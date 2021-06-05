@@ -2038,7 +2038,7 @@ public class Player {
 
     public String xpString(String c) {
         if (!_morphMode) {
-            return this.getExp() + c + World.world.getPersoXpMin(this.getLevel()) + c + World.world.getPersoXpMax(this.getLevel());
+            return World.world.getPersoXpMin(this.getLevel()) + c + this.getExp() + c + World.world.getPersoXpMax(this.getLevel());
         } else {
             if (this.getObjetByPos(Constant.ITEM_POS_ARME) != null)
                 if (Constant.isIncarnationWeapon(this.getObjetByPos(Constant.ITEM_POS_ARME).getTemplate().getId()))
@@ -2531,14 +2531,56 @@ public class Player {
         return false;
     }
 
+    public String stringStats2() {
+        final StringBuilder str = new StringBuilder("Ak");
+        str.append(stringStatsComplement());
+        return str.toString();
+    }
+
+    public String stringExperience(final String c) {
+        return World.world.getExpLevel(this.level).perso + c + this.exp + c + World.world.getExpLevel(level + 1).perso ;
+    }
+    public String stringStatsComplement() {
+        final StringBuilder str = new StringBuilder();
+        str.append(stringExperience(",")).append("|");
+        str.append(kamas).append("|");
+        if (_morphMode != true) {
+            str.append("0|0|");
+        } else {
+            str.append(_capital).append("|").append(_spellPts).append("|");
+        }
+        str.append(_align).append("~");
+        str.append(_align).append(",");// fake alineacion, si son diferentes se activa haveFakeAlignment
+        str.append(_aLvl).append(",");// orden alineacion
+        str.append(getGrade()).append(",");// nValue
+        str.append(_honor).append(",");// nHonour
+        str.append(_deshonor).append(",");// nDisgrace
+        str.append(is_showWings() ? "1" : "0").append("|");// bEnabled
+        int PDV = getCurPdv();
+        int PDVMax = getMaxPdv();
+        if (fight != null && fight.getFighterByPerso(this) != null) {
+            final Fighter luchador = fight.getFighterByPerso(this);
+            if (luchador != null) {
+                PDV = luchador.getPdv();
+                PDVMax = luchador.getPdvMax();
+            }
+        }
+        str.append(PDV).append(",").append(PDVMax).append("|");
+        str.append(energy).append(",10000|");
+        return str.toString();
+    }
+
     public boolean addXp(long winxp) {
         boolean up = false;
         this.exp += winxp;
-        while (this.getExp() >= World.world.getPersoXpMax(this.getLevel()) && this.getLevel() < World.world.getExpLevelSize())
+        while (this.getExp() >= World.world.getPersoXpMax(this.getLevel()) && this.getLevel() < World.world.getExpLevelSize()) {
             up = levelUp(true, false);
+        }
         if (isOnline) {
-            if (up)
+            if (up) {
                 SocketManager.GAME_SEND_NEW_LVL_PACKET(account.getGameClient(), this.getLevel());
+            }
+            //SocketManager.ENVIAR_Ak_KAMAS_PDV_EXP_PJ(this);
             SocketManager.GAME_SEND_STATS_PACKET(this);
         }
         return up;
