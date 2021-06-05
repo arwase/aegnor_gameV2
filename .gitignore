@@ -1,0 +1,8 @@
+# Project exclude paths
+/out/
+/.idea/
+/.classpath/
+/.project/
+03 - Game.iml
+Alexandria EMU.iml
+config.properties

@@ -497,7 +497,9 @@ public class GameObject {
             } else if (entry.getKey() == Constant.STATS_RESIST) {
                 stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
             } else {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                if(Integer.parseInt(entry.getValue()) > 0) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                }
             }
             isFirst = false;
         }
@@ -554,9 +556,11 @@ public class GameObject {
                 stats.append(Integer.toHexString(statID)).append("#");
                 stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
             } else {
-                String jet = "0d0+" + entry.getValue();
-                stats.append(Integer.toHexString(statID)).append("#");
-                stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
+                if(entry.getValue() > 0) {
+                    String jet = "0d0+" + entry.getValue();
+                    stats.append(Integer.toHexString(statID)).append("#");
+                    stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
+                }
             }
             isFirst = false;
         }
@@ -630,7 +634,9 @@ public class GameObject {
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0)).append("#0#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0));
                 }
             } else {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                if(Integer.parseInt(entry.getValue()) > 0) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                }
             }
             isFirst = false;
         }
@@ -671,8 +677,10 @@ public class GameObject {
                 stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
             } else {
                 String jet = "0d0+" + entry.getValue();
-                stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
-                stats.append("#0#0#").append(jet);
+                if(entry.getValue() > 0) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
+                    stats.append("#0#0#").append(jet);
+                }
             }
             isFirst = false;
         }

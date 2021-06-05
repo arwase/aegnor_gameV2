@@ -126,7 +126,7 @@ public class JobAction {
             IO.setState(JobConstant.IOBJECT_STATE_EMPTYING);
             P.setExchangeAction(new ExchangeAction<>(ExchangeAction.CRAFTING, this));
             SocketManager.GAME_SEND_ECK_PACKET(P, 3, this.min + ";" + this.id);
-            SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
+            SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P, cell.getId() + ";" + 2 + ";" + 1);
         }
     }
 
@@ -136,7 +136,8 @@ public class JobAction {
         IO.setState(JobConstant.IOBJECT_STATE_EMPTYING);//FIXME trouver la bonne valeur
         P.setExchangeAction(new ExchangeAction<>(ExchangeAction.CRAFTING, this));
         SocketManager.GAME_SEND_ECK_PACKET(P, 3, this.min + ";" + this.id);//this.min => Nbr de Case de l'interface
-        SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
+        SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P, cell.getId() + ";" + 2 + ";" + 1);
+        //SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
     }
 
     public void endAction(Player player, InteractiveObject IO, GameAction GA, GameCase cell) {

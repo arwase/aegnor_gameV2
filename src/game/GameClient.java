@@ -1432,6 +1432,7 @@ public class GameClient {
                 replayCraft();
                 break;
             case 'M'://Move (Ajthiser//retirer un objet a l'�change)
+                //ready();
                 movementItemOrKamas(packet);
                 break;
             case 'P':
@@ -2438,6 +2439,7 @@ public class GameClient {
                     }
                 } else if (packet.charAt(2) == 'R') {
                     if (((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
+                        var job = ((JobAction) this.player.getExchangeAction().getValue());
                         ((JobAction) this.player.getExchangeAction().getValue()).setJobCraft(((JobAction) this.player.getExchangeAction().getValue()).oldJobCraft);
                     }
                     ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft().setAction(Integer.parseInt(packet.substring(3)));

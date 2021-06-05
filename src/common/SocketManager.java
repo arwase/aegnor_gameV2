@@ -1348,7 +1348,15 @@ public class SocketManager {
         send(out, packet);
 
     }
-
+    public static void ENVIAR_Ak_KAMAS_PDV_EXP_PJ(Player perso) {
+        String packet = perso.stringStats2();
+        send(perso, packet);
+        ENVIAR_Ab_CIRCULO_XP_BANNER(perso);
+        //("STATS KAMAS PDV EXP PJ: PERSO", packet);
+    }
+    private static void ENVIAR_Ab_CIRCULO_XP_BANNER(Player perso) {
+        send(perso, "Ab");
+    }
     public static void GAME_SEND_MESSAGE_TO_ALL(String msg, String color) {
         String packet = "cs<font color='#" + color + "'>" + msg + "</font>";
         for (Player P : World.world.getOnlinePlayers())
@@ -1570,6 +1578,11 @@ public class SocketManager {
         for (Player z : map.getPlayers())
             send(z, packet);
 
+    }
+
+    public static void GAME_SEND_GDF_PACKET_TO_MAP(Player perso, String str) {
+        String packet = "GDF|" + str;
+        send(perso, packet);
     }
 
     public static void GAME_SEND_GDF_PACKET_TO_FIGHT(Player player,
