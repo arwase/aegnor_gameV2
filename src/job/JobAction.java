@@ -35,6 +35,7 @@ public class JobAction {
     private int id;
     private int min = 1;
     private int max = 1;
+
     private boolean isCraft;
     private int chan = 100;
     private int time = 0;
