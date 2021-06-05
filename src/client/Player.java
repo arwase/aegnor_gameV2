@@ -2038,7 +2038,8 @@ public class Player {
 
     public String xpString(String c) {
         if (!_morphMode) {
-            return this.getExp() + c + World.world.getPersoXpMin(this.getLevel()) + c + World.world.getPersoXpMax(this.getLevel());
+            return World.world.getPersoXpMin(this.getLevel()) + c + this.getExp() + c + World.world.getPersoXpMax(this.getLevel());
+            //return this.getExp() + c + World.world.getPersoXpMin(this.getLevel()) + c + World.world.getPersoXpMax(this.getLevel());
         } else {
             if (this.getObjetByPos(Constant.ITEM_POS_ARME) != null)
                 if (Constant.isIncarnationWeapon(this.getObjetByPos(Constant.ITEM_POS_ARME).getTemplate().getId()))
