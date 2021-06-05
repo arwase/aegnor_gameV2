@@ -1,0 +1,27 @@
+Version 0.1 (30/05/2021) :
+- Ajout de la compatibilité des Maps (Client Retro)
+- Ajout de la prévisualisation de l'exp d'un groupe (Client Retro)
+- Correction des Packets du Panel EndFight (Client Retro GameResult)
+- Ajout de l'augmentation des Stats version amélioré (Client Retro)
+- Debug de 1000 Maps Supplémentaires
+- Debug de 3852 Scripted_Cells
+
+Version 0.2 (31/05/2021) :
+- Ajout du Restat via le Panel des Caractéristiques
+- Ajout du Nerf d'un sort sur le Panel des Sorts (-1 level à un sort)
+- Ajout de toutes les commandes pour le PanelAdmin
+
+Version 0.3 (02/06/2021) :
+- Ajout du Panel NPC
+- Ajout du Panel SpawnMobs
+- Ajout du Panel AddDrops
+- Ajout du Panel Triggers
+- Ajout du Panel MobStats
+- Ajout du Panel FightPos
+- Ajout de 23 Nouvelles Commandes Admin pour les différents Panel
+
+Version 0.4 (03/06/2021) :
+- Correction du Packet pour les informations de la map (PanelAdmin)
+
+Version 0.5 (03/06/2021) :
+- Ajout su
