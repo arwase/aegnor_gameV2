@@ -92,8 +92,10 @@ public class MountPark {
                 try {
                     this.raising.add(Integer.parseInt(dd));
                     Mount mount = World.world.getMountById(Integer.parseInt(dd));
-                    mount.setMapId(this.map.getId());
-                    mount.setCellId(mount.getCellId());
+                    if(mount != null) {
+                        mount.setMapId(this.map.getId());
+                        mount.setCellId(mount.getCellId());
+                    }
                 } catch(Exception ignored) {
                 }
             }

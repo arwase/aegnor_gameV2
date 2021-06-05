@@ -75,15 +75,17 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-        if(id == 112) id = Constant.STATS_ADD_DOMA;
-        if (this.effects.get(id) == null || this.effects.get(id) == 0) {
-            this.effects.put(id, val);
-        } else {
-            int newVal = (this.effects.get(id) + val);
-            if(newVal <= 0) {
-                this.effects.remove(id);
-                return 0;
-            } else this.effects.put(id, newVal);
+        if(val > 0) {
+            if (id == 112) id = Constant.STATS_ADD_DOMA;
+            if (this.effects.get(id) == null || this.effects.get(id) == 0) {
+                this.effects.put(id, val);
+            } else {
+                int newVal = (this.effects.get(id) + val);
+                if (newVal <= 0) {
+                    this.effects.remove(id);
+                    return 0;
+                } else this.effects.put(id, newVal);
+            }
         }
         return this.effects.get(id);
     }
@@ -113,9 +115,11 @@ public class Stats {
         if (this.effects.isEmpty())
             return "";
         for (Entry<Integer, Integer> entry : this.effects.entrySet()) {
-            if (str.length() > 0)
-                str.append(",");
-            str.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue())).append("#0#0");
+            if(entry.getValue() > 0) {
+                if (str.length() > 0)
+                    str.append(",");
+                str.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue())).append("#0#0");
+            }
         }
         return str.toString();
     }
