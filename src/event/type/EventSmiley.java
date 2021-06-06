@@ -170,7 +170,7 @@ public class EventSmiley extends Event {
             ObjectTemplate template = World.world.getObjTemplate(EventManager.TOKEN);
 
             if(template != null) {
-                GameObject object = template.createNewItem(1, false);
+                GameObject object = template.createNewItem(1, false,0);
 
                 if (object != null && winner.addObjet(object, true)) {
                     World.world.addGameObject(object, true);

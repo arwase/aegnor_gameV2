@@ -283,4 +283,9 @@ public class Stats {
         }
         return new Stats(effets, false, null);
     }
+
+    public Map<Integer, Integer> getMap() {
+        return this.effects;
+    }
+
 }

@@ -3831,7 +3831,7 @@ public class Fight {
                 f.getPlayer().setCurrentPositionToOldPosition();
                 f.getPlayer().sendMessage("Vous venez de gagner " + TeamMatch.KAMAS + " kamas et 3 kolizetons suite à votre victoire au Kolizeum !");
                 f.getPlayer().addKamas(TeamMatch.KAMAS);
-                f.getPlayer().addObjet(World.world.getObjTemplate(TeamMatch.OBJECT).createNewItem(TeamMatch.QUANTITY, true), true);
+                f.getPlayer().addObjet(World.world.getObjTemplate(TeamMatch.OBJECT).createNewItem(TeamMatch.QUANTITY, true,0), true);
             }
 
             for (Fighter f : loosers) {
@@ -4168,7 +4168,7 @@ public class Fight {
                                 if (stalkTarget.getTraque() == curPlayer)
                                     quantity = 4;
 
-                            GameObject object = World.world.getObjTemplate(10275).createNewItem(quantity, false);
+                            GameObject object = World.world.getObjTemplate(10275).createNewItem(quantity, false,0);
                             if (curPlayer.addObjet(object, true))
                                 World.world.addGameObject(object, true);
                             kamas = new Couple<>(1000 * quantity, 1000 * quantity);
@@ -4194,7 +4194,7 @@ public class Fight {
                     if (curPlayer != null) {
                         kamas = new Couple<>(1000 * quantity, 1000 * quantity);
                         curPlayer.addKamas(1000 * quantity);
-                        GameObject object = World.world.getObjTemplate(10275).createNewItem(quantity, false);
+                        GameObject object = World.world.getObjTemplate(10275).createNewItem(quantity, false,0);
                         if (curPlayer.addObjet(object, true))
                             World.world.addGameObject(object, true);
                         stalk = true;
@@ -4578,7 +4578,7 @@ public class Fight {
                                 // Certificat :
                                 ObjectTemplate OT2 = World.world.getObjTemplate(Constant.getCertificatByDopeuls(IDmob));
                                 if(OT2 != null) {
-                                    GameObject obj2 = OT2.createNewItem(1, false);
+                                    GameObject obj2 = OT2.createNewItem(1, false,0);
                                     if (player.addObjet(obj2, true))// Si le joueur n'avait pas d'item similaire
                                         World.world.addGameObject(obj2, true);
                                     obj2.refreshStatsObjet("325#0#0#" + System.currentTimeMillis());
@@ -4634,7 +4634,7 @@ public class Fight {
 
                             switch (player.getCurMap().getId()) {
                                 case 8984:
-                                    GameObject obj = World.world.getObjTemplate(8012).createNewItem(1, false);
+                                    GameObject obj = World.world.getObjTemplate(8012).createNewItem(1, false,0);
                                     if (player.addObjet(obj, true))
                                         World.world.addGameObject(obj, true);
                                     drops += (drops.length() > 0 ? "," : "") + "8012~1";

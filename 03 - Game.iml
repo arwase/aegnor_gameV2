@@ -123,5 +123,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="commons-lang3-3.12.0" level="application" />
   </component>
 </module>

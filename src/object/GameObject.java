@@ -30,6 +30,7 @@ public class GameObject {
     protected int obvijevanPos;
     protected int obvijevanLook;
     protected int puit;
+    protected int rarity;
     private Stats Stats = new Stats();
     private ArrayList<SpellEffect> Effects = new ArrayList<>();
     private ArrayList<String> SortStats = new ArrayList<>();
@@ -38,13 +39,13 @@ public class GameObject {
 
     public byte modification = -1;
 
-    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit) {
+    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit, int rarity) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
         this.position = pos;
         this.puit = puit;
-
+        this.rarity = rarity;
         Stats = new Stats();
         this.parseStringToStats(strStats, false);
     }
@@ -55,9 +56,10 @@ public class GameObject {
         this.quantity = 1;
         this.position = -1;
         this.puit = 0;
+        this.rarity = 0;
     }
 
-    public GameObject(int Guid, int template, int qua, int pos, Stats stats, ArrayList<SpellEffect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit) {
+    public GameObject(int Guid, int template, int qua, int pos, Stats stats, ArrayList<SpellEffect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit, int rarity) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
@@ -69,6 +71,7 @@ public class GameObject {
         this.obvijevanPos = 0;
         this.obvijevanLook = 0;
         this.puit = puit;
+        this.rarity = rarity;
     }
 
     public static GameObject getCloneObjet(GameObject obj, int qua) {
@@ -76,9 +79,57 @@ public class GameObject {
         maps.putAll(obj.getStats().getEffects());
         Stats newStats = new Stats(maps);
 
-        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, obj.getEffects(), obj.getSoulStat(), obj.getTxtStat(), obj.getPuit());
+        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, obj.getEffects(), obj.getSoulStat(), obj.getTxtStat(), obj.getPuit(),obj.getRarity());
         ob.modification = 0;
         return ob;
+    }
+    public static int getAleaRarity(int chanceimpact) {
+        int rarity = 1;
+        int seuil = 50;
+        int chance = 0;
+
+        float perc = (float)(chanceimpact*0.01);
+        int seuilimpact = (int)Math.floor(seuil * perc);
+        for (int i = 0; i <= 4; i++) {
+            chance = Formulas.getRandomValue(0, 100);
+            System.out.println( chance+ " de chance sur " + seuilimpact );
+            if(chance<seuilimpact) {
+                rarity++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if(rarity>5){
+            rarity = 5;
+        }
+
+        System.out.println("La rareté finale " + rarity);
+
+
+        return rarity;
+    }
+
+    public static int getAleaRarity() {
+        int rarity = 1;
+        int seuil = 50;
+        int chance = 0;
+
+        for (int i = 0; i <= 4; i++) {
+            chance = Formulas.getRandomValue(0, 100);
+            if(chance<seuil) {
+                rarity++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if(rarity>5){
+            rarity = 5;
+        }
+        return rarity;
     }
 
     public GameObject getClone() {
@@ -86,12 +137,15 @@ public class GameObject {
         maps.putAll(this.getStats().getEffects());
         Stats newStats = new Stats(maps);
 
-        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), this.getTemplate().getId(), this.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, newStats, this.getEffects(), this.getSoulStat(), this.getTxtStat(), this.getPuit());
+        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), this.getTemplate().getId(), this.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, newStats, this.getEffects(), this.getSoulStat(), this.getTxtStat(), this.getPuit(),this.getRarity());
         ob.modification = -1;
         return ob;
     }
 
 
+    public void setRarity(int rarity) {
+        this.rarity = rarity;
+    }
 
     public int setId() {
         this.guid = Database.getStatics().getObjectData().getNextId();
@@ -369,8 +423,19 @@ public class GameObject {
         return Integer.toHexString(guid) + "~"
                 + Integer.toHexString(template.getId()) + "~"
                 + Integer.toHexString(quantity) + "~" + posi + "~"
-                + parseStatsString() + ";";
+                + parseStatsString() +  "~"
+                + rarity + ";";
     }
+
+    public String parseItemNormal() {
+        String posi = position == Constant.ITEM_POS_NO_EQUIPED ? "" : Integer.toHexString(position);
+        return guid + "~"
+                + template.getId() + "~"
+                + quantity + "~" + posi + "~"
+                + parseStatsString() +  "~"
+                + rarity + ";";
+    }
+
 
     public String parseStatsString() {
         if (this.getTemplate().getType() == 83) //Si c'est une pierre d'�me vide
@@ -909,7 +974,7 @@ public class GameObject {
     }
 
     /** FM TOUT POURRI **/
-    public String parseStringStatsEC_FM(GameObject obj, double poid, int carac) {
+    public String parseStringStatsEC_FM(GameObject obj, double poid, int carac) { // Ca c'est pas mal mais peut etre vori le jet perdu en soit
         String stats = "";
         boolean first = false;
         double perte = 0.0;
@@ -926,22 +991,26 @@ public class GameObject {
             }
             first = true;
         }
-        java.util.Map<Integer, Integer> statsObj = new java.util.HashMap<Integer, Integer>(obj.Stats.getEffects());
-        java.util.ArrayList<Integer> keys = new ArrayList<Integer>(obj.Stats.getEffects().keySet());
+        java.util.Map<Integer, Integer> statsObj = new java.util.HashMap<Integer, Integer>(obj.Stats.getMap());
+        java.util.ArrayList<Integer> keys = new ArrayList<Integer>(obj.Stats.getMap().keySet());
         Collections.shuffle(keys);
         int p = 0;
         int key = 0;
         if (keys.size() > 1) {
             for (Integer i : keys) // On cherche un OverFM
             {
+                //if(i == 121){
+                //	i = 112;
+                //}
                 int value = statsObj.get(i);
                 if (this.isOverFm(i, value)) {
                     key = i;
+                    //System.out.println(value + " On est over" + i);
                     break;
                 }
                 p++;
             }
-            if (key > 0) // On place l'OverFm en t�te de liste pour �tre niqu�
+            if (key > 0) // On place l'OverFm en tï¿½te de liste pour ï¿½tre niquï¿½
             {
                 keys.remove(p);
                 keys.add(p, keys.get(0));
@@ -950,18 +1019,32 @@ public class GameObject {
             }
         }
         for (Integer i : keys) {
+            //if(i == 121){
+            //	i = 112;
+            //}
+            //System.out.println(i + " On boucle ??");
             int newstats = 0;
             int statID = i;
             int value = statsObj.get(i);
+
+
+            //System.out.println(value + " La valeur de la stats");
             if (perte > poid || statID == carac) {
                 newstats = value;
+                //System.out.println(newstats  + "On laisse parce qu'on a deja perdu assez");
             } else if ((statID == 152) || (statID == 154) || (statID == 155)
                     || (statID == 157) || (statID == 116) || (statID == 153)) {
+
+                //System.out.println( " des stats négatif qu'on remet au max");
                 float a = (float) (value * poid / 100.0D);
+
                 if (a < 1.0F)
                     a = 1.0F;
+                //System.out.println(a  + " une valeur ");
                 float chute = value + a;
+                //System.out.println(chute + " la chute est de");
                 newstats = (int) Math.floor(chute);
+
                 if (newstats > JobAction.getBaseMaxJet(obj.getTemplate().getId(), Integer.toHexString(i)))
                     newstats = JobAction.getBaseMaxJet(obj.getTemplate().getId(), Integer.toHexString(i));
 
@@ -970,36 +1053,47 @@ public class GameObject {
                     continue;
 
                 float chute;
-                if (this.isOverFm(statID, value)) // Gros kick dans la gueulle de l'over FM
+
+                if (this.isOverFm(statID, value)){ // Gros kick dans la gueulle de l'over FM
                     chute = (float) (value - value
                             * (poid - (int) Math.floor(perte)) * 2 / 100.0D);
-                else
+                    //System.out.println( " On est over donc chute " + chute );
+                }
+                else{
                     chute = (float) (value - value
                             * (poid - (int) Math.floor(perte)) / 100.0D);
-                if ((chute / (float) value) < 0.75)
-                    chute = ((float) value) * 0.75F; // On ne peut pas perdre plus de 25% d'une stat d'un coup
 
+                    //System.out.println( " On est normal donc chute " + chute );
+                }
+                if ((chute / (float) value) < 0.75){
+
+                    chute = ((float) value) * 0.75F; // On ne peut pas perdre plus de 25% d'une stat d'un coup
+                    //System.out.println( " on a trop chuter donc chute " + chute );
+                }
                 double chutePwr = (value - chute)
                         * JobAction.getPwrPerEffet(statID);
+                //System.out.println( " chute final" + chutePwr );
                 //int chutePwrFixe = (int) Math.floor(chutePwr);
 
                 perte += chutePwr;
 
-				/*
-				 * if (obj.getPuit() > 0 && chutePwrFixe <= obj.getPuit()) //
-				 * S'il y a un puit positif, on annule la baisse { perte +=
-				 * chutePwr; chute = value; // On r�initialise
-				 * obj.setPuit(obj.getPuit() - chutePwrFixe); // On descend le
-				 * puit } else if (obj.getPuit() > 0) // Si le puit est positif,
-				 * mais pas suffisant pour annuler { double pwr =
-				 * obj.getPuit()/World.getPwrPerEffet(statID); // On calcule
-				 * l'annulation possible de la chute chute += (int)
-				 * Math.floor(pwr); // On l'a r�ajoute perte +=
-				 * (value-chute)*World.getPwrPerEffet(statID); obj.setPuit(0);
-				 * // On fixe le puit � 0 } else { perte += chutePwr; }
-				 */
+                /*
+                 * if (obj.getPuit() > 0 && chutePwrFixe <= obj.getPuit()) //
+                 * S'il y a un puit positif, on annule la baisse { perte +=
+                 * chutePwr; chute = value; // On rï¿½initialise
+                 * obj.setPuit(obj.getPuit() - chutePwrFixe); // On descend le
+                 * puit } else if (obj.getPuit() > 0) // Si le puit est positif,
+                 * mais pas suffisant pour annuler { double pwr =
+                 * obj.getPuit()/World.getPwrPerEffet(statID); // On calcule
+                 * l'annulation possible de la chute chute += (int)
+                 * Math.floor(pwr); // On l'a rï¿½ajoute perte +=
+                 * (value-chute)*World.getPwrPerEffet(statID); obj.setPuit(0);
+                 * // On fixe le puit ï¿½ 0 } else { perte += chutePwr; }
+                 */
 
                 newstats = (int) Math.floor(chute);
+
+                //System.out.println( " Nouvelle valur stats " + newstats );
             }
             if (newstats < 1)
                 continue;
@@ -1227,5 +1321,9 @@ public class GameObject {
         if (!trouve)
             return true;
         return false;
+    }
+
+    public int getRarity() {
+        return rarity;
     }
 }

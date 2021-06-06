@@ -502,15 +502,15 @@ public class Player {
         if (!Database.getStatics().getPlayerData().add(perso))
             return null;
         World.world.addPlayer(perso);
-        if (Config.INSTANCE.getSERVER_KEY().equals("jiva")) {
+        if (Config.INSTANCE.getSERVER_KEY().equals("aegnor")) {
             for (ObjectTemplate t : World.world.getItemSet(5).getItemTemplates()) {
-                GameObject obj = t.createNewItem(1, true);
+                GameObject obj = t.createNewItem(1, true,5);
                 if (perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
             }
             ObjectTemplate template = World.world.getObjTemplate(10207);
             if(template != null) {
-                GameObject object = template.createNewItem(1, true);
+                GameObject object = template.createNewItem(1, true,5);
                 if(object != null) {
                     object.getTxtStat().clear();
                     object.getTxtStat().putAll(Dopeul.generateStatsTrousseau());
@@ -1805,7 +1805,7 @@ public class Player {
     }
 
     public String parseToOa() {
-        return "Oa" + this.getId() + "|" + getGMStuffString();
+        return "Oa"  + this.getId() + "|"+ getGMStuffString() ;
     }
 
     public String parseToGM() {

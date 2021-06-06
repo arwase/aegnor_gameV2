@@ -1062,7 +1062,7 @@ public class World {
 
     }
 
-    public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit) {
+    public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit, int rarity) {
         if (getObjTemplate(template) == null) {
             return null;
         }
@@ -1075,13 +1075,13 @@ public class World {
             try {
                 Map<Integer, String> txtStat = new HashMap<>();
                 txtStat.put(Constant.STATS_DATE, stats.substring(3) + "");
-                return new GameObject(id, template, qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), txtStat, puit);
+                return new GameObject(id, template, qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), txtStat, puit, rarity);
             } catch (Exception e) {
                 e.printStackTrace();
-                return new GameObject(id, template, qua, pos, stats, 0);
+                return new GameObject(id, template, qua, pos, stats, 0,rarity);
             }
         } else {
-            return new GameObject(id, template, qua, pos, stats, 0);
+            return new GameObject(id, template, qua, pos, stats, 0,rarity);
         }
     }
 

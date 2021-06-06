@@ -29,9 +29,9 @@ public class ObjectData extends AbstractDAO<GameObject> {
                 int position = RS.getInt("position");
                 String stats = RS.getString("stats");
                 int puit = RS.getInt("puit");
-
+                int rarity = RS.getInt("rarity");
                 if(quantity == 0) continue;
-                World.world.addGameObject(World.world.newObjet(id, template, quantity, position, stats, puit), false);
+                World.world.addGameObject(World.world.newObjet(id, template, quantity, position, stats, puit,rarity), false);
             }
         } catch (SQLException e) {
             super.sendError("ObjectData load", e);
@@ -54,9 +54,10 @@ public class ObjectData extends AbstractDAO<GameObject> {
                 int position = RS.getInt("position");
                 String stats = RS.getString("stats");
                 int puit = RS.getInt("puit");
+                int rarity = RS.getInt("rarity");
 
                 if(quantity == 0) continue;
-                World.world.addGameObject(World.world.newObjet(id, template, quantity, position, stats, puit), false);
+                World.world.addGameObject(World.world.newObjet(id, template, quantity, position, stats, puit, rarity), false);
             }
         } catch (SQLException e) {
             super.sendError("ObjectData load", e);
@@ -75,13 +76,14 @@ public class ObjectData extends AbstractDAO<GameObject> {
 
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("UPDATE `world.entity.objects` SET `template` = ?, `quantity` = ?, `position` = ?, `puit` = ?, `stats` = ? WHERE `id` = ?;");
+            p = getPreparedStatement("UPDATE `world.entity.objects` SET `template` = ?, `quantity` = ?, `position` = ?, `puit` = ?, `rarity` = ?, `stats` = ? WHERE `id` = ?;");
             p.setInt(1, object.getTemplate().getId());
             p.setInt(2, object.getQuantity());
             p.setInt(3, object.getPosition());
             p.setInt(4, object.getPuit());
-            p.setString(5, object.parseToSave());
-            p.setInt(6, object.getGuid());
+            p.setInt(5, object.getRarity());
+            p.setString(6, object.parseToSave());
+            p.setInt(7, object.getGuid());
             execute(p);
             return true;
         } catch (SQLException e) {
@@ -102,13 +104,14 @@ public class ObjectData extends AbstractDAO<GameObject> {
         }
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("REPLACE INTO `world.entity.objects` VALUES (?, ?, ?, ?, ?, ?);");
+            p = getPreparedStatement("REPLACE INTO `world.entity.objects` VALUES (?, ?, ?, ?, ?, ?, ?);");
             p.setInt(1, object.getGuid());
             p.setInt(2, object.getTemplate().getId());
             p.setInt(3, object.getQuantity());
             p.setInt(4, object.getPosition());
             p.setString(5, object.parseToSave());
             p.setInt(6, object.getPuit());
+            p.setInt(7, object.getRarity());
             execute(p);
         } catch (SQLException e) {
             super.sendError("ObjectData insert", e);

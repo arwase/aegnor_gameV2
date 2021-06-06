@@ -38,7 +38,7 @@ public class Noel {
         } else if (value >= 10000 && value < 100000) {//All objects
             template = Integer.parseInt(objectOne.split(",")[Formulas.getRandomValue(0, objectOne.split(",").length - 1)]);
         }
-        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false);
+        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
         if (player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
@@ -55,7 +55,7 @@ public class Noel {
         } else if (value >= 10000 && value < 100000) {//All objects
             template = Integer.parseInt(objectTwo.split(",")[Formulas.getRandomValue(0, objectTwo.split(",").length - 1)]);
         }
-        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false);
+        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
         if (player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
@@ -72,7 +72,7 @@ public class Noel {
         } else if (value >= 10000 && value < 100000) {//All objects
             template = Integer.parseInt(objectTree.split(",")[Formulas.getRandomValue(0, objectTree.split(",").length - 1)]);
         }
-        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false);
+        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
         if (player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
@@ -89,7 +89,7 @@ public class Noel {
         } else if (value >= 10000 && value < 100000) {//All objects
             template = Integer.parseInt(objectFour.split(",")[Formulas.getRandomValue(0, objectFour.split(",").length - 1)]);
         }
-        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false);
+        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
         if (player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
@@ -106,7 +106,7 @@ public class Noel {
         } else if (value >= 10000 && value < 100000) {//All objects
             template = Integer.parseInt(objectFive.split(",")[Formulas.getRandomValue(0, objectFive.split(",").length - 1)]);
         }
-        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false);
+        GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
         if (player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);

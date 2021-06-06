@@ -828,7 +828,7 @@ public class GameCase {
                     this.getObject().disable();
                     SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), this);
                     int qua = Formulas.getRandomValue(1, 5);//On a entre 1 et 10 eaux
-                    GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false);
+                    GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false,0);
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
@@ -863,7 +863,7 @@ public class GameCase {
                     this.getObject().disable();
                     SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), this);
                     int qua = Formulas.getRandomValue(1, 10);//On a entre 1 et 10 eaux
-                    GameObject obj = World.world.getObjTemplate(311).createNewItem(qua, false);
+                    GameObject obj = World.world.getObjTemplate(311).createNewItem(qua, false,0);
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
@@ -1117,7 +1117,7 @@ public class GameCase {
                 this.object.disable();
                 SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(perso.getCurMap(), this);
                 int qua = Formulas.getRandomValue(1, 5);//On a entre 1 et 5 patates
-                GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false);
+                GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false,0);
                 if (perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
                 SocketManager.GAME_SEND_IQ_PACKET(perso, perso.getId(), qua);
@@ -1131,7 +1131,7 @@ public class GameCase {
                 this.object.disable();
                 SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(perso.getCurMap(), this);
                 qua = Formulas.getRandomValue(1, 10);//On a entre 1 et 10 eaux
-                obj = World.world.getObjTemplate(311).createNewItem(qua, false);
+                obj = World.world.getObjTemplate(311).createNewItem(qua, false,0);
                 if (perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
                 SocketManager.GAME_SEND_IQ_PACKET(perso, perso.getId(), qua);

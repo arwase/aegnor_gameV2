@@ -112,7 +112,7 @@ public class GameClient {
 
     public void parsePacket(String packet) throws InterruptedException {
         this.lastPacketTime = System.currentTimeMillis();
-
+        System.out.println("Paquet recu : " +packet);
         if (packet.length() > 3 && packet.substring(0, 4).equalsIgnoreCase("ping")) {
             SocketManager.GAME_SEND_PONG(this);
             return;
@@ -460,7 +460,7 @@ public class GameClient {
                 GameObject obj;
 
                 if (qua == 1) {
-                    obj = World.world.getObjTemplate(template).createNewItem(qua, (jp == 1));
+                    obj = World.world.getObjTemplate(template).createNewItem(qua, (jp == 1),0);
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     if(obj.getTemplate().getType() == Constant.ITEM_TYPE_CERTIF_MONTURE)
@@ -471,7 +471,7 @@ public class GameClient {
 
                     gifts = gifts.replace(str2, "").replace(str3, "").replace(str1, "");
                 } else {
-                    obj = World.world.getObjTemplate(template).createNewItem(1, (jp == 1));
+                    obj = World.world.getObjTemplate(template).createNewItem(1, (jp == 1),0);
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     if(obj.getTemplate().getType() == Constant.ITEM_TYPE_CERTIF_MONTURE)
@@ -1625,7 +1625,7 @@ public class GameClient {
                     }
 
                     this.account.setPoints(points - value);
-                    object = template.createNewItem(qua, (npcTemplate.getInformations() & 0x1) == 1);
+                    object = template.createNewItem(qua, (npcTemplate.getInformations() & 0x1) == 1,3);
                     
                     if (this.player.addObjet(object, true)) World.world.addGameObject(object, true);
                     if (attachObject) object.attachToPlayer(this.player);
@@ -1643,7 +1643,7 @@ public class GameClient {
                         return;
                     }
 
-                    object = template.createNewItem(qua, (npcTemplate.getInformations() & 0x1) == 1);
+                    object = template.createNewItem(qua, (npcTemplate.getInformations() & 0x1) == 1,0);
                     
                     this.player.setKamas(this.player.getKamas() - price);
                     if (this.player.addObjet(object, true)) World.world.addGameObject(object, true);
@@ -1869,6 +1869,8 @@ public class GameClient {
     }
 
     private synchronized void movementItemOrKamas(String packet) {
+
+
         if(this.player.getExchangeAction() == null) return;
         if(packet.contains("NaN")) {
             this.player.sendMessage("Error : StartExchange : (" + this.player.getExchangeAction().getType() + ") : " + packet + "\nA envoyer à un administreur.");
@@ -2441,6 +2443,7 @@ public class GameClient {
                     if (((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
                         var job = ((JobAction) this.player.getExchangeAction().getValue());
                         ((JobAction) this.player.getExchangeAction().getValue()).setJobCraft(((JobAction) this.player.getExchangeAction().getValue()).oldJobCraft);
+                        //ready();
                     }
                     ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft().setAction(Integer.parseInt(packet.substring(3)));
                 } else if (packet.charAt(2) == 'r') {
@@ -2826,7 +2829,7 @@ public class GameClient {
                     park.getEtable().remove(mount);
                     mount.setOwner(this.player.getId());
 
-                    object = Constant.getParchoTemplateByMountColor(mount.getColor()).createNewItem(1, false);
+                    object = Constant.getParchoTemplateByMountColor(mount.getColor()).createNewItem(1, false,0);
                     object.setMountStats(this.player, mount, false);
 
                     World.world.addGameObject(object, true);
@@ -6169,7 +6172,7 @@ public class GameClient {
         }
 
         ObjectTemplate t = World.world.getObjTemplate(idOBVI);
-        GameObject obV = t.createNewItem(1, true);
+        GameObject obV = t.createNewItem(1, true,0);
         String obviStats = obj.getObvijevanStatsOnly();
         if (obviStats.equals("")) {
             SocketManager.GAME_SEND_MESSAGE(this.player, "Erreur d'obvijevan numero: 3. Merci de nous le signaler si le probleme est grave.", "000000");
@@ -6681,7 +6684,7 @@ public class GameClient {
 
         int item = MP.getCellAndObject().get(cell);
         ObjectTemplate t = World.world.getObjTemplate(item);
-        GameObject obj = t.createNewItem(1, false); // creation de l'item au stats incorrecte
+        GameObject obj = t.createNewItem(1, false,0); // creation de l'item au stats incorrecte
 
         int statNew = 0;// on vas chercher la valeur de la resistance de l'item
         for (Map.Entry<Integer, Map<Integer, Integer>> entry : MP.getObjDurab().entrySet()) {

@@ -25,7 +25,7 @@ import java.util.List;
 
 public class CommandPlayer {
 
-    public final static String canal = "Général";
+    public final static String canal = "Aegnor";
     public static boolean canalMute = false;
 
     public static boolean analyse(Player player, String msg) {
@@ -345,6 +345,8 @@ public class CommandPlayer {
 
     private static String getNameServerById(int id) {
         switch (id) {
+            case 2 :
+                return "Aegnor";
             case 13:
                 return "Silouate";
             case 19:

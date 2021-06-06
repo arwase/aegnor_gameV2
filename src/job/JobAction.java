@@ -172,7 +172,7 @@ public class JobAction {
                     if (_tID != -1) {
                         ObjectTemplate _T = World.world.getObjTemplate(_tID);
                         if (_T != null) {
-                            GameObject _O = _T.createNewItem(qua, false);
+                            GameObject _O = _T.createNewItem(qua, false,0);
                             if (player.addObjet(_O, true))
                                 World.world.addGameObject(_O, true);
                         }
@@ -184,7 +184,7 @@ public class JobAction {
             ObjectTemplate T = World.world.getObjTemplate(tID);
             if (T == null)
                 return;
-            GameObject O = T.createNewItem(qua, false);
+            GameObject O = T.createNewItem(qua, false,0);
 
             if (player.addObjet(O, true))
                 World.world.addGameObject(O, true);
@@ -357,7 +357,7 @@ public class JobAction {
             SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + template);
             SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
         } else {
-            GameObject newObj = World.world.getObjTemplate(template).createNewItem(1, false);
+            GameObject newObj = World.world.getObjTemplate(template).createNewItem(1, false,0);
             if (signed) newObj.addTxtStat(988, this.player.getName());
             int guid = this.addCraftObject(receiver, newObj);
             if(guid == -1) guid = newObj.getGuid();

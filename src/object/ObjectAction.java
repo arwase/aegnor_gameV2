@@ -610,7 +610,7 @@ public class ObjectAction {
                     case 26://Ajout d'objet.
                         if (player0.getFight() != null) return;
                         for (String i : arg.split(";")) {
-                            obj = World.world.getObjTemplate(Integer.parseInt(i.split(",")[0])).createNewItem(Integer.parseInt(i.split(",")[1]), false);
+                            obj = World.world.getObjTemplate(Integer.parseInt(i.split(",")[0])).createNewItem(Integer.parseInt(i.split(",")[1]), false,0);
                             if (player.addObjet(obj, true))
                                 World.world.addGameObject(obj, true);
                         }
@@ -759,7 +759,7 @@ public class ObjectAction {
                     if (objectTemplate == null)
                         continue;
 
-                    GameObject newGameObject = objectTemplate.createNewItem(couple.second, true);
+                    GameObject newGameObject = objectTemplate.createNewItem(couple.second, true,0);
 
                     if (newGameObject == null)
                         continue;

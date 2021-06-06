@@ -73,6 +73,8 @@ public class Constant {
     public static final int ITEM_POS_MALEDICTION = 22;
     public static final int ITEM_POS_BONBON = 25;
     //Types
+    public static final int[] ITEM_TYPE_OBJ_BLACK = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};  // 1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81
+    public static final int[] ITEM_TYPE_WITH_RARITY = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,23,81};
     public static final int ITEM_TYPE_AMULETTE = 1;
     public static final int ITEM_TYPE_ARC = 2;
     public static final int ITEM_TYPE_BAGUETTE = 3;

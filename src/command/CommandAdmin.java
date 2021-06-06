@@ -1738,11 +1738,13 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             boolean useMax = false;
+            int rarity = 0;
             if (infos.length == 3)
                 useMax = infos[2].equals("MAX");//Si un jet est specifie
+                rarity = Integer.parseInt(infos[3]);
 
             for (ObjectTemplate t : IS.getItemTemplates()) {
-                GameObject obj = t.createNewItem(1, useMax);
+                GameObject obj = t.createNewItem(1, useMax,rarity);
                 if (this.getPlayer().addObjet(obj, true))//Si le joueur n'avait pas d'item similaire
                     World.world.addGameObject(obj, true);
             }
@@ -1775,11 +1777,19 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             boolean useMax = false;
+            int rarity = 0;
             if (infos.length == 4)//Si un jet est specifie
             {
                 if (infos[3].equalsIgnoreCase("MAX"))
                     useMax = true;
             }
+
+            if (infos.length == 5)//Si un jet est specifie
+            {
+                rarity = Integer.parseInt(infos[4]);
+            }
+
+
             ObjectTemplate t = World.world.getObjTemplate(tID);
             if (t == null) {
                 String mess = "Le template " + tID + " n'existe pas.";
@@ -1794,7 +1804,7 @@ public class CommandAdmin extends AdminUser {
             }
             if (qua < 1)
                 qua = 1;
-            GameObject obj = t.createNewItem(qua, useMax);
+            GameObject obj = t.createNewItem(qua, useMax,rarity);
 
             if(t.getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
                 //obj.setMountStats(this.getPlayer(), null);
@@ -1810,6 +1820,9 @@ public class CommandAdmin extends AdminUser {
             String str = "Creation de l'item " + tID + " reussie";
             if (useMax)
                 str += " avec des stats maximums";
+
+            str += " de rarete "+rarity;
+
             str += ".";
             this.sendMessage(str);
             SocketManager.GAME_SEND_Ow_PACKET(this.getPlayer());
@@ -2754,7 +2767,7 @@ public class CommandAdmin extends AdminUser {
 
             for (ObjectTemplate obj : World.world.getObjTemplates()) {
                 if (obj.getType() == type) {
-                    GameObject addObj = obj.createNewItem(1, true);
+                    GameObject addObj = obj.createNewItem(1, true,0);
                     if (this.getPlayer().addObjet(addObj, true))//Si le joueur n'avait pas d'item similaire
                         World.world.addGameObject(addObj, true);
                 }
@@ -3080,7 +3093,7 @@ public class CommandAdmin extends AdminUser {
                 for (Entry<Integer, Integer> entry : e.getItemNecessaryList().entrySet()) {
                     ObjectTemplate objT = World.world.getObjTemplate(entry.getKey());
                     int qua = entry.getValue();
-                    GameObject obj = objT.createNewItem(qua, false);
+                    GameObject obj = objT.createNewItem(qua, false,0);
                     if (this.getPlayer().addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_Im_PACKET(this.getPlayer(), "021;"

@@ -343,7 +343,7 @@ public class Quest {
             for (Entry<Integer, Integer> entry : questObjectif.getObjects().entrySet()) {
                 ObjectTemplate template = World.world.getObjTemplate(entry.getKey());
                 int quantity = entry.getValue();
-                GameObject object = template.createNewItem(quantity, false);
+                GameObject object = template.createNewItem(quantity, false,0);
 
                 if (player.addObjet(object, true)) {
                     World.world.addGameObject(object, true);

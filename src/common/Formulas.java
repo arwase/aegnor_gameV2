@@ -45,7 +45,67 @@ public class Formulas {
             return -1;
         }
     }
+    public static int getRandomJetWithRarity(int min ,int max, int rarity)//1d5+6
+    {
+        try {
+            int num = 0;
+            switch (rarity) {
+                case 2 : {
+                    if (min < max) {
+                        min = (int) Math.floor(min + ((max - min)*0.75));
+                        num = getRandomValue(min, max);
+                    }
+                    else if (min == max) {
+                        min = max;
+                        num = min;
+                    }
+                    else {
+                        num = min;
+                    }
+                    break;
+                }
+                case 3 : {
+                    // pas géré ici car simple jet parfait
+                    break;
+                }
+                case 4 : {
+                    if (min < max) {
+                        min = (int) Math.floor(min + ((max - min)*0.75));
+                        max = (int) Math.floor(max + ((max) *0.5));
+                        num = getRandomValue(min, max);
+                    }
+                    else if (min == max) {
+                        min = max;
+                        num = min;
+                    }
+                    else {
+                        num = min;
+                    }
+                    break;
+                }
+                case 5 : {
+                    if (min < max) {
+                        max = (int) Math.floor(max + ((max)*0.5));
+                        num = max;
+                    }
+                    else if (min == max) {
+                        min = max;
+                        num = min;
+                    }
+                    else {
+                        num = min;
+                    }
+                    break;
+                }
+            }
 
+            return num;
+        } catch (NumberFormatException e) {
+            //World.world.logger.trace("New item 2: "+e);
+            e.printStackTrace();
+            return -1;
+        }
+    }
     public static int getMaxJet(String jet) {
         int num = 0;
         try {

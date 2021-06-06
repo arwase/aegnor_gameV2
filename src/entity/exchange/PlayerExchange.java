@@ -476,7 +476,7 @@ public class PlayerExchange extends Exchange {
             for(Couple<Integer, Integer> couple1 : items2) {
                 if(couple1.second == 0)continue;
                 if(World.world.getObjTemplate(couple1.first) == null)continue;
-                GameObject obj1 = World.world.getObjTemplate(couple1.first).createNewItem(couple1.second, false);
+                GameObject obj1 = World.world.getObjTemplate(couple1.first).createNewItem(couple1.second, false,0);
                 if(this.player.addObjet(obj1, true))
                     World.world.addGameObject(obj1, true);
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "021;" + couple1.second + "~" + couple1.first);

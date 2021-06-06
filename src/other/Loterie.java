@@ -21,7 +21,7 @@ public class Loterie {
                             + 15001);
                     SocketManager.GAME_SEND_Im_PACKET(perso, "021;" + 1 + "~"
                             + objIdWin);
-                    GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false);
+                    GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false,0);
                     if (!perso.addObjetSimiler(newObjAdded, true, -1)) {
                         World.world.addGameObject(newObjAdded, true);
                         perso.addObjet(newObjAdded);
@@ -41,7 +41,7 @@ public class Loterie {
                             + 19072);
                     SocketManager.GAME_SEND_Im_PACKET(perso, "021;" + 1 + "~"
                             + objIdWin);
-                    GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false);
+                    GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false,0);
                     if (!perso.addObjetSimiler(newObjAdded, true, -1)) {
                         World.world.addGameObject(newObjAdded, true);
                         perso.addObjet(newObjAdded);
@@ -56,7 +56,7 @@ public class Loterie {
     public static void startLoteriePioute(Player perso) {
         int objIdWin = getCadeauPioute();
         SocketManager.GAME_SEND_Im_PACKET(perso, "021;" + 1 + "~" + objIdWin);
-        GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false);
+        GameObject newObjAdded = World.world.getObjTemplate(objIdWin).createNewItem(1, false,0);
         if (!perso.addObjetSimiler(newObjAdded, true, -1)) {
             World.world.addGameObject(newObjAdded, true);
             perso.addObjet(newObjAdded);
