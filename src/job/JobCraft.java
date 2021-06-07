@@ -18,7 +18,9 @@ public class JobCraft {
         this.player = player;
 
         this.thread = new Thread(() -> {
-            try { Thread.sleep(1200); } catch(Exception ignored) { }
+            try { Thread.sleep(1200); } catch(Exception ignored) {
+                ignored.printStackTrace();
+            }
             try {
                 if (itsOk)
                 {

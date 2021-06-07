@@ -517,7 +517,9 @@ public class GameObject {
             }
 
             if (!isFirst)
-                stats.append(",");
+                if(entry.getValue() > 0) {
+                    stats.append(",");
+                }
             if(statID == 615) {
                 stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(entry.getValue()));
             } else
@@ -541,9 +543,10 @@ public class GameObject {
                     String jet = "0d0+" + entry.getValue();
                     stats.append(Integer.toHexString(statID)).append("#");
                     stats.append(Integer.toHexString(entry.getValue().intValue())).append("#0#0#").append(jet);
+
+                    isFirst = false;
                 }
             }
-            isFirst = false;
         }
         return stats.toString();
     }
