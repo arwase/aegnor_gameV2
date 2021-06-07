@@ -648,17 +648,19 @@ public class GameObject {
             isFirst = false;
         }
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            if (!isFirst)
-                stats.append(",");
+            if(entry.getValue() > 0) {
+                if (!isFirst)
+                    stats.append(",");
 
-            if(entry.getKey() == 615) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
-            } else {
-                String jet = "0d0+" + entry.getValue();
-                stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
-                stats.append("#0#0#").append(jet);
+                if (entry.getKey() == 615) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
+                } else {
+                    String jet = "0d0+" + entry.getValue();
+                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
+                    stats.append("#0#0#").append(jet);
+                }
+                isFirst = false;
             }
-            isFirst = false;
         }
         return stats.toString();
     }
