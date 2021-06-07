@@ -31,6 +31,8 @@ object Config {
     var RATE_HONOR = ConfigReader.data[ConfigReader.rate.honor]
     var RATE_JOB = ConfigReader.data[ConfigReader.rate.job]
     var RATE_XP = ConfigReader.data[ConfigReader.rate.xp]
+    var RATE_FM = ConfigReader.data[ConfigReader.rate.fm]
+    var PERCENT_EXO = ConfigReader.data[ConfigReader.rate.percent_exo]
 
     var exchangePort: Int = ConfigReader.data[ConfigReader.exchange.port]
     var gamePort: Int = ConfigReader.data[ConfigReader.server.port]

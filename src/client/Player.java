@@ -69,6 +69,7 @@ public class Player {
     public Stats stats;
     public boolean isNew = false;
     //Job
+    private JobAction _curJobAction;
     //Disponibilit�
     public boolean _isAbsent = false;
     public boolean _isInvisible = false;
@@ -454,10 +455,9 @@ public class Player {
             String[] infos = item.split(":");
             int guid = Integer.parseInt(infos[0]);
             GameObject obj = World.world.getGameObject(guid);
-            if (obj == null || obj.getPosition() == -1)
+            if (obj == null)
                 continue;
-            GameObject newObj = obj.getClone();
-            objects.put(newObj.getGuid(), newObj);
+            objects.put(obj.getGuid(), obj);
         }
         this.maxPdv = (this.level - 1) * 5 + 50 + getStats().getEffect(Constant.STATS_ADD_VITA);
         this.curPdv = (this.maxPdv * pdvPer) / 100;
@@ -3771,10 +3771,10 @@ public class Player {
     public void resetVars() {
         if (this.getExchangeAction() != null) {
             if (this.getExchangeAction().getValue() instanceof JobAction && ((JobAction) this.getExchangeAction().getValue()).getJobCraft() != null)
-                ((JobAction) this.getExchangeAction().getValue()).getJobCraft().getJobAction().broke = true;
+                ((JobAction) this.getExchangeAction().getValue()).getJobCraft().jobAction.broke = true;
             this.setExchangeAction(null);
         }
-
+        this._curJobAction = null;
         doAction = false;
         this.setGameAction(null);
 
@@ -5772,5 +5772,13 @@ public class Player {
             SocketManager.GAME_SEND_STATS_PACKET(this);
             Database.getStatics().getPlayerData().update(this);
         }
+    }
+
+    public void setCurJobAction(final JobAction JA) {
+        this._curJobAction = JA;
+    }
+
+    public JobAction getCurJobAction() {
+        return this._curJobAction;
     }
 }

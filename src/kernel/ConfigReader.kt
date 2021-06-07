@@ -48,6 +48,8 @@ object ConfigReader {
     }
 
     object rate : PropertyGroup() {
+        val fm by intType
+        val percent_exo by intType
         val xp by doubleType
         val job by intType
         val farm by intType

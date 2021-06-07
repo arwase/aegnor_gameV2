@@ -1,10 +1,8 @@
 package job.maging;
 
 import game.world.World;
-import kernel.Constant;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class Rune {
 
@@ -36,26 +34,25 @@ public class Rune {
         return valid;
     }
 
-    private short id, characteristic;
+    int id;
+    private short characteristic;
     private float weight;
     private byte bonus;
 
-    public Rune(short id, float weight, byte bonus) {
-        this.id = id;
+    public Rune(int i, float weight, byte bonus) {
+        this.id = i;
         this.weight = weight;
         this.bonus = bonus;
         this.setCharacteristic();
         Rune.runes.add(this);
     }
 
-    public short getId() {
+    public int getId() {
         return id;
     }
 
     private void setCharacteristic() {
         this.characteristic = Short.parseShort(World.world.getObjTemplate(this.id).getStrTemplate().split("#")[0], 16);
-        if(this.characteristic == 112)
-            this.characteristic = Constant.STATS_ADD_DOMA;
     }
 
     public short getCharacteristic() {

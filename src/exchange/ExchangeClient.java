@@ -52,6 +52,10 @@ public class ExchangeClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        if(connectFuture == null)
+        {
+            logger.error("La variable connectFuture est null");
+        }
         if(!connectFuture.isConnected()) {
             logger.error("Can't connect to login server");
             return false;

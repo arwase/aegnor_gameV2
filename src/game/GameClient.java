@@ -2057,9 +2057,20 @@ public class GameClient {
                     final int count = Integer.parseInt(packet.substring(3));
                     breakingObject.setCount(count);
                     TimerWaiter.addNext(() -> {
-                        this.recursiveBreakingObject(breakingObject, 0, count);
-
-                    }, 0, TimerWaiter.DataType.CLIENT);
+                        for(int i = 0; i < count; i++) {
+                            if(breakingObject.isStop()) break;
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            this.player.send("EA" + (breakingObject.getCount() - (i + 1)));
+                            this.ready();
+                        }
+                        if(breakingObject.isStop()) this.player.send("Ea2");
+                        else this.player.send("Ea1");
+                        breakingObject.setStop(false);
+                    }, 1, TimerWaiter.DataType.CLIENT);
                 } else if(packet.charAt(2) == 'r') {
                     breakingObject.setStop(true);
                 }

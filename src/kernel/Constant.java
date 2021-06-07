@@ -236,6 +236,7 @@ public class Constant {
     public static final int STATS_REM_PA = 101;
     public static final int STATS_ADD_VIE = 110;
     public static final int STATS_ADD_PA = 111;
+    public static final int STATS_ADD_DOMA = 112;
     public static final int STATS_MULTIPLY_DOMMAGE = 114;
     public static final int STATS_ADD_CC = 115;
     public static final int STATS_REM_PO = 116;
@@ -243,7 +244,7 @@ public class Constant {
     public static final int STATS_ADD_FORC = 118;
     public static final int STATS_ADD_AGIL = 119;
     public static final int STATS_ADD_PA2 = 120;
-    public static final int STATS_ADD_DOMA = 121;
+    public static final int STATS_ADD_DOMA2 = 121;
     public static final int STATS_ADD_EC = 122;
     public static final int STATS_ADD_CHAN = 123;
     public static final int STATS_ADD_SAGE = 124;

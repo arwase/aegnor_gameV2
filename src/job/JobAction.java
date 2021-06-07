@@ -24,9 +24,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+@SuppressWarnings("unused")
 public class JobAction {
 
-    public Map<Integer, Integer> ingredients = new TreeMap<>(), lastCraft = new TreeMap<>();
+    public Map<Integer, Integer> ingredients = new TreeMap<>();
+    public Map<Integer, Integer> lastCraft = new TreeMap<>();
     public Player player;
     public String data = "";
     public boolean broke = false;
@@ -35,7 +37,6 @@ public class JobAction {
     private int id;
     private int min = 1;
     private int max = 1;
-
     private boolean isCraft;
     private int chan = 100;
     private int time = 0;
@@ -43,16 +44,28 @@ public class JobAction {
     private JobStat SM;
     private JobCraft jobCraft;
     public JobCraft oldJobCraft;
-    private int reConfigingRunes = -1;
 
     public JobAction(int sk, int min, int max, boolean craft, int arg, int xpWin) {
+        this.min = 1;
+        this.max = 1;
+        this.chan = 100;
+        this.time = 0;
+        this.xpWin = 0;
+        this.ingredients = new TreeMap<Integer, Integer>();
+        this.lastCraft = new TreeMap<Integer, Integer>();
+        this.data = "";
+        this.broke = false;
+        this.broken = false;
+        this.reConfigingRunes = -1;
+        this.isRepeat = false;
         this.id = sk;
         this.min = min;
         this.max = max;
         this.isCraft = craft;
-        this.xpWin = xpWin;
+
         if (craft) this.chan = arg;
-        else this.time = arg;
+        else this.time = Math.round((arg)/ 2) ;
+        this.xpWin = xpWin;
     }
 
     public int getId() {
@@ -110,6 +123,7 @@ public class JobAction {
                 if (distItem < dist) {
                     SocketManager.GAME_SEND_MESSAGE(P, "Vous êtes trop loin pour pouvoir pécher ce poisson !");
                     SocketManager.GAME_SEND_GA_PACKET(P.getGameClient(), "", "0", "", "");
+                    P.setCurJobAction(null);
                     P.setExchangeAction(null);
                     P.setDoAction(false);
                     return;
@@ -118,27 +132,29 @@ public class JobAction {
         }
         if (!this.isCraft) {
             P.getGameClient().action = System.currentTimeMillis();
+            P.setCurJobAction(this);
             IO.setInteractive(false);
-            IO.setState(JobConstant.IOBJECT_STATE_EMPTYING);
+            IO.setState(2);
             SocketManager.GAME_SEND_GA_PACKET_TO_MAP(P.getCurMap(), "" + GA.id, 501, P.getId() + "", cell.getId() + "," + this.time);
             SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
         } else {
             P.setAway(true);
-            IO.setState(JobConstant.IOBJECT_STATE_EMPTYING);
+            IO.setState(2);
+            P.setCurJobAction(this);
             P.setExchangeAction(new ExchangeAction<>(ExchangeAction.CRAFTING, this));
             SocketManager.GAME_SEND_ECK_PACKET(P, 3, this.min + ";" + this.id);
-            SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P, cell.getId() + ";" + 2 + ";" + 1);
+            SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
         }
     }
 
     public void startAction(Player P, InteractiveObject IO, GameAction GA, GameCase cell) {
         this.player = P;
         P.setAway(true);
-        IO.setState(JobConstant.IOBJECT_STATE_EMPTYING);//FIXME trouver la bonne valeur
+        IO.setState(2);//FIXME trouver la bonne valeur
+        P.setCurJobAction(this);
         P.setExchangeAction(new ExchangeAction<>(ExchangeAction.CRAFTING, this));
         SocketManager.GAME_SEND_ECK_PACKET(P, 3, this.min + ";" + this.id);//this.min => Nbr de Case de l'interface
-        SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P, cell.getId() + ";" + 2 + ";" + 1);
-        //SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
+        SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(P.getCurMap(), cell);
     }
 
     public void endAction(Player player, InteractiveObject IO, GameAction GA, GameCase cell) {
@@ -154,15 +170,16 @@ public class JobAction {
             return;
         if (!this.isCraft) {
             IO.setState(3);
-            IO.disable();
+            IO.desactive();
             SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), cell);
-            int qua = (this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min);
+            //int qua = (this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min); PETIT PLUS
+            int qua = Math.round((this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min) * (Config.INSTANCE.getRATE_JOB()/3)) ;
 
             if (SM.getTemplate().getId() == 36) {
                 if (qua > 0)
                     SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB() * World.world.getConquestBonus(player)));
             } else
-                SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB() * World.world.getConquestBonus(player)));
+                SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB()   * World.world.getConquestBonus(player)));
 
             int tID = JobConstant.getObjectByJobSkill(this.id);
 
@@ -204,12 +221,203 @@ public class JobAction {
         player.setAway(false);
     }
 
+    public synchronized void craft(boolean isRepeat, int repeat) {
+        if (!this.isCraft) return;
+
+        if (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169)) {
+            this.craftMaging(isRepeat, repeat);
+            return;
+        }
+        System.out.println(this.id);
+        this.ingredients.putAll(this.lastCraft);
+
+        Map<Integer, Integer> items = new HashMap<>();
+        //on ajoutes les ingrédient a une liste
+        for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+            if (!this.player.hasItemGuid(e.getKey())) {
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                return;
+            }
+
+            GameObject obj = World.world.getGameObject(e.getKey());
+
+
+
+            items.put(obj.getTemplate().getId(), e.getValue());
+        }
+
+        boolean signed = false;
+
+        if (items.containsKey(7508)) {
+            signed = true;
+            items.remove(7508);
+        }
+
+        SocketManager.GAME_SEND_Ow_PACKET(this.player);
+
+        boolean isUnjobSkill = this.getJobStat() == null;
+
+        if (!isUnjobSkill) {
+            JobStat SM = this.player.getMetierBySkill(this.id);
+            int templateId = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
+            //Recette non existante ou pas adaptï¿½ au mï¿½tier
+            if (templateId == -1 || !SM.getTemplate().canCraft(this.id, templateId)) {
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
+                this.ingredients.clear();
+                return;
+            }
+
+            // on les supprime que si c'est bon
+            for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                GameObject obj = World.world.getGameObject(e.getKey());
+                if (obj == null) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return;
+                }
+                if (obj.getQuantity() < e.getValue()) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return;
+                }
+
+                int newQua = obj.getQuantity() - e.getValue();
+                if (newQua < 0) return;
+
+                if (newQua == 0) {
+                    this.player.removeItem(e.getKey());
+                    World.world.removeGameObject(e.getKey());
+                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                } else {
+                    obj.setQuantity(newQua);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                }
+            }
+
+
+            int chan = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), this.ingredients.size());
+            int jet = Formulas.getRandomValue(1, 100);
+            boolean success = chan >= jet;
+
+            switch (this.id) {
+                case 109:
+                    success = true;
+                    break;
+            }
+
+            //if (Logging.USE_LOG)
+               // Logging.getInstance().write("Craft", this.player.getName() + " à crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + templateId + " (" + World.world.getObjTemplate(templateId).getName() + ")");
+            if (!success) {
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + templateId);
+                SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
+            } else {
+                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
+                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+                if(guid == -1) { // Don't exist
+                    guid = newObj.setId();
+                    this.player.getItems().put(guid, newObj);
+                    SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
+                    World.world.addGameObject(newObj, true);
+                } else {
+                    newObj.setQuantity(newObj.getQuantity() + 1);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+                }
+                SocketManager.GAME_SEND_Ow_PACKET(this.player);
+
+                if (signed) newObj.addTxtStat(988, this.player.getName());
+
+
+                SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
+            }
+
+            int winXP = 0;
+            if (success)
+                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
+            else if (!SM.getTemplate().isMaging())
+                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
+
+            if (winXP > 0) {
+                SM.addXp(this.player, winXP);
+                ArrayList<JobStat> SMs = new ArrayList<>();
+                SMs.add(SM);
+                SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
+            }
+        } else {
+            int templateId = World.world.getObjectByIngredientForJob(World.world.getMetier(this.id).getListBySkill(this.id), items);
+
+
+
+            if (templateId == -1 || !World.world.getMetier(this.id).canCraft(this.id, templateId)) {
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
+                this.ingredients.clear();
+                return;
+            }
+
+            for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                GameObject obj = World.world.getGameObject(e.getKey());
+                if (obj == null) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return;
+                }
+                if (obj.getQuantity() < e.getValue()) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return;
+                }
+
+                int newQua = obj.getQuantity() - e.getValue();
+                if (newQua < 0) return;
+
+                if (newQua == 0) {
+                    this.player.removeItem(e.getKey());
+                    World.world.removeGameObject(e.getKey());
+                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                } else {
+                    obj.setQuantity(newQua);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                }
+            }
+
+
+            GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
+            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+            if(guid == -1) { // Don't exist
+                guid = newObj.setId();
+                this.player.getItems().put(guid, newObj);
+                SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
+                World.world.addGameObject(newObj, true);
+            } else {
+                newObj.setQuantity(newObj.getQuantity() + 1);
+                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+            }
+
+            if (signed) newObj.addTxtStat(988, this.player.getName());
+
+            SocketManager.GAME_SEND_Ow_PACKET(this.player);
+            SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
+        }
+        this.lastCraft.clear();
+        this.lastCraft.putAll(this.ingredients);
+        this.ingredients.clear();
+
+        if(!isRepeat) {
+            this.oldJobCraft = this.jobCraft;
+            this.jobCraft = null;
+        }
+    }
+
     private int addCraftObject(Player player, GameObject newObj) {
         for (Entry<Integer, GameObject> entry : player.getItems().entrySet()) {
             GameObject obj = entry.getValue();
             if (obj.getTemplate().getId() == newObj.getTemplate().getId() && obj.getTxtStat().equals(newObj.getTxtStat())
                     && obj.getStats().isSameStats(newObj.getStats()) && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED) {
-                obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantit� de l'objet existant
+                obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantitï¿½ de l'objet existant
                 SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, obj);
                 return obj.getGuid();
             }
@@ -219,6 +427,116 @@ public class JobAction {
         SocketManager.GAME_SEND_OAKO_PACKET(player, newObj);
         World.world.addGameObject(newObj, true);
         return -1;
+    }
+
+    public boolean craftPublicMode(Player crafter, Player receiver, Map<Player, ArrayList<Couple<Integer, Integer>>> list) {
+        if (!this.isCraft) return false;
+
+        this.player = crafter;
+        boolean signed = false;
+
+        Map<Integer, Integer> items = new HashMap<>();
+
+        for (Entry<Player, ArrayList<Couple<Integer, Integer>>> entry : list.entrySet()) {
+            Player player = entry.getKey();
+            Map<Integer, Integer> playerItems = new HashMap<>();
+
+            for (Couple<Integer, Integer> couple : entry.getValue())
+                playerItems.put(couple.first, couple.second);
+
+            for (Entry<Integer, Integer> e : playerItems.entrySet()) {
+                if (!player.hasItemGuid(e.getKey())) {
+                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return false;
+                }
+
+                GameObject gameObject = World.world.getGameObject(e.getKey());
+                if (gameObject == null) {
+                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return false;
+                }
+                if (gameObject.getQuantity() < e.getValue()) {
+                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return false;
+                }
+
+                int newQua = gameObject.getQuantity() - e.getValue();
+
+                if (newQua < 0)
+                    return false;
+
+                if (newQua == 0) {
+                    player.removeItem(e.getKey());
+                    World.world.removeGameObject(e.getKey());
+                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, e.getKey());
+                } else {
+                    gameObject.setQuantity(newQua);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, gameObject);
+                }
+
+                items.put(gameObject.getTemplate().getId(), e.getValue());
+            }
+        }
+
+        SocketManager.GAME_SEND_Ow_PACKET(this.player);
+        JobStat SM = this.player.getMetierBySkill(this.id);
+
+        //Rune de signature
+        if (items.containsKey(7508))
+            if (SM.get_lvl() == 100)
+                signed = true;
+        items.remove(7508);
+
+        int template = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
+
+        if (template == -1 || !SM.getTemplate().canCraft(this.id, template)) {
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+            receiver.send("EcEI");
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
+            items.clear();
+            return false;
+        }
+
+        boolean success = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), items.size()) >= Formulas.getRandomValue(1, 100);
+
+        //if (Logging.USE_LOG)
+            //Logging.getInstance().write("SecureCraft", this.player.getName() + " Ã  crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + template + " (" + World.world.getObjTemplate(template).getName() + ") pour " + receiver.getName());
+        if (!success) {
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
+            SocketManager.GAME_SEND_Ec_PACKET(receiver, "EF");
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + template);
+            SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
+        } else {
+            GameObject newObj = World.world.getObjTemplate(template).createNewItem(1, false,0);
+            if (signed) newObj.addTxtStat(988, this.player.getName());
+            int guid = this.addCraftObject(receiver, newObj);
+            if(guid == -1) guid = newObj.getGuid();
+            String stats = newObj.parseStatsString();
+
+            this.player.send("ErKO+" + guid + "|1|" + template + "|" + stats);
+            receiver.send("ErKO+" + guid + "|1|" + template + "|" + stats);
+            this.player.send("EcK;" + template + ";T" + receiver.getName() + ";" + stats);
+            receiver.send("EcK;" + template + ";B" + crafter.getName() + ";" + stats);
+
+            SocketManager.GAME_SEND_Ow_PACKET(this.player);
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + template);
+        }
+
+        int winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
+        if (SM.getTemplate().getId() == 28 && winXP == 1)
+            winXP = 10;
+        if (success) {
+            SM.addXp(this.player, winXP);
+            ArrayList<JobStat> SMs = new ArrayList<>();
+            SMs.add(SM);
+            SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
+        }
+
+        this.ingredients.clear();
+        return success;
     }
 
     public void addIngredient(Player player, int id, int quantity) {
@@ -268,1254 +586,1419 @@ public class JobAction {
         this.jobCraft = null;
     }
 
-    public boolean craftPublicMode(Player crafter, Player receiver, Map<Player, ArrayList<Couple<Integer, Integer>>> list) {
-        if (!this.isCraft) return false;
+    //FM commence a etre OK
 
-        this.player = crafter;
-        JobStat SM = this.player.getMetierBySkill(this.id);
-        boolean signed = false;
+    private int reConfigingRunes = -1;
 
-        if (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169)) {
-            this.SM = SM;
-            return this.craftMaging(isRepeat, receiver, list);
-        }
-
-        Map<Integer, Integer> items = new HashMap<>();
-
-        for (Entry<Player, ArrayList<Couple<Integer, Integer>>> entry : list.entrySet()) {
-            Player player = entry.getKey();
-
-            for (Couple<Integer, Integer> e : entry.getValue()) {
-                if (!player.hasItemGuid(e.first)) {
-                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return false;
-                }
-
-                GameObject gameObject = World.world.getGameObject(e.first);
-                if (gameObject == null) {
-                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return false;
-                }
-                if (gameObject.getQuantity() < e.second) {
-                    SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return false;
-                }
-
-                int newQua = gameObject.getQuantity() - e.second;
-
-                if (newQua < 0)
-                    return false;
-
-                if (newQua == 0) {
-                    player.removeItem(e.first);
-                    World.world.removeGameObject(e.first);
-                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, e.first);
-                } else {
-                    gameObject.setQuantity(newQua);
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, gameObject);
-                }
-
-                if(items.containsKey(gameObject.getTemplate().getId())) {
-                    int template = gameObject.getTemplate().getId();
-                    int quantity = e.second + items.get(template);
-                    items.remove(template);
-                    items.put(template, quantity);
-                } else {
-                    items.put(gameObject.getTemplate().getId(), e.second);
-                }
-            }
-        }
-
-        SocketManager.GAME_SEND_Ow_PACKET(this.player);
-
-
-        //Rune de signature
-        if (items.containsKey(7508))
-            if (SM.get_lvl() == 100)
-                signed = true;
-
-        items.remove(7508);
-        int template = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
-
-        if (template == -1 || !SM.getTemplate().canCraft(this.id, template)) {
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-            receiver.send("EcEI");
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
-            items.clear();
-            return false;
-        }
-
-        boolean success = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), items.size()) >= Formulas.getRandomValue(1, 100);
-
-        Logging.craft.debug(this.player.getName() + " à crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + template + " (" + World.world.getObjTemplate(template).getName() + ") pour " + receiver.getName());
-        if (!success) {
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
-            SocketManager.GAME_SEND_Ec_PACKET(receiver, "EF");
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + template);
-            SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
-        } else {
-            GameObject newObj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-            if (signed) newObj.addTxtStat(988, this.player.getName());
-            int guid = this.addCraftObject(receiver, newObj);
-            if(guid == -1) guid = newObj.getGuid();
-            String stats = newObj.parseStatsString();
-
-            this.player.send("ErKO+" + guid + "|1|" + template + "|" + stats);
-            receiver.send("ErKO+" + guid + "|1|" + template + "|" + stats);
-            this.player.send("EcK;" + template + ";T" + receiver.getName() + ";" + stats);
-            receiver.send("EcK;" + template + ";B" + crafter.getName() + ";" + stats);
-
-            SocketManager.GAME_SEND_Ow_PACKET(this.player);
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + template);
-        }
-
-        int winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
-        if (SM.getTemplate().getId() == 28 && winXP == 1)
-            winXP = 10;
-        if (success) {
-            SM.addXp(this.player, winXP);
-            ArrayList<JobStat> SMs = new ArrayList<>();
-            SMs.add(SM);
-            SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
-        }
-
-        this.ingredients.clear();
-        return success;
+    public void modifIngredient(Player P, int guid, int qua) {
+        //on prend l'ancienne valeur
+        int q = this.ingredients.get(guid) == null ? 0 : this.ingredients.get(guid);
+        if(qua < 0) if(-qua > q) return;
+        //on enleve l'entrï¿½e dans la Map
+        this.ingredients.remove(guid);
+        //on ajoute (ou retire, en fct du signe) X objet
+        q += qua;
+        if (q > 0) {
+            this.ingredients.put(guid, q);
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", guid + "|"
+                    + q);
+        } else
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", guid + "");
     }
 
-    synchronized void craft(boolean isRepeat) {
-        if (!this.isCraft) return;
-
-        if (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169)) {
-            this.craftMaging(isRepeat, null, null);
-            return;
+    public void modifIngredient2(final Player P, final int guid, final int qua) {
+        int q = (this.ingredients.get(guid) == null) ? 0 : this.ingredients.get(guid);
+        this.ingredients.remove(guid);
+        q += qua;
+        if (q > 0) {
+            this.ingredients.put(guid, q);
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", String.valueOf(guid) + "|" + q);
+        } else {
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", new StringBuilder(String.valueOf(guid)).toString());
         }
+    }
+    public int lastDigit(int number) { return Math.abs(number) % 10; }
 
-        Map<Integer, Integer> items = new HashMap<>();
-        //on retire les items mis en ingr�dients
-        for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-            if (!this.player.hasItemGuid(e.getKey())) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                return;
-            }
+    private synchronized void craftMaging(boolean isReapeat, int repeat) {
+        // On commence le fm
 
-            GameObject obj = World.world.getGameObject(e.getKey());
+        //Definition des variables
+        int limitPerLigne = 151; // Max par ligne
+        boolean isRestating = false;
+        boolean isSigningRune = false; // Si on utilise une rune de signature
+        GameObject objectFm = null, signingRune = null, runeOrPotion = null; // Initalisation pour potentiellement les récuperer derriere et vide le cache
+        int lvlElementRune = 0, statsID = -1, lvlQuaStatsRune = 0, statsAdd = 0, deleteID = -1, poidRune = 0, idRune = 0; // De meme
+        boolean bonusRune = false; // Rune "Bonus" je suppose que c'est pour les serveurs cheat
+        String statsObjectFm = "-1";  // La stats que l'on veut FM
+        String loi = ""; // La loi de FM qui va être utilisé par l'algo (Potentiellement inutile si corrigé totalement)
 
-            if (obj == null) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                return;
-            }
-            if (obj.getQuantity() < e.getValue()) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                return;
-            }
-
-            int newQua = obj.getQuantity() - e.getValue();
-            if (newQua < 0) return;
-
-            if (newQua == 0) {
-                this.player.removeItem(e.getKey());
-                World.world.removeGameObject(e.getKey());
-                SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
-            } else {
-                obj.setQuantity(newQua);
-                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
-            }
-
-            items.put(obj.getTemplate().getId(), e.getValue());
-        }
-
-        boolean signed = false;
-
-        if (items.containsKey(7508)) {
-            signed = true;
-            items.remove(7508);
-        }
-
-        SocketManager.GAME_SEND_Ow_PACKET(this.player);
-
-        boolean isUnjobSkill = this.getJobStat() == null;
-
-        if (!isUnjobSkill) {
-            JobStat SM = this.player.getMetierBySkill(this.id);
-            int templateId = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
-            //Recette non existante ou pas adapt� au m�tier
-            if (templateId == -1 || !SM.getTemplate().canCraft(this.id, templateId)) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+        for (int idIngredient : this.ingredients.keySet()) { // On boucle sur Les ingrédients Pour différencié la Rune de l'objet
+            GameObject ing = World.world.getGameObject(idIngredient); // On récupÃ¨re l'ingrédient
+            if (ing == null || !this.player.hasItemGuid(idIngredient)) { // On check s'il existe et si le User a bien l'item
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // PACKET DE RETOUR POUR AFFICHER L'ERREUR CHEZ LE JOUEUR
                 SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
                 this.ingredients.clear();
-                return;
+                return; // ECHEC car pas d'ingrédient ou inexistant
             }
-
-            int chan = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), this.ingredients.size());
-            boolean success = chan >= Formulas.getRandomValue(0, 100);
-
-            if(chan == 99) {
-                success = chan * 2 >= Formulas.getRandomValue(0, 200);
-            }
-
-            switch (this.id) {
-                case 109:
-                    success = true;
+            int templateID = ing.getTemplate().getId(); // On récupÃ¨re le template de la rune
+            if (ing.getTemplate().getType() == 78)	// Si le type d'obj est une rune on le place dans une Var
+                idRune = idIngredient;
+            switch (templateID) { 	// Longue serie de Switch Case pour déterminé si c'est la rune on récupÃ¨re ces infos SI c'est l'object c'est le cas par défault
+                // ca c'est poure reformer un item
+                case 17200:
+                case 17202:
+                case 17203:
+                case 17204:
+                case 17205:
+                    runeOrPotion = ing;
+                    isRestating = true;
                     break;
-            }
-
-            Logging.craft.info(this.player.getName() + " à crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + templateId + " (" + World.world.getObjTemplate(templateId).getName() + ")");
-            if (!success) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
-                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + templateId);
-                SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
-            } else {
-                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
-                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
-
-                if(guid == -1) { // Don't exist
-                    guid = newObj.setId();
-                    this.player.getItems().put(guid, newObj);
-                    SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
-                    World.world.addGameObject(newObj, true);
-                } else {
-                    newObj.setQuantity(newObj.getQuantity() + 1);
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
-                }
-
-                SocketManager.GAME_SEND_Ow_PACKET(this.player);
-                if (signed) newObj.addTxtStat(988, this.player.getName());
-                SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
-                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
-            }
-
-            int winXP = 0;
-            if (success)
-                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
-            else if (!SM.getTemplate().isMaging())
-                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
-
-            if (winXP > 0) {
-                SM.addXp(this.player, winXP);
-                ArrayList<JobStat> SMs = new ArrayList<>();
-                SMs.add(SM);
-                SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
-            }
-        } else {
-            int templateId = World.world.getObjectByIngredientForJob(World.world.getMetier(this.id).getListBySkill(this.id), items);
-
-            if (templateId == -1 || !World.world.getMetier(this.id).canCraft(this.id, templateId)) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
-                this.ingredients.clear();
-                return;
-            }
-
-            GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
-            int guid = newObj.getGuid();
-
-            if(guid == -1) { // Don't exist
-                guid = newObj.setId();
-                this.player.getItems().put(guid, newObj);
-                SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
-                World.world.addGameObject(newObj, true);
-            } else {
-                newObj.setQuantity(newObj.getQuantity() + 1);
-                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
-            }
-
-            if (signed) newObj.addTxtStat(988, this.player.getName());
-
-            SocketManager.GAME_SEND_Ow_PACKET(this.player);
-            SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
-        }
-        this.lastCraft.clear();
-        this.lastCraft.putAll(this.ingredients);
-        this.ingredients.clear();
-
-        if(!isRepeat) {
-            this.oldJobCraft = this.jobCraft;
-            this.jobCraft = null;
-        }
-    }
-
-    /* ********FM TOUT POURRI*************/
-     private synchronized boolean craftMaging(boolean isRepeat, Player receiver, Map<Player, ArrayList<Couple<Integer, Integer>>> items) {
-        boolean isSigningRune = false;
-        GameObject objectFm = null, signingRune = null, runeOrPotion = null;
-        int lvlElementRune = 0, statId = -1, lvlQuaStatsRune = 0, statsAdd = 0, deleteID = -1, poid = 0, idRune = 0;
-        boolean bonusRune = false;
-        String statsObjectFm = "-1";
-
-        final boolean secure = items != null && receiver != null;
-        final Map<Integer, Integer> ingredients = items == null ? this.ingredients : new HashMap<>();
-
-        if(items != null) {
-            for(Entry<Player, ArrayList<Couple<Integer, Integer>>> entry : items.entrySet()) {
-                for(Couple<Integer, Integer> couple : entry.getValue()) {
-                    ingredients.put(couple.first, couple.second);
-                }
-            }
-        }
-
-        for (int id : ingredients.keySet()) {
-            GameObject object = World.world.getGameObject(id);
-
-            if(object == null) {
-                if(!this.player.hasItemGuid(id) || (secure && !this.player.hasItemGuid(id) && !receiver.hasItemGuid(id))) {
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
-                    ingredients.clear();
-                    return false;
-                }
-            }
-
-            int template = object.getTemplate().getId();
-            if (object.getTemplate().getType() == 78)
-                idRune = id;
-
-            //region gros switch rune
-            switch (template) {
-                //region on s'en tape
+                // Ca c'est les potion de tempete (Pour FM Arme)
                 case 1333:
-                    statId = 99;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
+                case 1343:
+                case 1345:
+                    statsID = 99;
+                    lvlElementRune = ing.getTemplate().getLevel();
+                    runeOrPotion = ing;
                     break;
                 case 1335:
-                    statId = 96;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
+                case 1341:
+                case 1346:
+                    statsID = 96;
+                    lvlElementRune = ing.getTemplate().getLevel();
+                    runeOrPotion = ing;
                     break;
                 case 1337:
-                    statId = 98;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
+                case 1342:
+                case 1347:
+                    statsID = 98;
+                    lvlElementRune = ing.getTemplate().getLevel();
+                    runeOrPotion = ing;
                     break;
                 case 1338:
-                    statId = 97;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
                 case 1340:
-                    statId = 97;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1341:
-                    statId = 96;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1342:
-                    statId = 98;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1343:
-                    statId = 99;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1345:
-                    statId = 99;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1346:
-                    statId = 96;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
-                case 1347:
-                    statId = 98;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
-                    break;
                 case 1348:
-                    statId = 97;
-                    lvlElementRune = object.getTemplate().getLevel();
-                    runeOrPotion = object;
+                    statsID = 97;
+                    lvlElementRune = ing.getTemplate().getLevel();
+                    runeOrPotion = ing;
                     break;
+                // Ca c'est les runes d'ajout de stats
                 case 1519:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "76";
                     statsAdd = 1;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1521:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7c";
                     statsAdd = 1;
-                    poid = 6;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 6;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1522:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7e";
                     statsAdd = 1;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1523:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7d";
-                    statsAdd = 3;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    statsAdd = 5;
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1524:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "77";
                     statsAdd = 1;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1525:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7b";
                     statsAdd = 1;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1545:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "76";
                     statsAdd = 3;
-                    poid = 3;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 3;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1546:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7c";
                     statsAdd = 3;
-                    poid = 18;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 18;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1547:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7e";
                     statsAdd = 3;
-                    poid = 3;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 3;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1548:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7d";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1549:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "77";
                     statsAdd = 3;
-                    poid = 3;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 3;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1550:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7b";
                     statsAdd = 3;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1551:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "76";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1552:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7c";
                     statsAdd = 10;
-                    poid = 50;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 50;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1553:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7e";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1554:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7d";
                     statsAdd = 30;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1555:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "77";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1556:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7b";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1557:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "6f";
                     statsAdd = 1;
-                    poid = 100;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 100;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 1558:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "80";
                     statsAdd = 1;
-                    poid = 90;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 90;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7433:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "73";
                     statsAdd = 1;
-                    poid = 30;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 30;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7434:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b2";
                     statsAdd = 1;
-                    poid = 20;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 20;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7435:
-                    runeOrPotion = object;
-                    statsObjectFm = "79";
+                    runeOrPotion = ing;
+                    statsObjectFm = "70";
                     statsAdd = 1;
-                    poid = 20;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 20;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7436:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "8a";
                     statsAdd = 1;
-                    poid = 2;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 2;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7437:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "dc";
                     statsAdd = 1;
-                    poid = 2;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 2;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7438:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "75";
                     statsAdd = 1;
-                    poid = 50;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 50;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7442:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b6";
                     statsAdd = 1;
-                    poid = 30;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 30;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7443:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "9e";
                     statsAdd = 10;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7444:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "9e";
                     statsAdd = 30;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7445:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "9e";
                     statsAdd = 100;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7446:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "e1";
                     statsAdd = 1;
-                    poid = 15;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 15;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7447:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "e2";
                     statsAdd = 1;
-                    poid = 2;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 2;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7448:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "ae";
                     statsAdd = 10;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7449:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "ae";
                     statsAdd = 30;
-                    poid = 3;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 3;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7450:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "ae";
                     statsAdd = 100;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7451:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b0";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7452:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "f3";
                     statsAdd = 1;
-                    poid = 4;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 4;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7453:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "f2";
                     statsAdd = 1;
-                    poid = 4;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 4;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7454:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "f1";
                     statsAdd = 1;
-                    poid = 4;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 4;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7455:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "f0";
                     statsAdd = 1;
-                    poid = 4;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 4;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7456:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "f4";
                     statsAdd = 1;
-                    poid = 4;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 4;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7457:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "d5";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7458:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "d4";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7459:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "d2";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7460:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "d6";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7560:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "d3";
                     statsAdd = 1;
-                    poid = 5;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 5;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 8379:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7d";
                     statsAdd = 10;
-                    poid = 10;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 10;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 10662:
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b0";
                     statsAdd = 3;
-                    poid = 15;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 15;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7508:
                     isSigningRune = true;
-                    signingRune = object;
+                    signingRune = ing;
                     break;
                 case 11118:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "76";
                     statsAdd = 15;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11119:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7c";
                     statsAdd = 15;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11120:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7e";
                     statsAdd = 15;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11121:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7d";
                     statsAdd = 45;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11122:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "77";
                     statsAdd = 15;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11123:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "7b";
                     statsAdd = 15;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11124:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b0";
                     statsAdd = 10;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11125:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "73";
                     statsAdd = 3;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11126:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "b2";
                     statsAdd = 5;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11127:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "70";
                     statsAdd = 5;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11128:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "8a";
                     statsAdd = 10;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 11129:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "dc";
                     statsAdd = 5;
-                    poid = 1;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 1;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 10057:
                     bonusRune = true;
-                    runeOrPotion = object;
+                    runeOrPotion = ing;
                     statsObjectFm = "31b";
                     statsAdd = 1;
-                    poid = 0;
-                    lvlQuaStatsRune = object.getTemplate().getLevel();
+                    poidRune = 0;
+                    lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
-                //endregion
+                // CA c'est l'objet
                 default:
-                    int type = object.getTemplate().getType();
-                    if ((type >= 1 && type <= 11) || (type >= 16 && type <= 22) || type == 81 || type == 102 || type == 114 || object.getTemplate().getPACost() > 0) {
-                        final Player player = this.player.hasItemGuid(object.getGuid()) ? this.player : receiver;
-                        objectFm = object;
-                        SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK_FM(player.getGameClient(), 'O', "+", objectFm.getGuid() + "|" + 1);
-                        deleteID = id;
-                        GameObject newObj = GameObject.getCloneObjet(objectFm, 1); // Cr�ation d'un clone avec un nouveau identifiant
-
+                    int type = ing.getTemplate().getType(); // On récupÃ¨re son type
+                    if ((type >= 1 && type <= 11) || (type >= 16 && type <= 22)
+                            || type == 81 || type == 102 || type == 114
+                            || ing.getTemplate().getPACost() > 0) { // Si c'est un obj avec des stats ou avec des PA d'utilisation
+                        objectFm = ing;
+                        SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK_FM(this.player.getGameClient(), 'O', "+", objectFm.getGuid()
+                                + "|" + 1); // On envoie un packet de validation au joueur il me semble
+                        deleteID = idIngredient; // On récupÃ¨re l'id de l'ingrédient pour le supprimer plus tard
+                        GameObject newObj = GameObject.getCloneObjet(objectFm, 1); // Crï¿½ation d'un clone avec un nouveau identifiant
                         if (objectFm.getQuantity() > 1) { // S'il y avait plus d'un objet
-                            int newQuant = objectFm.getQuantity() - 1; // On supprime celui que l'on a ajout�
-                            objectFm.setQuantity(newQuant);
-                            SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, objectFm);
+                            int newQuant = objectFm.getQuantity() - 1; // On supprime le cloné
+                            objectFm.setQuantity(newQuant); // on actualise les objets du serveur allumé
+                            SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm); // on actualise les objets sur le joueur
                         } else {
-                            World.world.removeGameObject(id);
-
-                            player.removeItem(id);
-                            SocketManager.GAME_SEND_DELETE_STATS_ITEM_FM(player, id);
+                            World.world.removeGameObject(idIngredient);
+                            this.player.removeItem(idIngredient);
+                            SocketManager.GAME_SEND_DELETE_STATS_ITEM_FM(this.player, idIngredient);
                         }
                         objectFm = newObj; // Tout neuf avec un nouveau identifiant
                         break;
                     }
             }
-            //endregion
         }
-
-        //region Calcul formule
-        double poid2 = getPwrPerEffet(Integer.parseInt(statsObjectFm, 16));
-        if (poid2 > 0.0)
-            poid = statsAdd * ((int) poid2);
-
-        if (SM == null || objectFm == null || runeOrPotion == null) {
+        // System.out.println("La :" + objectFm.getTemplate().getId() + " " + runeOrPotion + " " + SM );
+        if( objectFm.getTemplate() == null || runeOrPotion == null ) {
+            this.player.sendMessage("Aucune rune détecté");
             if (objectFm != null) {
                 World.world.addGameObject(objectFm, true);
                 this.player.addObjet(objectFm);
+                //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
             }
-
-            if(receiver != null)
-                SocketManager.GAME_SEND_Ec_PACKET(receiver, "EI");
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
-
-            ingredients.clear();
-            return false;
-        }
-        if (deleteID != -1) {
-            this.ingredients.remove(deleteID);
-        }
-
-        final ObjectTemplate template = objectFm.getTemplate();
-        ArrayList<Integer> chances = new ArrayList<>();
-
-        int chance, lvlJob = SM.get_lvl(), currentWeightTotal = 1, pwrPerte;
-        int objTemplateID = template.getId();
-        String statStringObj = objectFm.parseStatsString();
-
-        if (lvlElementRune > 0 && lvlQuaStatsRune == 0) {
-            chance = Formulas.calculChanceByElement(lvlJob, template.getLevel(), lvlElementRune);
-            if (chance > 100 - (lvlJob / 20))
-                chance = 100 - (lvlJob / 20);
-            if (chance < (lvlJob / 20))
-                chance = (lvlJob / 20);
-            chances.add(0, chance);
-            chances.add(1, 0);
-            chances.add(2, 100 - chance);
-        } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) {
-            int currentWeightStats = 1;
-            if (!statStringObj.isEmpty()) {
-                currentWeightTotal = currentTotalWeigthBase(statStringObj, objectFm); // Poids total de l'objet : PWRg
-                currentWeightStats = currentWeithStats(objectFm, statsObjectFm); // Poids � ajouter : PWRcarac
-            }
-
-            int currentTotalBase = WeithTotalBase(objTemplateID); // Poids maximum de l'objet : PWRmax
-            int currentMinBase = WeithTotalBaseMin(objTemplateID);
-
-            if (currentTotalBase < 0)
-                currentTotalBase = 0;
-            if (currentWeightStats < 0)
-                currentWeightStats = 0;
-            if (currentWeightTotal < 0)
-                currentWeightTotal = 0;
-
-            float coef = 1;
-            int baseStats = viewBaseStatsItem(objectFm, statsObjectFm), currentStats = viewActualStatsItem(objectFm, statsObjectFm);
-
-            if (baseStats == 1 && currentStats == 1 || baseStats == 1 && currentStats == 0) {
-                coef = 1.0f;
-            } else if (baseStats == 2 && currentStats == 2) {
-                coef = 0.50f;
-            } else if (baseStats == 0 && currentStats == 0 || baseStats == 0 && currentStats == 1) {
-                coef = 0.25f;
-            }
-
-            float x = 1;
-            boolean canFM = true;
-            int statMax = getStatBaseMaxs(objectFm.getTemplate(), statsObjectFm), actualJet = getActualJet(objectFm, statsObjectFm);
-
-            if (actualJet > statMax) {
-                x = 0.8F;
-                int overPerEffect = (int) getOverPerEffet(Integer.parseInt(statsObjectFm, 16));
-                //if (statMax == 0)
-                if (actualJet >= (statMax + overPerEffect))
-                    canFM = false;
-                if(Integer.parseInt(statsObjectFm, 16) == 111) {
-                    if(objectFm.isOverFm2(111, 1))
-                        if(!canFM)
-                            canFM = true;
-                } else if(Integer.parseInt(statsObjectFm, 16) == 128) {
-                    if(objectFm.isOverFm2(128, 1))
-                        if(!canFM)
-                            canFM = true;
-                }
-            }
-            if (lvlJob < (int) Math.floor(template.getLevel() / 2))
-                canFM = false; // On rate le FM si le m�tier n'est pas suffidant
-
-            int diff = (int) Math.abs((currentTotalBase * 1.3f) - currentWeightTotal);
-            if (canFM) {
-                if (objectFm.getTemplate().getId() == 2469 && poid == 100) {// Si c'est un gelano et que l'on essaie de remettre le PA
-                    chances.add(0, 49);
-                    chances.add(1, 18);
-                } else
-                    chances = Formulas.chanceFM(currentTotalBase, currentMinBase, currentWeightTotal, currentWeightStats, poid, diff, coef, statMax, getStatBaseMins(objectFm.getTemplate(), statsObjectFm), currentStats(objectFm, statsObjectFm), x, bonusRune, statsAdd);
-            } else {// Si l'objet est au dessus de l'over (impossible statistiquement ... mais evite un gelano 2 PA :p)
-                chances.add(0, 0);
-                chances.add(1, 0);
-            }
-        }
-
-        int aleatoryChance = Formulas.getRandomValue(1, 100), SC = chances.get(0), SN = chances.get(1);
-        boolean successC = (aleatoryChance <= SC), successN = (aleatoryChance <= (SC + SN));
-
-        if(objectFm.getPuit() >= statsAdd) {
-            if(runeOrPotion.getTemplate().getId() != 1558 && runeOrPotion.getTemplate().getId() != 1557 && runeOrPotion.getTemplate().getId() != 7438) {
-                if(Formulas.getRandomValue(1, 2) == 1)
-                    successC = true;
-            }
-        }
-        if(objectFm.isOverFm(111, 0) && runeOrPotion.getTemplate().getId() == 1557 || objectFm.isOverFm(128, 0) && runeOrPotion.getTemplate().getId() == 1558) {
-            successC = false;
-            successN = false;
-        }
-        if (successC || successN) {
-            int winXP = Formulas.calculXpWinFm(objectFm.getTemplate().getLevel(), poid) * Config.INSTANCE.getRATE_JOB();
-            if (winXP > 0) {
-                SM.addXp(this.player, winXP);
-                ArrayList<JobStat> SMs = new ArrayList<>();
-                SMs.add(SM);
-                SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
-            }
-        }
-        //endregion
-
-        //region succès critique
-        if (successC) {
-            int coef = 0;
-            pwrPerte = 0;
-
-            if (lvlElementRune == 1) coef = 50;
-            else if (lvlElementRune == 25) coef = 65;
-            else if (lvlElementRune == 50) coef = 85;
-            if (isSigningRune)
-                objectFm.addTxtStat(985, this.player.getName());
-
-            if (lvlElementRune > 0 && lvlQuaStatsRune == 0) {
-                for (SpellEffect effect : objectFm.getEffects()) {
-                    if (effect.getEffectID() != 100)
-                        continue;
-                    String[] infos = effect.getArgs().split(";");
-                    try {
-                        int min = Integer.parseInt(infos[0], 16);
-                        int max = Integer.parseInt(infos[1], 16);
-                        int newMin = (min * coef) / 100;
-                        int newMax = (max * coef) / 100;
-                        if (newMin == 0)
-                            newMin = 1;
-                        String newRange = "1d" + (newMax - newMin + 1) + "+" + (newMin - 1);
-                        String newArgs = Integer.toHexString(newMin) + ";" + Integer.toHexString(newMax) + ";-1;-1;0;" + newRange;
-                        effect.setArgs(newArgs);
-                        effect.setEffectID(statId);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) {
-                boolean negative = false;
-                int currentStats = viewActualStatsItem(objectFm, statsObjectFm);
-
-                if (currentStats == 2) {
-                    if (statsObjectFm.compareTo("7b") == 0) {
-                        statsObjectFm = "98";
-                        negative = true;
-                    }
-                    if (statsObjectFm.compareTo("77") == 0) {
-                        statsObjectFm = "9a";
-                        negative = true;
-                    }
-                    if (statsObjectFm.compareTo("7e") == 0) {
-                        statsObjectFm = "9b";
-                        negative = true;
-                    }
-                    if (statsObjectFm.compareTo("76") == 0) {
-                        statsObjectFm = "9d";
-                        negative = true;
-                    }
-                    if (statsObjectFm.compareTo("7c") == 0) {
-                        statsObjectFm = "9c";
-                        negative = true;
-                    }
-                    if (statsObjectFm.compareTo("7d") == 0) {
-                        statsObjectFm = "99";
-                        negative = true;
-                    }
-                }
-
-                if (statStringObj.isEmpty()) {
-                    String statsStr = statsObjectFm + "#" + Integer.toHexString(statsAdd) + "#0#0#0d0+" + statsAdd;
-                    objectFm.clearStats();
-                    objectFm.parseStringToStats(statsStr, false);
-                } else {
-                    String statsStr;
-                    if (currentStats == 1 || currentStats == 2)
-                        statsStr = objectFm.parseFMStatsString(statsObjectFm, objectFm, statsAdd, negative);
-                    else
-                        statsStr = objectFm.parseFMStatsString(statsObjectFm, objectFm, statsAdd, negative) + "," + statsObjectFm + "#" + Integer.toHexString(statsAdd) + "#0#0#0d0+" + statsAdd;
-
-                    objectFm.clearStats();
-                    objectFm.parseStringToStats(statsStr, false);
-                }
-            }
-
-            String data = objectFm.getGuid() + "|1|" + objectFm.getTemplate().getId() + "|" + objectFm.parseStatsString();
-
-            if (!this.isRepeat)
-                this.reConfigingRunes = -1;
-            if (this.reConfigingRunes != 0 || this.broken)
-                if(receiver == null)
-                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
-
-            this.data = data;
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplateID);
-            if(!secure) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplateID);
-            }
-        }
-        //endregion
-        //region Succès neutre
-        else if (successN) {
-            pwrPerte = 0;
-            if (isSigningRune) {
-                objectFm.addTxtStat(985, this.player.getName());
-            }
-
-            boolean negative = false;
-            int currentStats = viewActualStatsItem(objectFm, statsObjectFm);
-
-            if (currentStats == 2) {
-                if (statsObjectFm.compareTo("7b") == 0) {
-                    statsObjectFm = "98";
-                    negative = true;
-                }
-                if (statsObjectFm.compareTo("77") == 0) {
-                    statsObjectFm = "9a";
-                    negative = true;
-                }
-                if (statsObjectFm.compareTo("7e") == 0) {
-                    statsObjectFm = "9b";
-                    negative = true;
-                }
-                if (statsObjectFm.compareTo("76") == 0) {
-                    statsObjectFm = "9d";
-                    negative = true;
-                }
-                if (statsObjectFm.compareTo("7c") == 0) {
-                    statsObjectFm = "9c";
-                    negative = true;
-                }
-                if (statsObjectFm.compareTo("7d") == 0) {
-                    statsObjectFm = "99";
-                    negative = true;
-                }
-            }
-            if (statStringObj.isEmpty()) {
-                String statsStr = statsObjectFm + "#" + Integer.toHexString(statsAdd) + "#0#0#0d0+" + statsAdd;
-                objectFm.clearStats();
-                objectFm.parseStringToStats(statsStr, false);
-            } else {
-                String statsStr;
-
-                if (objectFm.getPuit() <= 0) {// EC en premier s'il n'y a pas de puits
-                    statsStr = objectFm.parseStringStatsEC_FM(objectFm, statsAdd, runeOrPotion.getTemplate().getId());
-                    objectFm.clearStats();
-                    objectFm.parseStringToStats(statsStr, false);
-                    pwrPerte = currentWeightTotal - currentTotalWeigthBase(statsStr, objectFm);
-                }
-                if (currentStats == 1 || currentStats == 2)
-                    statsStr = objectFm.parseFMStatsString(statsObjectFm, objectFm, statsAdd, negative);
-                else
-                    statsStr = objectFm.parseFMStatsString(statsObjectFm, objectFm, statsAdd, negative) + "," + statsObjectFm + "#" + Integer.toHexString(statsAdd) + "#0#0#0d0+" + statsAdd;
-                objectFm.clearStats();
-                objectFm.parseStringToStats(statsStr, false);
-            }
-
-            String data = objectFm.getGuid() + "|1|" + objectFm.getTemplate().getId() + "|" + objectFm.parseStatsString();
-            if (!this.isRepeat)
-                this.reConfigingRunes = -1;
-            if (this.reConfigingRunes != 0 || this.broken)
-                if(receiver == null)
-                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
-
-            this.data = data;
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplateID);
-
-            if (pwrPerte > 0) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
-                SocketManager.GAME_SEND_Im_PACKET(this.player, "0194");
-            } else {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplateID);
-            }
-        }
-        //endregion
-        //region Echec critique
-        else {// EC
-            pwrPerte = 0;
-
-            if (!statStringObj.isEmpty()) {
-                String statsStr = objectFm.parseStringStatsEC_FM(objectFm, statsAdd, -1);
-                objectFm.clearStats();
-                objectFm.parseStringToStats(statsStr, false);
-                pwrPerte = currentWeightTotal - currentTotalWeigthBase(statsStr, objectFm);
-            }
-
-            String data = objectFm.getGuid() + "|1|" + objectFm.getTemplate().getId() + "|" + objectFm.parseStatsString();
-            if (!this.isRepeat)
-                this.reConfigingRunes = -1;
-            if (this.reConfigingRunes != 0 || this.broken)
-                if(receiver == null)
-                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
-
-            this.data = data;
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + objTemplateID);
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
-
-            if (pwrPerte > 0)
-                SocketManager.GAME_SEND_Im_PACKET(this.player, "0117");
-            else
-                SocketManager.GAME_SEND_Im_PACKET(this.player, "0183");
-        }
-        //endregion
-
-
-
-        objectFm.setPuit((objectFm.getPuit() + pwrPerte) - poid);
-        int newQuantity = ingredients.get(idRune) == null ? 0 : ingredients.get(idRune) - 1;
-
-        if (objectFm != null) {
-            World.world.addGameObject(objectFm, true);
-            if(receiver == null) {
-                this.player.addObjet(objectFm);
-            } else {
-                receiver.addObjet(objectFm);
-            }
-        }
-
-        if(receiver == null) {
-            this.decrementObjectQuantity(this.player, signingRune);
-            this.decrementObjectQuantity(this.player, runeOrPotion);
-            this.player.send("EmKO-" + objectFm.getGuid() + "|1|");
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+            // On nettoie les ingrédients
+            final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
+                    + objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
             this.ingredients.clear();
-            this.player.send("EMKO+" + objectFm.getGuid() + "|1");
-            this.ingredients.put(objectFm.getGuid(), 1);
+            return;
+        }
 
-            if (newQuantity >= 1) {
-                this.player.send("EMKO+" + idRune + "|" + newQuantity);
-                this.ingredients.put(idRune, newQuantity);
-            } else {
-                this.player.send("EMKO-" + idRune);
+
+        if(runeOrPotion.getTemplate().getId() == 17200){
+
+            if (SM == null || objectFm == null) {
+                this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+
+
+                this.ingredients.clear(); // On nettoie les ingrédients
+
+
+                return;
             }
-        } else {
-            if(items != null) {
-                for(Entry<Player, ArrayList<Couple<Integer, Integer>>> entry : items.entrySet()) {
-                    final Player player = entry.getKey();
-                    for(Couple<Integer, Integer> couple : entry.getValue()) {
-                        if(signingRune != null && signingRune.getGuid() == couple.first)
-                            this.decrementObjectQuantity(player, signingRune);
-                        if(runeOrPotion.getGuid() == couple.first)
-                            this.decrementObjectQuantity(player, runeOrPotion);
-                        //player.send("EMKO-" + couple.first);
+            int rarity = objectFm.getRarity();
+            ObjectTemplate objTemplate = objectFm.getTemplate();
 
+            GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,rarity);
+            //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
+            objectFm = newObj;
+            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+            if(guid == -1) { // Don't exist
+                guid = newObj.setId();
+                World.world.addGameObject(newObj, true);
+                this.player.addObjet(newObj);
+            } else {
+                newObj.setQuantity(newObj.getQuantity() + 1);
+                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+            }
+            SocketManager.GAME_SEND_Ow_PACKET(this.player);
+
+            final String data = String.valueOf(newObj.getGuid()) + "|1|" + newObj.getTemplate().getId() + "|"
+                    + newObj.parseStatsString()+ "|"+newObj.getRarity();
+
+
+            if (deleteID != -1) {
+                //this.player.sendMessage("On retire l'ingrédient (Rune) :"+deleteID);
+                this.ingredients.remove(deleteID);
+            }
+            if (runeOrPotion != null) {
+                int newQua = runeOrPotion.getQuantity() - 1;
+                if (newQua <= 0) {
+                    this.player.removeItem(runeOrPotion.getGuid());
+                    World.world.removeGameObject(runeOrPotion.getGuid());
+                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, runeOrPotion.getGuid());
+                } else {
+                    runeOrPotion.setQuantity(newQua);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
+                }
+            }
+            //World.world.addGameObject(objectFm, true);
+            //this.player.addObjet(objectFm);
+            //SocketManager.GAME_SEND_Ow_PACKET(this.player);
+            //final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
+            //		+ objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+            if (!this.isRepeat) {
+                this.reConfigingRunes = -1;
+            }
+            if (this.reConfigingRunes != 0 || this.broken) {
+                SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+            }
+
+            //this.player.sendMessage(""+data);
+            //this.data = data;
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
+
+            //SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + objTemplate.getId() + "|" + newObj.parseStatsString().replace(";", "#"));
+            //SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
+            //SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
+
+        }
+        else if(runeOrPotion.getTemplate().getId() == 17202 || runeOrPotion.getTemplate().getId() == 17203
+                || runeOrPotion.getTemplate().getId() == 17204 || runeOrPotion.getTemplate().getId() == 17205){
+
+            if (SM == null || objectFm == null) {
+                this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+
+
+                this.ingredients.clear(); // On nettoie les ingrédients
+
+
+                return;
+            }
+            int rarity = objectFm.getRarity();
+            ObjectTemplate objTemplate = objectFm.getTemplate();
+            int lastDigit = lastDigit(runeOrPotion.getTemplate().getId());
+            System.out.println("lastDigit" + lastDigit);
+
+            if(lastDigit <= rarity){
+
+                this.player.sendMessage("L'objet est déjà de rareté supérieure ou égale");
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+
+
+                this.ingredients.clear(); // On nettoie les ingrédients
+                return;
+            }
+
+            if(lastDigit-1 != rarity){
+                this.player.sendMessage("L'objet ne possède pas la rareté suffisante pour être augmenté avec cette rune");
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+
+
+                this.ingredients.clear(); // On nettoie les ingrédients
+
+                return;
+            }
+
+
+            GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,lastDigit);
+            //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
+            objectFm = newObj;
+            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+            if(guid == -1) { // Don't exist
+                guid = newObj.setId();
+                World.world.addGameObject(newObj, true);
+                this.player.addObjet(newObj);
+            } else {
+                newObj.setQuantity(newObj.getQuantity() + 1);
+                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+            }
+            SocketManager.GAME_SEND_Ow_PACKET(this.player);
+
+            final String data = String.valueOf(newObj.getGuid()) + "|1|" + newObj.getTemplate().getId() + "|"
+                    + newObj.parseStatsString()+ "|"+newObj.getRarity();
+
+
+            if (deleteID != -1) {
+                //this.player.sendMessage("On retire l'ingrédient (Rune) :"+deleteID);
+                this.ingredients.remove(deleteID);
+            }
+            if (runeOrPotion != null) {
+                int newQua = runeOrPotion.getQuantity() - 1;
+                if (newQua <= 0) {
+                    this.player.removeItem(runeOrPotion.getGuid());
+                    World.world.removeGameObject(runeOrPotion.getGuid());
+                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, runeOrPotion.getGuid());
+                } else {
+                    runeOrPotion.setQuantity(newQua);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
+                }
+            }
+            //World.world.addGameObject(objectFm, true);
+            //this.player.addObjet(objectFm);
+            //SocketManager.GAME_SEND_Ow_PACKET(this.player);
+            //final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
+            //		+ objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+            if (!this.isRepeat) {
+                this.reConfigingRunes = -1;
+            }
+            if (this.reConfigingRunes != 0 || this.broken) {
+                SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+            }
+
+            //this.player.sendMessage(""+data);
+            //this.data = data;
+            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
+            SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
+
+        }
+        else{
+
+            int StatEnInt = Integer.parseInt(statsObjectFm, 16);
+            double poidUnitaire = getPwrPerEffet(StatEnInt); // On calcul le poid unitaire de la rune
+            double poidStatsAfter =0;
+            double poidStatsBefore =0;
+
+            if (poidUnitaire > 0.0) {
+                poidRune = (int)Math.round(statsAdd * poidUnitaire); // On le multiplie par sa valur logiquement pour avoir le poid total
+            }
+            //this.player.sendMessage("poid de la stat a l'unité :"+poidUnitaire);
+            //this.player.sendMessage("poid de la rune :"+poidRune);
+
+            if (SM == null || objectFm == null || runeOrPotion == null) { // On check avant de commencer le traitement si tous les pré-requis et recupération ont fonctionné
+                this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
+
+                //System.out.println("On rentre forcement la " );
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                }
+
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+                //this.ingredients.clear(); // On nettoie les ingrédients
+                return;
+            }
+
+            int rarity = objectFm.getRarity();
+            ObjectTemplate objTemplate = objectFm.getTemplate(); // On récupÃ¨re le template de l'objet
+            int chance = 0;
+            int lvlJob = SM.get_lvl();	// le level du métier
+            int PoidTotItemActuel = 0;
+            int pwrPerte = 0;
+            java.util.ArrayList<Integer> chances = new ArrayList<Integer>(); // Le tableau des chances
+            int objTemplateID = objTemplate.getId(); 	// L'id du template
+            String statStringObj = objectFm.parseStatsString();  // Les stats de l'objects en format String
+
+            if (lvlElementRune > 0 && lvlQuaStatsRune == 0) { // Le cas des runes élémentaire est unique, Le level du métier défini la réussite
+                //this.player.sendMessage("C'est une rune élémentaire (pour CAC)"+lvlElementRune);
+                chance = Formulas.calculChanceByElement(lvlJob, objTemplate.getLevel(), lvlElementRune);
+                if (chance > 100 - (lvlJob / 20))
+                    chance = 100 - (lvlJob / 20);
+                if (chance < (lvlJob / 20))
+                    chance = (lvlJob / 20);
+                chances.add(0, chance);
+                chances.add(1, 0);
+                chances.add(2, 100 - chance);
+            } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) { // Le cas du FM normal est trÃ¨s complÃ¨xe !
+                //this.player.sendMessage("C'est une rune normal (pour buff de stats)"+lvlQuaStatsRune);
+                int PoidActuelStatAFm = 1;
+                int PoidTotStatsExoItemActuel = 1;
+
+                if (!statStringObj.isEmpty()) {
+                    //this.player.sendMessage("L'objet n'est pas vide");
+                    PoidTotItemActuel = currentTotalWeigthBase(statStringObj, objectFm); // Poids total de l'objet
+                    //this.player.sendMessage("Poid de l'obj (Repris)  "+PoidTotItemActuel);
+                    PoidTotStatsExoItemActuel = currentWeithStatsExo(statStringObj, objectFm); // Poid des stats EXO (car si ca dépasse 101 ca echec)
+                    //this.player.sendMessage("Le poid des Exo :"+PoidTotStatsExoItemActuel);
+                }
+                else {
+                    PoidActuelStatAFm = 0;
+                    PoidTotStatsExoItemActuel = 0;
+                }
+
+
+
+
+                int PoidMaxItem = 0;
+                if(rarity>3){
+                    PoidMaxItem = WeithTotalBaseLegendary(objTemplateID) ; // Poids de l'objet en stat Max et légendaire (donc théoriquement le poid max)
+                }
+                else{
+                    PoidMaxItem = WeithTotalBase(objTemplateID); // Poids de l'objet en stat Max (donc théoriquement le poid max)
+                }
+                int PoidMiniItem = WeithTotalBaseMin(objTemplateID); // Poids de l'objet en stat Mini (donc théoriquement le poid minimum)
+
+                // Bon si les poid sont négatifs, on les positionne a 0 pour éviter les bugs, meme si faudrait gérer le cas différemment
+                if (PoidMaxItem < 0) {
+                    PoidMaxItem = 0;
+                }
+                if (PoidTotItemActuel < 0) {
+                    PoidTotItemActuel = 0;
+                }
+                if (PoidActuelStatAFm < 0) {
+                    PoidActuelStatAFm = 0;
+                }
+                if (PoidTotStatsExoItemActuel < 0) {
+                    PoidTotStatsExoItemActuel = 0;
+                }
+
+                float coef = 1;
+
+                int CheckStatItemTemplate = viewBaseStatsItem(objectFm, statsObjectFm); // Check si La stats est sur l'item de base
+                int CheckStatItemActuel = viewActualStatsItem(objectFm, statsObjectFm); // Check si La stats est sur l'item 1 = oui 2 = oui 0 = non
+
+                // A FAIRE !!!!
+                // Trouver un moment pour diminuer une stats négative plutot que la considéré comme un stat différente
+                int statMax = 0 ;
+
+                if(rarity > 3){
+                    statMax = getStatBaseMaxLegendaire(objTemplate, statsObjectFm);// stat maximum de l'obj Legendaire intéressant pour les cas ou les stats dépasse le poid théorique max
+                }
+                else{
+                    statMax = getStatBaseMax(objTemplate, statsObjectFm); // stat maximum de l'obj intéressant pour les cas ou les stats dépasse le poid théorique max
+                }
+
+                int statMin = getStatBaseMin(objTemplate, statsObjectFm); // stat Minimum de l'obj intéressant pour les cas ou les stats dépasse le poid théorique max
+
+                int statJetActuel = 0;
+
+                // Gestyion des dommages bizarres
+                if(statsObjectFm == "70" || statsObjectFm == "79" ) {
+                    int statJetActuel1 = getActualJet(objectFm, "79");
+                    int statJetActuel2 = getActualJet(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                    if(statJetActuel1>=statJetActuel2) {
+                        statJetActuel = statJetActuel1;
                     }
+                    else {
+                        statJetActuel = statJetActuel2;
+                    }
+                }
+                else {
+                    statJetActuel = getActualJet(objectFm, statsObjectFm);
+                }
+                int statJetFutur = statJetActuel + statsAdd;
+
+
+                PoidActuelStatAFm = (int)Math.floor(statJetActuel*poidUnitaire); // Poid des stats de base
+                //this.player.sendMessage("Poid de la stat actuel ? "+PoidActuelStatAFm);
+
+                //this.player.sendMessage("Le poid max de la ligne hors limite :" + statMax*poidUnitaire);
+
+                // La on fait des controles pour savoir si le FM théorique est possible ou non
+                boolean canFM = true;
+                boolean exception = false;
+                float x = 1;
+
+                if(statMax*poidUnitaire > limitPerLigne){ // Si le poid de la ligne de stats de base de l'item supérieur au maximum théorique par ligne de 101
+                    // On autorise quand même le fm si on dépasse pas le jet max
+                    //this.player.sendMessage("On est la  :" + (statJetActuel+statsAdd) + " max: " + statMax);
+                    if (statJetActuel+statsAdd > statMax) { // On compare en statistique car le poid ne compte pas pour ces cas
+                        this.player.sendMessage("Cette statistique ne montra pas plus haut");
+                        canFM = false;
+                    }
+                    else {
+                        coef = 1f; // Coef a 0.8 parce que la c'est quand meme chaud a faire
+                        exception = true;
+                    }
+                }
+                else {
+                    // Si la stats qui veut faire passer, dépasse la limite théorique
+                    if( (statJetActuel*poidUnitaire)+poidRune > limitPerLigne ) {
+                        this.player.sendMessage("Cette statistique ne montra pas plus haut");
+                        canFM = false;
+                    }
+                }
+
+                if((CheckStatItemTemplate == 0 && CheckStatItemActuel == 0) || (CheckStatItemTemplate == 0 && CheckStatItemActuel == 1)) {
+                    // La stat qu'on ajoute est un over et son poid est de PoidRune
+                    if( PoidTotStatsExoItemActuel + poidRune > limitPerLigne) {
+                        canFM = false;
+                        this.player.sendMessage("Tu ne peux pas ajouter plus d'Exo");
+                        this.player.sendMessage("Le poid des Exo :"+PoidTotStatsExoItemActuel);
+                    }
+                }
+                else {
+                    // TIEN ici on va utiliser le X pour plutot simplifier si on est loin de la limite théorique mais que c'est pas un exo bien entendu
+                    if( statJetActuel != 0 ) {
+                        x = (float) (limitPerLigne / (statJetActuel*poidUnitaire));
+                        if(x > 5.0f) {
+                            x = 5.0f;
+                        }
+                    }
+                    else {
+                        x = 5.0f;
+                    }
+                }
+
+                // La c'est les contraintes de métier ETC
+                if (lvlJob < (int) Math.floor(objTemplate.getLevel() / 2)) {
+                    this.player.sendMessage("Ton métier n'est pas suffisant pour améliorer cet objet !");
+                    canFM = false; // On rate le FM si le mï¿½tier n'est pas suffidant
+                }
+
+                // La notien de loi + permet de cibler le coef
+                if(poidRune > 30) {
+                    if( statMax < statJetFutur) {
+                        loi = "exo";
+                        coef = 0.25f;
+                    }
+                    else {
+                        loi = "normal";
+                        coef = 1.0f;
+                    }
+                }
+                else {
+                    if ( statMax < statJetFutur) {
+                        loi = "over";
+                        coef = 0.8f;
+                    }
+                    else {
+                        loi = "normal";
+                        coef = 1.0f;
+                    }
+                }
+
+
+                this.player.sendMessage("Loi appliquée " + loi);
+
+                if (canFM) {
+                    chances = Formulas.chanceFM2(PoidMaxItem, PoidMiniItem, PoidTotItemActuel, PoidActuelStatAFm,PoidTotStatsExoItemActuel , poidRune, statMax, statMin, statJetActuel,statsAdd,poidUnitaire,statJetFutur, x , coef, this.player, objectFm.getPuit(), loi );
+                    // On retire la rune car on peut FM
+                    if (deleteID != -1) {
+                        //this.player.sendMessage("On retire l'ingrédient (Rune) :"+deleteID);
+                        this.ingredients.remove(deleteID);
+                    }
+                }
+                else
+                {	// CORRIGE UN TRUC LA POUR QUE L'UTILISATEUR PERDRE PAS SES ITEMS MALGRES UNE TENTATIVE DE FM NON LEGAL
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+
+                    int nbRunes = this.ingredients.get(idRune);
+                    if (nbRunes > 0) // On remet la rune
+                        this.modifIngredient(this.player, idRune, nbRunes); // Rajout des runes moins une
+
+                    try {
+                        this.player.getCurJobAction().modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l"item
+                    }
+                    catch(Exception e){
+                        //this.player.sendMessage("On est la  :"+ e );
+                        ((JobAction) this.player.getExchangeAction().getValue()).modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l'item dans la case de FM
+                    }
+
+                    return;
                 }
             }
 
-            String stats = objectFm.parseStatsString();
-            this.player.send("ErKO+" + objectFm.getGuid() + "|1|" + template + "|" + stats);
-            receiver.send("ErKO+" + objectFm.getGuid() + "|1|" + template + "|" + stats);
-            this.player.send("EcK;" + template + ";T" + receiver.getName() + ";" + stats);
-            receiver.send("EcK;" + template + ";B" + this.player.getName() + ";" + stats);
 
-            if(!successC) {
-                receiver.send("EcEF");
+            int aleatoryChance = Formulas.getRandomValue(1, 100);
+            int SC = chances.get(0);
+            int SN = chances.get(1);
+            boolean successC = (aleatoryChance <= SC);
+            boolean successN = (aleatoryChance <= (SC + SN));
+            this.player.sendMessage("Chances : [SC "+SC + "%| SN " + SN+ "%| EC " + (100 - (SC + SN)) + "%]");
+            //this.player.sendMessage("le Jet :"+aleatoryChance);
+            if (successC || successN) {
+                int winXP = Formulas.calculXpWinFm(objectFm.getTemplate().getLevel(), poidRune)
+                        * Config.INSTANCE.getRATE_JOB();
+                if (winXP > 0) {
+                    SM.addXp(this.player, winXP);
+                    ArrayList<JobStat> SMs = new ArrayList<JobStat>();
+                    SMs.add(SM);
+                    SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
+                }
             }
+
+            if (successC) // SC
+            {
+                this.player.sendMessage("Succes critique !");
+                int coef = 0;
+                pwrPerte = 0;
+                if (lvlElementRune == 1)
+                    coef = 50;
+                else if (lvlElementRune == 25)
+                    coef = 65;
+                else if (lvlElementRune == 50)
+                    coef = 85;
+                if (isSigningRune) {
+                    objectFm.addTxtStat(985, this.player.getName());
+                }
+                if (lvlElementRune > 0 && lvlQuaStatsRune == 0) {
+                    for (SpellEffect effect : objectFm.getEffects()) {
+                        if (effect.getEffectID() != 100)
+                            continue;
+                        String[] infos = effect.getArgs().split(";");
+                        try {
+                            int min = Integer.parseInt(infos[0], 16);
+                            int max = Integer.parseInt(infos[1], 16);
+                            int newMin = (min * coef) / 100;
+                            int newMax = (max * coef) / 100;
+                            if (newMin == 0)
+                                newMin = 1;
+                            String newRange = "1d" + (newMax - newMin + 1) + "+"
+                                    + (newMin - 1);
+                            String newArgs = Integer.toHexString(newMin) + ";"
+                                    + Integer.toHexString(newMax) + ";-1;-1;0;"
+                                    + newRange;
+                            effect.setArgs(newArgs);
+                            effect.setEffectID(statsID);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) {
+                    objectFm.setNewStats(statsObjectFm,statsAdd);
+                    objectFm.setModification();
+                    //String test = objectFm.parseStatsString();
+                    //this.player.sendMessage("Succes critique !"+ test);
+                }
+                if (signingRune != null) {
+                    int newQua = signingRune.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(signingRune.getGuid());
+                        World.world.removeGameObject(signingRune.getGuid());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, signingRune.getGuid());
+                    } else {
+                        signingRune.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, signingRune);
+                    }
+                }
+                if (runeOrPotion != null) {
+                    int newQua = runeOrPotion.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(runeOrPotion.getGuid());
+                        World.world.removeGameObject(runeOrPotion.getGuid());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, runeOrPotion.getGuid());
+                    } else {
+                        runeOrPotion.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
+                    }
+                }
+                World.world.addGameObject(objectFm, true);
+                this.player.addObjet(objectFm);
+                SocketManager.GAME_SEND_Ow_PACKET(this.player);
+                final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
+                        + objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+                if (!this.isRepeat) {
+                    this.reConfigingRunes = -1;
+                }
+                if (this.reConfigingRunes != 0 || this.broken) {
+                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+                }
+                //this.player.sendMessage(""+data);
+                this.data = data;
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplateID);
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplateID);
+
+            } else if (successN) {
+                this.player.sendMessage("Succes Neutre");
+                pwrPerte = 0;
+                if (isSigningRune) {
+                    objectFm.addTxtStat(985, this.player.getName());
+                }
+
+                // GESTION DES STATS NEGATIVE A RERENDRE
+                objectFm = CalculPerteAndPuit(successN , statsAdd , statsObjectFm, objectFm, poidRune, poidUnitaire, loi,PoidTotItemActuel, this.player);
+
+                if (signingRune != null) {
+                    int newQua = signingRune.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(signingRune.getGuid());
+                        World.world.removeGameObject(signingRune.getGuid());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, signingRune.getGuid());
+                    } else {
+                        signingRune.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, signingRune);
+                    }
+                }
+                if (runeOrPotion != null) {
+                    int newQua = runeOrPotion.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(runeOrPotion.getGuid());
+                        World.world.removeGameObject(runeOrPotion.getGuid());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, runeOrPotion.getGuid());
+                    } else {
+                        runeOrPotion.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
+                    }
+                }
+
+                World.world.addGameObject(objectFm, true);
+                this.player.addObjet(objectFm);
+                SocketManager.GAME_SEND_Ow_PACKET(this.player);
+                String data = objectFm.getGuid() + "|1|" + objectFm.getTemplate().getId() + "|"+ objectFm.parseStatsString();
+                if (!this.isRepeat)
+                    this.reConfigingRunes = -1;
+                if (this.reConfigingRunes != 0 || this.broken)
+                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+                this.data = data;
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+"
+                        + objTemplateID);
+                if (pwrPerte > 0) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
+                    SocketManager.GAME_SEND_Im_PACKET(this.player, "0194");
+                } else
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;"
+                            + objTemplateID);
+            } else
+            // EC
+            {
+                this.player.sendMessage("Echec !");
+                pwrPerte = 0;
+                if (signingRune != null) { // On perd la rune signature
+                    int newQua = signingRune.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(signingRune.getGuid());
+                        World.world.removeGameObject(signingRune.getGuid());
+                        SocketManager.GAME_SEND_DELETE_STATS_ITEM_FM(this.player, signingRune.getGuid());
+                    } else {
+                        signingRune.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, signingRune);
+                    }
+                }
+                if (runeOrPotion != null) { // On perd la potion
+                    int newQua = runeOrPotion.getQuantity() - 1;
+                    if (newQua <= 0) {
+                        this.player.removeItem(runeOrPotion.getGuid());
+                        World.world.removeGameObject(runeOrPotion.getGuid());
+                        SocketManager.GAME_SEND_DELETE_STATS_ITEM_FM(this.player, runeOrPotion.getGuid());
+                    } else {
+                        runeOrPotion.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
+                    }
+                }
+
+                objectFm = CalculPerteAndPuit(successN , statsAdd , statsObjectFm, objectFm, poidRune, poidUnitaire, loi,PoidTotItemActuel, this.player);
+
+                //this.player.sendMessage("On est la l'objet a pas perdu de stat :"+ objectFm.getPuit() );
+                World.world.addGameObject(objectFm, true); // On ajoute l'obj a la map
+                this.player.addObjet(objectFm); // On ajoute l'obj au joueur
+                SocketManager.GAME_SEND_Ow_PACKET(this.player); // Ca je vois pas trop a part l'echec
+
+                String data = objectFm.getGuid() + "|1|"+ objectFm.getTemplate().getId() + "|"+ objectFm.parseStatsString(); // Ca non plus mais ca met un obj undefined ?
+
+                if (!this.isRepeat)
+                    this.reConfigingRunes = -1;
+
+                if (this.reConfigingRunes != 0 || this.broken)
+                    SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data); // Ca je ne sais pas
+
+                this.data = data;
+
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-"
+                        + objTemplateID); // Ca c'est l'echec sur l'icone je opense
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF"); // Ca c'est l'echec sur le joueur ?
+
+                if (pwrPerte > 0)
+                    SocketManager.GAME_SEND_Im_PACKET(this.player, "0117"); // Ca c'est gain de reliquat
+                else
+                    SocketManager.GAME_SEND_Im_PACKET(this.player, "0183"); // Ca c'est perte ?
+
+            }
+
+            this.player.sendMessage("Puit libre sur l'item :"+ objectFm.getPuit() );
         }
 
         this.lastCraft.clear();
         this.lastCraft.putAll(this.ingredients);
+        this.lastCraft.put(objectFm.getGuid(), 1);
+        int nbRunes = 0;
+        if (!this.ingredients.isEmpty() && this.ingredients.get(idRune) != null) {
+            if (this.isRepeat) {
+                nbRunes = this.ingredients.get(idRune) - 1;
+            } else {
+                nbRunes = this.ingredients.get(idRune) - 1;
+            }
+        }
 
-        SocketManager.GAME_SEND_Ow_PACKET(this.player);
-        if (!isRepeat) this.setJobCraft(null);
-        return true;
+        this.ingredients.clear(); // ON RAFRAICHIT LES INGREDIENTS (enleve)
+
+        if (nbRunes > 0) // On remet la rune
+            this.modifIngredient(this.player, idRune, nbRunes); // Rajout des runes moins une
+
+        try {
+            this.player.getCurJobAction().modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l"item
+        }
+        catch(Exception e){
+            this.player.sendMessage("On est la  :"+ e );
+
+            ((JobAction) this.player.getExchangeAction().getValue()).modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l'item dans la case de FM
+        }
+
     }
 
-    //region usefull function for fm
-    private void decrementObjectQuantity(Player player, GameObject object) {
-        if (object != null) {
-            int newQua = object.getQuantity() - 1;
-            if (newQua <= 0) {
-                player.removeItem(object.getGuid(), object.getQuantity(), true, true);
-                SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, object.getGuid());
-            } else {
-                object.setQuantity(newQua);
-                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, object);
+    // NOUVELLE FONCTION DE GESTON PERTE + PUITS ENCORE A CORRIGER UN PEU
+    public static GameObject CalculPerteAndPuit (boolean succesN , int statsAdd , String statsObjectFm ,GameObject objectFm, int poidTotal, double poidUnitaire, String loi, int currentWeightTotal, Player player ) {
+        String statsStr = "";
+        String statStringObj = objectFm.parseStatsString() ;
+        int pwrPerte = 0;
+        int puit = objectFm.getPuit();
+        switch (loi) {
+            case "exo" :
+            case "normal" :
+            case "over" : {
+                if(succesN)
+                {
+                    // le cas de l'over dépend du puit restant
+                    if(puit >= poidTotal) { // Si le puit peut absorber le SN il le prend
+                        //player.sendMessage("On a du puit, on prend dedant et on ajoute "+statsAdd+" de stats" );
+                        objectFm.setNewStats(statsObjectFm,statsAdd);
+
+                        // Si ca suffit On ajoute juste en perdant du reliquat
+                        objectFm.setPuit(objectFm.getPuit() - poidTotal);
+                        player.sendMessage("- Reliquat");
+                        return objectFm;
+                    }
+                    else {
+                        // S'il reste du puits malgré que ca soit pas suffisant on prend dedans pour limité la perte
+                        if(puit > 0) {
+                            poidTotal -= puit;
+                            objectFm.setPuit(0);
+                            //player.sendMessage("On a du puit, on prend dedant");
+                        }
+
+                        // On perd des caractéristiques également (si c'est possible, avant d'ajouté la stats) (Caract adapté avec le puit restant)
+                        if (!statStringObj.isEmpty()) {
+                            statsStr = objectFm.parseStringStatsEC_FM(objectFm, poidTotal, -1);
+                            objectFm.clearStats();
+                            objectFm.refreshStatsObjet(statsStr);
+                            pwrPerte = currentWeightTotal
+                                    - currentTotalWeigthBase(statsStr, objectFm);
+
+                            // On ajoute la stats du coup
+                            objectFm.setNewStats(statsObjectFm,statsAdd);
+
+                        }
+                        else { // Si c'est pas possible, on ajouté uniquement le nombre de stat avec le puit, arrondi au sup
+                            int StatToAdd = (int)  Math.floor( (poidTotal/poidUnitaire)*statsAdd  ); // PAS FINI
+                            if(StatToAdd ==0)
+                                StatToAdd=1;
+                            // On ajoute la stats du coup
+                            objectFm.setNewStats(statsObjectFm,StatToAdd);
+                        }
+
+                        if( ( (objectFm.getPuit() + pwrPerte) - poidTotal ) < 0) { // Le puit est négatif
+                            objectFm.setPuit(0);
+                        }
+                        else { // Sinon on applique le puit récupéré avec la baisse des stats
+                            objectFm.setPuit((objectFm.getPuit() + pwrPerte) - poidTotal);
+                        }
+                        return objectFm;
+                    }
+                }
+                else {
+                    // le cas de l'over dépend du puit restant
+                    if(puit >= poidTotal) { // Si le puit peut absorber l'echec il le prend
+                        //player.sendMessage("On a du puit, on prend dedant");
+                        objectFm.setPuit(objectFm.getPuit() - poidTotal);
+                        return objectFm;
+                    }
+                    else {
+
+                        // Sinon on retire le puit + On perd des caractéristiques (Caract adapté avec le puit restant)
+                        poidTotal -= puit;
+                        objectFm.setPuit(0);
+
+                        // Si les caracteristique ne sont pas vide
+                        if (!statStringObj.isEmpty()) {
+                            statsStr = objectFm.parseStringStatsEC_FM(objectFm, poidTotal, -1);
+                            objectFm.clearStats();
+                            objectFm.refreshStatsObjet(statsStr);
+                            pwrPerte = currentWeightTotal
+                                    - currentTotalWeigthBase(statsStr, objectFm);
+                        }
+
+                        if( (objectFm.getPuit() + pwrPerte - poidTotal) < 0 ) { // Le puit est négatif
+                            objectFm.setPuit(0);
+                        }
+                        else { // Sinon on applique le puit récupéré avec la baisse des stats
+                            objectFm.setPuit((objectFm.getPuit() + pwrPerte - poidTotal));
+                        }
+                    }
+
+                }
             }
+            case "autre" : {
+                // LE cas de l'exo c'est critique obligatoire ou echec, si les stats ne peuevent pas absorber l'echec on retire toutes les stats mais on ne change pas le puit
+                //player.sendMessage("Pas de perte de puit car EXO tenté");
+
+                // On perd quand meme des caractérique s'il y en as
+                if (!statStringObj.isEmpty()) {
+                    statsStr = objectFm.parseStringStatsEC_FM(objectFm, poidTotal, -1);
+                    objectFm.clearStats();
+                    objectFm.refreshStatsObjet(statsStr);
+                    pwrPerte = currentWeightTotal
+                            - currentTotalWeigthBase(statsStr, objectFm);
+                }
+
+            }
+        }
+        return objectFm;
+
+    }
+
+
+
+
+    // FONCTION PAS UTILISE PEUT ETRE A RETIRER
+    public static void setNewPuit(boolean success, String loi, Player player, GameObject objectFm, int poid, int pwrPerte) {        // La gestion du puit était codé avec le cu
+
+        if( !success ) {
+            switch (loi) {
+                case "over" : {
+                    // le cas de l'over dépend du puit restant
+                    if(objectFm.getPuit() > poid) { // Si le puit peut absorber l'echec ou le SN il le prend
+                        objectFm.setPuit(objectFm.getPuit() - poid);
+                    }
+                    else { // Sinon on retire le puit + Les caractéristiques perdu (Caract adapté avec le puit restant)
+                        if ( ((objectFm.getPuit() + pwrPerte) - poid) < 0) { // Si le puit + carac est tombé en dessous de 0 on le met a 0
+                            objectFm.setPuit(0);
+                        }
+                        else {
+                            objectFm.setPuit((objectFm.getPuit() + pwrPerte) - poid); // Si le puit + Carac est positif on recupÃ¨re le puit restant
+                        }
+                    }
+                }
+                case "exo" : {
+                    // LE cas de l'exo c'est critique obligatoire ou echec, si les stats ne peuevent pas absorber l'echec on retire toutes les stats mais on ne change pas le puit
+                    //player.sendMessage("Pas de perte de puit car EXO tenté");
+
+                }
+                case "normal" : {
+                    // le cas normal dépend du puit restant aussi
+                    if(objectFm.getPuit() > poid) { // Si le puit peut absorber l'echec ou le SN il le prend
+                        objectFm.setPuit(objectFm.getPuit() - poid);
+                    }
+                    else { // Sinon on retire le puit + Les caractéristiques perdu (Caract adapté avec le puit restant)
+                        if ( ((objectFm.getPuit() + pwrPerte) - poid) < 0) { // Si le puit + carac est tombé en dessous de 0 on le met a 0
+                            objectFm.setPuit(0);
+                        }
+                        else {
+                            objectFm.setPuit((objectFm.getPuit() + pwrPerte) - poid); // Si le puit + Carac est positif on recupÃ¨re le puit restant
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            player.sendMessage("Pas de perte de puit car SC");
         }
     }
 
-    public static int getStatBaseMaxs(ObjectTemplate objMod, String statsModif) {
+    // On donne le max pour une ligne (Attention a bien gerer les négatif dans le futur)
+    public static int getStatBaseMax(ObjectTemplate objMod, String statsModif) {
         String[] split = objMod.getStrTemplate().split(",");
         for (String s : split) {
             String[] stats = s.split("#");
             if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
             } else if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
+                //World.world.logger.trace(stats[0].toLowerCase()+" ICI/ "+statsModif.toLowerCase());
                 int max = Integer.parseInt(stats[2], 16);
                 if (max == 0)
                     max = Integer.parseInt(stats[1], 16);
@@ -1525,7 +2008,27 @@ public class JobAction {
         return 0;
     }
 
-    public static int getStatBaseMins(ObjectTemplate objMod, String statsModif) {
+    // On donne le max pour une ligne avec le legendaire (Attention a bien gerer les négatif dans le futur)
+    public static int getStatBaseMaxLegendaire(ObjectTemplate objMod, String statsModif) {
+        String[] split = objMod.getStrTemplate().split(",");
+        for (String s : split) {
+            String[] stats = s.split("#");
+            if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
+            } else if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
+                //World.world.logger.trace(stats[0].toLowerCase()+" ICI/ "+statsModif.toLowerCase());
+                int max = Integer.parseInt(stats[2], 16);
+                if (max == 0)
+                    max = Integer.parseInt(stats[1], 16);
+
+                max = (int) Math.floor(max + ((max)*0.5));
+                return max;
+            }
+        }
+        return 0;
+    }
+
+    // On donne le min pour une ligne de stat donné (Attention a bien gerer les négatif dans le futur)
+    public static int getStatBaseMin(ObjectTemplate objMod, String statsModif) {
         String[] split = objMod.getStrTemplate().split(",");
         for (String s : split) {
             String[] stats = s.split("#");
@@ -1537,7 +2040,7 @@ public class JobAction {
         return 0;
     }
 
-    public static int WeithTotalBaseMin(int objTemplateID) {
+    public static int WeithTotalBaseMin(int objTemplateID) {  // Le poid de l'item en Mini
         int weight = 0;
         int alt = 0;
         String statsTemplate = "";
@@ -1569,49 +2072,15 @@ public class JobAction {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            int statX = 1;
-            if (statID == 125 || statID == 158 || statID == 174) {
-                statX = 1;
-            } else if (statID == 118 || statID == 126 || statID == 119
-                    || statID == 123) {
-                statX = 2;
-            } else if (statID == 138 || statID == 666 || statID == 226
-                    || statID == 220) // de
-            // da�os,Trampas %
-            {
-                statX = 3;
-            } else if (statID == 124 || statID == 176) {
-                statX = 5;
-            } else if (statID == 240 || statID == 241 || statID == 242
-                    || statID == 243 || statID == 244)
 
-            {
-                statX = 7;
-            } else if (statID == 210 || statID == 211 || statID == 212
-                    || statID == 213 || statID == 214)
-
-            {
-                statX = 8;
-            } else if (statID == 225) {
-                statX = 15;
-            } else if (statID == 178 || statID == 121) {
-                statX = 20;
-            } else if (statID == 115 || statID == 182) {
-                statX = 30;
-            } else if (statID == 117) {
-                statX = 50;
-            } else if (statID == 128) {
-                statX = 90;
-            } else if (statID == 111) {
-                statX = 100;
-            }
-            weight = value * statX;
+            double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
+            weight = (int) Math.floor(value * coef);
             alt += weight;
         }
         return alt;
     }
 
-    public static int WeithTotalBase(int objTemplateID) {
+    public static int WeithTotalBase(int objTemplateID) {   // Poid max de l'item de base
         int weight = 0;
         int alt = 0;
         String statsTemplate = "";
@@ -1646,301 +2115,167 @@ public class JobAction {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            int statX = 1;
-            if (statID == 125 || statID == 158 || statID == 174) {
-                statX = 1;
-            } else if (statID == 118 || statID == 126 || statID == 119
-                    || statID == 123) {
-                statX = 2;
-            } else if (statID == 138 || statID == 666 || statID == 226
-                    || statID == 220) // de
-            // da�os,Trampas %
-            {
-                statX = 3;
-            } else if (statID == 124 || statID == 176) {
-                statX = 5;
-            } else if (statID == 240 || statID == 241 || statID == 242
-                    || statID == 243 || statID == 244)
-
-            {
-                statX = 7;
-            } else if (statID == 210 || statID == 211 || statID == 212
-                    || statID == 213 || statID == 214)
-
-            {
-                statX = 8;
-            } else if (statID == 225) {
-                statX = 15;
-            } else if (statID == 178 || statID == 121) {
-                statX = 20;
-            } else if (statID == 115 || statID == 182) {
-                statX = 30;
-            } else if (statID == 117) {
-                statX = 50;
-            } else if (statID == 128) {
-                statX = 90;
-            } else if (statID == 111) {
-                statX = 100;
-            }
-            weight = value * statX;
+            double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
+            weight = (int) Math.floor(value * coef);
             alt += weight;
         }
         return alt;
     }
 
-    public static int currentWeithStats(GameObject obj, String statsModif) {
-        for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-            int statID = entry.getKey();
-            if (Integer.toHexString(statID).toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
-            } else if (Integer.toHexString(statID).toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
-                int statX = 1;
-                int coef = 1;
-                int BaseStats = viewBaseStatsItem(obj, Integer.toHexString(statID));
-                if (BaseStats == 2) {
-                    coef = 3;
-                } else if (BaseStats == 0) {
-                    coef = 8;
+    public static int WeithTotalBaseLegendary(int objTemplateID) {   // Poid max de l'item de base
+        int weight = 0;
+        int alt = 0;
+        String statsTemplate = "";
+        statsTemplate = World.world.getObjTemplate(objTemplateID).getStrTemplate();
+        if (statsTemplate == null || statsTemplate.isEmpty())
+            return 0;
+        String[] split = statsTemplate.split(",");
+        for (String s : split) {
+            String[] stats = s.split("#");
+            int statID = Integer.parseInt(stats[0], 16);
+            boolean sig = true;
+            for (int a : Constant.ARMES_EFFECT_IDS)
+                if (a == statID)
+                    sig = false;
+            if (!sig)
+                continue;
+            String jet = "";
+            int value = 1;
+            try {
+                jet = stats[4];
+                value = Formulas.getRandomJet(jet);
+                try {
+                    int min = Integer.parseInt(stats[1], 16);
+                    int max = Integer.parseInt(stats[2], 16);
+                    value = min;
+                    if (max != 0)
+                        value = max;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    value = Formulas.getRandomJet(jet);
                 }
-                if (statID == 125 || statID == 158 || statID == 174) {
-                    statX = 1;
-                } else if (statID == 118 || statID == 126 || statID == 119
-                        || statID == 123)
-
-                {
-                    statX = 2;
-                } else if (statID == 138 || statID == 666 || statID == 226
-                        || statID == 220) // da�os,Trampas
-                // %
-                {
-                    statX = 3;
-                } else if (statID == 124 || statID == 176) {
-                    statX = 5;
-                } else if (statID == 240 || statID == 241 || statID == 242
-                        || statID == 243 || statID == 244)
-
-                {
-                    statX = 7;
-                } else if (statID == 210 || statID == 211 || statID == 212
-                        || statID == 213 || statID == 214) {
-                    statX = 8;
-                } else if (statID == 225) {
-                    statX = 15;
-                } else if (statID == 178 || statID == 121) {
-                    statX = 20;
-                } else if (statID == 115 || statID == 182) {
-                    statX = 30;
-                } else if (statID == 117) {
-                    statX = 50;
-                } else if (statID == 128) {
-                    statX = 90;
-                } else if (statID == 111) {
-                    statX = 100;
-                }
-                int Weight = entry.getValue() * statX * coef;
-                return Weight;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+            double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
+            weight = (int) Math.floor( (value + ((value)*0.5)) * coef);
+            alt += weight;
         }
-        return 0;
+        return alt;
     }
 
-    public static int currentStats(GameObject obj, String statsModif) {
-        for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-            int statID = entry.getKey();
-            if (Integer.toHexString(statID).toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
-            } else if (Integer.toHexString(statID).toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
-                return entry.getValue();
+    public static int currentWeithStatsExo(String statsModelo,GameObject obj) {	 // Poid des exos
+        if (statsModelo.equalsIgnoreCase(""))
+            return 0;
+        int Weigth = 0;
+        int Alto = 0;
+        int rarity = obj.getRarity();
+        String[] split = statsModelo.split(",");
+        for (String s : split) { // On boucle sur toutes les stats de l'item de base
+            String[] stats = s.split("#");
+            if (stats[0].length() > 0) {
+                int statID = Integer.parseInt(stats[0], 16);
+
+
+                String StatsHex = Integer.toHexString(statID);
+                if (StatsHex.equals("79")) {
+                    StatsHex = "70";
+                }
+                //System.out.println("On test :" + StatsHex);
+                int BaseStats = viewBaseStatsItem(obj, StatsHex);
+                if (BaseStats == 2 || BaseStats == 1) {
+                    continue;
+                }
+
+                if (statID == 985 || statID == 988)
+                    continue;
+                boolean xy = false;
+                for (int a : Constant.ARMES_EFFECT_IDS)
+                    if (a == statID)
+                        xy = true;
+                if (xy)
+                    continue;
+                String jet = "";
+                int qua = 1;
+
+                //System.out.println("La stat :" + statID + "considéré comme exo");
+                try {
+                    jet = stats[4];
+                    try {
+                        int min = Integer.parseInt(stats[1], 16);
+                        int max = Integer.parseInt(stats[2], 16);
+                        qua = min;
+                        if (max != 0)
+                            qua = max; // on prend la statMAX
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        qua = Formulas.getRandomJet(jet);
+                    }
+                } catch (Exception e) {
+                    // Ok :/
+                }
+                //World.world.logger.trace("Etrange cette stats"+statID);
+                double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
+                Weigth = (int) Math.floor(qua * coef); // On multiplie par le jet
+                Alto += Weigth;
+            }
+            else{
+                continue;
             }
         }
-        return 0;
+        return Alto;
     }
 
-    public static int currentTotalWeigthBase(String statsModelo, GameObject obj) {
+    public static int currentTotalWeigthBase(String statsModelo, GameObject obj) { // On récupÃ¨re le poid total de l'item actuel
         if (statsModelo.equalsIgnoreCase(""))
             return 0;
         int Weigth = 0;
         int Alto = 0;
         String[] split = statsModelo.split(",");
-        for (String s : split) {
+        for (String s : split) { // On boucle sur toutes les stats de l'item de base
             String[] stats = s.split("#");
-            int statID = Integer.parseInt(stats[0], 16);
-            if (statID == 985 || statID == 988)
-                continue;
-            boolean xy = false;
-            for (int a : Constant.ARMES_EFFECT_IDS)
-                if (a == statID)
-                    xy = true;
-            if (xy)
-                continue;
-            String jet = "";
-            int qua = 1;
-            try {
-                jet = stats[4];
-                qua = Formulas.getRandomJet(jet);
+            if(stats[0].length() > 0) {
+                int statID = Integer.parseInt(stats[0], 16);
+                if (statID == 985 || statID == 988)
+                    continue;
+                boolean xy = false;
+                for (int a : Constant.ARMES_EFFECT_IDS)
+                    if (a == statID)
+                        xy = true;
+                if (xy)
+                    continue;
+                String jet = "";
+                int qua = 1;
                 try {
-                    int min = Integer.parseInt(stats[1], 16);
-                    int max = Integer.parseInt(stats[2], 16);
-                    qua = min;
-                    if (max != 0)
-                        qua = max;
+                    jet = stats[4];
+                    try {
+                        int min = Integer.parseInt(stats[1], 16);
+                        int max = Integer.parseInt(stats[2], 16);
+                        qua = min;
+                        if (max != 0)
+                            qua = max; // on prend la statMAX
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        qua = Formulas.getRandomJet(jet);
+                    }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    qua = Formulas.getRandomJet(jet);
+                    // Ok :/
                 }
-            } catch (Exception e) {
-                // Ok :/
-            }
-            int statX = 1;
-            int coef = 1;
-            int statsBase = viewBaseStatsItem(obj, stats[0]);
-            if (statsBase == 2) {
-                coef = 3;
-            } else if (statsBase == 0) {
-                coef = 2;
-            }
-            if (statID == 125 || statID == 158 || statID == 174) {
-                statX = 1;
-            } else if (statID == 118 || statID == 126 || statID == 119
-                    || statID == 123) {
-                statX = 2;
-            } else if (statID == 138 || statID == 666 || statID == 226
-                    || statID == 220) // de
-            // da�os,Trampas %
-            {
-                statX = 3;
-            } else if (statID == 124 || statID == 176) {
-                statX = 5;
-            } else if (statID == 240 || statID == 241 || statID == 242
-                    || statID == 243 || statID == 244) {
-                statX = 7;
-            } else if (statID == 210 || statID == 211 || statID == 212
-                    || statID == 213 || statID == 214)
 
-            {
-                statX = 8;
-            } else if (statID == 225) {
-                statX = 15;
-            } else if (statID == 178 || statID == 121) {
-                statX = 20;
-            } else if (statID == 115 || statID == 182) {
-                statX = 30;
-            } else if (statID == 117) {
-                statX = 50;
-            } else if (statID == 128) {
-                statX = 90;
-            } else if (statID == 111) {
-                statX = 100;
+
+                double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
+                Weigth = (int) Math.floor(qua * coef); // On multiplie par le jet
+                Alto += Weigth;
             }
-            Weigth = qua * statX * coef;
-            Alto += Weigth;
+            else{
+                continue;
+            }
         }
         return Alto;
     }
 
-    public static int getBaseMaxJet(int templateID, String statsModif) {
-        ObjectTemplate t = World.world.getObjTemplate(templateID);
-        String[] splitted = t.getStrTemplate().split(",");
-        for (String s : splitted) {
-            String[] stats = s.split("#");
-            if (stats[0].compareTo(statsModif) > 0)//Effets n'existe pas de base
-            {
-            } else if (stats[0].compareTo(statsModif) == 0)//L'effet existe bien !
-            {
-                int max = Integer.parseInt(stats[2], 16);
-                if (max == 0)
-                    max = Integer.parseInt(stats[1], 16);//Pas de jet maximum on prend le minimum
-                return max;
-            }
-        }
-        return 0;
-    }
-
-    public static int getActualJet(GameObject obj, String statsModif) {
-        for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-            if (Integer.toHexString(entry.getKey()).compareTo(statsModif) > 0)//Effets inutiles
-            {
-            } else if (Integer.toHexString(entry.getKey()).compareTo(statsModif) == 0)//L'effet existe bien !
-            {
-                int JetActual = entry.getValue();
-                return JetActual;
-            }
-        }
-        return 0;
-    }
-
-    public static byte viewActualStatsItem(GameObject obj, String stats)//retourne vrai si le stats est actuellement sur l'item
-    {
-        if (!obj.parseStatsString().isEmpty()) {
-            for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-                if (Integer.toHexString(entry.getKey()).compareTo(stats) > 0)//Effets inutiles
-                {
-                    if (Integer.toHexString(entry.getKey()).compareTo("98") == 0
-                            && stats.compareTo("7b") == 0) {
-                        return 2;
-                    } else if (Integer.toHexString(entry.getKey()).compareTo("9a") == 0
-                            && stats.compareTo("77") == 0) {
-                        return 2;
-                    } else if (Integer.toHexString(entry.getKey()).compareTo("9b") == 0
-                            && stats.compareTo("7e") == 0) {
-                        return 2;
-                    } else if (Integer.toHexString(entry.getKey()).compareTo("9d") == 0
-                            && stats.compareTo("76") == 0) {
-                        return 2;
-                    } else if (Integer.toHexString(entry.getKey()).compareTo("74") == 0
-                            && stats.compareTo("75") == 0) {
-                        return 2;
-                    } else if (Integer.toHexString(entry.getKey()).compareTo("99") == 0
-                            && stats.compareTo("7d") == 0) {
-                        return 2;
-                    } else {
-                    }
-                } else if (Integer.toHexString(entry.getKey()).compareTo(stats) == 0)//L'effet existe bien !
-                {
-                    return 1;
-                }
-            }
-            return 0;
-        } else {
-            return 0;
-        }
-    }
-
-    public static byte viewBaseStatsItem(GameObject obj, String ItemStats)//retourne vrai si le stats existe de base sur l'item
-    {
-
-        String[] splitted = obj.getTemplate().getStrTemplate().split(",");
-        for (String s : splitted) {
-            String[] stats = s.split("#");
-            if (stats[0].compareTo(ItemStats) > 0)//Effets n'existe pas de base
-            {
-                if (stats[0].compareTo("98") == 0
-                        && ItemStats.compareTo("7b") == 0) {
-                    return 2;
-                } else if (stats[0].compareTo("9a") == 0
-                        && ItemStats.compareTo("77") == 0) {
-                    return 2;
-                } else if (stats[0].compareTo("9b") == 0
-                        && ItemStats.compareTo("7e") == 0) {
-                    return 2;
-                } else if (stats[0].compareTo("9d") == 0
-                        && ItemStats.compareTo("76") == 0) {
-                    return 2;
-                } else if (stats[0].compareTo("74") == 0
-                        && ItemStats.compareTo("75") == 0) {
-                    return 2;
-                } else if (stats[0].compareTo("99") == 0
-                        && ItemStats.compareTo("7d") == 0) {
-                    return 2;
-                } else {
-                }
-            } else if (stats[0].compareTo(ItemStats) == 0)//L'effet existe bien !
-            {
-                return 1;
-            }
-        }
-        return 0;
-    }
-
     public static double getPwrPerEffet(int effect) {
+        //System.out.println("On test "+effect);
         double r = 0.0;
         switch (effect) {
             case Constant.STATS_ADD_PA:
@@ -1971,6 +2306,9 @@ public class JobAction {
                 r = 100.0;
                 break;
             case Constant.STATS_ADD_DOMA:
+                r = 20.0;
+                break;
+            case Constant.STATS_ADD_DOMA2:
                 r = 20.0;
                 break;
             case Constant.STATS_ADD_EC:
@@ -2085,9 +2423,11 @@ public class JobAction {
                 r = 2.0;
                 break;
         }
+        //System.out.println("On retourne "+r);
         return r;
     }
 
+    // Nul a chier cette fonction, on va utiliser le poid max d'une ligne
     public static double getOverPerEffet(int effect) {
         double r = 0.0;
         switch (effect) {
@@ -2233,452 +2573,124 @@ public class JobAction {
                 r = 50.0;
                 break;
         }
+        //System.out.println("LE poid trouvé "+r);
         return r;
     }
-    //endregion
-    /* *********************/
 
-    //region Old craft with new formulas
-    /*private synchronized void craftMaging(boolean isReapeat, int repeat) {
-        GameClient.leaveExchange(this.player);
-        if(this.player != null) return;
-        GameObject gameObject = null, runeObject = null, potionObject = null, signingObject = null;
+    public static int getBaseMaxJet(int templateID, String statsModif) {
+        ObjectTemplate t = World.world.getObjTemplate(templateID);
+        String[] splitted = t.getStrTemplate().split(",");
+        for (String s : splitted) {
+            String[] stats = s.split("#");
+            if (stats[0].compareTo(statsModif) > 0)//Effets n'existe pas de base
+            {
+            } else if (stats[0].compareTo(statsModif) == 0)//L'effet existe bien !
+            {
 
-        //region Vérification de craft
-        /* Type : 26 = potion pour les cac
-           Type : 78 = rune
-           Signature : Type 50 ou Id 7508 */
+                int max = Integer.parseInt(stats[2], 16);
 
-        /*for(int id : this.ingredients.keySet()) {
-            GameObject object = World.world.getGameObject(id);
-            int type = object.getTemplate().getType();
-
-            if(gameObject == null && this.isAvailableObject(this.getJobStat().getTemplate().getId(), type))
-                gameObject = object;
-            else if(runeObject == null && type == 78)
-                runeObject = object;
-            else if(potionObject == null && type == 26)
-                potionObject = object;
-            else if(signingObject == null && object.getTemplate().getId() == 7508)
-                signingObject = object;
-        }
-
-        if(gameObject == null || (runeObject == null && potionObject == null)) {
-            GameClient.leaveExchange(this.player);
-            return;
-        }
-        //endregion Vérification de craft
-
-        /* Poids max : 100 si > EC à 100%
-           EXO : Si ça dépasse la valeur de la stats originale ou si elle n'existe pas */
-        /*if(runeObject != null) {
-            Rune runeTemplate = Rune.getRuneById(runeObject.getTemplate().getId()); // On trouve le template de la rune qu'on souhaite appliqué à l'item
-
-            if (runeTemplate == null) { // Si elle n'existe pas..
-                //Ne devrait pas arriver.
-                return;
+                if (max == 0)
+                    max = Integer.parseInt(stats[1], 16);//Pas de jet maximum on prend le minimum
+                return max;
             }
-
-            //region Initialisation des variables principales
-            String[] originalSplitStats = gameObject.getTemplate().getStrTemplate().split(","), actualObjectSplitStats = gameObject.parseStatsString().split(","); // Liste toutes les stats originale de l'objet
-            byte originalSplitLenghtStats = (byte) originalSplitStats.length, containsPo = 0; // Taille de la liste des stats originale
-            String concernedOriginalJet = null, concernedActualJet = null; // Jet originale concerner
-            float PWRGmin = 0, PWRGactual = 0, PWRGmax = 0;
-
-            for (String jet : originalSplitStats) { // On fait une iteration de chaque ligne de l'objet originale
-                if(jet.isEmpty()) continue;
-                int id = Short.parseShort(jet.split("#")[0], 16);
-
-                if (id == runeTemplate.getCharacteristic()) // Si l'ID de la stats est égale à l'ID de la stats de la rune
-                    concernedOriginalJet = jet; // On met la ligne concerner a jour
-                if (id == Constant.STATS_ADD_PO)
-                    containsPo = Byte.parseByte(jet.split("\\+")[1]);
-            }
-            for (String jet : actualObjectSplitStats) { // On fait une iteration de chaque ligne de l'objet actuel
-                if(jet.isEmpty()) continue;
-                short id = Short.parseShort(jet.split("#")[0], 16);
-
-                if (id == Constant.STATS_CHANGE_BY || id == Constant.STATS_BUILD_BY) continue;
-
-                Rune rune = Rune.getRuneByCharacteristicAndByWeight(id);
-                if(rune != null) PWRGactual += this.getPWR(rune, jet, (byte) 1);
-
-                if (id == runeTemplate.getCharacteristic()) // Si l'ID de la stats est égale à l'ID de la stats de la rune
-                    concernedActualJet = String.valueOf(gameObject.getStats().getEffect(Integer.parseInt(jet.split("#")[0], 16))); // On met la ligne concerner a jour
-            }
-            //endregion Initialisation des variables principales
-
-            //region Début des calculs des PWR & PWRG
-            float PWRmin = concernedOriginalJet == null ? 0 : this.getPWR(runeTemplate, concernedOriginalJet, (byte) 0),
-                    PWRactual = concernedActualJet == null ? 0 : this.getPWR(runeTemplate, concernedActualJet, (byte) 1),
-                    PWRmax = concernedOriginalJet == null ? 0 : this.getPWR(runeTemplate, concernedOriginalJet, (byte) 2);
-
-            for (String jet : originalSplitStats) {
-                short id = Short.parseShort(jet.split("#")[0], 16);
-                Rune rune = Rune.getRuneByCharacteristicAndByWeight(id);
-
-                if(rune == null) continue;
-
-                PWRGmin += this.getPWR(rune, jet, (byte) 0);
-                PWRGmax += this.getPWR(rune, jet, (byte) 2);
-            }
-            //endregion Début des calculs des PWR & PWRG
-
-            //region Réussite normal
-            byte factorJet = 30, factorObject = 50, successLevel = 5;
-
-            float stateOfJet = ((PWRactual + runeTemplate.getWeight() - PWRmin) * 100 / (PWRmax - PWRmin)),
-
-                    PWGGActualMin = PWRGactual - PWRGmin < 0 ? -(PWRGactual - PWRGmin) : PWRGactual - PWRGmin,
-
-                    stateOfObject = (float) Math.ceil(((PWRGactual - PWRGmin)* 100 / (PWRGmax - PWRGmin))),
-                            //Math.ceil((PWGGActualMin) * 100 / (PWGGActualMin)),
-                    //((PWGGActualMin <= 0 ? PWRGmin - PWRGactual : PWGGActualMin) * 100 /
-                    //((PWRGmax - PWRGmin) == 0 ? 1 : (PWRGmax - PWRGmin))),
-                    successJet = 1, successObject = 0;
-            byte criticSuccess = 1, neutralSuccess = 50, criticFail = 1;
-
-            //region Réussite exotique
-            if (PWRactual > PWRmax)
-                PWRactual = PWRmax + 2 * (PWRactual - PWRmax);
-
-            if ((PWRactual + runeTemplate.getWeight() > PWRmax && PWRactual > 101)
-                    || (gameObject.getStats().get(Constant.STATS_ADD_PA) >= 1 && runeTemplate.getWeight() == 100)
-                    || (gameObject.getStats().get(Constant.STATS_ADD_PM) >= 1 && runeTemplate.getWeight() == 90)
-                        || (gameObject.getStats().get(Constant.STATS_ADD_PO) >= containsPo && runeTemplate.getWeight() == 51)) {
-                criticSuccess = 0;
-                neutralSuccess = 0;
-                criticFail = 100;
-            } else if(PWRactual == 0 && PWRmax == 0 && runeTemplate.getWeight() > 50) {
-                criticSuccess = 1;
-                neutralSuccess = 0;
-                criticFail = 99;
-            } else if (PWRactual + runeTemplate.getWeight() > PWRmax && PWRactual < 101 && PWRactual + runeTemplate.getWeight() > 101) {
-                criticSuccess = 1;
-                neutralSuccess = 0;
-                criticFail = 99;
-            } else {
-                byte exotic = 0;
-                if (PWRactual + runeTemplate.getWeight() > PWRmax) {
-                    factorJet = 40;
-                    factorObject = 54;
-                    successLevel = 5;
-                    stateOfJet = 100;
-                    exotic = 1;
-                } else if (PWRmin == 0) {
-                    factorJet = 40;
-                    factorObject = 54;
-                    successLevel = 5;
-                    stateOfJet = 100;
-                    exotic = 1;
-                }
-                //endregion Réussite exotique
-
-                if (PWRmax - PWRmin == 0 && originalSplitLenghtStats == 1 && runeTemplate.getWeight() == 100) {
-                    criticSuccess = 70;
-                    neutralSuccess = 10;
-                    criticFail = 20;
-                } else {
-                    if (PWRmax - PWRmin == 0 && originalSplitLenghtStats > 1)
-                        stateOfJet = runeTemplate.getWeight();
-
-                    if (stateOfJet >= 80 && stateOfJet <= 100)
-                        successJet = factorJet * stateOfJet / 100;
-                    else if (stateOfJet > 100)//Faux
-                        successJet = factorJet * stateOfJet / 100;
-                    else
-                        successJet = stateOfJet / 4;
-
-                    if (stateOfObject >= 50 && stateOfObject <= 100)
-                        successObject = factorObject * stateOfObject / 100;
-                    else
-                        successObject = stateOfObject;
-
-                    criticSuccess = (byte) Math.ceil(100 - (successJet + successObject + successLevel));
-
-                    criticSuccess = criticSuccess < 0 ? 0 : criticSuccess;
-
-                    if (criticSuccess > 50)
-                        neutralSuccess = (byte) (100 - criticSuccess);
-                    else if (criticSuccess < 25)
-                        neutralSuccess = (byte) (50 - (25 - criticSuccess));
-
-                    criticFail = (byte) (100 - (neutralSuccess + criticSuccess));
-
-                    //region Limite
-                    if(exotic == 0) {//normal
-                        byte[] chances = runeTemplate.getChance();
-
-                        if (criticSuccess > chances[0]) {
-                            criticSuccess = chances[0];
-                            neutralSuccess = chances[1];
-                            criticFail = chances[2];
-                        }
-                    } else {//exotic
-                        if (criticSuccess > 32) {
-                            criticSuccess = 32;
-                            neutralSuccess = 50;
-                            criticFail = 18;
-                        }
-                    }
-                    //endregion
-                }
-            }
-            //endregion Réussite normal
-
-            //region Perte neutre et critique
-            RandomStats<Byte> randomStats = new RandomStats<>();
-            randomStats.add((int) criticSuccess, (byte) 0);
-            randomStats.add((int) neutralSuccess, (byte) 1);
-            randomStats.add((int) criticFail, (byte) 2);
-            byte result = randomStats.get();
-            this.player.sendMessage("SC: " + criticSuccess + " | SN: "+ neutralSuccess + " | EC: " + criticFail + " | R: " + result);
-
-            // success critique
-            if (result == 0) {
-                //TODO: Créer la fonction pour ajouter la rune à l'objet
-                int newQuantity = this.ingredients.get(runeObject.getPlayerId()) - 1;
-                this.player.removeByTemplateID(runeObject.getTemplate().getId(), 1);
-
-                int winXP = Formulas.calculXpWinFm(gameObject.getTemplate().getLevel(), (int) Math.floor(runeTemplate.getWeight())) * Config.INSTANCE.getRATE_JOB;
-                if (winXP > 0) this.SM.addXp(this.player, winXP);
-                this.player.send("JX|" + this.SM.getTemplate().getId() + ";" + this.SM.get_lvl() + ";" + this.SM.getXpString(";") + ";");
-
-                GameObject newObject = GameObject.getCloneObjet(gameObject, 1);
-                this.player.removeItem(gameObject.getPlayerId(), 1, true, gameObject.getQuantity() == 1);
-
-                if (signingObject != null) {
-                    this.player.removeByTemplateID(signingObject.getTemplate().getId(), 1);
-                    if (newObject.getTxtStat().containsKey(985))
-                        newObject.getTxtStat().remove(985);
-                    newObject.addTxtStat(985, this.player.getName());
-                }
-
-                newObject.getStats().addOneStat(runeTemplate.getCharacteristic(), runeTemplate.getBonus());
-
-                if (this.player.addObjetWithOAKO(newObject, false))
-                    World.world.addGameObject(newObject, true);
-
-                SocketManager.GAME_SEND_Ow_PACKET(this.player);
-
-                this.player.send("EmKO+" + newObject.getPlayerId() + "|1|" + newObject.getTemplate().getId() + "|" + newObject.parseStatsString());
-                this.player.send("IO" + this.player.getId() + "|+" + newObject.getTemplate().getId()); // Icon tête joueur :  +/-
-                this.player.send("EcK;" + newObject.getTemplate().getId());//Vous avez crée...
-
-                this.ingredients.clear();
-                this.player.send("EMKO+" + newObject.getPlayerId() + "|1");
-                this.ingredients.put(newObject.getPlayerId(), 1);
-
-                if (newQuantity >= 1) {
-                    this.player.send("EMKO+" + runeObject.getPlayerId() + "|" + newQuantity);
-                    this.ingredients.put(runeObject.getPlayerId(), newQuantity);
-                }
-
-                this.oldJobCraft = this.jobCraft;
-                if (!isReapeat) this.setJobCraft(null);
-                return;
-            }
-
-            // success neutre
-            // echec critique
-            float PWRloose = runeTemplate.getWeight();
-
-            if (Formulas.getRandomValue(0, 1) == 1) {
-                if (PWRloose > gameObject.getPuit()) {
-                    gameObject.setPuit((int) Math.ceil(gameObject.getPuit() - PWRloose));
-                } else if (PWRloose < gameObject.getPuit()) {
-                    PWRloose = PWRloose - gameObject.getPuit();
-                    gameObject.setPuit(0);
-                }
-            }
-
-            for(int i : gameObject.getStats().getEffects().values())
-                System.out.print(i + " - ");
-            System.out.println("");
-
-            ArrayList<String> listActual = new ArrayList<>();
-            Collections.addAll(listActual, actualObjectSplitStats);
-
-            //Formule calcul normal
-            while (PWRloose > 0 && listActual.size() > 0) {
-                if(listActual.get(0).isEmpty()) break;
-                Map<Short, String> hashMapOriginal = new HashMap<>();
-
-                listActual.clear();
-                Collections.addAll(listActual, actualObjectSplitStats);
-                for (String jet : originalSplitStats) hashMapOriginal.put(Short.parseShort(jet.split("#")[0], 16), jet);
-
-                for (String jetActual : listActual) {
-                    if(jetActual.isEmpty()) continue;
-                    short id = Short.parseShort(jetActual.split("#")[0], 16);
-
-                    if (id == Constant.STATS_CHANGE_BY || id == Constant.STATS_BUILD_BY) continue;
-
-                    Rune runeForActualJet = Rune.getRuneByCharacteristic(id);
-
-                    if (runeForActualJet == null) continue;
-
-                    float PWRactualAct = this.getPWR(runeForActualJet, jetActual, (byte) 1);
-
-                    for (String jetOriginal : hashMapOriginal.values()) {
-                        Rune runeForOriginalJet = Rune.getRuneByCharacteristic(Short.parseShort(jetOriginal.split("#")[0], 16));
-
-                        if (runeForOriginalJet == null) continue;
-                        // success neutre
-                        if (result == 1 && runeForActualJet.getCharacteristic() == runeForOriginalJet.getCharacteristic())
-                            continue;
-
-                        float PWRoriginalMax = this.getPWR(runeForOriginalJet, jetOriginal, (byte) 2);
-
-                        if (PWRactualAct > PWRoriginalMax) {
-                            float newPWRloose = PWRloose - Formulas.getRandomValue(1, (int) Math.ceil(PWRloose));
-                            if(newPWRloose == 0 || gameObject.getStats().getEffects().get(((int) id)) == null) continue;
-                            float newPWRSelectedJet = PWRactualAct - newPWRloose;
-                            System.out.print("old: " +gameObject.getStats().get(id));
-                            int loose = (int) -(gameObject.getStats().get(id) - Math.floor(newPWRSelectedJet / runeForActualJet.getWeight()));
-                            gameObject.getStats().addOneStat(id, loose);
-                            PWRloose = newPWRloose;
-                            break;
-                        }
-                    }
-                }
-
-                for (String jet : actualObjectSplitStats) {
-                    if(jet.isEmpty()) continue;
-                    short id = Short.parseShort(jet.split("#")[0], 16);
-
-                    if (id == Constant.STATS_CHANGE_BY || id == Constant.STATS_BUILD_BY) continue;
-
-                    Rune rune = Rune.getRuneByCharacteristic(id);
-
-                    if (rune == null) continue;
-
-
-                    // success neutre
-                    float PWRselectedJet = this.getPWR(rune, jet, (byte) 1);
-                    if (result == 1 && runeTemplate.getCharacteristic() == rune.getCharacteristic()) continue;
-                    if(gameObject.getStats().getEffects().get(((int) id)) == null) continue;
-                    //TODO: Ou aussi voir la formule PWRligne / PWRrunes
-
-                    if (Formulas.getRandomValue(1, 100) >= PWRselectedJet) {
-                        if(PWRloose == 1) {
-                            float newPWRSelectedJet = PWRselectedJet - PWRloose;
-                            int loose = (int) (-(gameObject.getStats().get(id) - Math.floor(newPWRSelectedJet / rune.getWeight())));
-                            gameObject.getStats().addOneStat(id, loose);
-                            PWRloose = 0;
-                        } else {
-                            float newPWRloose = PWRloose - Formulas.getRandomValue(1, (int) Math.ceil(PWRloose));
-                            if (newPWRloose == 0) continue;
-                            float newPWRSelectedJet = PWRselectedJet - newPWRloose;
-                            System.out.print("old: " + gameObject.getStats().get(id));
-                            int loose = (int) (-(gameObject.getStats().get(id) - Math.floor(newPWRSelectedJet / rune.getWeight())));
-                            gameObject.getStats().addOneStat(id, loose);
-                            PWRloose = newPWRloose;
-                        }
-                    } else if(PWRselectedJet >= 100 && rune.getWeight() > 80) {
-                        gameObject.getStats().addOneStat(id, - gameObject.getStats().get(id));
-                        PWRloose = 0;
-                    }
-                }
-            }
-            if (PWRloose < 0) gameObject.setPuit((int) Math.ceil(PWRloose * (-1)));
-
-            int newQuantity = this.ingredients.get(runeObject.getPlayerId()) - 1;
-            this.player.removeByTemplateID(runeObject.getTemplate().getId(), 1);
-
-            GameObject newObject = GameObject.getCloneObjet(gameObject, 1);
-
-            for(int i : newObject.getStats().getEffects().values())
-                System.out.print(i + " - ");
-            System.out.println("");
-
-
-            this.player.removeItem(gameObject.getPlayerId(), 1, true, gameObject.getQuantity() == 1);
-
-            if (signingObject != null)
-                this.player.removeByTemplateID(signingObject.getTemplate().getId(), 1);
-
-            if(result == 1) { // succes neutre
-                if (signingObject != null) {
-                    if (newObject.getTxtStat().containsKey(985))
-                        newObject.getTxtStat().remove(985);
-                    newObject.addTxtStat(985, this.player.getName());
-                }
-
-                newObject.getStats().addOneStat(runeTemplate.getCharacteristic(), runeTemplate.getBonus());
-                this.player.send("Im0194");//La magie n\'a pas parfaitement fonctionné..
-            } else {
-                this.player.send("Im0117");//La magie n'opère pas..
-            }
-
-            if (this.player.addObjetWithOAKO(newObject, false))
-                World.world.addGameObject(newObject, true);
-
-            SocketManager.GAME_SEND_Ow_PACKET(this.player);
-
-            this.player.send("EmKO+" + newObject.getPlayerId() + "|1|" + newObject.getTemplate().getId() + "|" + newObject.parseStatsString());
-            this.player.send("IO" + this.player.getId() + "|-" + newObject.getTemplate().getId()); // Icon tête joueur :  +/-
-
-
-            this.ingredients.clear();
-            this.player.send("EMKO+" + newObject.getPlayerId() + "|1");
-            this.ingredients.put(newObject.getPlayerId(), 1);
-
-            if (newQuantity >= 1) {
-                this.player.send("EMKO+" + runeObject.getPlayerId() + "|" + newQuantity);
-                this.ingredients.put(runeObject.getPlayerId(), newQuantity);
-            } else {
-                this.player.send("EMKO-" + runeObject.getPlayerId());
-            }
-
-            this.oldJobCraft = this.jobCraft;
-            if (!isReapeat) this.setJobCraft(null);
-        } else if(potionObject != null) {
-            
-        }
-        //endregion
-    }
-
-    private float getPWR(Rune rune, String jet, byte type) {
-        float weight = rune == null ? 1 : Rune.getRuneByCharacteristicAndByWeight(rune.getCharacteristic()).getWeight();
-        System.out.println("W : " + weight);
-        switch(type) {
-            case 0:// min
-                return weight * Formulas.getMinJet(jet.split("#")[4]);
-            case 1:// actual
-                return weight * Short.parseShort(jet.split("\\+")[jet.split("\\+").length - 1]);
-            case 2:// max
-                return weight * Formulas.getMaxJet(jet.split("#")[4]);
         }
         return 0;
     }
 
-    private boolean isAvailableObject(int jobId, int type) {
-        switch(jobId) {
-            case 62://Cordomage
-                return type == 10 || type == 11;
-            case 63://Joaillomage
-                return type == 1 || type == 9;
-            case 64://Costumage
-                return type == 16 || type == 17;
-            case 43://Forgemage de Dagues
-                return type == 5;
-            case 44://Forgemage d'Epées
-                return type == 6;
-            case 45://Forgemage de Marteaux
-                return type == 7;
-            case 46://Forgemage de Pelles
-                return type == 8;
-            case 47://Forgemage de Haches
-                return type == 19;
-            case 48://Sculptemage d'Arcs
-                return type == 2;
-            case 49://Sculptemage de Baguettes
-                return type == 3;
-            case 50://Sculptemage de Bâtons
-                return type == 4;
+    public static int getActualJet(GameObject obj, String statsModif) {
+        for (Entry<Integer, Integer> entry : obj.getStats().getMap().entrySet()) {
+            //World.world.logger.trace(Integer.toHexString(entry.getKey())+" / "+statsModif);
+
+            if (Integer.toHexString(entry.getKey()).compareTo(statsModif) > 0)//Effets inutiles
+            {
+
+            }
+            else if (Integer.toHexString(entry.getKey()).compareTo(statsModif) == 0)//L'effet existe bien !
+            {
+                int JetActual = entry.getValue();
+                return JetActual;
+            }
         }
-        return false;
-    }*/
-    //endregion Old craft with new formulas
+        return 0;
+    }
+
+    public static byte viewActualStatsItem(GameObject obj, String stats)//retourne vrai si le stats est actuellement sur l'item
+    {
+        if (!obj.parseStatsString().isEmpty()) { // si l'obj est pas vide
+            for (Entry<Integer, Integer> entry : obj.getStats().getMap().entrySet()) { // Toutes les entrées
+                if (Integer.toHexString(entry.getKey()).compareTo(stats) > 0)//Effets inutiles
+                {
+                    if (Integer.toHexString(entry.getKey()).compareTo("98") == 0  // C'est un cas négatif
+                            && stats.compareTo("7b") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9a") == 0
+                            && stats.compareTo("77") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9b") == 0
+                            && stats.compareTo("7e") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9d") == 0
+                            && stats.compareTo("76") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("74") == 0
+                            && stats.compareTo("75") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("99") == 0
+                            && stats.compareTo("7d") == 0) {
+                        return 2;
+                    }
+                }
+                else if (Integer.toHexString(entry.getKey()).compareTo(stats) == 0)//L'effet existe bien !
+                {
+                    return 1;
+                }
+            }
+            return 0;
+        } else {
+            return 0;
+        }
+    }
+
+    public static byte viewBaseStatsItem(GameObject obj, String ItemStats)//retourne vrai si le stats existe de base sur l'item
+    {
+
+
+        String[] splitted = obj.getTemplate().getStrTemplate().split(",");
+        for (String s : splitted) {
+            String[] stats = s.split("#");
+
+            //System.out.println("On compare :" + stats[0] + "a " + ItemStats);
+
+            if (stats[0].compareTo(ItemStats) > 0)//Effets n'existe pas de base
+            {
+                if (stats[0].compareTo("98") == 0
+                        && ItemStats.compareTo("7b") == 0) {
+                    return 2; //
+                } else if (stats[0].compareTo("9a") == 0
+                        && ItemStats.compareTo("77") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("9b") == 0
+                        && ItemStats.compareTo("7e") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("9d") == 0
+                        && ItemStats.compareTo("76") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("74") == 0
+                        && ItemStats.compareTo("75") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("99") == 0
+                        && ItemStats.compareTo("7d") == 0) {
+                    return 2; // Retourne oui mais c'est un négatif
+                } else if (stats[0].compareTo("99") == 0
+                        && ItemStats.compareTo("7d") == 0) {
+                    return 2; // Retourne oui mais c'est un négatif
+                } else {
+                }
+            } else if (stats[0].compareTo(ItemStats) == 0)//L'effet existe bien !
+            {
+                return 1;
+            }
+        }
+        return 0; // Retourne faux
+    }
 }

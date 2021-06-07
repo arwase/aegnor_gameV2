@@ -15,10 +15,7 @@ import kernel.Constant;
 import kernel.Logging;
 import object.entity.Fragment;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class GameObject {
@@ -39,7 +36,7 @@ public class GameObject {
 
     public byte modification = -1;
 
-    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit, int rarity) {
+    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit,int rarity) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
@@ -76,75 +73,12 @@ public class GameObject {
 
     public static GameObject getCloneObjet(GameObject obj, int qua) {
         Map<Integer, Integer> maps = new HashMap<>();
-        maps.putAll(obj.getStats().getEffects());
+        maps.putAll(obj.getStats().getMap());
         Stats newStats = new Stats(maps);
 
         GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, obj.getEffects(), obj.getSoulStat(), obj.getTxtStat(), obj.getPuit(),obj.getRarity());
         ob.modification = 0;
         return ob;
-    }
-    public static int getAleaRarity(int chanceimpact) {
-        int rarity = 1;
-        int seuil = 50;
-        int chance = 0;
-
-        float perc = (float)(chanceimpact*0.01);
-        int seuilimpact = (int)Math.floor(seuil * perc);
-        for (int i = 0; i <= 4; i++) {
-            chance = Formulas.getRandomValue(0, 100);
-            System.out.println( chance+ " de chance sur " + seuilimpact );
-            if(chance<seuilimpact) {
-                rarity++;
-            }
-            else {
-                break;
-            }
-        }
-
-        if(rarity>5){
-            rarity = 5;
-        }
-
-        System.out.println("La rareté finale " + rarity);
-
-
-        return rarity;
-    }
-
-    public static int getAleaRarity() {
-        int rarity = 1;
-        int seuil = 50;
-        int chance = 0;
-
-        for (int i = 0; i <= 4; i++) {
-            chance = Formulas.getRandomValue(0, 100);
-            if(chance<seuil) {
-                rarity++;
-            }
-            else {
-                break;
-            }
-        }
-
-        if(rarity>5){
-            rarity = 5;
-        }
-        return rarity;
-    }
-
-    public GameObject getClone() {
-        Map<Integer, Integer> maps = new HashMap<>();
-        maps.putAll(this.getStats().getEffects());
-        Stats newStats = new Stats(maps);
-
-        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), this.getTemplate().getId(), this.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, newStats, this.getEffects(), this.getSoulStat(), this.getTxtStat(), this.getPuit(),this.getRarity());
-        ob.modification = -1;
-        return ob;
-    }
-
-
-    public void setRarity(int rarity) {
-        this.rarity = rarity;
     }
 
     public int setId() {
@@ -183,8 +117,8 @@ public class GameObject {
             this.modification = 1;
     }
 
-    public void parseStringToStats(String strStats, boolean save) {
-        if(this.template != null && this.template.getId() == 7010) return;
+    private void parseStringToStats(String strStats, boolean save) {
+        if(this.template != null & this.template.getId() == 7010) return;
         String dj1 = "";
         if (!strStats.equalsIgnoreCase("")) {
             for (String split : strStats.split(",")) {
@@ -195,11 +129,11 @@ public class GameObject {
                         txtStats.put(Constant.STATS_DATE, split.substring(3) + "");
                         continue;
                     }
-                    if (split.substring(0, 3).equalsIgnoreCase("3dc")) {// Si c'est une rune de signature cr�e
+                    if (split.substring(0, 3).equalsIgnoreCase("3dc")) {// Si c'est une rune de signature crï¿½e
                         txtStats.put(Constant.STATS_SIGNATURE, split.split("#")[4]);
                         continue;
                     }
-                    if (split.substring(0, 3).equalsIgnoreCase("3d9")) {// Si c'est une rune de signature modifi�
+                    if (split.substring(0, 3).equalsIgnoreCase("3d9")) {// Si c'est une rune de signature modifiï¿½
                         txtStats.put(Constant.STATS_CHANGE_BY, split.split("#")[4]);
                         continue;
                     }
@@ -207,30 +141,8 @@ public class GameObject {
                     String[] stats = split.split("#");
                     int id = Integer.parseInt(stats[0], 16);
 
-                    /*if(id == Constant.STATS_ADD_DOMA && template != null) {
-                        int actual = Integer.parseInt(stats[1], 16);
-                        int max = Formulas.getMaxJet(this.template.getStrTemplate());
-
-                        if(actual - max > 5 && this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER) {
-                            Stats.addOneStat(id, max + 5);
-                            continue;
-                        } else if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER) {
-                            max = Integer.parseInt(World.world.getPets(this.template.getId()).getStatsMax());
-                            if(actual > max) {
-                                Stats.addOneStat(id, max);
-                                continue;
-                            }
-                        }
-                    }
-                    if(id == 112) {
-                        this.modification = 1;
-                        continue;
-                    }*/
-                    if (id >= 281 && id <= 294) {
-                        this.getSpellStats().add(split);
-                        continue;
-                    }
-                    if (id == Constant.STATS_PETS_DATE && this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
+                    if (id == Constant.STATS_PETS_DATE
+                            && this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
                         txtStats.put(id, split.substring(3));
                         continue;
                     }
@@ -243,7 +155,7 @@ public class GameObject {
                         continue;
                     }
                     if (id == Constant.STATS_PETS_SOUL) {
-                        SoulStats.put(Integer.parseInt(stats[1], 16), Integer.parseInt(stats[3], 16)); // put(id_monstre, nombre_tu�)
+                        SoulStats.put(Integer.parseInt(stats[1], 16), Integer.parseInt(stats[3], 16)); // put(id_monstre, nombre_tuï¿½)
                         continue;
                     }
                     if (id == Constant.STATS_NAME_DJ) {
@@ -264,7 +176,7 @@ public class GameObject {
                         continue;
                     }
                     //Si stats avec Texte (Signature, apartenance, etc)//FIXME
-                    if (id != Constant.STATS_RESIST && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas �gale � 0 ou est de type familier)
+                    if (id != Constant.STATS_RESIST && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
                         if (!(this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL && id == Constant.STATS_PETS_DATE)) {
                             txtStats.put(id, stats[3]);
                             continue;
@@ -279,6 +191,10 @@ public class GameObject {
                         continue;
                     }
 
+                    if (id >= 281 && id <= 294) {
+                        SortStats.add(split);
+                        continue;
+                    }
                     boolean follow1 = true;
                     switch (id) {
                         case 110:
@@ -305,7 +221,7 @@ public class GameObject {
                         }
                     }
                     if (!follow2)
-                        continue;//Si c'�tait un effet Actif d'arme ou une signature
+                        continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
 
                     Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
                 } catch (Exception e) {
@@ -340,10 +256,6 @@ public class GameObject {
         this.setModification();
     }
 
-    public ArrayList<String> getSpellStats() {
-        return SortStats;
-    }
-
     public int getQuantity() {
         return quantity;
     }
@@ -351,8 +263,9 @@ public class GameObject {
     public void setQuantity(int quantity) {
         if (quantity <= 0)
             quantity = 0;
-        else if (quantity >= 100_000)
-            Logging.objects.warn("Faille : Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
+        else if (quantity >= 100000)
+            //if (Logging.USE_LOG)
+            //    Logging.getInstance().write("Object", "Faille : Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
 
         this.quantity = quantity;
         this.setModification();
@@ -388,6 +301,10 @@ public class GameObject {
         return txtStats;
     }
 
+    public void setExchangeIn(Player player) {
+
+        this.setModification();
+    }
     public Mount setMountStats(Player player, Mount mount, boolean castrated) {
         if(mount == null)
             mount = new Mount(Constant.getMountColorByParchoTemplate(this.getTemplate().getId()), player.getId(), false);
@@ -436,37 +353,38 @@ public class GameObject {
                 + rarity + ";";
     }
 
-
     public String parseStatsString() {
-        if (this.getTemplate().getType() == 83) //Si c'est une pierre d'�me vide
-            return this.getTemplate().getStrTemplate();
-
-        final StringBuilder stats = new StringBuilder();
+        if (getTemplate().getType() == 83) //Si c'est une pierre d'ï¿½me vide
+            return getTemplate().getStrTemplate();
+        StringBuilder stats = new StringBuilder();
         boolean isFirst = true;
 
-        // Panoplie de classe (81 à 92)
-        if (this.getTemplate().getPanoId() >= 81 && this.getTemplate().getPanoId() <= 92) {
-            for (String spell : this.SortStats) {
+        if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
+                || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212)) {
+            for (String spell : SortStats) {
                 if (!isFirst) {
                     stats.append(",");
                 }
-                stats.append(spell);
+                String[] sort = spell.split("#");
+                int spellid = Integer.parseInt(sort[1], 16);
+                stats.append(sort[0]).append("#").append(sort[1]).append("#0#").append(sort[3]).append("#").append(World.world.getSort(spellid));
                 isFirst = false;
             }
         }
 
-        for (SpellEffect effect : this.Effects) {
+        for (SpellEffect SE : Effects) {
             if (!isFirst)
                 stats.append(",");
-            String[] split = effect.getArgs().split(";");
+            String[] infos = SE.getArgs().split(";");
 
             try {
-                switch (effect.getEffectID()) {
+                switch (SE.getEffectID()) {
                     case 614:
-                        stats.append(Integer.toHexString(effect.getEffectID())).append("#0#0#").append(split[0]).append("#").append(split[5]);
+                        stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(infos[0]).append("#").append(infos[5]);
                         break;
+
                     default:
-                        stats.append(Integer.toHexString(effect.getEffectID())).append("#").append(split[0]).append("#").append(split[1]).append("#").append(split[1]).append("#").append(split[5]);
+                        stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(infos[0]).append("#").append(infos[1]).append("#").append(infos[1]).append("#").append(infos[5]);
                         break;
                 }
             } catch (Exception e) {
@@ -562,9 +480,7 @@ public class GameObject {
             } else if (entry.getKey() == Constant.STATS_RESIST) {
                 stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
             } else {
-                if(Integer.parseInt(entry.getValue()) > 0) {
-                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
-                }
+                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
             }
             isFirst = false;
         }
@@ -580,7 +496,7 @@ public class GameObject {
             isFirst = false;
         }
 
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
 
             int statID = entry.getKey();
             if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
@@ -607,7 +523,7 @@ public class GameObject {
             } else
             if ((statID == 970) || (statID == 971) || (statID == 972)
                     || (statID == 973) || (statID == 974)) {
-                int jet = entry.getValue();
+                int jet = entry.getValue().intValue();
                 if ((statID == 974) || (statID == 972) || (statID == 970))
                     stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
                 else
@@ -624,7 +540,7 @@ public class GameObject {
                 if(entry.getValue() > 0) {
                     String jet = "0d0+" + entry.getValue();
                     stats.append(Integer.toHexString(statID)).append("#");
-                    stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
+                    stats.append(Integer.toHexString(entry.getValue().intValue())).append("#0#0#").append(jet);
                 }
             }
             isFirst = false;
@@ -633,7 +549,7 @@ public class GameObject {
     }
 
     public String parseStatsStringSansUserObvi() {
-        if (getTemplate().getType() == 83) //Si c'est une pierre d'�me vide
+        if (getTemplate().getType() == 83) //Si c'est une pierre d'ï¿½me vide
             return getTemplate().getStrTemplate();
 
         StringBuilder stats = new StringBuilder();
@@ -705,16 +621,10 @@ public class GameObject {
             }
             isFirst = false;
         }
-        // Panoplie de classe (81 à 92)
-        if (this.getTemplate().getPanoId() >= 81 && this.getTemplate().getPanoId() <= 92) {
-            for (String spell : this.SortStats) {
-                if (!isFirst) {
-                    stats.append(",");
-                }
-                stats.append(spell);
-                isFirst = false;
-            }
-        }
+        /*
+         * if(isCertif && !db) return stats.toString();
+         */
+
         for (SpellEffect SE : Effects) {
             if (!isFirst)
                 stats.append(",");
@@ -734,7 +644,7 @@ public class GameObject {
             stats.append(Integer.toHexString(Constant.STATS_PETS_SOUL)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
             isFirst = false;
         }
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
             if (!isFirst)
                 stats.append(",");
 
@@ -742,10 +652,8 @@ public class GameObject {
                 stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
             } else {
                 String jet = "0d0+" + entry.getValue();
-                if(entry.getValue() > 0) {
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
-                    stats.append("#0#0#").append(jet);
-                }
+                stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
+                stats.append("#0#0#").append(jet);
             }
             isFirst = false;
         }
@@ -773,10 +681,10 @@ public class GameObject {
     public void obvijevanNourir(GameObject obj) {
         if (obj == null)
             return;
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
-            if (entry.getKey().intValue() != 974) // on ne boost que la stat de l'exp�rience de l'obvi
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
+            if (entry.getKey().intValue() != 974) // on ne boost que la stat de l'expï¿½rience de l'obvi
                 continue;
-            if (entry.getValue().intValue() > 500) // si le boost a une valeur sup�rieure � 500 (irr�aliste)
+            if (entry.getValue().intValue() > 500) // si le boost a une valeur supï¿½rieure ï¿½ 500 (irrï¿½aliste)
                 return;
             entry.setValue(Integer.valueOf(entry.getValue().intValue()
                     + obj.getTemplate().getLevel() / 3));
@@ -785,7 +693,7 @@ public class GameObject {
     }
 
     public void obvijevanChangeStat(int statID, int val) {
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
             if (entry.getKey().intValue() != statID)
                 continue;
             entry.setValue(Integer.valueOf(val));
@@ -796,7 +704,7 @@ public class GameObject {
     public void removeAllObvijevanStats() {
         setObvijevanPos(0);
         client.other.Stats StatsSansObvi = new Stats();
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
             int statID = entry.getKey().intValue();
             if ((statID == 970) || (statID == 971) || (statID == 972)
                     || (statID == 973) || (statID == 974))
@@ -810,7 +718,7 @@ public class GameObject {
     public void removeAll_ExepteObvijevanStats() {
         setObvijevanPos(0);
         client.other.Stats StatsSansObvi = new Stats();
-        for (Entry<Integer, Integer> entry : Stats.getEffects().entrySet()) {
+        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
             int statID = entry.getKey().intValue();
             if ((statID != 971) && (statID != 972) && (statID != 973)
                     && (statID != 974))
@@ -828,7 +736,7 @@ public class GameObject {
         return obj.parseStatsStringSansUserObvi();
     }
 
-	/* *********FM SYSTEM********* */
+    /* *********FM SYSTEM********* */
 
     public Stats generateNewStatsFromTemplate(String statsTemplate,
                                               boolean useMax) {
@@ -848,7 +756,7 @@ public class GameObject {
                 if (a == statID)
                     follow = false;
             if (!follow)
-                continue;//Si c'�tait un effet Actif d'arme
+                continue;//Si c'ï¿½tait un effet Actif d'arme
 
             String jet = "";
             int value = 1;
@@ -871,7 +779,9 @@ public class GameObject {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            itemStats.addOneStat(statID, value);
+            if(value > 0) {
+                itemStats.addOneStat(statID, value);
+            }
         }
         return itemStats;
     }
@@ -899,7 +809,7 @@ public class GameObject {
                         + (boost ? template.getBonusCC() : 0);
                 String jet = "1d" + (max - min + 1) + "+" + (min - 1);
                 //exCode: String newArgs = Integer.toHexString(min)+";"+Integer.toHexString(max)+";-1;-1;0;"+jet;
-                //osef du minMax, vu qu'on se sert du jet pour calculer les d�gats
+                //osef du minMax, vu qu'on se sert du jet pour calculer les dï¿½gats
                 String newArgs = "0;0;0;-1;0;" + jet;
                 effets.add(new SpellEffect(SE.getEffectID(), newArgs, 0, -1));
             } catch (Exception e) {
@@ -973,7 +883,212 @@ public class GameObject {
         return value;
     }
 
-    /** FM TOUT POURRI **/
+    public String parseFMStatsString(String statsstr, int add,
+                                     boolean negatif) {
+        String stats = "";
+        boolean isFirst = true;
+        for (SpellEffect SE : this.Effects) {
+            if (!isFirst)
+                stats += ",";
+
+            String[] infos = SE.getArgs().split(";");
+            try {
+                stats += Integer.toHexString(SE.getEffectID()) + "#" + infos[0]
+                        + "#" + infos[1] + "#0#" + infos[5];
+            } catch (Exception e) {
+                e.printStackTrace();
+                continue;
+            }
+            isFirst = false;
+        }
+
+        for (Entry<Integer, Integer> entry : this.Stats.getMap().entrySet()) {
+            if (!isFirst)
+                stats += ",";
+
+            //World.world.logger.trace( ""+Integer.toHexString(entry.getKey())+" "+statsstr +" "+ add+ " "+ entry.getValue());
+            if (Integer.toHexString(entry.getKey()).compareTo(statsstr) == 0) {
+                int newstats = 0;
+                @SuppressWarnings("unused")
+                int newstats2 = 0;
+                //World.world.logger.trace( "Negative ? " + negatif);
+                if (negatif) {
+                    newstats = entry.getValue() - add;
+                    if (add < 1)
+                        continue;
+                } else {
+                    newstats = entry.getValue() + add;
+                }
+                String jet = "0d0+" + newstats;
+                stats += Integer.toHexString(entry.getKey()) + "#"
+                        + Integer.toHexString(newstats) + "#0#0#"
+                        + jet;
+            } else {
+
+                String jet = "0d0+" + entry.getValue();
+                stats += Integer.toHexString(entry.getKey()) + "#"
+                        + Integer.toHexString(entry.getValue()) + "#0#0#" + jet;
+
+                //World.world.logger.trace( ""+entry.getKey()+" "+statsstr +" "+ add+ " "+ entry.getValue());
+            }
+            isFirst = false;
+        }
+
+        for (Entry<Integer, String> entry : this.txtStats.entrySet()) {
+            if (!isFirst)
+                stats += ",";
+                stats += Integer.toHexString(entry.getKey()) + "#0#0#0#"
+                        + entry.getValue();
+                isFirst = false;
+        }
+        // World.world.logger.trace( ""+stats);
+        return stats;
+    }
+
+    public static byte viewActualStatsItem(GameObject obj, String stats)//retourne vrai si le stats est actuellement sur l'item
+    {
+        if (!obj.parseStatsString().isEmpty()) { // si l'obj est pas vide
+            for (Entry<Integer, Integer> entry : obj.getStats().getMap().entrySet()) { // Toutes les entrées
+                if (Integer.toHexString(entry.getKey()).compareTo(stats) > 0)//Effets inutiles
+                {
+                    if (Integer.toHexString(entry.getKey()).compareTo("98") == 0  // C'est un cas négatif
+                            && stats.compareTo("7b") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9a") == 0
+                            && stats.compareTo("77") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9b") == 0
+                            && stats.compareTo("7e") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("9d") == 0
+                            && stats.compareTo("76") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("74") == 0
+                            && stats.compareTo("75") == 0) {
+                        return 2;
+                    } else if (Integer.toHexString(entry.getKey()).compareTo("99") == 0
+                            && stats.compareTo("7d") == 0) {
+                        return 2;
+                    }
+                }
+                else if (Integer.toHexString(entry.getKey()).compareTo(stats) == 0)//L'effet existe bien !
+                {
+                    return 1;
+                }
+            }
+            return 0;
+        } else {
+            return 0;
+        }
+    }
+
+    public static byte viewBaseStatsItem(GameObject obj, String ItemStats)//retourne vrai si le stats existe de base sur l'item
+    {
+
+        String[] splitted = obj.getTemplate().getStrTemplate().split(",");
+        for (String s : splitted) {
+            String[] stats = s.split("#");
+            if (stats[0].compareTo(ItemStats) > 0)//Effets n'existe pas de base
+            {
+                if (stats[0].compareTo("98") == 0
+                        && ItemStats.compareTo("7b") == 0) {
+                    return 2; //
+                } else if (stats[0].compareTo("9a") == 0
+                        && ItemStats.compareTo("77") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("9b") == 0
+                        && ItemStats.compareTo("7e") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("9d") == 0
+                        && ItemStats.compareTo("76") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("74") == 0
+                        && ItemStats.compareTo("75") == 0) {
+                    return 2;
+                } else if (stats[0].compareTo("99") == 0
+                        && ItemStats.compareTo("7d") == 0) {
+                    return 2;
+                } else {
+                }
+            } else if (stats[0].compareTo(ItemStats) == 0)//L'effet existe bien !
+            {
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    public void setNewStats(String statsObjectFm,int statsAdd) {
+        int ItemCurrentStats = viewActualStatsItem(this, statsObjectFm);
+        String statsStr = "";
+        String statStringObj = this.parseStatsString() ;
+        boolean negative = false;
+        if (ItemCurrentStats == 2) {
+            if (statsObjectFm.compareTo("7b") == 0) {
+                statsObjectFm = "98";
+                negative = true;
+            }
+            if (statsObjectFm.compareTo("77") == 0) {
+                statsObjectFm = "9a";
+                negative = true;
+            }
+            if (statsObjectFm.compareTo("7e") == 0) {
+                statsObjectFm = "9b";
+                negative = true;
+            }
+            if (statsObjectFm.compareTo("76") == 0) {
+                statsObjectFm = "9d";
+                negative = true;
+            }
+            if (statsObjectFm.compareTo("7c") == 0) {
+                statsObjectFm = "9c";
+                negative = true;
+            }
+            if (statsObjectFm.compareTo("7d") == 0) {
+                statsObjectFm = "99";
+                negative = true;
+            }
+        }
+        if (ItemCurrentStats == 1 || ItemCurrentStats == 2) {
+            //World.world.logger.trace( "On est la normal");
+            if (statStringObj.isEmpty()) {
+                statsStr = statsObjectFm + "#"
+                        + Integer.toHexString(statsAdd) + "#0#0#0d0+"
+                        + statsAdd;
+                this.clearStats();
+                this.refreshStatsObjet(statsStr);
+
+            } else {
+                statsStr = this.parseFMStatsString(statsObjectFm, statsAdd, negative);
+                //World.world.logger.trace( "Etrange "+statsStr);
+                this.clearStats();
+                this.refreshStatsObjet(statsStr);
+                //String test = this.parseStatsString() ;
+                // World.world.logger.trace( "Test "+test);
+            }
+        } else {
+            //World.world.logger.trace( "Bizarrement on est la");
+            if (statStringObj.isEmpty()) {
+                statsStr = statsObjectFm + "#"
+                        + Integer.toHexString(statsAdd) + "#0#0#0d0+"
+                        + statsAdd;
+                this.clearStats();
+                this.refreshStatsObjet(statsStr);
+            } else {
+                statsStr = this.parseFMStatsString(statsObjectFm, statsAdd, negative)
+                        + ","
+                        + statsObjectFm
+                        + "#"
+                        + Integer.toHexString(statsAdd)
+                        + "#0#0#0d0+"
+                        + statsAdd;
+                this.clearStats();
+                this.refreshStatsObjet(statsStr);
+            }
+        }
+        this.setModification();
+    }
+
     public String parseStringStatsEC_FM(GameObject obj, double poid, int carac) { // Ca c'est pas mal mais peut etre vori le jet perdu en soit
         String stats = "";
         boolean first = false;
@@ -1114,71 +1229,22 @@ public class GameObject {
         return stats;
     }
 
-
-    public String parseFMStatsString(String statsstr, GameObject obj, int add,
-                                     boolean negatif) {
-        String stats = "";
-        boolean isFirst = true;
-        for (SpellEffect SE : obj.Effects) {
-            if (!isFirst)
-                stats += ",";
-
-            String[] infos = SE.getArgs().split(";");
-            try {
-                stats += Integer.toHexString(SE.getEffectID()) + "#" + infos[0]
-                        + "#" + infos[1] + "#0#" + infos[5];
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-            isFirst = false;
-        }
-
-        for (Entry<Integer, Integer> entry : obj.Stats.getEffects().entrySet()) {
-            if (!isFirst)
-                stats += ",";
-            if (Integer.toHexString(entry.getKey()).compareTo(statsstr) == 0) {
-                int newstats = 0;
-                if (negatif) {
-                    newstats = entry.getValue() - add;
-                    if (newstats < 1)
-                        continue;
-                } else {
-                    newstats = entry.getValue() + add;
-                }
-                String jet = "0d0+" + newstats;
-                stats += Integer.toHexString(entry.getKey()) + "#"
-                        + Integer.toHexString(entry.getValue() + add) + "#0#0#"
-                        + jet;
-            } else {
-                String jet = "0d0+" + entry.getValue();
-                stats += Integer.toHexString(entry.getKey()) + "#"
-                        + Integer.toHexString(entry.getValue()) + "#0#0#" + jet;
-            }
-            isFirst = false;
-        }
-
-        for (Entry<Integer, String> entry : obj.txtStats.entrySet()) {
-            if (!isFirst)
-                stats += ",";
-            stats += Integer.toHexString(entry.getKey()) + "#0#0#0#"
-                    + entry.getValue();
-            isFirst = false;
-        }
-
-        return stats;
-    }
-
     public boolean isOverFm(int stat, int val) {
+        if(stat == 121){
+            stat = 112;
+        }
+
         boolean trouve = false;
         String statsTemplate = "";
         statsTemplate = this.template.getStrTemplate();
+
         if (statsTemplate == null || statsTemplate.isEmpty())
             return false;
         String[] split = statsTemplate.split(",");
         for (String s : split) {
             String[] stats = s.split("#");
             int statID = Integer.parseInt(stats[0], 16);
+            //System.out.println("La stat " + statID);
             if (statID != stat)
                 continue;
 
@@ -1192,138 +1258,79 @@ public class GameObject {
             String jet = "";
             int value = 1;
             try {
+
+
                 jet = stats[4];
                 value = Formulas.getRandomJet(jet);
-                try {
-                    int min = Integer.parseInt(stats[1], 16);
-                    int max = Integer.parseInt(stats[2], 16);
-                    value = min;
-                    if (max != 0)
-                        value = max;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    value = Formulas.getRandomJet(jet);
+
+                if(rarity <= 3){
+                    try {
+                        int min = Integer.parseInt(stats[1], 16);
+                        int max = Integer.parseInt(stats[2], 16);
+                        value = min;
+                        if (max != 0)
+                            value = max;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        value = Formulas.getRandomJet(jet);
+                    }
                 }
+                else{
+                    try {
+                        int min = Integer.parseInt(stats[1], 16);
+                        int max = Integer.parseInt(stats[2], 16);
+                        value = min;
+                        if (max != 0)
+                            value = Formulas.getRandomJetWithRarity(min,max,5);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        value = Formulas.getRandomJet(jet);
+                    }
+                }
+
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            if (val > value)
+            if (val > value){
+                //System.out.println("On est over" + val + " "+value);
                 return true;
+            }
+
         }
         return !trouve;
     }
 
-    public boolean isSameStats(GameObject newObj) {
-        boolean effects = true, check = false;
-        for(SpellEffect effect0 : this.Effects) {
-            for(SpellEffect effect1 : newObj.Effects) {
-                if(effect0.getEffectID() == effect1.getEffectID() && effect0.getJet().equals(effect1.getJet())) {
-                    check = true;
-                    break;
-                }
-            }
-            if(!check) {
-                effects = false;
-                break;
-            }
-        }
-        check = false;
-        for(String spellStats0 : this.SortStats) {
-            for(String spellStats1 : newObj.SortStats) {
-                if(spellStats0.equals(spellStats1)) {
-                    check = true;
-                    break;
-                }
-            }
-            if(!check) {
-                effects = false;
-                break;
-            }
-        }
-        check = false;
-        for(String effect0 : this.txtStats.values()) {
-            for(String effect1 : newObj.txtStats.values()) {
-                if(effect0.equals(effect1)) {
-                    check = true;
-                    break;
-                }
-            }
-            if(!check) {
-                effects = false;
-                break;
-            }
-        }
-        check = false;
-        for(Entry<Integer, Integer> effect0 : this.SoulStats.entrySet()) {
-            for(Entry<Integer, Integer> effect1 : newObj.SoulStats.entrySet()) {
-                if(effect0.getKey().intValue() == effect1.getKey().intValue() && effect0.getValue().intValue() == effect1.getValue().intValue()) {
-                    check = true;
-                    break;
-                }
-            }
-            if(!check) {
-                effects = false;
-                break;
-            }
-        }
-        return effects && this.getStats().isSameStats(newObj.getStats());
-    }
-
-    public boolean isOverFm2(int stat, int val)
-    {
-        boolean trouve = false;
-        String statsTemplate = "";
-        statsTemplate = this.template.getStrTemplate();
-        if (statsTemplate == null || statsTemplate.isEmpty())
-            return false;
-        String[] split = statsTemplate.split(",");
-        for (String s : split)
-        {
-            String[] stats = s.split("#");
-            int statID = Integer.parseInt(stats[0], 16);
-            if (statID != stat)
-                continue;
-
-            trouve = true;
-            boolean sig = true;
-            for (int a : Constant.ARMES_EFFECT_IDS)
-                if (a == statID)
-                    sig = false;
-            if (!sig)
-                continue;
-            String jet = "";
-            int value = 1;
-            try
-            {
-                jet = stats[4];
-                value = Formulas.getRandomJet(jet);
-                try
-                {
-                    int min = Integer.parseInt(stats[1], 16);
-                    int max = Integer.parseInt(stats[2], 16);
-                    value = min;
-                    if (max != 0)
-                        value = max;
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                    value = Formulas.getRandomJet(jet);
-                }
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-            if (val == value)
-                return true;
-        }
-        if (!trouve)
-            return true;
-        return false;
+    public void setRarity(int rarity) {
+        this.rarity = rarity;
     }
 
     public int getRarity() {
         return rarity;
+    }
+
+    public static int getAleaRarity() {
+        int rarity = 1;
+        int seuil = 50;
+        int chance = 0;
+
+        for (int i = 0; i <= 4; i++) {
+            chance = Formulas.getRandomValue(0, 100);
+            if(chance>seuil) {
+                rarity++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if(rarity>5){
+            rarity = 5;
+        }
+        return rarity;
+    }
+
+    public ArrayList<String> getSpellStats() {
+        return SortStats;
     }
 }

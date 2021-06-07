@@ -408,6 +408,12 @@ public class InteractiveObject {
         array.add(this);
     }
 
+    public void desactive() {
+        this.lastTime = System.currentTimeMillis();
+        ArrayList<InteractiveObject> array = (ArrayList<InteractiveObject>) InteractiveObject.updatable.get();
+        array.add(this);
+    }
+
     public static class InteractiveObjectTemplate {
 
         private int id;

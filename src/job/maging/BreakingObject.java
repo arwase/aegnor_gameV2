@@ -10,6 +10,10 @@ public class BreakingObject {
     private int count = 0;
     private boolean stop = false;
 
+    public ArrayList<Couple<Integer, Integer>> getObjects() {
+        return objects;
+    }
+
     public void setCount(int count) {
         this.count = count;
     }
@@ -24,14 +28,6 @@ public class BreakingObject {
 
     public boolean isStop() {
         return stop;
-    }
-
-    public void setObjects(ArrayList<Couple<Integer, Integer>> objects) {
-        this.objects = objects;
-    }
-
-    public ArrayList<Couple<Integer, Integer>> getObjects() {
-        return objects;
     }
 
     public synchronized int addObject(int id, int quantity) {
@@ -65,10 +61,13 @@ public class BreakingObject {
         return 0;
     }
 
-    private Couple<Integer, Integer> search(int id) {
+    public Couple<Integer, Integer> search(int id) {
         for (Couple<Integer, Integer> couple : this.objects)
             if (couple.first == id)
                 return couple;
         return null;
+    }
+
+    public void setObjects(ArrayList<Couple<Integer, Integer>> objects) {
     }
 }

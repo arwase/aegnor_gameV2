@@ -57,10 +57,6 @@ public class Job {
         return skills;
     }
 
-    public Map<Integer, ArrayList<Integer>> getCrafts() {
-        return crafts;
-    }
-
     public boolean isValidTool(int id1) {
         for (int id : this.tools)
             if (id == id1)

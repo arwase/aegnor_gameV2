@@ -1330,4 +1330,143 @@ public class Formulas {
             msg = msg.replace(i, "H");
         return msg;
     }
+
+    // NOUVELLE FONCTION PAS TROP MAL
+    public static ArrayList<Integer> chanceFM2(final int PoidMaxItem, final int PoidMiniItem,final int PoidTotItemActuel, final int PoidActuelStatAFm,
+                                               final int PoidTotStatsExoItemActuel,final int poidRune,  final int maxStat, final int minStat,final int actualStat, final int statsAdd,
+                                               double poidUnitaire, final int statsJetfutur, final float x, final float coef, Player player, int puit,String loi) {
+
+
+        final ArrayList<Integer> chances = new ArrayList<Integer>();
+
+        int p1 = 0;
+        int p2 = 0;
+        int p3 = 0;
+
+        if(loi == "exo") {
+            p1 = (Config.INSTANCE.getPERCENT_EXO() * Config.INSTANCE.getRATE_FM());
+            p2 = 0;
+            p3 = (100-p1);
+
+            chances.add(0, p1);
+            chances.add(1, p2);
+            chances.add(2, p3);
+
+            return chances;
+        }
+
+        final int diff = (int) Math.abs(PoidMaxItem * 1.3f - PoidTotItemActuel);
+
+        //player.sendMessage("Poid en JP : " + WeightTotalBase );
+        //player.sendMessage("Poid en JM : " + WeightTotalBaseMin );
+        //player.sendMessage("Poid de l'obj actuel : " + PoidTotItemActuel );
+        //player.sendMessage("Stats Max ITEM : " + maxStat );
+        //player.sendMessage("Stats Min ITEM : " + minStat );
+        //player.sendMessage("Stats Actuel : " + actualStat );
+        //player.sendMessage("Je confond sans doute : " + PoidTotItemActuel + " != " +PoidActuelStatAFm +" + "+ PoidTotStatsExoItemActuel  );
+        //player.sendMessage("Poid de la stats a montÃ© : " + (PoidActuelStatAFm + PoidTotStatsExoItemActuel)  );
+        //player.sendMessage("Poid de la rune : " + poidRune );
+        //player.sendMessage("DiffÃ©rentiel  : " + diff );
+        //player.sendMessage("Coefficient : " + coef );
+        //player.sendMessage("Je sais pas trop mais dans la multiplication : " + x );
+        //player.sendMessage("Stats ajoutÃ© : " + statsAdd );
+        //player.sendMessage("Puits de l'objet : " + puit );
+        //player.sendMessage("Rate FM : " + Config.getInstance().rateFm );
+
+
+
+        float c = 1.0f;
+        final float m1 = maxStat - (actualStat + statsAdd);
+        final float m2 = maxStat - minStat;
+        if (1.0f - m1 / m2 > 1.0) {
+            c = (1.0f - (1.0f - m1 / m2) / 2.0f) / 2.0f;
+        } else if (1.0f - m1 / m2 > 0.8) {
+            c = 1.0f - (1.0f - m1 / m2) / 2.0f;
+        }
+        if (c < 0.0f) {
+            c = 0.0f;
+        }
+
+
+        try {
+
+            final int moyenne = (int) Math.floor(maxStat - (((maxStat - minStat)) / 2) );
+            //player.sendMessage("moyenne : " + moyenne );
+
+            float mStat = 1.0f;
+            // Si la stats n'est pas prÃ©sent sur l'obj (Exclu EXO)
+            if(maxStat == 0) {
+                mStat = 1f;
+            }
+            else {
+                //player.sendMessage("moyenne : " + moyenne );
+                //player.sendMessage("actualStat : " + actualStat );
+                //player.sendMessage("actualStat : " + actualStat );
+                // Si la diffÃ©rence entre la stat sencÃ© etre prÃ©sente et la sats est null on limite la hausse
+                if( actualStat > 0) {
+                    mStat = (float)((float)moyenne / (float)actualStat);
+                    //player.sendMessage("mStat : " + mStat );
+                    if (mStat > 5f) {
+                        mStat = 5f;
+                    }
+                }
+                else {
+                    mStat = 5f;
+                }
+                //player.sendMessage("mStat : " + mStat );
+            }
+
+            if(mStat==0f) {
+                mStat = 1;
+            }
+            //player.sendMessage("a = "+ (PoidMaxItem + diff)+ "*" + coef + "*" + mStat + "*" + x + "*" +  Config.getInstance().rateFm  );
+            final float a = (PoidMaxItem + diff) * coef * mStat * x * Config.INSTANCE.getRATE_FM();
+            float b = (float) (Math.sqrt(PoidTotItemActuel + PoidActuelStatAFm)  + poidRune);
+
+            //player.sendMessage("Le total c'est  " + a );
+            //player.sendMessage("Le diviseur c'est  " + b );
+
+            if (b < 1.0) {
+                b = 1.0f;
+            }
+
+            p1 = (int) Math.floor(a / b);
+            p2 = 0;
+            p3 = 0;
+
+            if (p1 < 5) {
+                p1 = 5;
+                p2 = 0;
+                p3 = 95;
+            }
+            else if (p1 > 80) {
+                p1 = 80;
+                p2 = 19;
+            }
+            if (p2 == 0 && p3 == 0) {
+                p2 = (int) Math.floor(a / Math.sqrt(PoidTotItemActuel + PoidActuelStatAFm ));
+                if (p2 > 100 - p1) {
+                    p2 = 100 - p1;
+                }
+                if (p2 > 50) {
+                    p2 = 50;
+                }
+            }
+
+            //player.sendMessage("La chance SN c'est  " + p2 );
+            chances.add(0, p1);
+            chances.add(1, p2);
+            chances.add(2, p3);
+        }
+        catch(Exception e) {
+            player.sendMessage("ERREUR:" + e );
+            p1 = 5;
+            p2 = 0;
+            p3 = 95;
+            chances.add(0, p1);
+            chances.add(1, p2);
+            chances.add(2, p3);
+        }
+        return chances;
+    }
 }
