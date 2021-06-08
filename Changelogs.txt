@@ -23,5 +23,9 @@ Version 0.3 (02/06/2021) :
 Version 0.4 (03/06/2021) :
 - Correction du Packet pour les informations de la map (PanelAdmin)
 
-Version 0.5 (03/06/2021) :
-- Ajout su
+Version 0.5 (09/06/2021) :
+- Ajout du Système de FM de l'ancien Serveur
+- Ajout du Système de Rareté des Items (Arwase)
+- Ajout des maps du Donjons Kralamour
+- Ajout de 3 Raccourcis (ShowFightPos / ShowMobGroupInfo / HideSprite) modifiable dans les raccourcis personalisés
+- Correction de la Commande ADDFIGHTPOS pour le PanelAdmin

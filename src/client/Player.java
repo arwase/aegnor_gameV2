@@ -5790,11 +5790,12 @@ public class Player {
             this.sendMessage(mess);
             return;
         }
-        SocketManager.send(this, "GZ"+ places);
+        SocketManager.send(this, "GZB"+ places);
+        //SocketManager.send(this, "GZB"+ places);
     }
 
     public void cancelFightCells() {
-        SocketManager.send(this, "GZ"+ "");
+        SocketManager.send(this, "GZB"+ "");
     }
 
     public int getProspection () {
