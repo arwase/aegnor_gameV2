@@ -346,6 +346,7 @@ public class CommandPlayer {
     private static String getNameServerById(int id) {
         switch (id) {
             case 2 :
+            case 1:
                 return "Aegnor";
             case 13:
                 return "Silouate";
@@ -353,8 +354,6 @@ public class CommandPlayer {
                 return "Allister";
             case 22:
                 return "Oto Mustam";
-            case 1:
-                return "Jiva";
             case 37:
                 return "Nostalgy";
             case 4001:

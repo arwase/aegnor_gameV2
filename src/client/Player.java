@@ -5781,4 +5781,23 @@ public class Player {
     public JobAction getCurJobAction() {
         return this._curJobAction;
     }
+
+    // pour voir les cellules de combat du perso (sur sa map)
+    public void showFightCells() {
+        String places = this.getCurMap().getPlaces();
+        if (places.indexOf('|') == -1 || places.length() < 2) {
+            String mess = "Les places n'ont pas ete definies";
+            this.sendMessage(mess);
+            return;
+        }
+        SocketManager.send(this, "GZ"+ places);
+    }
+
+    public void cancelFightCells() {
+        SocketManager.send(this, "GZ"+ "");
+    }
+
+    public int getProspection () {
+        return (getTotalStats().getEffect(Constant.STATS_ADD_PROS) + Math.round(getTotalStats().getEffect(Constant.STATS_ADD_CHAN) / 10));
+    }
 }

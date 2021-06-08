@@ -2204,6 +2204,11 @@ public class World {
             } catch(IndexOutOfBoundsException ignored) { return null; }
             return drop;
         }
+
+        public double getPercentbyGrade(int Grade) {
+            double percent = percents.get(Grade -1);
+            return percent;
+        }
     }
 
     public static class Couple<L, R> {

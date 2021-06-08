@@ -32,6 +32,7 @@ public class MonsterData extends AbstractDAO<Monster> {
 
                 int id = RS.getInt("id");
                 //if(id == 1044) continue;
+                String name = RS.getString("name");
                 int gfxID = RS.getInt("gfxID");
                 int align = RS.getInt("align");
                 String colors = RS.getString("colors");
@@ -49,7 +50,7 @@ public class MonsterData extends AbstractDAO<Monster> {
                 int aggroDistance = RS.getInt("aggroDistance");
                 boolean capturable = RS.getInt("capturable") == 1;
 
-                Monster monster = new Monster(id, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance);
+                Monster monster = new Monster(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance);
                 World.world.addMobTemplate(id, monster);
             }
 
@@ -68,6 +69,7 @@ public class MonsterData extends AbstractDAO<Monster> {
             ResultSet RS = result.resultSet;
             while (RS.next()) {
                 int id = RS.getInt("id");
+                String name = RS.getString("name");
                 int gfxID = RS.getInt("gfxID");
                 int align = RS.getInt("align");
                 String colors = RS.getString("colors");
@@ -85,7 +87,7 @@ public class MonsterData extends AbstractDAO<Monster> {
                 int aggroDistance = RS.getInt("aggroDistance");
                 boolean capturable = (RS.getInt("capturable") == 1);
                 if (World.world.getMonstre(id) == null) {
-                    World.world.addMobTemplate(id, new Monster(id, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance));
+                    World.world.addMobTemplate(id, new Monster(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance));
                 } else {
                     World.world.getMonstre(id).setInfos(gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance);
                 }

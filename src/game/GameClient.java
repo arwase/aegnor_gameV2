@@ -1,5 +1,6 @@
 package game;
 
+import entity.monster.Monster;
 import org.apache.mina.core.session.IoSession;
 import org.slf4j.LoggerFactory;
 import area.map.GameCase;
@@ -65,9 +66,12 @@ import util.TimerWaiter;
 import util.lang.Lang;
 
 import java.net.InetSocketAddress;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 
 public class GameClient {
 
@@ -203,12 +207,293 @@ public class GameClient {
             case 'W':
                 parseWaypointPacket(packet);
                 break;
-
+            case 'Z':
+                try{
+                    parseMapPacket(packet);
+                }
+                catch (Exception e)  {
+                    System.out.println("RecvPacket : " + this.player.getName() + " : " + this.player.getAccount().getCurrentIp() + " : " + packet);
+                }
+                break;
             default:
                 if(this.player != null)
                     if(this.player.isChangeName())
                         this.changeName(packet);                
                 break;
+        }
+    }
+
+    private void parseMapPacket(String packet) {
+        switch (packet.charAt(1)) {
+            case 'C'://Use les fights pos
+                fightCell();
+                break;
+            case 'c'://Use les fights pos
+                fightCellcancel();
+                break;
+            case 'E':// Quand on clique sur un monstre
+                showMonsterInfo(packet.substring(2));
+                break;
+            case 'e':// Quand on clique sur un monstre
+                showMonsterLoc(packet.substring(2));
+                break;
+            case 'N': // Quand on ouvre le bestiaire monstre sur la map
+                bestiaireUse();
+                break;
+            case 'V': // Quand on recherche par monstre
+                searchByMonster(packet.substring(2));
+                break;
+            case 'v': // Quand on recherche par drop
+                searchByDrops(packet.substring(2));
+                break;
+            case 'w':
+                prismLeave();
+                break;
+        }
+    }
+
+    private void showMonsterLoc(String Idmonstre) {
+        int Id = Integer.parseInt(Idmonstre);
+
+        Collection<GameMap> maps = World.world.getMaps();
+        for (GameMap map : maps)
+        {
+            Map<Integer, Monster.MobGroup> Monstres = map.getMobGroups();
+            for (Map.Entry<Integer, Monster.MobGroup> entry : Monstres.entrySet()) {
+                Monster.MobGroup mobGroup = entry.getValue();
+                for(Map.Entry<Integer, Monster.MobGrade> entry2 : mobGroup.getMobs().entrySet()){
+                    Monster.MobGrade mobGrade = entry2.getValue();
+                    if( mobGrade.getTemplate().getId() == Id ){
+                        SocketManager.GAME_SEND_FLAG_PACKET(player, map);
+                        return;
+                    }
+                }
+
+            }
+
+        }
+        this.player.sendMessage("Le monstre n'a pas été trouvé dans le monde des douzes");
+    }
+
+    private void showMonsterInfo(String Idmonstre) {
+        try {
+            int Id = Integer.parseInt(Idmonstre);
+            Monster Monstre = World.world.getMonstre(Id);
+            ArrayList<World.Drop> Drops = Monstre.getDrops();
+            String drops = "";
+            final NumberFormat formatter = new DecimalFormat("#0.000");
+
+            int FullPP = 0 ;
+            int GroupSize = 1;
+
+            if(this.player.getParty() != null) {
+                List<Player> Players = this.player.getParty().getPlayers();
+                if(Players != null) {
+                    @SuppressWarnings("unused")
+                    int countPlayer = Players.size();
+                    for (Player player : Players)
+                        if(player != null)
+                            FullPP += player.getProspection();
+
+                }
+                GroupSize = Players.size();
+            }
+            else {
+                FullPP = this.player.getProspection();
+            }
+
+            double chancebasesolo = 1.0;
+            double chancebaseGroupe = 1.0;
+
+            for (World.Drop drop : Drops)
+            {
+
+                int seuil = drop.getCeil();
+                if (seuil <= FullPP ) {
+                    chancebasesolo = 2;
+                }
+                else {
+                    if(seuil/8 <= FullPP){
+                        chancebasesolo = 1;
+                    }
+                    else{
+                        chancebasesolo = 0.5;
+                    }
+                }
+
+                double prospecting = this.player.getProspection() / 100.0;
+                if (prospecting < 1) prospecting = 1;
+
+                Double chanceSolo = Double.parseDouble(formatter.format(drop.getPercentbyGrade(1) * prospecting * Config.INSTANCE.getRATE_DROP() * chancebasesolo).replace(',', '.'));
+                Double chanceEnGroupe = 0.0;
+
+                if(this.player.getParty() != null) {
+                    if (seuil <= FullPP ) {
+                        chancebaseGroupe = 2;
+                    }
+                    else {
+                        if(seuil/(8/GroupSize) <= FullPP){
+                            chancebaseGroupe = 1;
+                        }
+                        else{
+                            chancebaseGroupe = 0.5;
+                        }
+                    }
+
+                    chanceEnGroupe = Double.parseDouble(formatter.format(drop.getPercentbyGrade(1)  * prospecting * Config.INSTANCE.getRATE_DROP() * chancebaseGroupe).replace(',', '.'));
+                }
+
+                int itemId = drop.getObjectId();
+
+                String seuils = (seuil) + " / " + (seuil/8) + " / " + (seuil/(8/GroupSize));
+
+                String percent = "";
+                if( chanceEnGroupe == 0.0 ) {
+                    percent = chanceSolo + " / " + "Pas de groupe" ;
+                }
+                else {
+                    percent = chanceSolo + " / " + chanceEnGroupe ;
+                }
+
+
+                drops += itemId +","+ seuils +"#"+ percent+"#"+"1"+";";
+
+
+            }
+            if(drops.length()>0){
+                drops = drops.substring(0,drops.length()-1);
+            }
+            String gradeString = "";
+            Map<Integer, Monster.MobGrade> grades = Monstre.getGrades();
+            for (Map.Entry<Integer, Monster.MobGrade> entry : grades.entrySet()) {
+                Monster.MobGrade actualgrade = entry.getValue();
+                String gradeinfo = "";
+                int Life = actualgrade.getPdvMax();
+                int PA = actualgrade.getPa();
+                int PM = actualgrade.getPm();
+                int Lvl = actualgrade.getLevel();
+                String ResiStats = actualgrade.getStringResi();
+                Map<Integer, Spell.SortStats> Spells = actualgrade.getSpells();
+                String SpellString = "";
+                for (Map.Entry<Integer, Spell.SortStats> spell : Spells.entrySet()) {
+                    Spell.SortStats sort =  spell.getValue();
+                    SpellString += sort.getSpellID();
+                    SpellString += "@";
+                    SpellString +=  sort.getLevel();
+                    SpellString += ",";
+                }
+                if(SpellString.length()>0){
+                    SpellString = SpellString.substring(0,SpellString.length()-1);
+                }
+
+                int Xp = actualgrade.getBaseXp();
+                gradeinfo = Life + "~" + PA + "~" + PM + "~" + Lvl + "," + ResiStats + "~" +  SpellString + "~" + (Xp*Config.INSTANCE.getRATE_XP());
+
+                gradeString += "|" + gradeinfo ;
+            }
+            // La famille je sais pas ou elle est stocké , je vais envoyé 1 de base
+            String packet = Monstre.getId() + "|" + (Monstre.getMinKamas()*Config.INSTANCE.getRATE_KAMAS()) +"-"+(Monstre.getMaxKamas()*Config.INSTANCE.getRATE_KAMAS())  + "|" + drops + gradeString ;
+            //String packet = "1|"+"";
+            SocketManager.send(this, "XE"+ packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.player.sendMessage( e.toString() );
+        }
+    }
+
+    private void bestiaireUse() {
+
+        String packet = "";
+        ArrayList<Monster.MobGrade> zoneArea = this.player.getCurMap().getMobPossibles();
+        for (Monster.MobGrade mob : zoneArea)
+        {
+            int Id = mob.getTemplate().getId();
+            String idS = Id+"";
+            if(!packet.contains(idS) ) {
+                packet += Id + ",";
+            }
+        }
+        if(packet.length()>0){
+            packet = packet.substring(0,packet.length()-1);
+        }
+
+        SocketManager.send(this, "XF"+ packet);
+    }
+
+    private void searchByMonster(String MonstreSearch) {
+
+        String Monstre = MonstreSearch.trim().toLowerCase();
+
+        //System.out.println(MonstreSearch);
+        if(Monstre.length() < 3){
+            this.player.sendMessage("Vous n'avez pas entré assez de caractère pour faire une recherche");
+        }
+        else{
+            Collection<Monster> Monstres =	World.world.getMonstres();
+            String packet = "";
+            for (Monster mob : Monstres)
+            {
+                String little = mob.getName().toLowerCase();
+                Monstre = Monstre.toLowerCase();
+                if( ( little.contains(Monstre) || little.equals(Monstre)) && !(mob.getGrade(1).getSpells().keySet().isEmpty()) ){
+                    int Id = mob.getId();
+                    String idS = Id+"";
+                    if(!packet.contains(idS) ) {
+                        packet += Id + ",";
+                    }
+                }
+            }
+
+            if( packet.length() <= 0){
+                this.player.sendMessage("Pas de monstre trouvé qui s'appelle "+Monstre);
+                SocketManager.send(this, "XR");
+            }
+            else{
+                packet = packet.substring(0,packet.length()-1);
+                SocketManager.send(this, "XR"+ packet);
+            }
+        }
+    }
+
+    private void searchByDrops(String DropSearch) {
+        String Drops = DropSearch.trim().toLowerCase();
+        //System.out.println(Drops);
+        if(Drops.length() < 3){
+            this.player.sendMessage("Vous n'avez pas entré assez de caractères pour faire une recherche");
+            SocketManager.send(this, "Xr");
+        }
+        else{
+            Collection<Monster> Monstres =	World.world.getMonstres();
+            String packet = "";
+
+            try{
+                for (Monster mob : Monstres)
+                {
+                    Collection<World.Drop> dropofMonster = mob.getDrops();
+                    for(World.Drop Drop : dropofMonster ) {
+                        String ItemName = World.world.getObjTemplate(Drop.getObjectId()).getName().toLowerCase();
+                        if( (ItemName.contains(Drops) || ItemName.equals(Drops)) && !(mob.getGrade(1).getSpells().keySet().isEmpty()) ){
+                            System.out.println("On a trouvé " +ItemName);
+                            int Id = mob.getId();
+                            String idS = Id+"";
+                            if(!packet.contains(idS) ) {
+                                packet += Id + ",";
+                            }
+                        }
+                    }
+                }
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+            if( packet.length() <= 0){
+                this.player.sendMessage("Pas de monstre trouvé qui drop : "+ Drops);
+                SocketManager.send(this, "Xr");
+            }
+            else{
+                packet = packet.substring(0,packet.length()-1);
+                SocketManager.send(this, "Xr"+ packet);
+            }
         }
     }
 
@@ -7036,6 +7321,12 @@ public class GameClient {
         this.player.removeByTemplateID(10860, 1);
         SocketManager.GAME_SEND_ALTER_GM_PACKET(this.player.getCurMap(), this.player);
     }
+        private void fightCell() {
+            this.player.showFightCells();
+        }
+        private void fightCellcancel() {
+            this.player.cancelFightCells();
+        }
 
     public void send(String packet) {
         try {

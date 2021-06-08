@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 public class Monster {
     private int id;
+    private String name;
     private int gfxId;
     private int align;
     private String colors;
@@ -34,7 +35,7 @@ public class Monster {
     private boolean isCapturable;
     private int aggroDistance = 0;
 
-    public Monster(int id, int gfxId, int align, String colors,
+    public Monster(int id,String name, int gfxId, int align, String colors,
                    String thisGrades, String thisSpells, String thisStats,
                    String thisStatsInfos, String thisPdvs, String thisPoints,
                    String thisInit, int minKamas, int maxKamas, String thisXp, int ia,
@@ -194,6 +195,22 @@ public class Monster {
             drops.remove(remove);
         }
     }
+
+    public MobGrade getGrade(int gradevalue) {
+        int graderandom = 1;
+        for (Entry<Integer, MobGrade> grade : getGrades().entrySet()) {
+            if (graderandom == gradevalue)
+                return grade.getValue();
+            else
+                graderandom++;
+        }
+        return null;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public enum TipoGrupo {
         FIJO, NORMAL, SOLO_UNA_PELEA, HASTA_QUE_MUERA
     }
@@ -1295,6 +1312,12 @@ public class Monster {
             });
             strStats.append(",").append(Constant.STATS_ADD_INIT).append(":").append(getInit());
             return strStats.toString();
+        }
+
+        public String getStringResi() {
+            String Resi ="";
+            Resi = this.stats.get(Constant.STATS_ADD_RP_NEU) + "," + this.stats.get(Constant.STATS_ADD_RP_TER) + "," + this.stats.get(Constant.STATS_ADD_RP_FEU) + "," + this.stats.get(Constant.STATS_ADD_RP_EAU) + "," +this.stats.get(Constant.STATS_ADD_RP_AIR);
+            return Resi;
         }
     }
 }
