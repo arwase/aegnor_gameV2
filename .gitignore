@@ -1,8 +1,13 @@
 # Project exclude paths
 /out/
 /.idea/
+.idea/
 /.classpath/
+/classes/
+/recursos/
 /.project/
 03 - Game.iml
 Alexandria EMU.iml
+AegnorGame.iml
 config.properties
+names.txt
