@@ -4109,6 +4109,14 @@ public class GameClient {
             case 'F':
                 this.player.setGhost();
                 break;
+            case 'G' :
+                switch(packet.charAt(2))
+                {
+                    case 'K':
+
+                        break;
+                }
+                break;
             case 'I':
                 getExtraInformations();
                 break;

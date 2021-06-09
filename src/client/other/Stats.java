@@ -76,7 +76,7 @@ public class Stats {
 
     public int addOneStat(int id, int val) {
         if(val > 0) {
-            if (id == 112) id = Constant.STATS_ADD_DOMA;
+            if (id == 112) id = Constant.STATS_ADD_DOMA2;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -87,7 +87,12 @@ public class Stats {
                 } else this.effects.put(id, newVal);
             }
         }
-        return this.effects.get(id);
+        if(this.effects.containsKey(id)) {
+            return this.effects.get(id);
+        }
+        else{
+            return 0;
+        }
     }
 
     public boolean isSameStats(Stats other) {
@@ -192,6 +197,10 @@ public class Stats {
                 val = Constant.STATS_ADD_VIE;
                 break;
             case Constant.STATS_ADD_DOMA:
+                if (this.effects.get(Constant.STATS_REM_DOMA) != null)
+                    val -= this.effects.get(Constant.STATS_REM_DOMA);
+                break;
+            case Constant.STATS_ADD_DOMA2:
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
                 break;

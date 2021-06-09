@@ -29,3 +29,7 @@ Version 0.5 (09/06/2021) :
 - Ajout des maps du Donjons Kralamour
 - Ajout de 3 Raccourcis (ShowFightPos / ShowMobGroupInfo / HideSprite) modifiable dans les raccourcis personalisés
 - Correction de la Commande ADDFIGHTPOS pour le PanelAdmin
+- Debug du Kralamour
+
+//TODO
+- Régler la mise à jour de la GameCase lorsqu'un joueur se déplace en fight

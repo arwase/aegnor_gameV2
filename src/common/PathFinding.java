@@ -1559,25 +1559,25 @@ public class PathFinding {
         char[] dirs = {'b', 'd', 'f', 'h'};
         for (char d : dirs) {
 
-            // On cherche la celluleID correspondant � la direction associ�
+            // On cherche la celluleID correspondant ï¿½ la direction associï¿½
             int c = PathFinding.GetCaseIDFromDirrection(startCell, d, map, true);
             if (map.getCase(c) == null)
                 continue;
             // On cherche la distance entre
             int dis = PathFinding.getDistanceBetween(map, endCell, c);
-            // Si la distance est strictement inf�rieur � 1000 et que la case
+            // Si la distance est strictement infï¿½rieur ï¿½ 1000 et que la case
             // est marchable et que personne ne
             // se trouve dessus et que la case n'est pas interdite
             if (dis < dist && map.getCase(c).isWalkable(true, true, -1)
                     && map.getCase(c).getFirstFighter() == null
                     && !forbidens.contains(map.getCase(c))) {
-                // On cr�e la distance
+                // On crï¿½e la distance
                 dist = dis;
                 // On modifie la cellule
                 cellID = c;
             }
         }
-        // On renvoie -1 si pas trouv�
+        // On renvoie -1 si pas trouvï¿½
         return cellID == startCell ? -1 : cellID;
     }
 
