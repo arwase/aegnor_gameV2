@@ -105,7 +105,7 @@ public class AccountData extends AbstractDAO<Account> {
                     + acc.parseFriendListToDB() + "', enemy = '"
                     + acc.parseEnemyListToDB() + "', muteTime = '"
                     + acc.getMuteTime() + "', mutePseudo = '"
-                    + acc.getMutePseudo() + "', vip = '"+ acc.getVip() +" WHERE guid = '" + acc.getId()
+                    + acc.getMutePseudo() + "', vip = '"+ acc.getVip() +"' WHERE guid = '" + acc.getId()
                     + "'");
             execute(statement);
             return true;
