@@ -22,6 +22,8 @@ import util.TimerWaiter;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Math.floor;
+
 public class GameCase {
 
     private int id;
@@ -32,6 +34,8 @@ public class GameCase {
     private ArrayList<Action> onCellStop;
     private InteractiveObject object;
     private GameObject droppedItem;
+    private Byte coordX;
+    private Byte coordY;
 
     public GameCase(GameMap map, int id, boolean walkable, boolean loS, int objId) {
         this.id = id;
@@ -39,11 +43,20 @@ public class GameCase {
         this.loS = loS;
         if (objId != -1)
             this.object = new InteractiveObject(objId, map, this);
+        var ancho = map.getH();
+        var _loc5 = (int)(floor((double)(this.id / (ancho * 2 - 1))));
+        var _loc6 = this.id - _loc5 * (ancho * 2 - 1);
+        var _loc7 = _loc6 % ancho;
+        coordY = Byte.parseByte(String.valueOf(_loc5 - _loc7));
+        // es en plano inclinado, solo Y es negativo partiendo del 0 arriba negativo, abajo positivo
+        coordX = Byte.parseByte(String.valueOf((this.id - (ancho - 1) * coordY) / ancho));
     }
 
     public int getId() {
         return id;
     }
+    public Byte getCoordY() { return coordY;}
+    public Byte getCoordX() { return coordX;}
 
     public boolean isWalkable(boolean useObject) {
         if (this.object != null && useObject)

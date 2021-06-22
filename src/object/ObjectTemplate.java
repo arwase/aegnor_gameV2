@@ -15,10 +15,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import other.Dopeul;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ObjectTemplate {
 
@@ -38,6 +35,7 @@ public class ObjectTemplate {
     private int avgPrice;
     private int points, newPrice;
     private ArrayList<ObjectAction> onUseActions;
+    private int boutique;
 
     public String toString() {
         return id + "";
@@ -45,7 +43,7 @@ public class ObjectTemplate {
 
     public ObjectTemplate(int id, String strTemplate, String name, int type,
                           int level, int pod, int price, int panoId, String conditions,
-                          String armesInfos, int sold, int avgPrice, int points, int newPrice) {
+                          String armesInfos, int sold, int avgPrice, int points, int newPrice, int boutique) {
         this.id = id;
         this.strTemplate = strTemplate;
         this.name = name;
@@ -65,6 +63,7 @@ public class ObjectTemplate {
         this.avgPrice = avgPrice;
         this.points = points;
         this.newPrice = newPrice;
+        this.boutique = boutique;
         if(armesInfos.isEmpty()) return;
         try {
             String[] infos = armesInfos.split(";");
@@ -80,7 +79,7 @@ public class ObjectTemplate {
         }
     }
 
-    public void setInfos(String strTemplate, String name, int type, int level, int pod, int price, int panoId, String conditions, String armesInfos, int sold, int avgPrice, int points, int newPrice) {
+    public void setInfos(String strTemplate, String name, int type, int level, int pod, int price, int panoId, String conditions, String armesInfos, int sold, int avgPrice, int points, int newPrice, int boutique) {
         this.strTemplate = strTemplate;
         this.name = name;
         this.type = type;
@@ -99,6 +98,7 @@ public class ObjectTemplate {
         this.avgPrice = avgPrice;
         this.points = points;
         this.newPrice = newPrice;
+        this.boutique = boutique;
         try {
             String[] infos = armesInfos.split(";");
             PACost = Integer.parseInt(infos[0]);
@@ -342,10 +342,15 @@ public class ObjectTemplate {
         item = new GameObject(id, getId(), 1, Constant.ITEM_POS_PNJ_SUIVEUR, stats, new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), new HashMap<Integer, String>(), 0,0 );
         return item;
     }
-
+    private final Integer[] ItemsRarityAllowed = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,20,21,22,23,81,82};
     public GameObject createNewItem(int qua, boolean useMax, int rarity) {
         int id = Database.getStatics().getObjectData().getNextId();
         GameObject item;
+        List<Integer> verif = new ArrayList<>(Arrays.asList(ItemsRarityAllowed));
+        if(!verif.contains(getType()))
+        {
+            rarity = 0;
+        }
         if (getType() == Constant.ITEM_TYPE_QUETES && (Constant.isCertificatDopeuls(getId()) || getId() == 6653)) {
             Map<Integer, String> txtStat = new HashMap<Integer, String>();
             txtStat.put(Constant.STATS_DATE, System.currentTimeMillis() + "");
@@ -412,6 +417,7 @@ public class ObjectTemplate {
     public GameObject createNewItemWithoutDuplication(Collection<GameObject> objects, int qua, boolean useMax) {
         int id = -1;
         GameObject item;
+        List<Integer> verif = new ArrayList<>(Arrays.asList(ItemsRarityAllowed));
         if (getType() == Constant.ITEM_TYPE_QUETES && (Constant.isCertificatDopeuls(getId()) || getId() == 6653)) {
             Map<Integer, String> txtStat = new HashMap<>();
             txtStat.put(Constant.STATS_DATE, System.currentTimeMillis() + "");
@@ -758,5 +764,9 @@ public class ObjectTemplate {
 
         return item;
 
+    }
+
+    public int getBoutique() {
+        return boutique;
     }
 }

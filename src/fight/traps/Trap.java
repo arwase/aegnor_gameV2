@@ -63,18 +63,18 @@ public class Trap {
         int team = this.caster.getTeam() + 1;
         str.append("GDZ-").append(this.cell.getId()).append(";").append(this.size).append(";").append(this.color);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team, 999, this.caster.getId()
-                + "", str.toString());
+                + "", str.toString(), 999);
         str2.append("GDC").append(this.cell.getId());
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team, 999, this.caster.getId()
-                + "", str2.toString());
+                + "", str2.toString(), 999);
         if (this.isUnHide) {
             int team2 = this.teamUnHide + 1;
             str3.append("GDZ-").append(this.cell.getId()).append(";").append(this.size).append(";").append(this.color);
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team2, 999, this.caster.getId()
-                    + "", str3.toString());
+                    + "", str3.toString(), 999);
             str4.append("GDC").append(this.cell.getId());
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team2, 999, this.caster.getId()
-                    + "", str4.toString());
+                    + "", str4.toString(), 999);
         }
     }
 
@@ -85,10 +85,10 @@ public class Trap {
         int team = f.getTeam() + 1;
         str.append("GDZ+").append(this.cell.getId()).append(";").append(this.size).append(";").append(this.color);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team, 999, this.caster.getId()
-                + "", str.toString());
+                + "", str.toString(), 999);
         str2.append("GDC").append(this.cell.getId()).append(";Haaaaaaaaz3005;");
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, team, 999, this.caster.getId()
-                + "", str2.toString());
+                + "", str2.toString(), 999);
     }
 
     public void onTraped(Fighter target) {
@@ -97,7 +97,7 @@ public class Trap {
         this.fight.getAllTraps().remove(this);//On efface le pieges
         desappear();//On d�clenche ses effets
         String str = this.spell + "," + this.cell.getId() + ",0,1,1," + this.caster.getId();
-        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 307, target.getId() + "", str);
+        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 307, target.getId() + "", str, 307);
 
         ArrayList<GameCase> cells = new ArrayList<GameCase>();
         cells.add(this.cell);

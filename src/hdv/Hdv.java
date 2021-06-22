@@ -198,7 +198,12 @@ public class Hdv {
     }
 
     public String parseTemplate(int categID) {
-        return this.getCategorys().get(categID).parseTemplate();
+        var categ = this.getCategorys().get(categID).parseTemplate();
+        if(categ == null)
+        {
+            categ = "";
+        }
+        return categ;
     }
 
     public String parseTaxe() {

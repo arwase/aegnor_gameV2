@@ -37,9 +37,11 @@ import guild.Guild;
 import job.JobConstant;
 import kernel.Config;
 import kernel.Constant;
+import kernel.Main;
 import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.SoulStone;
+import org.apache.commons.lang3.ArrayUtils;
 import other.Action;
 import quest.Quest;
 import quest.QuestPlayer;
@@ -96,6 +98,7 @@ public class Fight {
     private String defenders = "";
     private int trainerWinner = -1;
     private int nextId = -100;
+    private int turnTotal;
 
     public Fight(int type, int id, GameMap map, Player perso, Player init2) {
         launchTime = System.currentTimeMillis();
@@ -1630,6 +1633,10 @@ public class Fight {
 
         Fighter current = this.getFighterByOrdreJeu();
 
+        if(current == this.getOrderPlaying().get(0))
+        {
+            turnTotal++;
+        }
         setCurFighterPa(current.getPa());
         setCurFighterPm(current.getPm());
         setCurFighterUsedPa();
@@ -1664,15 +1671,21 @@ public class Fight {
             endTurn(false, current);
             return;
         }
-        if (current.getPlayer() != null)
-            SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+
+        if (current.getPlayer() != null) {
+            //SocketManager.GAME_SEND_STATS_PACKET(current.getPersonnage());
+            if (current.getPlayer().passturn) {
+                endTurn(false, current);
+                return;
+            }
+        }
 
         if (current.hasBuff(Constant.EFFECT_PASS_TURN)) {
             endTurn(false, current);
             return;
         }
 
-        SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN);
+        SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
         current.setCanPlay(true);
         this.turn = new Turn(this, current);
 
@@ -2587,21 +2600,23 @@ public class Fight {
         char dir = PathFinding.getDirBetweenTwoCase(casterCell, cell.getId(), getMap(), true);
 
         if (spell.getSpellID() == 67) {
-            if (!PathFinding.checkLoS(getMap(), PathFinding.GetCaseIDFromDirrection(casterCell, dir, getMap(), true), cell.getId(), null, true)) {
+            if (PathFinding.checkLoS(getMap(), PathFinding.GetCaseIDFromDirrection(casterCell, dir, getMap(), true), cell.getId(), null, true)) {
                 if (player != null)
                     SocketManager.GAME_SEND_Im_PACKET(player, "1174");
                 return false;
             }
         }
 
-        if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-            int modi = player.getValueOfClassObject(spell.getSpellID(), 289);
-            boolean modif = modi == 1;
-            if (spell.hasLDV() && !PathFinding.checkLoS(getMap(), casterCell, cell.getId()) && !modif) {
-                SocketManager.GAME_SEND_Im_PACKET(player, "1174");
-                return false;
+        if (caster.getType() == 1 && player != null) {
+            if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
+                int modi = player.getValueOfClassObject(spell.getSpellID(), 289);
+                boolean modif = modi == 1;
+                if (spell.hasLDV() && PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
+                    SocketManager.GAME_SEND_Im_PACKET(player, "1174");
+                    return false;
+                }
             }
-        } else if (spell.hasLDV() && !PathFinding.checkLoS(getMap(), casterCell, cell.getId())) {
+        } else if (spell.hasLDV() && PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
             if (player != null)
                 SocketManager.GAME_SEND_Im_PACKET(player, "1174");
             return false;
@@ -2611,18 +2626,30 @@ public class Fight {
         int maxAlc = spell.getMaxPO();
         int minAlc = spell.getMinPO();
         // + porté
-        if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-            int modi = player.getValueOfClassObject(spell.getSpellID(), 281);
-            maxAlc = maxAlc + modi;
+        if (caster.getType() == 1 && player != null) {
+            if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
+                int modi = player.getValueOfClassObject(spell.getSpellID(), 281);
+                maxAlc = maxAlc + modi;
+            }
         }// porté modifiable
 
-        if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-            int modi = player.getValueOfClassObject(spell.getSpellID(), 282);
-            boolean modif = modi == 1;
-            if (spell.isModifPO() || modif) {
-                maxAlc += caster.getTotalStats().getEffect(117);
-                if (maxAlc <= minAlc)
-                    maxAlc = minAlc + 1;
+        if (caster.getType() == 1 && player != null) {
+            if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
+                int modi = player.getValueOfClassObject(spell.getSpellID(), 282);
+                boolean modif = modi == 1;
+                if (spell.isModifPO() || modif) {
+                    maxAlc += caster.getTotalStats().getEffect(117);
+                    if (maxAlc <= minAlc)
+                        maxAlc = minAlc + 1;
+                }
+            }
+            else
+                {
+                    if (spell.isModifPO()) {
+                        maxAlc += caster.getTotalStats().getEffect(117);
+                        if (maxAlc <= minAlc)
+                            maxAlc = minAlc + 1;
+                    }
             }
         } else if (spell.isModifPO()) {
             maxAlc += caster.getTotalStats().getEffect(117);
@@ -2644,8 +2671,9 @@ public class Fight {
 
         int numLunch = spell.getMaxLaunchbyTurn();
 
-        if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID()))
-            numLunch += player.getValueOfClassObject(spell.getSpellID(), 290);
+        if (caster.getType() == 1 && player != null)
+            if(player.getObjectsClassSpell().containsKey(spell.getSpellID()))
+                numLunch += player.getValueOfClassObject(spell.getSpellID(), 290);
 
         if (numLunch - LaunchedSpell.getNbLaunch(caster, spell.getSpellID()) <= 0 && numLunch > 0) {
             return false;
@@ -2654,8 +2682,9 @@ public class Fight {
         Fighter t = cell.getFirstFighter();
         int numLunchT = spell.getMaxLaunchByTarget();
 
-        if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID()))
-            numLunchT += player.getValueOfClassObject(spell.getSpellID(), 291);
+        if (caster.getType() == 1 && player != null)
+            if(player.getObjectsClassSpell().containsKey(spell.getSpellID()))
+                numLunchT += player.getValueOfClassObject(spell.getSpellID(), 291);
 
         return !(numLunchT - LaunchedSpell.getNbLaunchTarget(caster, t, spell.getSpellID()) <= 0 && numLunchT > 0);
     }
@@ -4510,32 +4539,70 @@ public class Fight {
                             ObjectTemplate objectTemplate = World.world.getObjTemplate(entry.getKey());
 
                             if(player == null && i.getInvocator() == null) break;
-                            if (objectTemplate == null || i.isDouble()) continue;
-                            if (drops.length() > 0) drops += ",";
-
-                            drops += entry.getKey() + "~" + entry.getValue();
+                            if (objectTemplate == null) continue;
+                            //if (drops.length() > 0) drops += ",";
 
                             Player target = player != null ? player : i.getInvocator().getPlayer();
+                            Player chief = target.getSlaveLeader();
+                            if(chief != null){ // Si le chef a noitem
+                                if(chief.noitems ){
+                                    if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() )){
+                                        //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
+                                        continue;
+                                    }
+
+                                }
+                            }
+
+                            if( target.noitems){ // Si la cible a noitem
+                                if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() )){
+                                    //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
+                                    continue;
+                                }
+                            }
+                            if (drops.length() > 0) drops += ",";
+                            drops += objectTemplate.getId() + "~" + entry.getValue();
+                            //target.sendMessage(drops);
+
+                            try{
+
+                                if(chief != null ){
+                                    if(chief.ipdrop){
+                                        if(objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS && objectTemplate.getType() != Constant.ITEM_TYPE_OBJET_MISSION ){
+                                            target = chief;
+                                        }
+                                    }
+                                }
+                            }
+                            catch( Exception e){
+                                target.sendMessage("Erreur :"+ e.toString());
+                            }
+
 
                             if (objectTemplate.getType() == 32 && player != null) {
                                 player.setMascotte(entry.getKey());
                             } else {
+
                                 GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplication(target.getItems().values(), entry.getValue(), false);
-                                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
+                                if(newObj !=null){
+                                    int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
-                                if (guid == -1) { // Don't exist
-                                    guid = newObj.setId();
-                                    target.getItems().put(guid, newObj);
-                                    SocketManager.GAME_SEND_OAKO_PACKET(target, newObj);
-                                    World.world.addGameObject(newObj, true);
-                                } else {
-                                    GameObject object = target.getItems().get(guid);
+                                    if (guid == -1) { // Don't exist
+                                        guid = newObj.setId();
+                                        target.getItems().put(guid, newObj);
+                                        SocketManager.GAME_SEND_OAKO_PACKET(target, newObj);
 
-                                    if(object != null) {
-                                        object.setQuantity(object.getQuantity() + entry.getValue());
-                                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, object);
+                                        World.world.addGameObject(newObj, true);
+                                        //target.sendMessage("Drop "+newObj.toString());
+                                    } else {
+                                        newObj.setQuantity(newObj.getQuantity() + entry.getValue());
+                                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, newObj);
                                     }
                                 }
+                                else{
+                                    //Main.INSTANCE..error( "L'objet " + objectTemplate.getId() + " semble poser un problème à la création");
+                                }
+
                             }
                         }
 
@@ -4728,6 +4795,11 @@ public class Fight {
                         temporary.append(";").append(Formulas.getRandomValue(kamas.first, kamas.second)).append(";0;0;0;0|");
                         temporary.append(";;0;0;0;0;0|");
                         gains.put(i.getId(), temporary);
+                    } else if(this.getType() == Constant.FIGHT_TYPE_PVT) {
+                      if(i.isCollector())
+                      {
+                          i.getCollector().setisDead(false);
+                      }
                     } else if (this.getType() == Constant.FIGHT_TYPE_CONQUETE) {
                         if (player != null) {
                             if (player.get_honor() + winH < 0)
@@ -4839,6 +4911,11 @@ public class Fight {
                         packet.append(player.getDeshonor()).append(";");
                         packet.append(winD);
                         packet.append(";;0;0;0;0;0|");
+                    } else if(this.getType() == Constant.FIGHT_TYPE_PVT) {
+                        if(i.isCollector())
+                        {
+                            i.getCollector().setisDead(true);
+                        }
                     } else if (this.getType() == Constant.FIGHT_TYPE_CONQUETE) {
                         winH = Formulas.calculHonorWin(winners, loosers, i);
 
@@ -4893,12 +4970,15 @@ public class Fight {
                 Guild guild = World.world.getGuild(collector.getGuildId());
 
                 packet.append("5;").append(collector.getId()).append(";").append(collector.getFullName()).append(";").append(World.world.getGuild(collector.getGuildId()).getLvl()).append(";0;");
-                packet.append(guild.getLvl()).append(";");
-                packet.append(guild.getXp()).append(";");
-                packet.append(World.world.getGuildXpMax(guild.getLvl())).append(";");
-                packet.append(";");// XpGagner
+                packet.append(collector.isDead() ? "1" : "0").append(";");
+                packet.append(collector.xpString(";")).append(";");
+                //packet.append(winxp).append(";");
+                //packet.append(guild.getXp()).append(";");
+                //packet.append(guild.getXp()).append(";");
+                //packet.append(World.world.getGuildXpMax(guild.getLvl())).append(";");
+                packet.append("0;");// XpGagner
                 packet.append(winxp).append(";");// XpGuilde
-                packet.append(";");// Monture
+                packet.append("0;");// Monture
 
                 String drops = "";
                 ArrayList<Drop> temporary = new ArrayList<>(dropsPlayers);
@@ -5104,16 +5184,6 @@ public class Fight {
                 break;
 
             case Constant.FIGHT_TYPE_PVM:
-                infos.append("0,");
-                infos.append(this.getTeamSizeWithoutInvocation(this.getTeam0().values())).append(";");
-                // Team2
-                infos.append("1,");
-                if (getTeam0().isEmpty())
-                    infos.append("0,");
-                else
-                    infos.append(getTeam1().get(getTeam1().keySet().toArray()[0]).getMob().getTemplate().getAlign()).append(",");
-                infos.append(this.getTeamSizeWithoutInvocation(this.getTeam1().values())).append(";");
-                break;
 
             case Constant.FIGHT_TYPE_DOPEUL:
                 infos.append("0,");
@@ -5126,6 +5196,7 @@ public class Fight {
                     infos.append(getTeam1().get(getTeam1().keySet().toArray()[0]).getMob().getTemplate().getAlign()).append(",");
                 infos.append(this.getTeamSizeWithoutInvocation(this.getTeam1().values())).append(";");
                 break;
+            // Team2
 
             case Constant.FIGHT_TYPE_PVT:
                 infos.append("0,");

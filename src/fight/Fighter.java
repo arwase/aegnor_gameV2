@@ -556,13 +556,13 @@ public class Fighter implements Comparable<Fighter> {
                 case Constant.STATS_ADD_PA:
                 case Constant.STATS_ADD_PA2:
                     SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 101, getId()
-                            + "", getId() + ",-" + spellEffect.getValue());
+                            + "", getId() + ",-" + spellEffect.getValue(), 101);
                     break;
 
                 case Constant.STATS_ADD_PM:
                 case Constant.STATS_ADD_PM2:
                     SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 127, getId()
-                            + "", getId() + ",-" + spellEffect.getValue());
+                            + "", getId() + ",-" + spellEffect.getValue(), 127);
                     break;
             }
         }

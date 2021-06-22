@@ -29,7 +29,7 @@ public class AccountData extends AbstractDAO<Account> {
                 if (a != null && a.isOnline())
                     continue;
 
-                Account C = new Account(RS.getInt("guid"), RS.getString("account").toLowerCase(), RS.getString("pseudo"), RS.getString("reponse"), (RS.getInt("banned") == 1), RS.getString("lastIP"), RS.getString("lastConnectionDate"), RS.getString("friends"), RS.getString("enemy"), RS.getInt("points"), RS.getLong("subscribe"), RS.getLong("muteTime"), RS.getString("mutePseudo"), RS.getString("lastVoteIP"), RS.getString("heurevote"));
+                Account C = new Account(RS.getInt("guid"), RS.getString("account").toLowerCase(), RS.getString("pseudo"), RS.getString("reponse"), (RS.getInt("banned") == 1), RS.getString("lastIP"), RS.getString("lastConnectionDate"), RS.getString("friends"), RS.getString("enemy"), RS.getInt("points"), RS.getLong("subscribe"), RS.getLong("muteTime"), RS.getString("mutePseudo"), RS.getString("lastVoteIP"), RS.getString("heurevote"), RS.getInt("vip"));
                 World.world.addAccount(C);
                 World.world.ReassignAccountToChar(C);
             }
@@ -47,7 +47,7 @@ public class AccountData extends AbstractDAO<Account> {
             ResultSet RS = result.resultSet;
             while (RS.next()) {
                 if(RS.getString("pseudo").isEmpty()) continue;
-                Account a = new Account(RS.getInt("guid"), RS.getString("account").toLowerCase(), RS.getString("pseudo"), RS.getString("reponse"), (RS.getInt("banned") == 1), RS.getString("lastIP"), RS.getString("lastConnectionDate"), RS.getString("friends"), RS.getString("enemy"), RS.getInt("points"), RS.getLong("subscribe"), RS.getLong("muteTime"), RS.getString("mutePseudo"), RS.getString("lastVoteIP"), RS.getString("heurevote"));
+                Account a = new Account(RS.getInt("guid"), RS.getString("account").toLowerCase(), RS.getString("pseudo"), RS.getString("reponse"), (RS.getInt("banned") == 1), RS.getString("lastIP"), RS.getString("lastConnectionDate"), RS.getString("friends"), RS.getString("enemy"), RS.getInt("points"), RS.getLong("subscribe"), RS.getLong("muteTime"), RS.getString("mutePseudo"), RS.getString("lastVoteIP"), RS.getString("heurevote"), RS.getInt("vip"));
                 World.world.addAccount(a);
             }
         } catch (Exception e) {
@@ -105,7 +105,7 @@ public class AccountData extends AbstractDAO<Account> {
                     + acc.parseFriendListToDB() + "', enemy = '"
                     + acc.parseEnemyListToDB() + "', muteTime = '"
                     + acc.getMuteTime() + "', mutePseudo = '"
-                    + acc.getMutePseudo() + "' WHERE guid = '" + acc.getId()
+                    + acc.getMutePseudo() + "', vip = '"+ acc.getVip() +" WHERE guid = '" + acc.getId()
                     + "'");
             execute(statement);
             return true;
@@ -115,6 +115,21 @@ public class AccountData extends AbstractDAO<Account> {
             close(statement);
         }
         return false;
+    }
+
+    public void updateVip(Account compte)
+    {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE accounts SET `vip` = ? WHERE `guid` = ?");
+            p.setInt(1, compte.getVip());
+            p.setInt(2, compte.getId());
+            execute(p);
+        } catch (SQLException e) {
+            super.sendError("AccountData updateLastConnection", e);
+        } finally {
+            close(p);
+        }
     }
 
     public void updateLastConnection(Account compte) {

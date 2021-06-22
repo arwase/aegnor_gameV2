@@ -1014,12 +1014,18 @@ public class Monster {
 
                 isFirst = false;
             }
+
             totalExp = (long) (totalExp * (starBonus / 100f + Config.INSTANCE.getRATE_XP()));
             toreturn.append("+").append(this.cellId).append(";").append(this.orientation).append(";");
             toreturn.append(getStarBonus());// bonus en pourcentage (�toile/20%) // Actuellement 1%/min
             toreturn.append(";").append(this.id).append(";").append(mobIDs).append(";-3;").append(mobGFX).append(";")
                     .append(mobLevels).append(";").append(totalExp).append(";").append(colors);
             return toreturn.toString();
+        }
+
+        public void setStarBonus(int i) {
+            this.starBonus = (short) i;
+
         }
     }
 

@@ -248,6 +248,26 @@ public class GameMap {
         this.minSize = minSize;
         this.fixSize = fixSize;
     }
+
+    public static boolean IsInDj (GameMap map) {
+
+        Map<Integer, ArrayList<Action>> actionsOnMap = map.GetEndFightAction();
+        for (Map.Entry<Integer, ArrayList<Action> > entry : actionsOnMap.entrySet()) {
+            ArrayList<Action> Actions =  entry.getValue();
+            for (Action action : Actions) {
+                //player.sendMessage("L'action " + action.getId() + " " + action.getArgs());
+                if( action.getId() == 0 ){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public Map<Integer, ArrayList<Action>> GetEndFightAction() {
+        return this.endFightAction ;
+    }
+
     public Short capabilitiesCompilado()
     {
         Short parametros = 0;
@@ -1083,6 +1103,60 @@ public class GameMap {
 
     public int getMaxMerchant() {
         return maxMerchant;
+    }
+
+    public void refreshSpawnsWithMaxStars() {
+
+
+        for (int id : this.mobGroups.keySet()) {
+            SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this, id);
+        }
+        this.mobGroups.clear();
+        spawnGroupWithStars(Constant.ALIGNEMENT_NEUTRE, this.maxGroup, true, -1);//Spawn des groupes d'alignement neutre
+    }
+
+    public void spawnGroupWithStars(int align, int nbr, boolean log, int cellID) {
+        if (nbr < 1)
+            return;
+        if (this.mobGroups.size() - this.fixMobGroups.size() >= this.maxGroup)
+            return;
+        for (int a = 1; a <= nbr; a++) {
+            // mobExtras
+            ArrayList<Monster.MobGrade> mobPoss = new ArrayList<>(this.mobPossibles);
+            if (!this.mobExtras.isEmpty()) {
+                for (Entry<Integer, Integer> entry : this.mobExtras.entrySet()) {
+                    if (entry.getKey() == 499) // Si c'est un minotoboule de nowel
+                        if (!Config.INSTANCE.getNOEL()) // Si ce n'est pas nowel
+                            continue;
+                    int random = Formulas.getRandomValue(0, 99);
+                    while (entry.getValue() > random) {
+                        Monster mob = World.world.getMonstre(entry.getKey());
+                        if (mob == null)
+                            continue;
+                        Monster.MobGrade mobG = mob.getRandomGrade();
+                        if (mobG == null)
+                            continue;
+                        mobPoss.add(mobG);
+                        if (entry.getKey() == 422 || entry.getKey() == 499) // un seul DDV / Minotoboule
+                            break;
+                        random = Formulas.getRandomValue(0, 99);
+                    }
+                }
+            }
+
+            while(this.mobGroups.get(this.nextObjectId) != null)
+                this.nextObjectId--;
+
+            Monster.MobGroup group = new Monster.MobGroup(this.nextObjectId, align, mobPoss, this, cellID, this.fixSize, this.minSize, this.maxSize, null);
+            group.setStarBonus(150);
+
+            if (group.getMobs().isEmpty())
+                continue;
+            this.mobGroups.put(this.nextObjectId, group);
+            if (log)
+                SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
+            this.nextObjectId--;
+        }
     }
 
     private static class RespawnGroup {

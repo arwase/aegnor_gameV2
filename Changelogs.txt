@@ -29,7 +29,27 @@ Version 0.5 (09/06/2021) :
 - Ajout des maps du Donjons Kralamour
 - Ajout de 3 Raccourcis (ShowFightPos / ShowMobGroupInfo / HideSprite) modifiable dans les raccourcis personalisés
 - Correction de la Commande ADDFIGHTPOS pour le PanelAdmin
-- Debug du Kralamour
+- Ajout du Bestiaire
+
+Version 0.6 (21/06/2021) :
+- Fix de la ligne de vue des Monstres
+- Fix du paquet du nombre de tours
+- Fix des packets de guilde (Annonce + Panel)
+- Fix packets Percepteur
+
+Version 0.7 (22/06/2021) :
+- Fix des dégâts en Couleurs
+- Correction du Bug de Portée, désormais la portée en stats est bien pris en compte
+- Ajout de toutes les Commandes de Aegnor
+- Ajout du système VIP
+- Ajout de la Boutique (reste 1 fix à faire (faire apparaître les items dans la boutique))
+- Correction du Restat
+- Fix l'hdv global
 
 //TODO
-- Régler la mise à jour de la GameCase lorsqu'un joueur se déplace en fight
+- Remettre les bons indexes pour les commandes (Lang)
+- Fix la boutique
+- Faire les drops d'items hors pano
+- Revoir les Panoplies de Classes (Jet sûrement)
+- Tester toutes les commandes (plusieurs déjà testées)
+- Fix les ressources qui ne se stack pas donc ne sont pas générés dans l'inventaire

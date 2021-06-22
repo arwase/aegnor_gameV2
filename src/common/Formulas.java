@@ -567,12 +567,12 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
                         int value = (int) num - target.getBuff(105).getValue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
@@ -584,12 +584,12 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
                         int value = (int) num - target.getBuff(105).getValue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
@@ -600,12 +600,12 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
                         int value = (int) num - target.getBuff(105).getValue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue());
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
@@ -620,7 +620,7 @@ public class Formulas {
                     renvoie = (int) num;
                 num -= renvoie;
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 107, "-1", target.getId()
-                        + "," + renvoie);
+                        + "," + renvoie, 107);
                 if (renvoie > caster.getPdv())
                     renvoie = caster.getPdv();
                 if (num < 1)
@@ -633,7 +633,7 @@ public class Formulas {
                     caster.removePdv(caster, renvoie);
 
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId()
-                        + "", caster.getId() + ",-" + renvoie);
+                        + "", caster.getId() + ",-" + renvoie, 107);
             }
         }
         int reduc = (int) ((num / (float) 100) * respT);//Reduc %resis
@@ -645,7 +645,7 @@ public class Formulas {
         if (!isHeal)
             if (armor > 0)
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId()
-                        + "", target.getId() + "," + armor);
+                        + "", target.getId() + "," + armor, 105);
         if (!isHeal)
             num -= resfT;//resis fixe
         //d�gats finaux

@@ -3,6 +3,7 @@ package game.world;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import client.Classe;
+import kernel.Boutique;
 import org.slf4j.LoggerFactory;
 import area.Area;
 import area.SubArea;
@@ -470,6 +471,8 @@ public class World {
         PigDragon.initialize();
         logger.debug("Initialization of the dungeon : Labyrinth of the Minotoror.");
         Minotoror.initialize();
+        logger.debug("Initialisation de la boutique IG.");
+        Boutique.initPacket();
 
         Database.getStatics().getServerData().updateTime(time);
         logger.info("All data was loaded successfully at "

@@ -220,6 +220,47 @@ public class Player {
     private Map<Integer, QuestPlayer> questList = new HashMap<>();
     private boolean changeName;
     public boolean afterFight = false;
+    public int isParcho = 0;
+
+    private boolean maitre;
+    public boolean ipdrop = false;
+    public boolean noitems = false;
+    public boolean passturn = false;
+    public boolean boutique =  false;
+    //Systeme de Maitre
+    //Commande .maitre
+    public List<Player> PlayerList1 = new ArrayList<Player>();
+    public Player SlaveLeader = null;
+
+    //Retourne la liste des esclaves
+    @SuppressWarnings("rawtypes")
+    public List getSlaves(){
+        return PlayerList1;
+    }
+
+    public void addSlave(Player givenSlave){
+        PlayerList1.add(givenSlave);
+    }
+    //Retourne le chef des esclaves
+    public Player getSlaveLeader(){
+        return SlaveLeader;
+    }
+    //Defini un chef pour ce Player
+    public void setSlaveLeader(Player givenPlayer){
+        SlaveLeader = givenPlayer;
+    }
+    //Dispose
+    public void disposeSlavery(){
+        for(Player slave: PlayerList1){
+            if(slave == null)continue;
+            if(slave.getFight() != null)continue;
+            if(!slave.isOnline())continue;
+            if(slave.getSlaveLeader() != this)continue;
+            slave.setSlaveLeader(null);
+        }
+        this.PlayerList1.clear(); // on vide la liste
+    }
+
 
     public ArrayList<Integer> getIsCraftingType() {
         return craftingType;
@@ -235,7 +276,7 @@ public class Player {
                   String savePos, String jobs, int mountXp, int mount, int honor,
                   int deshonor, int alvl, String z, byte title, int wifeGuid,
                   String morphMode, String allTitle, String emotes, long prison,
-                  boolean isNew, String parcho, long timeDeblo, boolean noall, String deadInformation, byte deathCount, long totalKills) {
+                  boolean isNew, String parcho, long timeDeblo, boolean noall, String deadInformation, byte deathCount, long totalKills, int isParcho) {
         this.id = id;
         this.noall = noall;
         this.name = name;
@@ -422,6 +463,7 @@ public class Player {
                 setGhost();
             else if (this.energy == -1)
                 setFuneral();
+            this.isParcho = isParcho;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -490,7 +532,7 @@ public class Player {
                 //224,
                 "", "", 100, "", (startMap != 0 ? (short) startMap : Constant.getStartMap(classe))
                 + ","
-                + (startCell != 0 ? (short) startCell : Constant.getStartCell(classe)), "", 0, -1, 0, 0, 0, z, (byte) 0, 0, "0;0", "", Config.INSTANCE.getALL_EMOTE() ? "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21" : "0", 0, true, "118,0;119,0;123,0;124,0;125,0;126,0", 0, false, "0,0,0,0", (byte) 0, 0);
+                + (startCell != 0 ? (short) startCell : Constant.getStartCell(classe)), "", 0, -1, 0, 0, 0, z, (byte) 0, 0, "0;0", "", Config.INSTANCE.getALL_EMOTE() ? "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21" : "0", 0, true, "118,0;119,0;123,0;124,0;125,0;126,0", 0, false, "0,0,0,0", (byte) 0, 0, 0);
         perso.emotes.add(1);
         perso._sorts = Constant.getStartSorts(classe);
         for (int a = 1; a <= perso.getLevel(); a++)
@@ -527,6 +569,9 @@ public class Player {
         for (Integer b : i) i2 += (2 << (b - 2));
         return i2 + "|0";
     }
+
+    public int getisParcho() { return isParcho;}
+    public void setisParcho(int activate) { this.isParcho = activate;}
 
     //CLONAGE
     public static Player ClonePerso(Player P, int id, int pdv) {

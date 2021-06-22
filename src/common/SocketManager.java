@@ -816,8 +816,8 @@ public class SocketManager {
     }
 
     public static void GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(Fight fight,
-                                                               int teams, int guid, int time) {
-        String packet = "GTS" + guid + "|" + time;
+                                                               int teams, int guid, int time, int turntotal) {
+        String packet = "GTS" + guid + "|" + time + "|" + turntotal;
         for (Fighter f : fight.getFighters(teams)) {
             if (f.hasLeft())
                 continue;
@@ -873,6 +873,26 @@ public class SocketManager {
 
         if (!s2.equals(""))
             packet += ";" + s2;
+        for (Fighter f : fight.getFighters(teams)) {
+            if (f.hasLeft())
+                continue;
+            if (f.getPlayer() == null || !f.getPlayer().isOnline())
+                continue;
+            send(f.getPlayer(), packet);
+        }
+    }
+
+    public static void GAME_SEND_GA_PACKET_TO_FIGHT(Fight fight, int teams,
+                                                    int actionID, String s1, String s2, int effect) {
+        String packet = "GA;" + actionID + ";" + s1;
+
+        if (!s2.equals(""))
+            packet += ";" + s2;
+
+        if( effect != 0 && ( actionID == 100 || actionID == 108) ) {
+            packet += ","+effect;
+        }
+
         for (Fighter f : fight.getFighters(teams)) {
             if (f.hasLeft())
                 continue;
@@ -2677,5 +2697,4 @@ public class SocketManager {
         for (Player perso : map.getPlayers())
             send(perso, "GM|" + npc.parse(true, perso));
     }
-
 }

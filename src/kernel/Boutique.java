@@ -1,0 +1,43 @@
+package kernel;
+
+import client.Player;
+import client.other.Stats;
+import common.SocketManager;
+import game.action.ExchangeAction;
+import object.ObjectTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Boutique {
+    public static final List<ObjectTemplate> items = new ArrayList<>();
+    private static String packet;
+
+    public static void initPacket() {
+        packet = getObjectList();
+    }
+
+    public static void open(Player player) {
+        player.boutique = true;
+        player.setExchangeAction(new ExchangeAction<>(ExchangeAction.TRADING_WITH_BOUTIQUE, 0));
+        SocketManager.send(player, "ECK0|1");
+        SocketManager.send(player, "Es" + packet);
+    }
+
+    private static String getObjectList() {
+        StringBuilder items = new StringBuilder();
+        for (ObjectTemplate obj : Boutique.items) {
+            //Stats stats = obj.generateNewStatsFromTemplate(obj.getStrTemplate(), true,3);
+            Stats stats;
+            if(obj.getId()==9624){
+                stats = new Stats();
+            }
+            else{
+
+                stats = obj.generateNewStatsFromTemplate(obj.getStrTemplate(), true,0);
+            }
+            items.append(obj.getId() + ";"+ stats.parseToItemSetStats() + ";" + obj.getPoints() + "|");
+        }
+        return items.toString();
+    }
+}

@@ -207,6 +207,9 @@ public class GameClient {
             case 'W':
                 parseWaypointPacket(packet);
                 break;
+            case 'w':
+                parsePanel(packet);
+                break;
             case 'Z':
                 try{
                     parseMapPacket(packet);
@@ -220,6 +223,23 @@ public class GameClient {
                     if(this.player.isChangeName())
                         this.changeName(packet);                
                 break;
+        }
+    }
+
+    private void parsePanel(String packet) {
+        switch (packet.charAt(1)) {
+            case 'G' :
+                String announce = "";
+                if(this.player.getGuild() != null)
+                {
+                    announce = packet.substring(2);
+                    this.player.getGuild().setAnnounce(announce);
+                }
+            case 'g' :
+                if(this.player.getGuild() != null)
+                {
+                    SocketManager.send(this.player, "wg" + this.player.getGuild().getAnnounce());
+                }
         }
     }
 
@@ -1801,7 +1821,7 @@ public class GameClient {
         String[] infos = packet.substring(2).split("\\|");
 
         ExchangeAction<?> checkExchangeAction = this.player.getExchangeAction();
-        if(checkExchangeAction == null || !(checkExchangeAction.getValue() instanceof Integer) || (checkExchangeAction.getType() != ExchangeAction.TRADING_WITH_OFFLINE_PLAYER && checkExchangeAction.getType() != ExchangeAction.TRADING_WITH_NPC)) return;
+        if(checkExchangeAction == null || !(checkExchangeAction.getValue() instanceof Integer) || (checkExchangeAction.getType() != ExchangeAction.TRADING_WITH_OFFLINE_PLAYER && checkExchangeAction.getType() != ExchangeAction.TRADING_WITH_NPC && checkExchangeAction.getType() != ExchangeAction.TRADING_WITH_BOUTIQUE)) return;
 
         ExchangeAction<Integer> exchangeAction = (ExchangeAction<Integer>) this.player.getExchangeAction();
 
@@ -1868,7 +1888,61 @@ public class GameClient {
                         }
                     }
             }
-        } else {
+        } if( exchangeAction.getType() == ExchangeAction.TRADING_WITH_BOUTIQUE) {
+            try {
+                int id = Integer.parseInt(infos[0]), qua = Integer.parseInt(infos[1]);
+
+                if (qua <= 0 || qua > 100000)
+                    return;
+
+                ObjectTemplate template = World.world.getObjTemplate(id);
+
+                if (template == null) {
+                    SocketManager.GAME_SEND_BUY_ERROR_PACKET(this);
+                    return;
+                }
+                if (template.getType() == 18 && qua > 1) {
+                    this.player.sendMessage("Merci de n'acheter qu'un seul familier à la fois !");
+                    return;
+                }
+
+                if (template.getPoints() > 0 && this.player.boutique && template.getBoutique() > 0) {
+                    int value = template.getPoints() * qua, points = this.account.getPoints();
+
+                    if (points < value) {
+                        SocketManager.GAME_SEND_MESSAGE(this.player, "Vous n'avez pas assez de points pour acheter cet article, vous avez actuellement " + points + "  points boutique et vous manquent " + (value - points) + " points pour pouvoir l'acheter.");
+                        SocketManager.GAME_SEND_BUY_ERROR_PACKET(this);
+                        return;
+                    }
+
+                    this.account.setPoints(points - value);
+                    GameObject object = template.createNewItem(qua, true,3);
+                    if (template.getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
+                        Mount mount = new Mount(Constant.getMountColorByParchoTemplate(object.getTemplate().getId()), this.getPlayer().getId(), false);
+                        object.clearStats();
+                        object.getStats().addOneStat(995, -(mount.getId()));
+                        object.getTxtStat().put(996, this.getPlayer().getName());
+                        object.getTxtStat().put(997, mount.getName());
+                    }
+                    if (this.player.addObjet(object, true)) World.world.addGameObject(object, true);
+
+                    if(template.getType() == Constant.ITEM_TYPE_DOFUS || template.getType() == Constant.ITEM_TYPE_FAMILIER){
+                        //object.attachToPlayer(this.player);
+
+                    }
+
+                    SocketManager.GAME_SEND_BUY_OK_PACKET(this);
+                    SocketManager.GAME_SEND_STATS_PACKET(this.player);
+                    SocketManager.GAME_SEND_Ow_PACKET(this.player);
+                    SocketManager.GAME_SEND_MESSAGE(this.player, "Il te reste <b>" + (points - value) + "</b> PB après cet achat de <b>"+value+"</b> PB !");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                SocketManager.GAME_SEND_BUY_ERROR_PACKET(this);
+            }
+            Database.getStatics().getPlayerData().update(this.getPlayer());
+        }
+        else {
 
             try {
                 int id = Integer.parseInt(infos[0]), qua = Integer.parseInt(infos[1]);
@@ -2021,7 +2095,15 @@ public class GameClient {
                 break;
             case 'T'://Demande des template de la cat�gorie
                 int categ = Integer.parseInt(packet.substring(3));
-                String allTemplate = World.world.getHdv(Math.abs(exchangeAction.getValue())).parseTemplate(categ);
+                int hdvid = 0;
+                if(exchangeAction.getValue() < 0)
+                {
+                    hdvid = -1;
+                }
+                else{
+                   hdvid = exchangeAction.getValue();
+                }
+                String allTemplate = World.world.getHdv(hdvid).parseTemplate(categ);
                 SocketManager.GAME_SEND_EHL_PACKET(this.player, categ, allTemplate);
                 break;
             case 'S': //search
@@ -2215,7 +2297,70 @@ public class GameClient {
                         break;
                 }
                 break;
+            case ExchangeAction.TRADING_WITH_BOUTIQUE:
+                switch (packet.charAt(2)) {
+                    case 'O'://Objet ?
+                        if (packet.charAt(3) == '+') {
+                            String[] infos = packet.substring(4).split("\\|");
+                            try {
+                                int guid = Integer.parseInt(infos[0]);
+                                int qua = Integer.parseInt(infos[1]);
+                                int quaInExch = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
+                                if (!this.player.hasItemGuid(guid)) return;
+                                GameObject obj = World.world.getGameObject(guid);
+                                if (obj == null) return;
+
+                                if (qua > obj.getQuantity() - quaInExch)
+                                    qua = obj.getQuantity() - quaInExch;
+                                if (qua <= 0)
+                                    return;
+
+                                ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).addItem(guid, qua);
+                            } catch (NumberFormatException e) {
+                                World.world.logger.error("Error Echange NPC '" + packet + "' => " + e.getMessage());
+                                e.printStackTrace();
+                                return;
+                            }
+                        } else {
+                            String[] infos = packet.substring(4).split("\\|");
+                            try {
+                                int guid = Integer.parseInt(infos[0]);
+                                int qua = Integer.parseInt(infos[1]);
+
+                                if (qua <= 0)
+                                    return;
+                                if (!this.player.hasItemGuid(guid))
+                                    return;
+
+                                GameObject obj = World.world.getGameObject(guid);
+                                if (obj == null)
+                                    return;
+                                if (qua > ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, false))
+                                    return;
+
+                                ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).removeItem(guid, qua);
+                            } catch (NumberFormatException e) {
+                                World.world.logger.error("Error Echange NPC '" + packet + "' => " + e.getMessage());
+                                e.printStackTrace();
+                                return;
+                            }
+                        }
+                        break;
+                    case 'G'://Kamas
+                        try {
+                            long numb = Integer.parseInt(packet.substring(3));
+                            if (this.player.getKamas() < numb)
+                                numb = this.player.getKamas();
+                            ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).setKamas(false, numb);
+                        } catch (NumberFormatException e) {
+                            World.world.logger.error("Error Echange NPC '" + packet + "' => " + e.getMessage());
+                            e.printStackTrace();
+                            return;
+                        }
+                        break;
+                }
+                break;
             case ExchangeAction.TRADING_WITH_COLLECTOR:
                 Collector Collector = World.world.getCollector((Integer) this.player.getExchangeAction().getValue());
                 if (Collector == null || Collector.getInFight() > 0)
@@ -3437,6 +3582,10 @@ public class GameClient {
             }
 
             Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
+            if(hdv == null)
+            {
+                hdv = World.world.getHdv(-1);
+            }
             if (hdv != null) {
                 String info = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 11, info);

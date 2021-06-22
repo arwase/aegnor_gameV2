@@ -24,7 +24,7 @@ public class GuildData extends AbstractDAO<Guild> {
             ResultSet RS = result.resultSet;
 
             while (RS.next())
-                World.world.addGuild(new Guild(RS.getInt("id"), RS.getString("name"), RS.getString("emblem"), RS.getInt("lvl"), RS.getLong("xp"), RS.getInt("capital"), RS.getInt("maxCollectors"), RS.getString("spells"), RS.getString("stats"), RS.getLong("date")), false);
+                World.world.addGuild(new Guild(RS.getInt("id"), RS.getString("name"), RS.getString("emblem"), RS.getInt("lvl"), RS.getLong("xp"), RS.getInt("capital"), RS.getInt("maxCollectors"), RS.getString("spells"), RS.getString("stats"), RS.getLong("date"), RS.getString("announce")), false);
         } catch (SQLException e) {
             super.sendError("GuildData load", e);
         } finally {
@@ -36,14 +36,15 @@ public class GuildData extends AbstractDAO<Guild> {
     public boolean update(Guild guild) {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("UPDATE `world.entity.guilds` SET `lvl` = ?, `xp` = ?, `capital` = ?, `maxCollectors` = ?, `spells` = ?, `stats` = ? WHERE id = ?;");
+            p = getPreparedStatement("UPDATE `world.entity.guilds` SET `lvl` = ?, `xp` = ?, `capital` = ?, `maxCollectors` = ?, `spells` = ?, `stats` = ?, `announce` = ? WHERE id = ?;");
             p.setInt(1, guild.getLvl());
             p.setLong(2, guild.getXp());
             p.setInt(3, guild.getCapital());
             p.setInt(4, guild.getNbCollectors());
             p.setString(5, guild.compileSpell());
             p.setString(6, guild.compileStats());
-            p.setInt(7, guild.getId());
+            p.setString(7, guild.getAnnounce());
+            p.setInt(8, guild.getId());
             execute(p);
             return true;
         } catch (SQLException e) {
@@ -57,7 +58,7 @@ public class GuildData extends AbstractDAO<Guild> {
     public void add(Guild guild) {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("INSERT INTO `world.entity.guilds` VALUES (?,?,?,1,0,0,0,?,?,?);");
+            p = getPreparedStatement("INSERT INTO `world.entity.guilds` VALUES (?,?,?,1,0,0,0,?,?,?,'');");
             p.setInt(1, guild.getId());
             p.setString(2, guild.getName());
             p.setString(3, guild.getEmblem());

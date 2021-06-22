@@ -35,6 +35,8 @@ public class Collector {
     private java.util.Map<Integer, GameObject> objects = new HashMap<>();
     //La d�fense
     private java.util.Map<Integer, Player> defenserId = new HashMap<>();
+    //Fight
+    private boolean isDead = false;
 
     public Collector(int id, short map, int cell, byte orientation,
                      int aGuildID, short N1, short N2, Player poseur, long date,
@@ -185,7 +187,7 @@ public class Collector {
                 packet.append("-1"); // lastHD
                 packet.append(",");
                 packet.append(Long.toString(perco.date
-                        + World.world.getGuild(GuildID).getLvl() * 600000)); // nextHD
+                        + World.world.getGuild(GuildID).getLvl() * 600000L)); // nextHD
                 packet.append(";");
 
                 packet.append(Integer.toString(map.getId(), 36));
@@ -591,5 +593,19 @@ public class Collector {
 
     public Collection<GameObject> getDrops() {
         return this.objects.values();
+    }
+
+    public boolean isDead(){ return isDead;}
+    public void setisDead(boolean result)
+    {
+        this.isDead = result;
+    }
+
+    public String xpString(String str) {
+            int max = World.world.getGuild(getGuildId()).getLvl() + 1;
+            if (max > World.world.getExpLevelSize())
+                max = World.world.getExpLevelSize();
+            return World.world.getExpLevel(World.world.getGuild(getGuildId()).getLvl()).perso + str
+                    + this.getXp() + str + World.world.getExpLevel(max).perso;
     }
 }

@@ -19,7 +19,7 @@ public class Guild {
 
     private int id;
     private long xp, date;
-    private String name = "", emblem = "";
+    private String name = "", emblem = "", announce = "";
     private int lvl, capital = 0, nbCollectors = 0;
     private List<GuildMember> members = new ArrayList<>();
     private Map<Integer, SortStats> spells = new HashMap<>(); // <Id, Level>
@@ -34,9 +34,10 @@ public class Guild {
         this.date = System.currentTimeMillis();
         this.decompileSpell("462;0|461;0|460;0|459;0|458;0|457;0|456;0|455;0|454;0|453;0|452;0|451;0|");
         this.decompileStats("176;100|158;1000|124;100|");
+        this.announce = "";
     }
 
-    public Guild(int id, String name, String emblem, int lvl, long xp, int capital, int nbCollectors, String sorts, String stats, long date) {
+    public Guild(int id, String name, String emblem, int lvl, long xp, int capital, int nbCollectors, String sorts, String stats, long date, String announce) {
         this.id = id;
         this.name = name;
         this.emblem = emblem;
@@ -47,6 +48,7 @@ public class Guild {
         this.date = date;
         this.decompileSpell(sorts);
         this.decompileStats(stats);
+        this.announce = announce;
     }
 
     public GuildMember addMember(int id, int r, byte pXp, long x, int ri, String lastCo) {
@@ -68,6 +70,10 @@ public class Guild {
     public int getId() {
         return this.id;
     }
+
+    public String getAnnounce() {return  this.announce;}
+
+    public void setAnnounce(String texte) { this.announce = texte;}
 
     public int getNbCollectors() {
         return this.nbCollectors;
