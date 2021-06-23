@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import client.Classe;
 import kernel.Boutique;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.LoggerFactory;
 import area.Area;
 import area.SubArea;
@@ -2148,6 +2149,17 @@ public class World {
                         .filter(player -> player != null && player.getGameClient() != null && player.isOnline())
                         .forEach(player -> player.sendMessage(message)),
                 0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+    }
+
+    public ArrayList<ObjectTemplate> getPotentialBlackItem(int level) {
+        ArrayList<ObjectTemplate> array = new ArrayList<>();
+        if(level>=175){
+            level=175;
+        }
+        final int levelMin = (level - 5 < 0 ? 0 : level - 5), levelMax = level + 5;
+        getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#")
+                && (levelMin <= objectTemplate.getLevel() && objectTemplate.getLevel() <= levelMax) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  ).forEach(array::add);
+        return array;
     }
 
     public static class Drop {
