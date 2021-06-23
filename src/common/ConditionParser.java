@@ -1,5 +1,6 @@
 package common;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.Node;
 import org.nfunk.jep.ParseException;
@@ -556,14 +557,26 @@ public class ConditionParser {
                 if(obj.getTemplate().getId() == newObj.getTemplate().getId())
                     return false;
         }
-        return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar && obj.getStats().isSameStats(newObj.getStats()) && (obj.getRarity() == newObj.getRarity()) && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
+
+        if( ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, newObj.getTemplate().getType() ) ) {
+            return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar && obj.getStats().isSameStats(newObj.getStats()) && (obj.getRarity() == newObj.getRarity()) && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
+                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT
+                    && (newObj.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(obj.getTemplate().getId()) || Constant.isDoplon(obj.getTemplate().getId()))
+                    && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED;
+        }
+        return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar && obj.getStats().isSameStats(newObj.getStats()) && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT
-                &&(newObj.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(obj.getTemplate().getId()) || Constant.isDoplon(obj.getTemplate().getId()))
+                && (newObj.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(obj.getTemplate().getId()) || Constant.isDoplon(obj.getTemplate().getId()))
                 && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED;
     }
     public static boolean stackIfSimilar2(GameObject obj, GameObject newObj, boolean stackIfSimilar) {

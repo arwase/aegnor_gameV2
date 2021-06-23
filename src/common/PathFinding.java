@@ -1830,21 +1830,26 @@ public class PathFinding {
 
     public static boolean checkLoS(GameMap map, int cell1, int cell2,
                                    Fighter fighter, boolean isPeur) {
+
         if (fighter == null) // on ne rev�rifie pas (en plus du client) pour les joueurs
             return false;
+
+        if (fighter.getPlayer() != null) // on ne rev�rifie pas (en plus du client) pour les joueurs
+            return true;
+
         ArrayList<Integer> CellsToConsider = new ArrayList<Integer>();
         CellsToConsider = getLoSBotheringIDCases(map, cell1, cell2, true);
         if (CellsToConsider == null) {
-            return false;
+            return true;
         }
         for (Integer cellID : CellsToConsider) {
             if (map.getCase(cellID) != null)
                 if (!map.getCase(cellID).blockLoS()
                         || (!map.getCase(cellID).isWalkable(false) && isPeur)) {
-                    return true;
+                    return false;
                 }
         }
-        return false;
+        return true;
     }
 
     private static ArrayList<Integer> getLoSBotheringIDCases(GameMap map,
