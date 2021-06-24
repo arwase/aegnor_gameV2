@@ -103,7 +103,7 @@ public class Player {
     private long exp;
     private int curPdv;
     private int maxPdv;
-    private Stats statsParcho = new Stats();
+    private Stats statsParcho = new Stats(true);
     private long kamas;
     private int _spellPts;
     private int _capital;
@@ -2367,7 +2367,7 @@ public class Player {
     public boolean addObjet(GameObject newObj, boolean stackIfSimilar) {
         for (Entry<Integer, GameObject> entry : objects.entrySet()) {
             GameObject obj = entry.getValue();
-            if (World.world.getConditionManager().stackIfSimilar(obj, newObj, stackIfSimilar)) {
+            if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, stackIfSimilar)) {
                 obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantit� de l'objet existant
                 if (isOnline)
                     SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this, obj);
@@ -3336,7 +3336,7 @@ public class Player {
 
     private GameObject getSimilarBankItem(GameObject exGameObject) {
         for (GameObject gameObject : this.account.getBank())
-            if (World.world.getConditionManager().stackIfSimilar(gameObject, exGameObject, true))
+            if (World.world.getConditionManager().stackIfSimilar2(gameObject, exGameObject, true))
                 return gameObject;
         return null;
     }
@@ -4810,7 +4810,7 @@ public class Player {
     private GameObject getSimilarStoreItem(GameObject exGameObject) {
         for (Integer id : _storeItems.keySet()) {
             GameObject gameObject = World.world.getGameObject(id);
-            if (World.world.getConditionManager().stackIfSimilar(gameObject, exGameObject, true))
+            if (World.world.getConditionManager().stackIfSimilar2(gameObject, exGameObject, true))
                 return gameObject;
         }
 
@@ -5355,7 +5355,7 @@ public class Player {
                 if (obj.getPosition() == -1 && obj.getGuid() != oldID
                         && obj.getTemplate().getId() == objModelo.getId()
                         && obj.getStats().isSameStats(objet.getStats())
-                        && World.world.getConditionManager().stackIfSimilar(obj, objet, hasSimiler)) {
+                        && World.world.getConditionManager().stackIfSimilar2(obj, objet, hasSimiler)) {
                     obj.setQuantity(obj.getQuantity() + objet.getQuantity());
                     SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this, obj);
                     return true;

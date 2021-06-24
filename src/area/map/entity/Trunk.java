@@ -387,7 +387,7 @@ public class Trunk {
 
     private GameObject getSimilarTrunkItem(GameObject obj) {
         for (GameObject object : this.object.values())
-            if(World.world.getConditionManager().stackIfSimilar(object, obj, true))
+            if(World.world.getConditionManager().stackIfSimilar2(object, obj, true))
                 return object;
         return null;
     }

@@ -55,15 +55,17 @@ public class French extends AbstractLang {
                 "<b>.groupe</b> - Groupe vos mules.\n"); index++;
         //13
         this.sentences.add(index, "Vous pouvez dès à présent voter, <b><a href='" + Config.INSTANCE.getUrl() + "'>clique ici</a></b> !"); index++;
-        this.sentences.add(index, "Vous ne pouvez plus combattre jusqu'à nouvelle ordre."); index++;
         //14
-        this.sentences.add(index, "Vous pouvez désormais combattre.");
+        this.sentences.add(index, "Vous ne pouvez plus combattre jusqu'à nouvelle ordre."); index++;
+        //15
+        this.sentences.add(index, "Vous pouvez désormais combattre."); index++;
+        //16
         this.sentences.add(index,"Pour afficher les commandes disponibles faites :\n"
                 + "<b>.commande</b> - Permet d'afficher les commandes standards.\n"
                 + "<b>.commandemulti</b> - Permet d'afficher les commandes multicomptes.\n"
                 + "<b>.commandevip</b> - Permet d'afficher les commandes VIP.\n"
                 + "<b>.commandebuy</b> - Permet d'afficher les commandes payantes."); index++;
-        //15
+        //17
         this.sentences.add(index,"<b>***COMMANDES STANDARD***</b> disponibles sont :\n"
                 + "<b>.infos</b> - Permet d'obtenir des informations sur le serveur.\n"
                 + "<b>.deblo</b> - Permet de vous débloquer d'une case non marchable.\n"
@@ -81,6 +83,7 @@ public class French extends AbstractLang {
                 + "<b>.hdv</b> - Permet d'afficher un hdv global.\n"
                 + "<b>.boutique</b> - Permet d'afficher les objets boutiques.\n"
                 + "<b>.points</b> - Permet d'afficher tes points boutiques."); index++;
+        //18
         this.sentences.add(index,"<b>***COMMANDES MAITRE***</b> disponibles sont :\n"
                 + "<b>.groupe</b> - Permet de grouper l'ensemble de tes persos.\n"
                 + "<b>.tp</b> - Permet de téléporter tes persos sur ta map.\n"
@@ -90,11 +93,13 @@ public class French extends AbstractLang {
                 + "<b>.getslave</b> - Permet d'afficher tes esclaves.\n"
                 + "<b>.resetmaitre</b> - Si tu es maitre, libères tes esclaves.\n"
                 + "<b>.pass</b> - Permet de passer ton tour automatiquement."); index++;
+        //19
         this.sentences.add(index,"<b>***COMMANDES VIP***</b> disponibles sont :\n"
                 + "<b>.banque</b> - Permet d'ouvrir la banque.\n"
                 + "<b>.refreshMobs</b> - Permet de rafraichir les monstre de la map.\n"
                 + "<b>.zaap</b> - Permet d'ouvrir la liste des zaap."); index++;
         // + "<b>.zaap</b> - Permet d'ouvrir la banque."
+        //20
         this.sentences.add(index,"<b>***COMMANDES PAYANTES***</b> disponibles sont :\n"
                 + "<b>.parcho</b> - (100PB) Permet de te parcho 101 partout.\n"
                 + "<b>.spellboost</b> - (50PB) Donne 15 points de sort.\n"

@@ -46,10 +46,15 @@ Version 0.7 (22/06/2021) :
 - Correction du Restat
 - Fix l'hdv global
 
+Version 0.8 (24/06/2021) :
+- Fix des Jets d'Items
+- Fix du Stack des Items
+- Fix du Bug de visualisation des CellFights
+- Correction du Bug de la Commande pour supprimer les mobgroupfix de la map
+
 //TODO
-- Remettre les bons indexes pour les commandes (Lang)
+- Remettre les bons indexes pour les commandes (Lang) (Normalement Réglé)
 - Fix la boutique
 - Faire les drops d'items hors pano
 - Revoir les Panoplies de Classes (Jet sûrement)
 - Tester toutes les commandes (plusieurs déjà testées)
-- Fix les ressources qui ne se stack pas donc ne sont pas générés dans l'inventaire

@@ -39,13 +39,16 @@ public class Stats {
         }
     }
 
-    public Stats() { // Parchotage
+    public Stats(boolean a) { // Parchotage
         this.effects.put(Constant.STATS_ADD_VITA, 0);
         this.effects.put(Constant.STATS_ADD_SAGE, 0);
         this.effects.put(Constant.STATS_ADD_INTE, 0);
         this.effects.put(Constant.STATS_ADD_FORC, 0);
         this.effects.put(Constant.STATS_ADD_CHAN, 0);
         this.effects.put(Constant.STATS_ADD_AGIL, 0);
+    }
+    public Stats() {
+        this.effects = new HashMap<Integer, Integer>();
     }
 
     public Stats(Guild guild) { // Stats collector in fight
@@ -75,7 +78,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-        if(val != 0) {
+        if(val > 0) {
             if (id == 112) id = Constant.STATS_ADD_DOMA2;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
@@ -96,23 +99,29 @@ public class Stats {
     }
 
     public boolean isSameStats(Stats other) {
-        for (Entry<Integer, Integer> entry : this.effects.entrySet()) {
-            //Si la stat n'existe pas dans l'autre map
-            if (other.getEffects().get(entry.getKey()) == null)
-                return false;
-            //Si la stat existe mais n'a pas la m�me valeur
-            if (other.getEffects().get(entry.getKey()).compareTo(entry.getValue()) != 0)
-                return false;
+        if(this.effects.size() == 0 && other.getEffects().size() == 0)
+        {
+            return true;
         }
-        for (Entry<Integer, Integer> entry : other.getEffects().entrySet()) {
-            //Si la stat n'existe pas dans l'autre map
-            if (this.effects.get(entry.getKey()) == null)
-                return false;
-            //Si la stat existe mais n'a pas la m�me valeur
-            if (this.effects.get(entry.getKey()).compareTo(entry.getValue()) != 0)
-                return false;
+        else {
+            for (Entry<Integer, Integer> entry : this.effects.entrySet()) {
+                //Si la stat n'existe pas dans l'autre map
+                if (other.getEffects().get(entry.getKey()) == null)
+                    return false;
+                //Si la stat existe mais n'a pas la m�me valeur
+                if (other.getEffects().get(entry.getKey()).compareTo(entry.getValue()) != 0)
+                    return false;
+            }
+            for (Entry<Integer, Integer> entry : other.getEffects().entrySet()) {
+                //Si la stat n'existe pas dans l'autre map
+                if (this.effects.get(entry.getKey()) == null)
+                    return false;
+                //Si la stat existe mais n'a pas la m�me valeur
+                if (this.effects.get(entry.getKey()).compareTo(entry.getValue()) != 0)
+                    return false;
+            }
+            return true;
         }
-        return true;
     }
 
     public String parseToItemSetStats() {

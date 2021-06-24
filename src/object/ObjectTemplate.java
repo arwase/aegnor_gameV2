@@ -474,9 +474,11 @@ public class ObjectTemplate {
             }
         }
 
-        for(GameObject object : objects)
-            if(World.world.getConditionManager().stackIfSimilar(object, item, true))
+        for(GameObject object : objects) {
+            if (World.world.getConditionManager().stackIfSimilar2(object, item, true)) {
                 return object;
+            }
+        }
         return item;
     }
 
@@ -621,7 +623,9 @@ public class ObjectTemplate {
                         break;
                     }
                 }
-                itemStats.addOneStat(statID, value);
+                if(value > 0) {
+                    itemStats.addOneStat(statID, value);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -754,7 +758,7 @@ public class ObjectTemplate {
             }
 
             for(GameObject object : objects)
-                if(ConditionParser.stackIfSimilar2(object, item, true))
+                if(World.world.getConditionManager().stackIfSimilar2(object, item, true))
                     return object;
 
         }

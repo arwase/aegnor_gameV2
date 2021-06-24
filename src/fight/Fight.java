@@ -1114,6 +1114,18 @@ public class Fight {
                 player.refreshObjectsClass();
             }
         }
+        for(Fighter fighter : this.team0.values())
+        {
+            if(fighter.getPlayer() != null) {
+                SocketManager.send(fighter.getPlayer(), "FC");
+            }
+        }
+        for(Fighter fighter : this.team1.values())
+        {
+            if(fighter.getPlayer() != null) {
+                SocketManager.send(fighter.getPlayer(), "FC");
+            }
+        }
 
         if (isHaveKnight() && getType() == Constant.FIGHT_TYPE_AGRESSION)
             addChevalier();
@@ -4582,28 +4594,40 @@ public class Fight {
                             if (objectTemplate.getType() == 32 && player != null) {
                                 player.setMascotte(entry.getKey());
                             } else {
+                                List<Integer> forbidden = Arrays.asList(Constant.ITEM_TYPE_OBJ_BLACK2);
+                                Integer typeObj = objectTemplate.getType();
+                                if((player.noitems && !forbidden.contains(typeObj)) || !player.noitems) {
+                                    GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplication(target.getItems().values(), entry.getValue(), false);
+                                    if (newObj != null) {
+                                        int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
-                                GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplication(target.getItems().values(), entry.getValue(), false);
-                                if(newObj !=null){
-                                    int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+                                        if (guid == -1) { // Don't exist
+                                            guid = newObj.setId();
+                                            target.getItems().put(guid, newObj);
+                                            SocketManager.GAME_SEND_OAKO_PACKET(target, newObj);
 
-                                    if (guid == -1) { // Don't exist
-                                        guid = newObj.setId();
-                                        target.getItems().put(guid, newObj);
-                                        SocketManager.GAME_SEND_OAKO_PACKET(target, newObj);
-
-                                        World.world.addGameObject(newObj, true);
-                                        //target.sendMessage("Drop "+newObj.toString());
-                                    } else {
-                                        newObj.setQuantity(newObj.getQuantity() + entry.getValue());
-                                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, newObj);
+                                            World.world.addGameObject(newObj, true);
+                                            //target.sendMessage("Drop "+newObj.toString());
+                                        } else {
+                                            int newQuantity = newObj.getQuantity() + entry.getValue();
+                                            Collection<GameObject> playerObjects = target.getItems().values();
+                                            for(GameObject object : playerObjects)
+                                            {
+                                                if(object.getTemplate() == newObj.getTemplate())
+                                                {
+                                                    object.setQuantity(newQuantity);
+                                                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, object);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        //Main.INSTANCE..error( "L'objet " + objectTemplate.getId() + " semble poser un problème à la création");
                                     }
                                 }
-                                else{
-                                    //Main.INSTANCE..error( "L'objet " + objectTemplate.getId() + " semble poser un problème à la création");
-                                }
-
                             }
+
                         }
 
                         for (Entry<Integer, Integer> entry : itemWon2.entrySet()) {

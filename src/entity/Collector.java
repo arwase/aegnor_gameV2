@@ -447,7 +447,7 @@ public class Collector {
     public boolean addObjet(GameObject newObj) {
         for (java.util.Map.Entry<Integer, GameObject> entry : this.objects.entrySet()) {
             GameObject obj = entry.getValue();
-            if (World.world.getConditionManager().stackIfSimilar(obj, newObj, true)) {
+            if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, true)) {
                 obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantit� de l'objet existant
                 return false;
             }

@@ -63,16 +63,16 @@ public class CommandPlayer {
                 ExchangeClient.INSTANCE.send("DM" + player.getName() + "|" + getNameServerById(Config.INSTANCE.getSERVER_ID()) + "|" + msg.substring(5, msg.length() - 1).replace("\n", "").replace("\r", "").replace(";", ":").replace("~", "").replace("|", "").replace("<", "").replace(">", "") + "|");
                 return true;
             } else if (command(msg, "commandemulti")) {
-                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 15));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 18));
                 return true;
             } else if (command(msg, "commandevip")) {
-                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 16));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 19));
                 return true;
             } else if (command(msg, "commandebuy")) {
-                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 20));
                 return true;
             } else if (command(msg, "commande")) {
-                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 14));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
                 return true;
             } else if (command(msg, "noall")) {
                 if (player.noall) {
@@ -549,7 +549,7 @@ public class CommandPlayer {
                         player.getAccount().setVip(1);
                         player.getAccount().setPoints(points);
                         Database.getStatics().getAccountData().update(player.getAccount());
-                        player.sendMessage("Vous êtes maintenant VIP ! Il vous reste <b>" + (points - prix) + "</b> après cet achat");
+                        player.sendMessage("Vous êtes maintenant VIP ! Il vous reste <b>" + player.getAccount().getPoints() + "</b> après cet achat");
                     }
                 }
                 else{
@@ -730,7 +730,7 @@ public class CommandPlayer {
                 if(player.cantTP()) return true;
                 return EventManager.getInstance().subscribe(player) == 1;
             } else {
-                player.sendMessage(Lang.get(player, 12));
+                player.sendMessage(Lang.get(player, 16));
                 return true;
             }
         }

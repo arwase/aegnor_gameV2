@@ -98,7 +98,18 @@ public class ExchangePacketHandler {
 
                                 for (String data : packet.split("DI")) {
                                     String[] split = data.split(";");
-                                    long count = Long.parseLong(split[0].substring(1));
+                                    long count = 0L;
+                                    if(data.contains("F"))
+                                    {
+                                        break;
+                                    }
+                                    try{
+                                        count = Long.parseLong(split[0].substring(1));
+                                    }
+                                    catch (Exception ignored)
+                                    {
+                                        count = Long.parseLong(split[0].substring(0,1));
+                                    }
                                     DataType<?> queue = World.world.getDataQueue().getQueue().get(count);
 
                                     switch (Byte.parseByte(String.valueOf(data.charAt(0)))) {

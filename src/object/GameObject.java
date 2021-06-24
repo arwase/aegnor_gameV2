@@ -222,8 +222,10 @@ public class GameObject {
                     }
                     if (!follow2)
                         continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
-
-                    Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                    int jet = Integer.parseInt(stats[1], 16);
+                    if(jet > 0) {
+                        Stats.addOneStat(id, jet);
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -261,12 +263,13 @@ public class GameObject {
     }
 
     public void setQuantity(int quantity) {
-        if (quantity <= 0)
+        if (quantity <= 0) {
             quantity = 0;
-        else if (quantity >= 100000)
-            //if (Logging.USE_LOG)
-            //    Logging.getInstance().write("Object", "Faille : Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
-
+        }
+        if (quantity >= 100000)
+        {
+            quantity = 1;
+        }
         this.quantity = quantity;
         this.setModification();
     }
@@ -525,7 +528,7 @@ public class GameObject {
             } else
             if ((statID == 970) || (statID == 971) || (statID == 972)
                     || (statID == 973) || (statID == 974)) {
-                int jet = entry.getValue().intValue();
+                int jet = entry.getValue();
                 if ((statID == 974) || (statID == 972) || (statID == 970))
                     stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
                 else
@@ -655,9 +658,11 @@ public class GameObject {
                 if (entry.getKey() == 615) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
                 } else {
-                    String jet = "0d0+" + entry.getValue();
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
-                    stats.append("#0#0#").append(jet);
+                    if(entry.getValue() > 0) {
+                        String jet = "0d0+" + entry.getValue();
+                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
+                        stats.append("#0#0#").append(jet);
+                    }
                 }
                 isFirst = false;
             }

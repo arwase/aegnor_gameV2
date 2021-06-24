@@ -61,7 +61,7 @@ public class WorldSave extends Updatable {
                     Database.getDynamics().getPrismData().update(prism);
 
             World.world.logger.info("-> of guilds.");
-            World.world.getGuilds().values().stream().forEach(guild -> Database.getStatics().getGuildData().update(guild));
+            World.world.getGuilds().values().forEach(guild -> Database.getStatics().getGuildData().update(guild));
 
             World.world.logger.info("-> of collectors.");
             World.world.getCollectors().values().stream().filter(collector -> collector.getInFight() <= 0).forEach(collector -> Database.getDynamics().getCollectorData().update(collector));
@@ -70,17 +70,17 @@ public class WorldSave extends Updatable {
             World.world.getHouses().values().stream().filter(house -> house.getOwnerId() > 0).forEach(house -> Database.getDynamics().getHouseData().update(house));
 
             World.world.logger.info("-> of trunks.");
-            World.world.getTrunks().values().stream().forEach(trunk -> Database.getDynamics().getTrunkData().update(trunk));
+            World.world.getTrunks().values().forEach(trunk -> Database.getDynamics().getTrunkData().update(trunk));
 
             World.world.logger.info("-> of parks.");
             World.world.getMountparks().values().stream().filter(mp -> mp.getOwner() > 0 || mp.getOwner() == -1).forEach(mp -> Database.getDynamics().getMountParkData().update(mp));
 
             World.world.logger.info("-> of mounts.");
-            World.world.getMounts().values().stream().forEach(mount -> Database.getStatics().getMountData().update(mount));
+            World.world.getMounts().values().forEach(mount -> Database.getStatics().getMountData().update(mount));
 
             World.world.logger.info("-> of areas.");
-            World.world.getAreas().values().stream().forEach(area -> Database.getDynamics().getAreaData().update(area));
-            World.world.getSubAreas().values().stream().forEach(subArea -> Database.getDynamics().getSubAreaData().update(subArea));
+            World.world.getAreas().values().forEach(area -> Database.getDynamics().getAreaData().update(area));
+            World.world.getSubAreas().values().forEach(subArea -> Database.getDynamics().getSubAreaData().update(subArea));
 
             World.world.logger.info("-> of objects.");
             try {
