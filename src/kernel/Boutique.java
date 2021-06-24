@@ -20,8 +20,8 @@ public class Boutique {
     public static void open(Player player) {
         player.boutique = true;
         player.setExchangeAction(new ExchangeAction<>(ExchangeAction.TRADING_WITH_BOUTIQUE, 0));
-        SocketManager.send(player, "ECK0|1");
-        SocketManager.send(player, "Es" + packet);
+        SocketManager.send(player, "ECK20|1");
+        SocketManager.send(player, "EY" + packet);
     }
 
     private static String getObjectList() {
@@ -36,7 +36,7 @@ public class Boutique {
 
                 stats = obj.generateNewStatsFromTemplate(obj.getStrTemplate(), true,0);
             }
-            items.append(obj.getId() + ";"+ stats.parseToItemSetStats() + ";" + obj.getPoints() + "|");
+            items.append(obj.getId()).append(";").append(stats.parseToItemSetStats()).append(";").append(obj.getPoints()).append("|");
         }
         return items.toString();
     }

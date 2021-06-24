@@ -51,10 +51,11 @@ Version 0.8 (24/06/2021) :
 - Fix du Stack des Items
 - Fix du Bug de visualisation des CellFights
 - Correction du Bug de la Commande pour supprimer les mobgroupfix de la map
+- Fix de la LDV des monstres
+- FIx des Langs pour les commandes
+- Fix de la Boutique
+- Ajout des drops items Hors Pano
 
 //TODO
-- Remettre les bons indexes pour les commandes (Lang) (Normalement Réglé)
-- Fix la boutique
-- Faire les drops d'items hors pano
 - Revoir les Panoplies de Classes (Jet sûrement)
 - Tester toutes les commandes (plusieurs déjà testées)
