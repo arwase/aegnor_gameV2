@@ -295,6 +295,7 @@ public class JobAction {
 
 
             int chan = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), this.ingredients.size());
+            int chan2 = JobConstant.getChanceByNbrCaseByLvlnormal(SM.get_lvl(), this.ingredients.size());
             int jet = Formulas.getRandomValue(1, 100);
             boolean success = chan >= jet;
 
@@ -311,7 +312,7 @@ public class JobAction {
                 SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + templateId);
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
             } else {
-                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
+                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplicationForJobs(this.player.getItems().values(), 1, false,chan2);
                 int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
                 if(guid == -1) { // Don't exist

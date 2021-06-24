@@ -4028,22 +4028,39 @@ public class Fight {
                 }
             }
             if (amande || rousse || doree) {
-                winners.stream().filter(fighter -> !fighter.isInvocation() && fighter.haveState(Constant.ETAT_APPRIVOISEMENT)).forEach(F -> getTrainer().add(F));
+                winners.stream().filter(fighter -> !fighter.isInvocation() ).forEach(F -> getTrainer().add(F));
                 if (getTrainer().size() > 0) {
                     for (int i = 0; i < getTrainer().size(); i++) {
                         try {
                             Fighter f = getTrainer().get(Formulas.getRandomValue(0, getTrainer().size() - 1)); // R�cup�re un captureur au hasard dans la liste
                             Player player = f.getPlayer();
+                            int boostChance = 0;
+                            int	appriChance = 0;
+
                             if (player.getObjetByPos(Constant.ITEM_POS_ARME) == null || !(player.getObjetByPos(Constant.ITEM_POS_ARME).getTemplate().getType() == Constant.ITEM_TYPE_FILET_CAPTURE)) {
-                                getTrainer().remove(f);
-                                continue;
+                                appriChance = 5;
                             }
-                            int chance = Formulas.getRandomValue(1, 100), appriChance = Formulas.totalAppriChance(amande, rousse, doree, player);
+                            else{
+                                appriChance = 33;
+
+                                if( f.haveState(Constant.ETAT_APPRIVOISEMENT) ){
+                                    appriChance += Formulas.totalAppriChance(amande, rousse, doree, player) ;
+                                }
+                            }
+                            int chance = Formulas.getRandomValue(1, 100);
+                            //appriChance = Formulas.totalAppriChance(amande, rousse, doree, player);
                             if (chance <= appriChance) {
-                                // Retire le filet au personnage et lui envoie ce changement
-                                int filet = player.getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
-                                player.deleteItem(filet);
-                                SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, filet);
+                                if (player.getObjetByPos(Constant.ITEM_POS_ARME) == null || !(player.getObjetByPos(Constant.ITEM_POS_ARME).getTemplate().getType() == Constant.ITEM_TYPE_FILET_CAPTURE)) {
+                                    // getTrainer().remove(f);
+                                    // continue;
+                                }
+                                else {
+                                    // Retire le filet au personnage et lui envoie ce changement
+                                    int filet = player.getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
+                                    player.deleteItem(filet);
+                                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, filet);
+
+                                }
                                 setTrainerWinner(f.getId());
                                 break;
                             }
@@ -4109,7 +4126,7 @@ public class Fight {
             // Calcul the total prospecting.
             int totalProspecting = 0;
             double challengeFactor = 0, starFactor = this.getMobGroup() != null ? (this.getMobGroup().getStarBonus() / 100) + 1 : 1;
-
+            double chancebase = 1.0;
             for (Fighter fighter : winners)
                 if(fighter != null && !fighter.isDouble())
                     if (!fighter.isInvocation() || (fighter.getMob() != null && fighter.getMob().getTemplate() != null && fighter.getMob().getTemplate().getId() == 285))
@@ -4127,6 +4144,8 @@ public class Fight {
             ArrayList<Drop> dropsPlayers = new ArrayList<>(), dropsMeats = new ArrayList<>();
             Collection<GameObject> dropsCollector = null;
             Couple<Integer, Integer> kamas;
+            List<Integer> levels = new ArrayList<Integer>() ;
+            levels.add(0);
 
             if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                 int kamasCollector = (int) Math.ceil(collector.getKamas() / winners.size());
@@ -4138,6 +4157,7 @@ public class Fight {
                     if (!fighter.isInvocation() && fighter.getMob() != null && !fighter.isDouble()) {
                         minKamas += fighter.getMob().getTemplate().getMinKamas();
                         maxKamas += fighter.getMob().getTemplate().getMaxKamas();
+                        levels.add(fighter.getMob().getLevel());
 
                         for (Drop drop1 : fighter.getMob().getTemplate().getDrops()) {
                             switch (drop1.getAction()) {
@@ -4151,15 +4171,38 @@ public class Fight {
                                         drop = drop1.copy(fighter.getMob().getGrade());
                                         if(drop == null) break;
                                         dropsPlayers.add(drop);
+                                        chancebase = 2;
+
+                                    }
+                                    else {
+                                        if(drop1.getCeil()/(8/winners.size()) <= totalProspecting && fighter.getMob() != null){
+                                            chancebase = 1;
+                                        }
+                                        else{
+                                            chancebase = 0.5;
+                                        }
+
+                                        drop = drop1.copy(fighter.getMob().getGrade());
+                                        if(drop == null) break;
+                                        dropsPlayers.add(drop);
                                     }
                                     break;
                             }
                         }
                     }
+                    else{
+                        levels.add(0);
+                    }
                 }
 
                 kamas = new Couple<>(minKamas, maxKamas);
             }
+
+            int Maxlvlgroupe =  Collections.max(levels);
+            if(Maxlvlgroupe>175) {
+                Maxlvlgroupe = 175;
+            }
+
             // Sort fighter by prospecting.
             ArrayList<Fighter> temporary1 = new ArrayList<>();
             Fighter higherFighter = null;
@@ -4356,8 +4399,20 @@ public class Fight {
                         }
                     } else {
                         ArrayList<Drop> temporary3 = new ArrayList<>(dropsPlayers);
-                        temporary3.addAll(World.world.getEtherealWeapons(i.isInvocation() ? i.getInvocator().getLvl() : i.getLvl()).stream().map(objectTemplate ->
-                              new Drop(objectTemplate.getId(), 0.001, 0)).collect(Collectors.toList()));
+                        //temporary3.addAll(World.world.getEtherealWeapons(i.isInvocation() ? i.getInvocator().getLvl() : i.getLvl()).stream().map(objectTemplate ->
+                              //new Drop(objectTemplate.getId(), 0.001, 0)).collect(Collectors.toList()));
+
+                        try {
+                            if (this.getType() == Constant.FIGHT_TYPE_PVM && win == 1) {
+                                temporary3.addAll(World.world.getPotentialBlackItem(Maxlvlgroupe).stream().map(objectTemplate ->
+                                        new Drop(objectTemplate.getId(), 0.03, 0)).collect(Collectors.toList()));
+                            }
+                        }
+                        catch (Exception e) {
+                            player.sendMessage(e.toString());
+                        }
+
+
                         Collections.shuffle(temporary3);
 
                         for (Drop drop : temporary3) {
@@ -4366,7 +4421,7 @@ public class Fight {
 
 
                             final double jet = Double.parseDouble(formatter.format(Math.random() * 100).replace(',', '.')),
-                                    chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonus(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP()).replace(',', '.'));
+                                    chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonus(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP()* chancebase ).replace(',', '.'));
                             boolean ok = false;
 
                             switch (drop.getAction()) {
@@ -4382,6 +4437,17 @@ public class Fight {
                                     continue;
 
                                 quantity = 1;
+                                if( (objectTemplate.getType() > 32 || objectTemplate.getType() == 15) && (( objectTemplate.getType() < 71 ) || ( objectTemplate.getType() > 94  ) || ( objectTemplate.getType() == 84 ) )
+                                        && ( objectTemplate.getType() != 97 )  && ( objectTemplate.getType() <= 111 ) ) {
+                                    quantity = Formulas.getRandomValue(1, Config.INSTANCE.getRATE_DROP());
+
+                                }
+
+                                if( quantity ==1 && drop.getLocalPercent() >= 100) {
+                                    quantity = (int)Math.round(drop.getLocalPercent()/100) ;
+                                }
+
+
                                 boolean itsOk = false, unique = false;
                                 switch (drop.getAction()) {
                                     case -2:
@@ -4580,7 +4646,7 @@ public class Fight {
 
                                 if(chief != null ){
                                     if(chief.ipdrop){
-                                        if(objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS && objectTemplate.getType() != Constant.ITEM_TYPE_OBJET_MISSION ){
+                                        if(objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS && objectTemplate.getType() != Constant.ITEM_TYPE_OBJET_MISSION && objectTemplate.getType() != Constant.ITEM_TYPE_QUETES){
                                             target = chief;
                                         }
                                     }

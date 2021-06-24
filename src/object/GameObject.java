@@ -1339,6 +1339,28 @@ public class GameObject {
         }
         return rarity;
     }
+    public static int getAleaRarity(int chanceimpact) {
+        int rarity = 1;
+        int seuil = 50;
+        int chance = 0;
+
+        float perc = (float)(chanceimpact*0.01);
+        int seuilimpact = (int)Math.floor(seuil * perc);
+        for (int i = 0; i <= 4; i++) {
+            chance = Formulas.getRandomValue(0, 100);
+            if(chance<seuilimpact) {
+                rarity++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if(rarity>5){
+            rarity = 5;
+        }
+        return rarity;
+    }
 
     public ArrayList<String> getSpellStats() {
         return SortStats;

@@ -177,7 +177,15 @@ public class JobConstant {
     public static int getChanceByNbrCaseByLvl(int lvl, int nbr) {
         if (nbr <= getTotalCaseByJobLevel(lvl) - 2)
             return 100;//99.999... normalement, mais osef
+        //return getChanceForMaxCase(lvl);
+        return 100;
+    }
+
+    public static int getChanceByNbrCaseByLvlnormal(int lvl, int nbr) {
+        if (nbr <= getTotalCaseByJobLevel(lvl) - 2)
+            return 100;//99.999... normalement, mais osef
         return getChanceForMaxCase(lvl);
+        //return 100;
     }
 
     public static boolean isMageJob(int id) {
