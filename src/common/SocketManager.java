@@ -2697,4 +2697,40 @@ public class SocketManager {
         for (Player perso : map.getPlayers())
             send(perso, "GM|" + npc.parse(true, perso));
     }
+
+    public static void GAME_SEND_BN_OUT(Player player, String s) {
+        String packet = "BN" + s;
+        send(player, packet);
+    }
+
+    public static void GAME_SEND_AC_CHANGE_CLASSE(Player player, int Classe) {
+        String packet = "AC" + Classe;
+        send(player, packet);
+    }
+
+    public static void GAME_SEND_SL_LISTE_SORTS(Player player) {
+        var packet = "SL" + player.stringListeSorts();
+        send(player, packet);
+    }
+
+    public static void GAME_SEND_GM_REFRESH_PL_TO_MAP(GameMap curMap, Player player) {
+        String packet = "GM|~" + player.parseToGM();
+        for (Player p : curMap.getPlayers()) {
+            if (p.getFight() == null) {
+                send(p, packet);
+            }
+        }
+    }
+
+    public static void GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(Fight fight, Fighter luchador) {
+        String packet = "GM|~" + luchador.getPlayer().parseToGM();
+        for (Fighter luchadore : fight.getTeam(3).values()) {
+            send(luchadore.getPlayer(), packet);
+        }
+    }
+
+    public static void GAME_SEND_bV_CLOSE_PANEL(Player player) {
+        String packet = "bV";
+        send(player, packet);
+    }
 }

@@ -32,17 +32,17 @@ public class IA21 extends AbstractNeedSpell  {
         Fighter secondEnnemy = Function.getNearestEnnemynbrcasemax2(this.fight, this.fighter, 0, 2);
 
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
-            Function.buffIfPossibleKrala(this.fight, this.fighter, this.fighter);
-            Function.invoctantaIfPossible(this.fight, this.fighter);
+            Function.getInstance().buffIfPossibleKrala(this.fight, this.fighter, this.fighter);
+            Function.getInstance().invoctantaIfPossible(this.fight, this.fighter);
             //System.out.println("La elle a invoqué si elle peut " );
             if(this.fighter.getCurPa(this.fight) > 0 && firstEnnemy != null && secondEnnemy == null && !action) {
-                int num = Function.attackIfPossible(this.fight, this.fighter, this.highests);
+                int num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
                 if(num != 0) {
                     time = num;
                     action = true;
                 }
             } else if(this.fighter.getCurPa(this.fight) > 0 && secondEnnemy != null && !action) {
-                int num = Function.attackIfPossible(this.fight, this.fighter, this.cacs);
+                int num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.cacs);
                 if(num != 0) {
                     time = num;
                     action = true;

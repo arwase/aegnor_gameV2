@@ -192,9 +192,11 @@ public class GameObject {
                     }
 
                     if (id >= 281 && id <= 294) {
-                        SortStats.add(split);
+                        int jet = Integer.parseInt(stats[1], 16);
+                        Stats.addOneStat(id, jet);
                         continue;
                     }
+
                     boolean follow1 = true;
                     switch (id) {
                         case 110:
@@ -362,7 +364,7 @@ public class GameObject {
         StringBuilder stats = new StringBuilder();
         boolean isFirst = true;
 
-        if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
+       /* if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
                 || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212)) {
             for (String spell : SortStats) {
                 if (!isFirst) {
@@ -373,184 +375,191 @@ public class GameObject {
                 stats.append(sort[0]).append("#").append(sort[1]).append("#0#").append(sort[3]).append("#").append(World.world.getSort(spellid));
                 isFirst = false;
             }
-        }
+        }*/
 
-        for (SpellEffect SE : Effects) {
-            if (!isFirst)
-                stats.append(",");
-            String[] infos = SE.getArgs().split(";");
+            for (SpellEffect SE : Effects) {
+                if (!isFirst)
+                    stats.append(",");
+                String[] infos = SE.getArgs().split(";");
 
-            try {
-                switch (SE.getEffectID()) {
-                    case 614:
-                        stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(infos[0]).append("#").append(infos[5]);
-                        break;
+                try {
+                    switch (SE.getEffectID()) {
+                        case 614:
+                            stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(infos[0]).append("#").append(infos[5]);
+                            break;
 
-                    default:
-                        stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(infos[0]).append("#").append(infos[1]).append("#").append(infos[1]).append("#").append(infos[5]);
-                        break;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                continue;
-            }
-            isFirst = false;
-        }
-
-        for (Entry<Integer, String> entry : txtStats.entrySet()) {
-            if (!isFirst)
-                stats.append(",");
-            if (template.getType() == 77 || template.getType() == 90) {
-                if (entry.getKey() == Constant.STATS_PETS_PDV)
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
-                if (entry.getKey() == Constant.STATS_PETS_EPO)
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
-                if (entry.getKey() == Constant.STATS_PETS_REPAS)
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
-                if (entry.getKey() == Constant.STATS_PETS_POIDS) {
-                    int corpu = 0;
-                    int corpulence = 0;
-                    String c = entry.getValue();
-                    if (c != null && !c.equalsIgnoreCase("")) {
-                        try {
-                            corpulence = Integer.parseInt(c);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        default:
+                            stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(infos[0]).append("#").append(infos[1]).append("#").append(infos[1]).append("#").append(infos[5]);
+                            break;
                     }
-                    if (corpulence > 0 || corpulence < 0)
-                        corpu = 7;
-                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(corpu)).append("#").append(corpulence > 0 ? corpu : 0).append("#").append(Integer.toHexString(corpu));
-                }
-                if (entry.getKey() == Constant.STATS_PETS_DATE
-                        && template.getType() == 77) {
-                    if (entry.getValue().contains("#"))
-                        stats.append(Integer.toHexString(entry.getKey())).append(entry.getValue());
-                    else
-                        stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
-                }
-            } else if (entry.getKey() == Constant.STATS_CHANGE_BY || entry.getKey() == Constant.STATS_NAME_TRAQUE || entry.getKey() == Constant.STATS_OWNER_1) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
-            } else if (entry.getKey() == Constant.STATS_GRADE_TRAQUE || entry.getKey() == Constant.STATS_ALIGNEMENT_TRAQUE || entry.getKey() == Constant.STATS_NIVEAU_TRAQUE) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue()).append("#0");
-            } else if (entry.getKey() == Constant.STATS_NAME_DJ) {
-                if (entry.getValue().equals("0d0+0"))
+                } catch (Exception e) {
+                    e.printStackTrace();
                     continue;
-                for (String i : entry.getValue().split(",")) {
-                    stats.append(",").append(Integer.toHexString(entry.getKey())).append("#0#0#").append(i);
                 }
-                continue;
-            } else if (entry.getKey() == Constant.STATS_DATE) {
-                String item = entry.getValue();
-                if (item.contains("#")) {
-                    String date = item.split("#")[3];
-                    if (date != null && !date.equalsIgnoreCase(""))
-                        stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(date)));
-                } else
-                    stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(item)));
-            } else if (entry.getKey() == Constant.CAPTURE_MONSTRE) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue());
-            } else if (entry.getKey() == Constant.STATS_PETS_PDV
-                    || entry.getKey() == Constant.STATS_PETS_POIDS
-                    || entry.getKey() == Constant.STATS_PETS_DATE
-                    || entry.getKey() == Constant.STATS_PETS_REPAS) {
-                PetEntry p = World.world.getPetsEntry(this.getGuid());
-                if (p == null) {
+                isFirst = false;
+            }
+
+            for (Entry<Integer, String> entry : txtStats.entrySet()) {
+                if (!isFirst)
+                    stats.append(",");
+                if (template.getType() == 77 || template.getType() == 90) {
                     if (entry.getKey() == Constant.STATS_PETS_PDV)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append("a").append("#0#a");
-                    if (entry.getKey() == Constant.STATS_PETS_POIDS)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
-                    if (entry.getKey() == Constant.STATS_PETS_DATE)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
-                    if (entry.getKey() == Constant.STATS_PETS_REPAS)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
-                } else {
-                    if (entry.getKey() == Constant.STATS_PETS_PDV)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getPdv())).append("#0#").append(Integer.toHexString(p.getPdv()));
-                    if (entry.getKey() == Constant.STATS_PETS_POIDS)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toString(p.parseCorpulence())).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(Integer.toString(p.parseCorpulence()));
-                    if (entry.getKey() == Constant.STATS_PETS_DATE)
-                        stats.append(Integer.toHexString(entry.getKey())).append(p.parseLastEatDate());
+                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
+                    if (entry.getKey() == Constant.STATS_PETS_EPO)
+                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
                     if (entry.getKey() == Constant.STATS_PETS_REPAS)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
-                    if (p.getIsEupeoh()
-                            && entry.getKey() == Constant.STATS_PETS_EPO)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0)).append("#0#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0));
+                    if (entry.getKey() == Constant.STATS_PETS_POIDS) {
+                        int corpu = 0;
+                        int corpulence = 0;
+                        String c = entry.getValue();
+                        if (c != null && !c.equalsIgnoreCase("")) {
+                            try {
+                                corpulence = Integer.parseInt(c);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (corpulence > 0 || corpulence < 0)
+                            corpu = 7;
+                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(corpu)).append("#").append(corpulence > 0 ? corpu : 0).append("#").append(Integer.toHexString(corpu));
+                    }
+                    if (entry.getKey() == Constant.STATS_PETS_DATE
+                            && template.getType() == 77) {
+                        if (entry.getValue().contains("#"))
+                            stats.append(Integer.toHexString(entry.getKey())).append(entry.getValue());
+                        else
+                            stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
+                    }
+                } else if (entry.getKey() == Constant.STATS_CHANGE_BY || entry.getKey() == Constant.STATS_NAME_TRAQUE || entry.getKey() == Constant.STATS_OWNER_1) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                } else if (entry.getKey() == Constant.STATS_GRADE_TRAQUE || entry.getKey() == Constant.STATS_ALIGNEMENT_TRAQUE || entry.getKey() == Constant.STATS_NIVEAU_TRAQUE) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue()).append("#0");
+                } else if (entry.getKey() == Constant.STATS_NAME_DJ) {
+                    if (entry.getValue().equals("0d0+0"))
+                        continue;
+                    for (String i : entry.getValue().split(",")) {
+                        stats.append(",").append(Integer.toHexString(entry.getKey())).append("#0#0#").append(i);
+                    }
+                    continue;
+                } else if (entry.getKey() == Constant.STATS_DATE) {
+                    String item = entry.getValue();
+                    if (item.contains("#")) {
+                        String date = item.split("#")[3];
+                        if (date != null && !date.equalsIgnoreCase(""))
+                            stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(date)));
+                    } else
+                        stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(item)));
+                } else if (entry.getKey() == Constant.CAPTURE_MONSTRE) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue());
+                } else if (entry.getKey() == Constant.STATS_PETS_PDV
+                        || entry.getKey() == Constant.STATS_PETS_POIDS
+                        || entry.getKey() == Constant.STATS_PETS_DATE
+                        || entry.getKey() == Constant.STATS_PETS_REPAS) {
+                    PetEntry p = World.world.getPetsEntry(this.getGuid());
+                    if (p == null) {
+                        if (entry.getKey() == Constant.STATS_PETS_PDV)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append("a").append("#0#a");
+                        if (entry.getKey() == Constant.STATS_PETS_POIDS)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
+                        if (entry.getKey() == Constant.STATS_PETS_DATE)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
+                        if (entry.getKey() == Constant.STATS_PETS_REPAS)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
+                    } else {
+                        if (entry.getKey() == Constant.STATS_PETS_PDV)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getPdv())).append("#0#").append(Integer.toHexString(p.getPdv()));
+                        if (entry.getKey() == Constant.STATS_PETS_POIDS)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toString(p.parseCorpulence())).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(Integer.toString(p.parseCorpulence()));
+                        if (entry.getKey() == Constant.STATS_PETS_DATE)
+                            stats.append(Integer.toHexString(entry.getKey())).append(p.parseLastEatDate());
+                        if (entry.getKey() == Constant.STATS_PETS_REPAS)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
+                        if (p.getIsEupeoh()
+                                && entry.getKey() == Constant.STATS_PETS_EPO)
+                            stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0)).append("#0#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0));
+                    }
+                } else if (entry.getKey() == Constant.STATS_RESIST
+                        && getTemplate().getType() == 93) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
+                } else if (entry.getKey() == Constant.STATS_RESIST) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
+                } else {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
                 }
-            } else if (entry.getKey() == Constant.STATS_RESIST
-                    && getTemplate().getType() == 93) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
-            } else if (entry.getKey() == Constant.STATS_RESIST) {
-                stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate()))).append("#").append(entry.getValue()).append("#").append(Integer.toHexString(getResistanceMax(getTemplate().getStrTemplate())));
-            } else {
-                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
+                isFirst = false;
             }
-            isFirst = false;
-        }
 
-        for (Entry<Integer, Integer> entry : SoulStats.entrySet()) {
-            if (!isFirst)
-                stats.append(",");
+            for (Entry<Integer, Integer> entry : SoulStats.entrySet()) {
+                if (!isFirst)
+                    stats.append(",");
 
-            if (this.getTemplate().getType() == 18)
-                stats.append(Integer.toHexString(Constant.STATS_PETS_SOUL)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
-            if (entry.getKey() == Constant.STATS_NIVEAU)
-                stats.append(Integer.toHexString(Constant.STATS_NIVEAU)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
-            isFirst = false;
-        }
+                if (this.getTemplate().getType() == 18)
+                    stats.append(Integer.toHexString(Constant.STATS_PETS_SOUL)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
+                if (entry.getKey() == Constant.STATS_NIVEAU)
+                    stats.append(Integer.toHexString(Constant.STATS_NIVEAU)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
+                isFirst = false;
+            }
+            for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
 
-        for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
+                int statID = entry.getKey();
+                if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
+                        || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212)) {
+                    String[] modificable = template.getStrTemplate().split(",");
+                    int cantMod = modificable.length;
+                    for (int j = 0; j < cantMod; j++) {
+                        String[] mod = modificable[j].split("#");
+                        if (Integer.parseInt(mod[0], 16) == statID) {
+                            String jet = "0d0+" + Integer.parseInt(mod[1], 16);
+                            if (!isFirst) {
+                                stats.append(",");
+                            }
+                            else
+                            {
+                                if(stats.length() > 0)
+                                {
+                                    stats = new StringBuilder();
+                                }
+                            }
+                            stats.append(mod[0]).append("#").append(mod[1]).append("#0#").append(mod[3]).append("#").append(jet);
+                            isFirst = false;
+                        }
+                    }
+                    continue;
+                } else {
 
-            int statID = entry.getKey();
-            if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
-                    || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212)) {
-                String[] modificable = template.getStrTemplate().split(",");
-                int cantMod = modificable.length;
-                for (int j = 0; j < cantMod; j++) {
-                    String[] mod = modificable[j].split("#");
-                    if (Integer.parseInt(mod[0], 16) == statID) {
-                        String jet = "0d0+" + Integer.parseInt(mod[1], 16);
-                        if (!isFirst)
+                    if (!isFirst)
+                        if (entry.getValue() > 0) {
                             stats.append(",");
-                        stats.append(mod[0]).append("#").append(mod[1]).append("#0#").append(mod[3]).append("#").append(jet);
-                        isFirst = false;
+                        }
+                    if (statID == 615) {
+                        stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(entry.getValue()));
+                    } else if ((statID == 970) || (statID == 971) || (statID == 972)
+                            || (statID == 973) || (statID == 974)) {
+                        int jet = entry.getValue();
+                        if ((statID == 974) || (statID == 972) || (statID == 970))
+                            stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
+                        else
+                            stats.append(Integer.toHexString(statID)).append("#0#0#").append(jet);
+                        if (statID == 973)
+                            setObvijevanPos(jet);
+                        if (statID == 972)
+                            setObvijevanLook(jet);
+                    } else if (statID == Constant.STATS_TURN) {
+                        String jet = "0d0+" + entry.getValue();
+                        stats.append(Integer.toHexString(statID)).append("#");
+                        stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
+                    } else {
+                        if (entry.getValue() > 0) {
+                            String jet = "0d0+" + entry.getValue();
+                            stats.append(Integer.toHexString(statID)).append("#");
+                            stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
+
+                            isFirst = false;
+                        }
                     }
                 }
-                continue;
             }
-
-            if (!isFirst)
-                if(entry.getValue() > 0) {
-                    stats.append(",");
-                }
-            if(statID == 615) {
-                stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(entry.getValue()));
-            } else
-            if ((statID == 970) || (statID == 971) || (statID == 972)
-                    || (statID == 973) || (statID == 974)) {
-                int jet = entry.getValue();
-                if ((statID == 974) || (statID == 972) || (statID == 970))
-                    stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
-                else
-                    stats.append(Integer.toHexString(statID)).append("#0#0#").append(jet);
-                if (statID == 973)
-                    setObvijevanPos(jet);
-                if (statID == 972)
-                    setObvijevanLook(jet);
-            } else if (statID == Constant.STATS_TURN) {
-                String jet = "0d0+" + entry.getValue();
-                stats.append(Integer.toHexString(statID)).append("#");
-                stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
-            } else {
-                if(entry.getValue() > 0) {
-                    String jet = "0d0+" + entry.getValue();
-                    stats.append(Integer.toHexString(statID)).append("#");
-                    stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
-
-                    isFirst = false;
-                }
-            }
-        }
         return stats.toString();
     }
 

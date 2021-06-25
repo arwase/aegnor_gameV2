@@ -55,8 +55,14 @@ public class IA39 extends AbstractNeedSpell  {
                 }
             }
 
-            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
-                if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
+            if(this.fighter.getCurPa(this.fight) > 0 && C != null && !action) {
+                if (Function.getInstance().debuffIfPossible(this.fight, this.fighter, C)) {
+                    time = 1000;
+                    action = true;
+                }
+            } else if(this.fighter.getCurPa(this.fight) > 0 && L != null && !action) {
+                boolean value = Function.getInstance().debuffIfPossible(this.fight, this.fighter, L);
+                if (value) {
                     time = 1000;
                     action = true;
                 }
@@ -81,9 +87,7 @@ public class IA39 extends AbstractNeedSpell  {
                     time = value;
                     action = true;
                 }
-            }
-
-            if(this.fighter.getCurPa(this.fight) > 0 && C != null && !action) {
+        } else if(this.fighter.getCurPa(this.fight) > 0 && C != null && !action) {
                 int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
                 if(value != 0) {
                     this.attack++;

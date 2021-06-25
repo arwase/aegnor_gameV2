@@ -142,7 +142,7 @@ public class Function {
 
         List<SortStats> spells = new ArrayList<>();
         spells.add(spell);
-        return Function.instance.invocIfPossible(fight, fighter, spells);
+        return Function.getInstance().invocIfPossible(fight, fighter, spells);
     }
 
     public Fighter getNearest(Fight fight, Fighter fighter)
@@ -345,7 +345,7 @@ public class Function {
         return 0;
     }
 
-    public static boolean invoctantaIfPossible(Fight fight, Fighter fighter)
+    public boolean invoctantaIfPossible(Fight fight, Fighter fighter)
     {
         if (fight == null || fighter == null)
             return false;
@@ -378,9 +378,23 @@ public class Function {
             spell = World.world.getSort(1107).getStatsByLevel(5);
             fighter.setState(35, 0);
         }
-        while (_loc0_++ < limit)
+        for (Fighter target : fight.getFighters(3)) {
+            if (target.getTeam() == fighter.getTeam()) continue;
+            List<Integer> cells = new ArrayList<>();
+            nearestCell = PathFinding.getAvailableCellArround(fight, target.getCell().getId(), cells);
+
+            if (nearestCell == 0)
+                break;
+            if (fight.canCastSpell1(fighter, spell, fight.getMap().getCase(nearestCell), -1)) {
+                fight.tryCastSpell(fighter, spell, nearestCell);
+                return true;
+            } else {
+                cells.add(nearestCell);
+            }
+        }
+       /* while (_loc0_++ < limit)
         {
-            nearestCell = PathFinding.getNearestCellAround(fight.getMap(), nearestCell, nearest.getCell().getId(), null);
+            nearestCell = PathFinding.get(fight.getMap(), nearestCell, nearest.getCell().getId(), null);
             if(nearestCell > -1)
             {
                 _loc0_ = limit;
@@ -396,11 +410,11 @@ public class Function {
             return false;
         int invoc = fight.tryCastSpell(fighter, spell, nearestCell);
         if (invoc != 0)
-            return false;
+            return false;*/
         return true;
     }
 
-    public static boolean buffIfPossibleKrala(Fight fight, Fighter fighter, Fighter target)
+    public boolean buffIfPossibleKrala(Fight fight, Fighter fighter, Fighter target)
     {
         if (fight == null || fighter == null)
             return false;
@@ -1231,7 +1245,7 @@ public class Function {
         return true;
     }
 
-    public static boolean invocIfPossible(Fight fight, Fighter fighter, List<SortStats> Spelllist)
+    public boolean invocIfPossible(Fight fight, Fighter fighter, List<SortStats> Spelllist)
     {
         if (fight == null || fighter == null)
             return false;
@@ -1559,6 +1573,30 @@ public class Function {
         return true;
     }
 
+    public boolean debuffIfPossible(Fight fight, Fighter fighter, Fighter target)
+    {
+        if (fight == null || fighter == null)
+            return false;
+        if (target == null)
+            return false;
+        SortStats SS = null;
+        for(SortStats spell : fighter.getMob().getSpells().values()) {
+            for(SpellEffect spellEffect : spell.getEffects())
+            {
+                if(spellEffect.getEffectID() == 132)
+                {
+                    SS = spell;
+                }
+            }
+        }
+        if (SS == null)
+            return false;
+        int debuff = fight.tryCastSpell(fighter, SS, target.getCell().getId());
+        if (debuff != 0)
+            return false;
+        return true;
+    }
+
     public SortStats getBuffSpell(Fight fight, Fighter F, Fighter T)
     {
         if (fight == null || F == null)
@@ -1597,7 +1635,7 @@ public class Function {
         return ss;
     }
 
-    public static boolean buffIfPossible(Fight fight, Fighter fighter, Fighter target, List<SortStats> Spelllist)
+    public boolean buffIfPossible(Fight fight, Fighter fighter, Fighter target, List<SortStats> Spelllist)
     {
         if (fight == null || fighter == null)
             return false;
@@ -1672,7 +1710,7 @@ public class Function {
         return ss;
     }
 
-    public static int moveautourIfPossible(Fight fight, Fighter F, Fighter T)
+    public int moveautourIfPossible(Fight fight, Fighter F, Fighter T)
     {
         if (fight == null)
             return 0;
@@ -2184,7 +2222,7 @@ public class Function {
         return curF;
     }
 
-    public static Fighter getNearestEnnemy(Fight fight, Fighter fighter)
+    public Fighter getNearestEnnemy(Fight fight, Fighter fighter)
     {
         if (fight == null || fighter == null)
             return null;
@@ -2238,7 +2276,7 @@ public class Function {
         return curF;
     }
 
-    public static Fighter getNearestEnnemynbrcasemax(Fight fight, Fighter fighter, int distmin, int distmax)
+    public Fighter getNearestEnnemynbrcasemax(Fight fight, Fighter fighter, int distmin, int distmax)
     {
         if (fight == null || fighter == null)
             return null;
@@ -2549,7 +2587,7 @@ public class Function {
         return list;
     }
 
-    public static int attackIfPossible(Fight fight, Fighter fighter, List<SortStats> Spell)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
+    public int attackIfPossible(Fight fight, Fighter fighter, List<SortStats> Spell)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null)
             return 0;
@@ -3549,50 +3587,30 @@ public class Function {
                     inf = 200 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 91:
-                    inf = 150 * Formulas.getMiddleJet(SE.getJet());
-                    break;
+                case 95:
+                case 94:
+                case 93:
                 case 92:
                     inf = 150 * Formulas.getMiddleJet(SE.getJet());
                     break;
-                case 93:
-                    inf = 150 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 94:
-                    inf = 150 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 95:
-                    inf = 150 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 96:
-                    inf = 100 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 97:
-                    inf = 100 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 98:
-                    inf = 100 * Formulas.getMiddleJet(SE.getJet());
-                    break;
+                case 97:
                 case 99:
-                    inf = 100 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 100:
                     inf = 100 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 101:
-                    inf = 1000 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 127:
+                case 169:
+                case 168:
                     inf = 1000 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 84:
-                    inf = 1500 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 77:
                     inf = 1500 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 111:
-                    inf = -1000 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 128:
                     inf = -1000 * Formulas.getMiddleJet(SE.getJet());
                     break;
@@ -3600,6 +3618,11 @@ public class Function {
                     inf = -100 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 131:
+                case 215:
+                case 216:
+                case 217:
+                case 218:
+                case 219:
                     inf = 300 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 132:
@@ -3611,41 +3634,12 @@ public class Function {
                 case 150:
                     inf = -2000;
                     break;
-                case 168:
-                    inf = 1000 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 169:
-                    inf = 1000 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 210:
-                    inf = -300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 211:
-                    inf = -300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 212:
-                    inf = -300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 213:
-                    inf = -300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
                 case 214:
                     inf = -300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 215:
-                    inf = 300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 216:
-                    inf = 300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 217:
-                    inf = 300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 218:
-                    inf = 300 * Formulas.getMiddleJet(SE.getJet());
-                    break;
-                case 219:
-                    inf = 300 * Formulas.getMiddleJet(SE.getJet());
                     break;
                 case 265:
                     inf = -250 * Formulas.getMiddleJet(SE.getJet());

@@ -235,11 +235,48 @@ public class GameClient {
                     announce = packet.substring(2);
                     this.player.getGuild().setAnnounce(announce);
                 }
+                break;
             case 'g' :
                 if(this.player.getGuild() != null)
                 {
                     SocketManager.send(this.player, "wg" + this.player.getGuild().getAnnounce());
                 }
+                break;
+            case 'l' :
+                {
+                    if(player != null)
+                    {
+                        if(player.getFight() != null){
+                            return;
+                        }
+                    var precioBase = Config.INSTANCE.getPRIX_CHANGEMENT_CLASSE();
+                    SocketManager.send(player, "bOC" + player.getAccount().getPoints() + "^" + precioBase);
+                    }
+                }
+                break;
+            case 'L' :
+                {
+                    if (!player.isDispo(player))
+                    {
+                        return;
+                    }
+                    int prix_de_base = Config.INSTANCE.getPRIX_CHANGEMENT_CLASSE();
+                    int ogrineAcc = player.getAccount().getPoints();
+                    int difference = ogrineAcc - prix_de_base;
+                    boolean canBuy = true;
+                    if(difference < 0)
+                    {
+                        canBuy = false;
+                    }
+                    if (!canBuy)
+                    {
+                        return;
+                    }
+                    byte clase = Byte.parseByte(packet.substring(2));
+                    player.changeClasse(clase);
+                    SocketManager.GAME_SEND_bV_CLOSE_PANEL(player);
+                }
+                break;
         }
     }
 

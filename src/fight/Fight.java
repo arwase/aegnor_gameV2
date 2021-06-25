@@ -2623,7 +2623,7 @@ public class Fight {
             if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
                 int modi = player.getValueOfClassObject(spell.getSpellID(), 289);
                 boolean modif = modi == 1;
-                if (spell.hasLDV() && PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
+                if (spell.hasLDV() && !PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
                     SocketManager.GAME_SEND_Im_PACKET(player, "1174");
                     return false;
                 }

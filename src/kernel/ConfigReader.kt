@@ -57,6 +57,10 @@ object ConfigReader {
         val kamas by intType
     }
 
+    object prix : PropertyGroup() {
+        val prix_changement_classe by intType
+    }
+
     object mode : PropertyGroup() {
         val halloween by booleanType
         val christmas by booleanType

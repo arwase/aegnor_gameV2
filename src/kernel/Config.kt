@@ -34,6 +34,8 @@ object Config {
     var RATE_FM = ConfigReader.data[ConfigReader.rate.fm]
     var PERCENT_EXO = ConfigReader.data[ConfigReader.rate.percent_exo]
 
+    var PRIX_CHANGEMENT_CLASSE = ConfigReader.data[ConfigReader.prix.prix_changement_classe]
+
     var exchangePort: Int = ConfigReader.data[ConfigReader.exchange.port]
     var gamePort: Int = ConfigReader.data[ConfigReader.server.port]
     var exchangeIp: String = ConfigReader.data[ConfigReader.exchange.host]

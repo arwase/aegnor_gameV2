@@ -55,7 +55,15 @@ Version 0.8 (24/06/2021) :
 - FIx des Langs pour les commandes
 - Fix de la Boutique
 - Ajout des drops items Hors Pano
+- Fix des panoplies de classe
 
+Version 0.9 (25/06/2021) :
+- Fix des positions d'invocation du Kralamour il invoque désormais au CaC d'un ennemi
+- Fix d'un bug de LDV sur les joueurs utilisant un sort
+- Fix de la commande d'ajout un groupe de Monstre Fix
+- Fix du Dragounet Rouge il peut désormais débuff
+- Fix de l'IA du Tofu désormais il s'éloigne des ennemies une fois qu'il a attaqué
+- Ajout du Panel de Changement de Classe + Debug
+- Suppression du Drop Pano Champ Champ sur les Fungus
 //TODO
-- Revoir les Panoplies de Classes (Jet sûrement)
 - Tester toutes les commandes (plusieurs déjà testées)

@@ -11,7 +11,7 @@ import fight.spells.Spell.SortStats;
  */
 public class IA12 extends AbstractNeedSpell  {
 
-    private byte attack = 0;
+    private int attack = 0;
     private boolean boost = false;
 
     public IA12(Fight fight, Fighter fighter, byte count) {

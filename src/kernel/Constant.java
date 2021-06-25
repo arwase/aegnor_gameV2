@@ -13,6 +13,7 @@ import util.RandomStats;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Constant {
     //DEBUG
@@ -230,6 +231,8 @@ public class Constant {
     public static final int[] ARMES_EFFECT_IDS = {91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 108};
     //Buff a ne pas booster en cas de CC
     public static final int[] NO_BOOST_CC_IDS = {101};
+    //Panoplie de Classe
+    public static final int[] BUFF_SET_CLASSE = {281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292};
     //Invocation Statiques
     public static final int[] STATIC_INVOCATIONS = {282, 556, 2750, 7000};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    //Arbre et Cawotte s'tout :p
     //Verif d'Etat au lancement d'un sort {spellID,stateID}, � completer avant d'activer
@@ -434,6 +437,21 @@ public class Constant {
                     && Integer.parseInt(HUNTING_QUESTS[v][1]) == cellid)
                 return HUNTING_QUESTS[v][2];
         return "";
+    }
+    public static int getEffectSetClasse(int effectID)
+    {
+        for(int i = 0; i < BUFF_SET_CLASSE.length; i++)
+        {
+            if(BUFF_SET_CLASSE[i] == effectID)
+            {
+                return BUFF_SET_CLASSE[i];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        return 0;
     }
 
     public static short getClassStatueMap(int classID) {
@@ -718,6 +736,529 @@ public class Constant {
                 start.put(432, World.world.getSort(432).getStatsByLevel(1));//Pied du Sacrieur
                 start.put(431, World.world.getSort(431).getStatsByLevel(1));//Chatiment Forc�
                 start.put(434, World.world.getSort(434).getStatsByLevel(1));//Attirance
+                break;
+        }
+        return start;
+    }
+
+    public static HashMap<Integer, SortStats> getSortsByClasse(int classID, int level) {
+        HashMap<Integer, SortStats> start = new HashMap<Integer, SortStats>();
+        switch (classID) {
+            case CLASS_FECA:
+                if(level > 0) {
+                    start.put(3, World.world.getSort(3).getStatsByLevel(1));//Attaque Naturelle
+                    start.put(17, World.world.getSort(17).getStatsByLevel(1));//Glyphe Agressif
+                    start.put(6, World.world.getSort(6).getStatsByLevel(1));//Armure Terrestre
+                } else if(level >= 3) {
+                    start.put(4, World.world.getSort(4).getStatsByLevel(1));//Renvoie de Sort
+                } else if(level >= 6) {
+                    start.put(2, World.world.getSort(2).getStatsByLevel(1));//Aveuglement
+                } else if(level >= 9) {
+                    start.put(1, World.world.getSort(1).getStatsByLevel(1));//Armure Incandescente
+                } else if(level >= 13) {
+                    start.put(9, World.world.getSort(9).getStatsByLevel(1));//Attaque Nuageuse
+                } else if(level >= 17) {
+                start.put(18, World.world.getSort(18).getStatsByLevel(1));//Armure Aqueuse
+                } else if(level >= 21) {
+                start.put(20, World.world.getSort(20).getStatsByLevel(1));//Immunité
+                } else if(level >= 26) {
+                start.put(14, World.world.getSort(14).getStatsByLevel(1));//Armure Venteuse
+                } else if(level >= 31) {
+                start.put(19, World.world.getSort(19).getStatsByLevel(1));//Bulle
+                } else if(level >= 36) {
+                start.put(5, World.world.getSort(5).getStatsByLevel(1));//Trêve
+                } else if(level >= 42) {
+                start.put(16, World.world.getSort(16).getStatsByLevel(1));//Science du Bâton
+                } else if(level >= 48) {
+                start.put(8, World.world.getSort(8).getStatsByLevel(1));//Retour du Bâton
+                } else if(level >= 54) {
+                start.put(12, World.world.getSort(12).getStatsByLevel(1));//Glyphe Aveuglement
+                } else if(level >= 60) {
+                start.put(11, World.world.getSort(11).getStatsByLevel(1));//Téléportation
+                } else if(level >= 70) {
+                start.put(10, World.world.getSort(10).getStatsByLevel(1));//Glyphe Enflammée
+                } else if(level >= 80) {
+                start.put(7, World.world.getSort(7).getStatsByLevel(1));//Bouclier Féca
+                } else if(level >= 90) {
+                start.put(15, World.world.getSort(15).getStatsByLevel(1));//Glyphe Immobilisation
+                } else if(level >= 100) {
+                start.put(13, World.world.getSort(13).getStatsByLevel(1));//Glyphe Silence
+                } else if(level == 200) {
+                start.put(1901, World.world.getSort(1901).getStatsByLevel(1));//Dopeul Féca
+                }
+                break;
+            case CLASS_SRAM:
+                if(level > 0) {
+                    start.put(65, World.world.getSort(65).getStatsByLevel(1));
+                    start.put(72, World.world.getSort(72).getStatsByLevel(1));
+                    start.put(61, World.world.getSort(61).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(66, World.world.getSort(66).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(68, World.world.getSort(68).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(63, World.world.getSort(63).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(74, World.world.getSort(74).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(64, World.world.getSort(64).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(79, World.world.getSort(79).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(78, World.world.getSort(14).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(71, World.world.getSort(71).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(62, World.world.getSort(62).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(69, World.world.getSort(69).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(77, World.world.getSort(77).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(73, World.world.getSort(73).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(67, World.world.getSort(67).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(70, World.world.getSort(70).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(75, World.world.getSort(75).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(76, World.world.getSort(76).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(80, World.world.getSort(80).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1904, World.world.getSort(1904).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_ENIRIPSA:
+                if(level > 0) {
+                    start.put(125, World.world.getSort(125).getStatsByLevel(1));
+                    start.put(128, World.world.getSort(128).getStatsByLevel(1));
+                    start.put(121, World.world.getSort(121).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(124, World.world.getSort(124).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(122, World.world.getSort(122).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(126, World.world.getSort(126).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(127, World.world.getSort(127).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(123, World.world.getSort(123).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(130, World.world.getSort(130).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(131, World.world.getSort(131).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(132, World.world.getSort(132).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(133, World.world.getSort(133).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(134, World.world.getSort(134).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(135, World.world.getSort(135).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(129, World.world.getSort(129).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(136, World.world.getSort(136).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(137, World.world.getSort(137).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(138, World.world.getSort(138).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(139, World.world.getSort(139).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(140, World.world.getSort(140).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1907, World.world.getSort(1907).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_ECAFLIP:
+                if(level > 0) {
+                    start.put(102, World.world.getSort(102).getStatsByLevel(1));
+                    start.put(103, World.world.getSort(103).getStatsByLevel(1));
+                    start.put(105, World.world.getSort(105).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(109, World.world.getSort(109).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(113, World.world.getSort(113).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(111, World.world.getSort(111).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(104, World.world.getSort(104).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(119, World.world.getSort(119).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(101, World.world.getSort(101).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(107, World.world.getSort(107).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(116, World.world.getSort(116).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(106, World.world.getSort(106).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(117, World.world.getSort(117).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(108, World.world.getSort(108).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(115, World.world.getSort(115).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(118, World.world.getSort(118).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(110, World.world.getSort(110).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(112, World.world.getSort(112).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(114, World.world.getSort(114).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(120, World.world.getSort(120).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1906, World.world.getSort(1906).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_CRA:
+                if(level > 0) {
+                    start.put(169, World.world.getSort(169).getStatsByLevel(1));
+                    start.put(164, World.world.getSort(164).getStatsByLevel(1));
+                    start.put(161, World.world.getSort(161).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(163, World.world.getSort(163).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(165, World.world.getSort(165).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(172, World.world.getSort(172).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(167, World.world.getSort(167).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(168, World.world.getSort(168).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(162, World.world.getSort(162).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(170, World.world.getSort(170).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(171, World.world.getSort(171).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(166, World.world.getSort(166).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(173, World.world.getSort(173).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(174, World.world.getSort(174).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(175, World.world.getSort(175).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(176, World.world.getSort(176).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(177, World.world.getSort(177).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(178, World.world.getSort(178).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(179, World.world.getSort(179).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(180, World.world.getSort(180).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1909, World.world.getSort(1909).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_IOP:
+                if(level > 0) {
+                    start.put(142, World.world.getSort(142).getStatsByLevel(1));
+                    start.put(143, World.world.getSort(143).getStatsByLevel(1));
+                    start.put(141, World.world.getSort(141).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(144, World.world.getSort(144).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(145, World.world.getSort(145).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(146, World.world.getSort(146).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(147, World.world.getSort(147).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(148, World.world.getSort(148).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(154, World.world.getSort(154).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(150, World.world.getSort(150).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(151, World.world.getSort(151).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(155, World.world.getSort(155).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(152, World.world.getSort(152).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(153, World.world.getSort(153).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(149, World.world.getSort(149).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(156, World.world.getSort(156).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(157, World.world.getSort(157).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(158, World.world.getSort(158).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(160, World.world.getSort(160).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(159, World.world.getSort(159).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1908, World.world.getSort(1908).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_SADIDA:
+                if(level > 0) {
+                    start.put(193, World.world.getSort(193).getStatsByLevel(1));
+                    start.put(183, World.world.getSort(183).getStatsByLevel(1));
+                    start.put(200, World.world.getSort(200).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(198, World.world.getSort(198).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(195, World.world.getSort(195).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(182, World.world.getSort(182).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(192, World.world.getSort(192).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(197, World.world.getSort(197).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(189, World.world.getSort(189).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(181, World.world.getSort(181).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(199, World.world.getSort(199).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(191, World.world.getSort(191).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(186, World.world.getSort(186).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(196, World.world.getSort(196).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(190, World.world.getSort(190).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(194, World.world.getSort(194).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(185, World.world.getSort(185).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(184, World.world.getSort(184).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(188, World.world.getSort(188).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(187, World.world.getSort(187).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1910, World.world.getSort(1910).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_OSAMODAS:
+                if(level > 0) {
+                    start.put(23, World.world.getSort(23).getStatsByLevel(1));
+                    start.put(34, World.world.getSort(34).getStatsByLevel(1));
+                    start.put(21, World.world.getSort(21).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(26, World.world.getSort(26).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(22, World.world.getSort(22).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(35, World.world.getSort(35).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(28, World.world.getSort(28).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(37, World.world.getSort(37).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(30, World.world.getSort(30).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(27, World.world.getSort(27).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(24, World.world.getSort(24).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(33, World.world.getSort(33).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(25, World.world.getSort(25).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(38, World.world.getSort(38).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(36, World.world.getSort(36).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(32, World.world.getSort(32).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(29, World.world.getSort(29).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(39, World.world.getSort(39).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(40, World.world.getSort(40).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(31, World.world.getSort(31).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1902, World.world.getSort(1902).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_XELOR:
+                if(level > 0) {
+                    start.put(81, World.world.getSort(81).getStatsByLevel(1));
+                    start.put(83, World.world.getSort(83).getStatsByLevel(1));
+                    start.put(82, World.world.getSort(82).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(84, World.world.getSort(84).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(100, World.world.getSort(100).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(92, World.world.getSort(92).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(88, World.world.getSort(88).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(93, World.world.getSort(93).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(85, World.world.getSort(79).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(96, World.world.getSort(96).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(98, World.world.getSort(98).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(86, World.world.getSort(86).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(89, World.world.getSort(89).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(90, World.world.getSort(90).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(87, World.world.getSort(87).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(94, World.world.getSort(94).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(99, World.world.getSort(99).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(95, World.world.getSort(95).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(91, World.world.getSort(91).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(97, World.world.getSort(97).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1905, World.world.getSort(1905).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_PANDAWA:
+                if(level > 0) {
+                    start.put(686, World.world.getSort(686).getStatsByLevel(1));
+                    start.put(692, World.world.getSort(692).getStatsByLevel(1));
+                    start.put(687, World.world.getSort(687).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(689, World.world.getSort(689).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(690, World.world.getSort(690).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(691, World.world.getSort(691).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(688, World.world.getSort(688).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(693, World.world.getSort(693).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(694, World.world.getSort(694).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(695, World.world.getSort(695).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(696, World.world.getSort(696).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(697, World.world.getSort(697).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(698, World.world.getSort(698).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(699, World.world.getSort(699).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(700, World.world.getSort(700).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(701, World.world.getSort(701).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(702, World.world.getSort(702).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(703, World.world.getSort(703).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(704, World.world.getSort(704).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(705, World.world.getSort(705).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1912, World.world.getSort(1912).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_ENUTROF:
+                if(level > 0) {
+                    start.put(51, World.world.getSort(51).getStatsByLevel(1));
+                    start.put(41, World.world.getSort(41).getStatsByLevel(1));
+                    start.put(43, World.world.getSort(43).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(49, World.world.getSort(49).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(42, World.world.getSort(42).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(47, World.world.getSort(47).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(48, World.world.getSort(48).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(45, World.world.getSort(45).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(53, World.world.getSort(53).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(46, World.world.getSort(46).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(52, World.world.getSort(52).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(44, World.world.getSort(44).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(50, World.world.getSort(50).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(54, World.world.getSort(54).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(55, World.world.getSort(55).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(56, World.world.getSort(56).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(58, World.world.getSort(58).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(59, World.world.getSort(59).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(57, World.world.getSort(57).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(60, World.world.getSort(60).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1903, World.world.getSort(1903).getStatsByLevel(1));
+                }
+                break;
+            case CLASS_SACRIEUR:
+                if(level > 0) {
+                    start.put(431, World.world.getSort(431).getStatsByLevel(1));
+                    start.put(432, World.world.getSort(432).getStatsByLevel(1));
+                    start.put(434, World.world.getSort(434).getStatsByLevel(1));
+                } else if(level >= 3) {
+                    start.put(444, World.world.getSort(444).getStatsByLevel(1));
+                } else if(level >= 6) {
+                    start.put(449, World.world.getSort(449).getStatsByLevel(1));
+                } else if(level >= 9) {
+                    start.put(436, World.world.getSort(436).getStatsByLevel(1));
+                } else if(level >= 13) {
+                    start.put(437, World.world.getSort(437).getStatsByLevel(1));
+                } else if(level >= 17) {
+                    start.put(439, World.world.getSort(439).getStatsByLevel(1));
+                } else if(level >= 21) {
+                    start.put(433, World.world.getSort(433).getStatsByLevel(1));
+                } else if(level >= 26) {
+                    start.put(443, World.world.getSort(443).getStatsByLevel(1));
+                } else if(level >= 31) {
+                    start.put(440, World.world.getSort(440).getStatsByLevel(1));
+                } else if(level >= 36) {
+                    start.put(442, World.world.getSort(442).getStatsByLevel(1));
+                } else if(level >= 42) {
+                    start.put(441, World.world.getSort(441).getStatsByLevel(1));
+                } else if(level >= 48) {
+                    start.put(445, World.world.getSort(445).getStatsByLevel(1));
+                } else if(level >= 54) {
+                    start.put(438, World.world.getSort(438).getStatsByLevel(1));
+                } else if(level >= 60) {
+                    start.put(446, World.world.getSort(446).getStatsByLevel(1));
+                } else if(level >= 70) {
+                    start.put(447, World.world.getSort(447).getStatsByLevel(1));
+                } else if(level >= 80) {
+                    start.put(448, World.world.getSort(448).getStatsByLevel(1));
+                } else if(level >= 90) {
+                    start.put(435, World.world.getSort(435).getStatsByLevel(1));
+                } else if(level >= 100) {
+                    start.put(450, World.world.getSort(450).getStatsByLevel(1));
+                } else if(level == 200) {
+                    start.put(1911, World.world.getSort(1911).getStatsByLevel(1));
+                }
                 break;
         }
         return start;

@@ -3655,7 +3655,7 @@ public class CommandAdmin extends AdminUser {
                 String mapinfos = getPlayer().getCurMap().getId() + ";" + getPlayer().getCurCell().getId();
                 World.world.addGroupFix(mapinfos, grupoData, segundosRespawn);
                 /*grupoMob.condUnirsePelea = condUnirse*/
-                grupoMob.setCondition(String.valueOf(segundosRespawn));
+                //grupoMob.setCondition(String.valueOf(segundosRespawn));
                 if (sql) {
                     Database.getDynamics().getMapData().replaceMobFix((int)getPlayer().getCurMap().getId(), getPlayer().getCurCell().getId(), grupoData, segundosRespawn);
                 }

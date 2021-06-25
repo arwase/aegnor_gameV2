@@ -51,6 +51,7 @@ import quest.QuestPlayer;
 import util.TimerWaiter;
 import util.lang.Lang;
 
+import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -1461,6 +1462,12 @@ public class Player {
         if (this.getMorphMode()) {
             int morphID = this.getClasse() * 10 + this.getSexe();
             this.setGfxId(morphID);
+            SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.getCurMap(), this.getId());
+            SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.getCurMap(), this);
+        }
+        else if(_morphId != this.getClasse() * 10 + this.getSexe())
+        {
+            this.setGfxId(this.getClasse() * 10 + this.getSexe());
             SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.getCurMap(), this.getId());
             SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.getCurMap(), this);
         }
@@ -5845,5 +5852,87 @@ public class Player {
 
     public int getProspection () {
         return (getTotalStats().getEffect(Constant.STATS_ADD_PROS) + Math.round(getTotalStats().getEffect(Constant.STATS_ADD_CHAN) / 10));
+    }
+
+    public boolean changeClasse(byte clase) {
+        if(isMorph())
+        {
+            return false;
+        }
+        if (clase < 1) {
+            clase = 1;
+        } else if (clase > 12) {
+            clase = 12;
+        }
+        if (clase == getClasse()) {
+            SocketManager.GAME_SEND_BN_OUT(this, "Changement de Classe - Même Classe");
+            return false;
+        }
+        setClasse(clase);
+        //Clase = Mundo.getClase(ClaseID);
+        SocketManager.GAME_SEND_AC_CHANGE_CLASSE(this, getClasse());
+        this._sorts = Constant.getStartSorts(classe);
+        for (int a = 1; a <= this.getLevel(); a++) {
+            Constant.onLevelUpSpells(this, a);
+        }
+        this._sortsPlaces = Constant.getStartSortsPlaces(classe);
+        int spellpoints = 0;
+        for(int i = 2; i < 201; i++)
+        {
+            spellpoints += 1;
+        }
+        this._spellPts = spellpoints;
+        if(isOnline)
+        {
+            SocketManager.GAME_SEND_SL_LISTE_SORTS(this);
+        }
+        demorph();
+        restat();
+        refreshToMap();
+        Database.getStatics().getPlayerData().updateInfos(this);
+        Database.getStatics().getPlayerData().update(this);
+        String	message = "Sauvegarde du Personnage terminé";
+        SocketManager.GAME_SEND_MESSAGE(this, message);
+        SocketManager.GAME_SEND_Im_PACKET(this, "1CHANGED_CLASSE_SUCCESS");
+        return true;
+    }
+
+    private void refreshToMap() {
+        if (fight == null) {
+            SocketManager.GAME_SEND_GM_REFRESH_PL_TO_MAP(getCurMap(), this);
+        } else if (fight.getState() == Constant.FIGHT_STATE_PLACE) {
+            final Fighter luchador = fight.getFighterByPerso(this);
+            if (luchador != null) {
+                SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(fight, luchador);
+            }
+        }
+    }
+
+    private void restat() {
+        this.getStatsParcho().getMap().clear();
+        this.getStats().addOneStat(125,-this.getStats().getEffect(125));
+        this.getStats().addOneStat(124,-this.getStats().getEffect(124));
+        this.getStats().addOneStat(118,-this.getStats().getEffect(118));
+        this.getStats().addOneStat(123,-this.getStats().getEffect(123));
+        this.getStats().addOneStat(119,-this.getStats().getEffect(119));
+        this.getStats().addOneStat(126,-this.getStats().getEffect(126));
+        this.addCapital((this.getLevel() - 1) * 5 - this.get_capital());
+        SocketManager.GAME_SEND_STATS_PACKET(this);
+        SocketManager.GAME_SEND_Im_PACKET(this,"023;" + (this.getLevel() * 5 - 5));
+    }
+
+    public String stringListeSorts() {
+        final StringBuilder str = new StringBuilder();
+        for (Spell.SortStats hp : _sorts.values()) {
+            if (hp.getSpell() == null) {
+                continue;
+            }
+            if (str.length() > 0) {
+                str.append(";");
+            }
+
+            str.append(hp.getSpellID()).append("~").append(hp.getLevel()).append("~").append(_sortsPlaces.get(hp.getSpellID()));
+        }
+        return str.toString();
     }
 }
