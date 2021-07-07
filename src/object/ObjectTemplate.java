@@ -528,13 +528,15 @@ public class ObjectTemplate {
                     case 6:
                     case 7:
                     case 8:
-                        String[] splitted = getStrTemplate().split(",");
-                        for (String s : splitted) {
-                            String[] stats = s.split("#");
-                            int statID = Integer.parseInt(stats[0], 16);
-                            if (statID == Constant.STATS_RESIST) {
-                                String ResistanceIni = stats[1];
-                                Stat.put(statID, ResistanceIni);
+                        if( this.getStrTemplate() !="" || !StringUtils.isEmpty(this.getStrTemplate()) || !StringUtils.isBlank(this.getStrTemplate()) ) {
+                            String[] splitted = getStrTemplate().split(",");
+                            for (String s : splitted) {
+                                String[] stats = s.split("#");
+                                int statID = Integer.parseInt(stats[0], 16);
+                                if (statID == Constant.STATS_RESIST) {
+                                    String ResistanceIni = stats[1];
+                                    Stat.put(statID, ResistanceIni);
+                                }
                             }
                         }
                         break;

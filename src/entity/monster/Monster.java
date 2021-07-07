@@ -921,10 +921,10 @@ public class Monster {
         }
 
         public void addStarBonus() {
-            if(this.getStarBonus() >= 150) {
-                this.starBonus = 150;
+            if(this.getStarBonus() >= 200) {
+                this.starBonus = 200;
             } else {
-                this.starBonus += 3;
+                this.starBonus += 15;
             }
         }
 
