@@ -3632,18 +3632,61 @@ public class Fight {
             return;
 
         player.afterFight = true;
-
-        GameObject weapon = player.getObjetByPos(Constant.ITEM_POS_ARME);
-        if (weapon != null) {
-            if (weapon.getTxtStat().containsKey(Constant.STATS_RESIST)) {
-                int statNew = Integer.parseInt(weapon.getTxtStat().get(Constant.STATS_RESIST), 16) - 1;
-                if (statNew <= 0) {
-                    SocketManager.send(player, "Im160");
-                    player.removeItem(weapon.getGuid(), 1, true, true);
-                } else {
-                    weapon.getTxtStat().remove(Constant.STATS_RESIST); // on retire les stats "32c"
-                    weapon.addTxtStat(Constant.STATS_RESIST, Integer.toHexString(statNew));// on ajout les bonnes stats
-                    SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, weapon);
+        if (this.getType() != Constant.FIGHT_TYPE_CHALLENGE) {
+            GameObject bonbon = player.getObjetByPos(Constant.ITEM_POS_BONBON);
+            if (bonbon != null) {
+                if (bonbon.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = bonbon.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(bonbon.getGuid(), 1, true, true);
+                    } else {
+                        bonbon.getStats().getEffects().remove(Constant.STATS_TURN);
+                        bonbon.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, bonbon);
+                    }
+                }
+            }
+            GameObject benediction = player.getObjetByPos(Constant.ITEM_POS_BENEDICTION);
+            if (benediction != null) {
+                if (benediction.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = benediction.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(benediction.getGuid(), 1, true, true);
+                    } else {
+                        benediction.getStats().getEffects().remove(Constant.STATS_TURN);
+                        benediction.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, benediction);
+                    }
+                }
+            }
+            GameObject malediction = player.getObjetByPos(Constant.ITEM_POS_MALEDICTION);
+            if (malediction != null) {
+                if (malediction.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = malediction.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(malediction.getGuid(), 1, true, true);
+                    } else {
+                        malediction.getStats().getEffects().remove(Constant.STATS_TURN);
+                        malediction.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, malediction);
+                    }
+                }
+            }
+            GameObject weapon = player.getObjetByPos(Constant.ITEM_POS_ARME);
+            if (weapon != null) {
+                if (weapon.getTxtStat().containsKey(Constant.STATS_RESIST)) {
+                    int statNew = Integer.parseInt(weapon.getTxtStat().get(Constant.STATS_RESIST), 16) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(weapon.getGuid(), 1, true, true);
+                    } else {
+                        weapon.getTxtStat().remove(Constant.STATS_RESIST); // on retire les stats "32c"
+                        weapon.addTxtStat(Constant.STATS_RESIST, Integer.toHexString(statNew));// on ajout les bonnes stats
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, weapon);
+                    }
                 }
             }
         }
@@ -3699,32 +3742,74 @@ public class Fight {
 
         if (player.getMorphMode() && player.donjon)
             player.unsetFullMorph();
+        if(this.getType() != Constant.FIGHT_TYPE_CHALLENGE) {
+            GameObject bonbon = player.getObjetByPos(Constant.ITEM_POS_BONBON);
+            if (bonbon != null) {
+                if (bonbon.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = bonbon.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(bonbon.getGuid(), 1, true, true);
+                    } else {
+                        bonbon.getStats().getEffects().remove(Constant.STATS_TURN);
+                        bonbon.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, bonbon);
+                    }
+                }
+            }
+            GameObject benediction = player.getObjetByPos(Constant.ITEM_POS_BENEDICTION);
+            if (benediction != null) {
+                if (benediction.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = benediction.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(benediction.getGuid(), 1, true, true);
+                    } else {
+                        benediction.getStats().getEffects().remove(Constant.STATS_TURN);
+                        benediction.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, benediction);
+                    }
+                }
+            }
+            GameObject malediction = player.getObjetByPos(Constant.ITEM_POS_MALEDICTION);
+            if (malediction != null) {
+                if (malediction.getStats().getMap().containsKey(Constant.STATS_TURN)) {
+                    int statNew = malediction.getStats().get(Constant.STATS_TURN) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(malediction.getGuid(), 1, true, true);
+                    } else {
+                        malediction.getStats().getEffects().remove(Constant.STATS_TURN);
+                        malediction.getStats().getEffects().put(Constant.STATS_TURN, statNew);
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, malediction);
+                    }
+                }
+            }
 
-        GameObject arme = player.getObjetByPos(Constant.ITEM_POS_ARME);
+            GameObject arme = player.getObjetByPos(Constant.ITEM_POS_ARME);
+            if (arme != null) {
+                if (arme.getTxtStat().containsKey(Constant.STATS_RESIST)) {
+                    int statNew = Integer.parseInt(arme.getTxtStat().get(Constant.STATS_RESIST), 16) - 1;
+                    if (statNew <= 0) {
+                        SocketManager.send(player, "Im160");
+                        player.removeItem(arme.getGuid(), 1, true, true);
+                    } else {
+                        arme.getTxtStat().remove(Constant.STATS_RESIST); // on retire les stats "32c"
+                        arme.addTxtStat(Constant.STATS_RESIST, Integer.toHexString(statNew));// on ajout les bonnes stats
+                        SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, arme);
+                    }
+                }
+            }
 
-        if (arme != null) {
-            if (arme.getTxtStat().containsKey(Constant.STATS_RESIST)) {
-                int statNew = Integer.parseInt(arme.getTxtStat().get(Constant.STATS_RESIST), 16) - 1;
-                if (statNew <= 0) {
-                    SocketManager.send(player, "Im160");
-                    player.removeItem(arme.getGuid(), 1, true, true);
-                } else {
-                    arme.getTxtStat().remove(Constant.STATS_RESIST); // on retire les stats "32c"
-                    arme.addTxtStat(Constant.STATS_RESIST, Integer.toHexString(statNew));// on ajout les bonnes stats
-                    SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, arme);
+            if (player.getObjetByPos(Constant.ITEM_POS_FAMILIER) != null && this.getType() != Constant.FIGHT_TYPE_CHALLENGE) {
+                GameObject obj = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
+                if (obj != null) {
+                    PetEntry pets = World.world.getPetsEntry(obj.getGuid());
+                    if (pets != null)
+                        pets.looseFight(player);
                 }
             }
         }
-
-        if (player.getObjetByPos(Constant.ITEM_POS_FAMILIER) != null && this.getType() != Constant.FIGHT_TYPE_CHALLENGE) {
-            GameObject obj = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
-            if (obj != null) {
-                PetEntry pets = World.world.getPetsEntry(obj.getGuid());
-                if (pets != null)
-                    pets.looseFight(player);
-            }
-        }
-
         if (player.getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR) != null)
             player.setMascotte(0);
 
