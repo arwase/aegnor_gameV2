@@ -2121,7 +2121,7 @@ public class Action {
                 if (player.getFight() != null) {
                     break;
                 }
-                player.setBenediction(World.world.getGameObject(IdObj2).getTemplate().getId());
+                player.setBenediction(IdObj2);
                 break;
 
             case 243://Mal�diction.
@@ -2129,7 +2129,7 @@ public class Action {
                 if (player.getFight() != null) {
                     break;
                 }
-                player.setMalediction(World.world.getGameObject(IdObj3).getTemplate().getId());
+                player.setMalediction(IdObj3);
                 break;
 
             /** Ile Moon **/

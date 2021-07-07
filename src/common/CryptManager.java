@@ -70,7 +70,7 @@ public class CryptManager {
         return list;
     }
 
-    /*public List<GameCase> decompileMapData(GameMap map, String data, byte sniffed) {
+    public List<GameCase> decompileMapData(GameMap map, String data, byte sniffed) {
         try {
             List<GameCase> cells = new ArrayList<>();
             int a = 0;
@@ -83,13 +83,25 @@ public class CryptManager {
 
                 int walkable = ((cellInfos.get(2) & 56) >> 3);
                 boolean los = (cellInfos.get(0) & 1) != 0;
+                Byte level = Byte.parseByte(String.valueOf(cellInfos.get(1) & 15));
+                Byte slope = Byte.parseByte(String.valueOf((cellInfos.get(4) & 60) >> 2));
+                boolean activo = ((cellInfos.get(0) & 32) >> 5) != 0;
+
 
                 int layerObject2 = ((cellInfos.get(0) & 2) << 12) + ((cellInfos.get(7) & 1) << 12) + (cellInfos.get(8) << 6) + cellInfos.get(9);
                 boolean layerObject2Interactive = ((cellInfos.get(7) & 2) >> 1) != 0;
                 int object = (layerObject2Interactive && sniffed == 0 ? layerObject2 : -1);
                 if ((walkable != 0 && !mapData.equalsIgnoreCase("bhGaeaaaaa") && !mapData.equalsIgnoreCase("Hhaaeaaaaa")))
                     a++;
-                cells.add(new GameCase(map, (short) (f / 10), (walkable != 0 && !mapData.equalsIgnoreCase("bhGaeaaaaa") && !mapData.equalsIgnoreCase("Hhaaeaaaaa")), los, object));
+                cells.add(
+                        new GameCase(map
+                                , (short) (f / 10)
+                                , (walkable != 0 && !mapData.equalsIgnoreCase("bhGaeaaaaa") && !mapData.equalsIgnoreCase("Hhaaeaaaaa"))
+                                , los
+                                , level
+                                , slope
+                                , activo
+                                , object));
             }
             return cells;
         }
@@ -98,7 +110,7 @@ public class CryptManager {
             logger.error("Error dynamics database " + " : " + e.getMessage());
         }
         return null;
-    }*/
+    }
 
 
     // prepareData
@@ -205,4 +217,5 @@ public class CryptManager {
     private boolean isUnsafe(char ch) {
         return ch > 255 || "+%".indexOf(ch) >= 0;
     }
+
 }

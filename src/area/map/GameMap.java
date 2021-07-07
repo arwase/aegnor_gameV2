@@ -139,8 +139,8 @@ public class GameMap {
         this.backgroundID = backgroundID;
         this.outDoor = outDoor;
         this.maxMerchant = maxMerchant;
-        //this.cases = World.world.getCryptManager().decompileMapData(this, dData, sniffed);
-        World.world.getEncryptador().decompilarMapaData(this);
+        this.cases = World.world.getCryptManager().decompileMapData(this, dData, sniffed);
+        //World.world.getEncryptador().decompilarMapaData(this);
 
         try {
             if (!places.equalsIgnoreCase("") && !places.equalsIgnoreCase("|"))
