@@ -23,6 +23,7 @@ import kernel.Logging;
 import object.GameObject;
 import util.lang.Lang;
 
+import javax.xml.crypto.Data;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -73,6 +74,43 @@ public class CommandPlayer {
                 return true;
             } else if (command(msg, "commande")) {
                 SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
+                return true;
+            } else if (command(msg, "sellitem")) {
+                if(player.getItems() == null)
+                {
+                    SocketManager.GAME_SEND_MESSAGE(player, "Votre Inventaire est vide");
+                    return false;
+                } else if(player.getItems().size() < 1)
+                {
+                    SocketManager.GAME_SEND_MESSAGE(player, "Votre Inventaire est vide");
+                    return false;
+                }
+                List<GameObject> EquipedObject = player.getEquippedObjects();
+                int kamastoGive = 0;
+                List<GameObject> ObjectToKill = new ArrayList<GameObject>();
+                for(GameObject object : player.getItems().values())
+                {
+                    if(!object.isAttach() && !EquipedObject.contains(object) && Constant.ITEM_TYPE_TO_SELL.contains(object.getTemplate().getType()))
+                    {
+                        kamastoGive += (object.getTemplate().getPrice() * 10);
+                        ObjectToKill.add(object);
+                        /*player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
+                        SocketManager.GAME_SEND_Ow_PACKET(player);
+                        SocketManager.GAME_SEND_Im_PACKET(player, "022;"
+                                + -object.getQuantity() + "~" + object.getTemplate().getId());*/
+                    }
+                }
+                for(GameObject object : ObjectToKill)
+                {
+                    player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
+                    SocketManager.GAME_SEND_Ow_PACKET(player);
+                    SocketManager.GAME_SEND_Im_PACKET(player, "022;"
+                            + -object.getQuantity() + "~" + object.getTemplate().getId());
+                }
+                player.setKamas(player.getKamas() + kamastoGive);
+                Database.getStatics().getPlayerData().update(player);
+                SocketManager.GAME_SEND_STATS_PACKET(player);
+                SocketManager.GAME_SEND_MESSAGE(player,"Votre inventaire a été vidé ! Vous avez gagné " + kamastoGive + " kamas !");
                 return true;
             } else if (command(msg, "noall")) {
                 if (player.noall) {

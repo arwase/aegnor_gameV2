@@ -436,13 +436,13 @@ public class PigDragon {
     private static void open(GameMap map, short cellId) {
         sendOpen(map, cellId);
         map.removeCase(cellId);
-        map.getCases().add(new GameCase(map, cellId, true, true, -1));
+        map.getCases().add(new GameCase(map, cellId, true, true, Byte.parseByte("1"), Byte.parseByte("0"), true, -1));
     }
 
     private static void close(final GameMap map, final short cellId) {
         sendClose(map, cellId);
         map.removeCase(cellId);
-        map.getCases().add(new GameCase(map, cellId, false, false, -1));
+        map.getCases().add(new GameCase(map, cellId, false, false, Byte.parseByte("1"), Byte.parseByte("0"), false, -1));
     }
 
     private static void sendOpen(GameMap map, int cellId) {

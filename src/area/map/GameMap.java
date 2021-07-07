@@ -5,10 +5,7 @@ import area.map.entity.InteractiveDoor;
 import area.map.entity.MountPark;
 import client.Player;
 import client.other.Party;
-import common.CryptManager;
-import common.Formulas;
-import common.PathFinding;
-import common.SocketManager;
+import common.*;
 import database.Database;
 import database.dynamics.data.MapData;
 import entity.Collector;
@@ -115,6 +112,7 @@ public class GameMap {
     private int backgroundID;
     private int outDoor;
     private int maxMerchant;
+    public ArrayList<Integer> trabajos = new ArrayList<Integer>();
 
     public GameMap(short id, String date, byte w, byte h, String key, String places, String dData, String monsters, String mapPos, byte maxGroup, byte fixSize, byte minSize, byte maxSize, String forbidden, byte sniffed, short capabilities, int musicID, int ambianceID, int backgroundID, int outDoor, int maxMerchant) {
         this.id = id;
@@ -127,14 +125,22 @@ public class GameMap {
         this.maxSize = maxSize;
         this.minSize = minSize;
         this.fixSize = fixSize;
-        this.mapData = dData;
+        if(key.length() > 0)
+        {
+            this.mapData = World.world.getEncryptador().decifrarMapData(key, dData);
+        }
+        else {
+
+            this.mapData = dData;
+        }
         this.capabilities = capabilities;
         this.musicID = musicID;
         this.ambianceID = ambianceID;
         this.backgroundID = backgroundID;
         this.outDoor = outDoor;
         this.maxMerchant = maxMerchant;
-        this.cases = World.world.getCryptManager().decompileMapData(this, dData, sniffed);
+        //this.cases = World.world.getCryptManager().decompileMapData(this, dData, sniffed);
+        World.world.getEncryptador().decompilarMapaData(this);
 
         try {
             if (!places.equalsIgnoreCase("") && !places.equalsIgnoreCase("|"))
@@ -729,6 +735,19 @@ public class GameMap {
         return null;
     }
 
+    public void addCases(GameCase cases)
+    {
+        this.cases.add(cases);
+    }
+
+    public GameCase getCase(String id) {
+        int id2 = Integer.parseInt(id);
+        for(GameCase gameCase : this.cases)
+            if(gameCase.getId() == (id2))
+                return gameCase;
+        return null;
+    }
+
     public void removeCase(int id) {
         Iterator<GameCase> iterator = this.cases.iterator();
 
@@ -931,7 +950,7 @@ public class GameMap {
                 }
             }
 
-            cases.add(new GameCase(map, gameCase.getId(), gameCase.isWalkable(true, true, -1), gameCase.isLoS(), (gameCase.getObject() == null ? -1 : gameCase.getObject().getId())));
+            cases.add(new GameCase(map, gameCase.getId(), gameCase.isWalkable(true, true, -1), gameCase.isLoS(), gameCase.level, gameCase.slope, gameCase.isActivate(), (gameCase.getObject() == null ? -1 : gameCase.getObject().getId())));
         }
         map.setCases(cases);
         return map;
@@ -939,7 +958,7 @@ public class GameMap {
 
     public GameMap getMapCopyIdentic() {
         GameMap map = new GameMap(id, date, w, h, key, placesStr, X, Y, maxGroup, fixSize, minSize, maxSize);
-        List<GameCase> cases = this.cases.stream().map(entry -> new GameCase(map, entry.getId(), entry.isWalkable(false), entry.isLoS(), (entry.getObject() == null ? -1 : entry.getObject().getId()))).collect(Collectors.toList());
+        List<GameCase> cases = this.cases.stream().map(entry -> new GameCase(map, entry.getId(), entry.isWalkable(false), entry.isLoS(), entry.level, entry.slope, entry.isActivate(), (entry.getObject() == null ? -1 : entry.getObject().getId()))).collect(Collectors.toList());
         map.setCases(cases);
         return map;
     }

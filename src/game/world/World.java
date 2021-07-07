@@ -3,6 +3,7 @@ package game.world;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import client.Classe;
+import common.*;
 import kernel.Boutique;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,6 @@ import area.map.labyrinth.PigDragon;
 import client.Account;
 import client.Player;
 import client.other.Stats;
-import common.ConditionParser;
-import common.CryptManager;
-import common.Formulas;
-import common.SocketManager;
 import database.Database;
 import entity.Collector;
 import entity.Prism;
@@ -108,6 +105,12 @@ public class World {
 
     public HouseManager getHouseManager() {
         return houseManager;
+    }
+
+    private Encryptador encryptador = new Encryptador();
+
+    public Encryptador getEncryptador() {
+        return encryptador;
     }
 
     private CryptManager cryptManager = new CryptManager();

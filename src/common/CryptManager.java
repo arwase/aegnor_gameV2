@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Console;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,7 +70,7 @@ public class CryptManager {
         return list;
     }
 
-    public List<GameCase> decompileMapData(GameMap map, String data, byte sniffed) {
+    /*public List<GameCase> decompileMapData(GameMap map, String data, byte sniffed) {
         try {
             List<GameCase> cells = new ArrayList<>();
             int a = 0;
@@ -97,7 +98,7 @@ public class CryptManager {
             logger.error("Error dynamics database " + " : " + e.getMessage());
         }
         return null;
-    }
+    }*/
 
 
     // prepareData
@@ -144,10 +145,19 @@ public class CryptManager {
             sb.append((char) Integer.parseInt(key.substring(i, i + 2), 16));
 
         try {
-            return URLDecoder.decode(sb.toString(), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+            return unescape(sb.toString());
+            //return URLDecoder.decode(sb.toString(), StandardCharsets.UTF_8.toString());
+        } catch (Exception e) {
             return null;
         }
+    }
+    private String unescape(String s1) {
+        String s = s1;
+        try {
+            s = URLDecoder.decode(s, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ignored) {
+        }
+        return s;
     }
 
     private int checksum(String data) {
@@ -174,6 +184,18 @@ public class CryptManager {
             }
         }
         return resultStr.toString();
+    }
+
+    public String decipherMapData(String key2, String preData) {
+        String key = key2;
+        String data = preData;
+        try {
+            key = prepareKey(key);
+            Encryptador encrypted = new Encryptador();
+            data = encrypted.decypherData(preData, key, checksum(key) + "");
+        } catch (Exception ignored) {
+        }
+        return data;
     }
 
     private char toHex(int ch) {

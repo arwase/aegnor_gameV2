@@ -80,7 +80,7 @@ public class DropData extends AbstractDAO<World.Drop> {
     {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("DELETE `drops` WHERE monsterId = ? AND objectId = ?");
+            p = getPreparedStatement("DELETE FROM `drops` WHERE monsterId = ? AND objectId = ?");
             p.setInt(1, monsterID);
             p.setInt(2, objID);
             execute(p);
@@ -116,7 +116,7 @@ public class DropData extends AbstractDAO<World.Drop> {
     {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("DELETE `drops` WHERE monsterId = ? AND objectId = ?");
+            p = getPreparedStatement("DELETE FROM `drops` WHERE monsterId = ? AND objectId = ?");
             p.setInt(1, monsterID);
             p.setInt(2, objID);
             execute(p);

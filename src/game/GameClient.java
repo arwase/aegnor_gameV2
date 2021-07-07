@@ -2204,9 +2204,10 @@ public class GameClient {
                     this.player.send("Ea3");
                     break;
                 }
-
+                int lvl = object.getTemplate().getLevel();
                 for (int k = couple.second; k > 0; k--) {
                     int type = object.getTemplate().getType();
+                    int rarity = object.getRarity();
                     if (type > 11 && type < 16 && type > 23 && type != 81 && type != 82)
                         continue;
                     for (Map.Entry<Integer, Integer> entry1 : object.getStats().getEffects().entrySet()) {
@@ -2242,6 +2243,36 @@ public class GameClient {
                                     }
                                 }
                             }
+                        }
+                    }
+                    if( (lvl >= 5) &&  !(object.parseStatsString().isEmpty())  ) {
+                        System.out.println(object.parseStatsString());
+                        if(rarity >= 2){
+                            int runeID = 0;
+                            int chance =0;
+                            switch(rarity){
+                                case 2:
+                                    runeID = 17202;
+                                    chance = 20;
+                                    break;
+                                case 3:
+                                    runeID = 17203;
+                                    chance = 15;
+                                    break;
+                                case 4:
+                                    runeID = 17204;
+                                    chance = 10;
+                                    break;
+                                case 5:
+                                    runeID = 17205;
+                                    chance = 5;
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            if (Formulas.getRandomValue(1, 100) <= chance)
+                                fragment.addRune(runeID);
                         }
                     }
                 }

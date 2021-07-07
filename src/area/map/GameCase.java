@@ -36,11 +36,19 @@ public class GameCase {
     private GameObject droppedItem;
     private Byte coordX;
     private Byte coordY;
+    public Byte level;
+    private Boolean _esCaminableLevel;
+    public Byte slope;
+    public Float height;
+    private Boolean activate;
 
-    public GameCase(GameMap map, int id, boolean walkable, boolean loS, int objId) {
+    public GameCase(GameMap map, int id, boolean walkable, boolean loS, Byte level, Byte slope,Boolean activate, int objId) {
         this.id = id;
         this.walkable = walkable;
         this.loS = loS;
+        this.level = level;
+        this.slope = slope;
+        this.activate = activate;
         if (objId != -1)
             this.object = new InteractiveObject(objId, map, this);
         var ancho = map.getH();
@@ -50,6 +58,18 @@ public class GameCase {
         coordY = Byte.parseByte(String.valueOf(_loc5 - _loc7));
         // es en plano inclinado, solo Y es negativo partiendo del 0 arriba negativo, abajo positivo
         coordX = Byte.parseByte(String.valueOf((this.id - (ancho - 1) * coordY) / ancho));
+        int tempD = (int)((coordX + coordY - 1) * 13.5f);
+        var tempL = (this.level - 7) * 20;
+        _esCaminableLevel = (tempD - tempL) >= 0;
+        var a = 0F;
+        if ((int)slope == 1) {
+            a = 0F;
+        }
+        else {
+            a = 0.5f;
+        }
+        var b = level - 7;
+        height = a + b;
     }
 
     public int getId() {
@@ -1150,5 +1170,13 @@ public class GameCase {
                 SocketManager.GAME_SEND_IQ_PACKET(perso, perso.getId(), qua);
                 break;
         }
+    }
+
+    public void celdaNornmal() {
+
+    }
+
+    public Boolean isActivate() {
+        return activate;
     }
 }

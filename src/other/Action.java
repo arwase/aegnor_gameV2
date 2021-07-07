@@ -2116,6 +2116,21 @@ public class Action {
                             + 6653);
                 }
                 break;
+            case 242://B�n�diction.
+                int IdObj2 = Short.parseShort(args);
+                if (player.getFight() != null) {
+                    break;
+                }
+                player.setBenediction(World.world.getGameObject(IdObj2).getTemplate().getId());
+                break;
+
+            case 243://Mal�diction.
+                int IdObj3 = Short.parseShort(args);
+                if (player.getFight() != null) {
+                    break;
+                }
+                player.setMalediction(World.world.getGameObject(IdObj3).getTemplate().getId());
+                break;
 
             /** Ile Moon **/
             case 450: //Ortimus

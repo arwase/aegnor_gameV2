@@ -173,7 +173,7 @@ public class MapData extends AbstractDAO<GameMap> {
     {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("DELETE `mobgroups_fix` WHERE `mapid` = ?");
+            p = getPreparedStatement("DELETE FROM `mobgroups_fix` WHERE `mapid` = ?");
             p.setInt(1, map.getId());
             execute(p);
             return true;

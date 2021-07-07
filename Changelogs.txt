@@ -65,5 +65,16 @@ Version 0.9 (25/06/2021) :
 - Fix de l'IA du Tofu désormais il s'éloigne des ennemies une fois qu'il a attaqué
 - Ajout du Panel de Changement de Classe + Debug
 - Suppression du Drop Pano Champ Champ sur les Fungus
+- Ajout d'une commande pour vendre tout son inventaire sauf objets de quête / liées ou équipées
+
+Version 1.0 (05/07/2021) :
+- Ajout des Runes de Rareté
+- Debug du FM via les Runes de Rareté
+- Debug du Concassage des items avec une génération de rune de rareté
+- Amélioration du Décryptage des Maps
+
+Version 1.1 (06/07/2021) :
+- Donjon Qu'tan + Monstres Debug 85% (Manque PNJ + Potion + Ressources)
+
 //TODO
 - Tester toutes les commandes (plusieurs déjà testées)

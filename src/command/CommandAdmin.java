@@ -1768,7 +1768,7 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             int qua = 1;
-            if (infos.length == 3)//Si une quantite est specifiee
+            if (infos.length >= 3)//Si une quantite est specifiee
             {
                 try {
                     qua = Integer.parseInt(infos[2]);
@@ -1776,17 +1776,22 @@ public class CommandAdmin extends AdminUser {
                     // ok
                 }
             }
+            String pseudo = "";
+            if(infos.length >= 4)
+            {
+                pseudo = infos[3];
+            }
             boolean useMax = false;
             int rarity = 0;
-            if (infos.length == 4)//Si un jet est specifie
+            if (infos.length >= 5)//Si un jet est specifie
             {
-                if (infos[3].equalsIgnoreCase("MAX"))
+                if (infos[4].equalsIgnoreCase("MAX") || infos[4].equalsIgnoreCase("Max"))
                     useMax = true;
             }
 
-            if (infos.length == 5)//Si un jet est specifie
+            if (infos.length >= 6)//Si un jet est specifie
             {
-                rarity = Integer.parseInt(infos[4]);
+                rarity = Integer.parseInt(infos[5]);
             }
 
 
@@ -1815,17 +1820,40 @@ public class CommandAdmin extends AdminUser {
                 obj.getTxtStat().put(997, mount.getName());
                 mount.setToMax();
             }
-            if (this.getPlayer().addObjet(obj, true))//Si le joueur n'avait pas d'item similaire
-                World.world.addGameObject(obj, true);
-            String str = "Creation de l'item " + tID + " reussie";
-            if (useMax)
-                str += " avec des stats maximums";
+            if(!pseudo.equals(""))
+            {
+                Player target = World.world.getPlayerByName(pseudo);
+                if(target != null) {
+                    if (target.addObjet(obj, true)) {
+                        World.world.addGameObject(obj, true);
+                    }
+                    String str = "Creation de l'item " + tID + " reussie";
+                    if (useMax)
+                        str += " avec des stats maximums";
 
-            str += " de rarete "+rarity;
+                    str += " de rarete "+rarity;
 
-            str += ".";
-            this.sendMessage(str);
-            SocketManager.GAME_SEND_Ow_PACKET(this.getPlayer());
+                    str += ".";
+                    target.sendMessage(str);
+                    SocketManager.GAME_SEND_Ow_PACKET(target);
+                }
+                else{
+                    pseudo = "";
+                    SocketManager.GAME_SEND_MESSAGE(getPlayer(), "Le joueur ciblé n'a pas été trouvé l'item a donc été généré sur vous même.");
+                    if (this.getPlayer().addObjet(obj, true))//Si le joueur n'avait pas d'item similaire
+                        World.world.addGameObject(obj, true);
+                    String str = "Creation de l'item " + tID + " reussie";
+                    if (useMax)
+                        str += " avec des stats maximums";
+
+                    str += " de rarete "+rarity;
+
+                    str += ".";
+                    this.sendMessage(str);
+                    SocketManager.GAME_SEND_Ow_PACKET(this.getPlayer());
+                    return;
+                }
+            }
             return;
         } else if (command.equalsIgnoreCase("SPELLPOINT")) {
             int pts = -1;
