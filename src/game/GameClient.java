@@ -210,6 +210,8 @@ public class GameClient {
             case 'w':
                 parsePanel(packet);
                 break;
+            case 'X':
+                parseMapPacket(packet);
             case 'Z':
                 try{
                     parseMapPacket(packet);
@@ -228,6 +230,36 @@ public class GameClient {
 
     private void parsePanel(String packet) {
         switch (packet.charAt(1)) {
+            case 'a':
+                int prix_de_base3 = Config.INSTANCE.getPRIX_CHANGEMENT_COULEUR() + Config.INSTANCE.getPRIX_CHANGEMENT_PSEUDO();
+                int ogrineAcc3 = player.getAccount().getPoints();
+                int difference3 = ogrineAcc3 - prix_de_base3;
+                boolean canBuy3 = true;
+                if(difference3 < 0)
+                {
+                    canBuy3 = false;
+                }
+                if (!canBuy3)
+                {
+                    return;
+                }
+                SocketManager.send(this.player, "wEa;"+prix_de_base3);
+                break;
+            case 'c':
+                int prix_de_base1 = Config.INSTANCE.getPRIX_CHANGEMENT_COULEUR();
+                int ogrineAcc1 = player.getAccount().getPoints();
+                int difference1 = ogrineAcc1 - prix_de_base1;
+                boolean canBuy1 = true;
+                if(difference1 < 0)
+                {
+                    canBuy1 = false;
+                }
+                if (!canBuy1)
+                {
+                    return;
+                }
+                SocketManager.send(this.player, "wEc;"+prix_de_base1);
+                break;
             case 'G' :
                 String announce = "";
                 if(this.player.getGuild() != null)
@@ -277,6 +309,21 @@ public class GameClient {
                     SocketManager.GAME_SEND_bV_CLOSE_PANEL(player);
                 }
                 break;
+            case 'n':
+                int prix_de_base2 = Config.INSTANCE.getPRIX_CHANGEMENT_PSEUDO();
+                int ogrineAcc2 = player.getAccount().getPoints();
+                int difference2 = ogrineAcc2 - prix_de_base2;
+                boolean canBuy2 = true;
+                if(difference2 < 0)
+                {
+                    canBuy2 = false;
+                }
+                if (!canBuy2)
+                {
+                    return;
+                }
+                SocketManager.send(this.player, "wEn;"+prix_de_base2);
+                break;
         }
     }
 
@@ -297,6 +344,11 @@ public class GameClient {
             case 'N': // Quand on ouvre le bestiaire monstre sur la map
                 bestiaireUse();
                 break;
+            case 's':
+                if(this.player != null) {
+                    AegnorService(packet);
+                }
+                break;
             case 'V': // Quand on recherche par monstre
                 searchByMonster(packet.substring(2));
                 break;
@@ -305,6 +357,15 @@ public class GameClient {
                 break;
             case 'w':
                 prismLeave();
+                break;
+        }
+    }
+
+    private void AegnorService(String packet) {
+        switch (packet.charAt(2))
+        {
+            case 'N':
+                player.changePlayerName(packet);
                 break;
         }
     }
@@ -568,6 +629,16 @@ public class GameClient {
             case 'D':
                 deleteCharacter(packet);
                 break;
+            case 'E':
+                switch (packet.charAt(2))
+                {
+                    case 'c':
+                        if(this.player.getFight() == null)
+                        {
+                            this.player.changeColor(packet);
+                        }
+                        break;
+                }
             case 'f':
                 getQueuePosition();
                 break;
@@ -1382,9 +1453,6 @@ public class GameClient {
     private void worldInfos(String packet) {
         switch (packet.charAt(2)) {
             case 'J':
-                SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(1));
-                SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(2));
-                break;
             case 'V':
                 SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(1));
                 SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(2));
@@ -2105,8 +2173,7 @@ public class GameClient {
                 if (curHdv.buyItem(ligneID, amount, Integer.parseInt(info[2]), this.player)) {
 
                     SocketManager.GAME_SEND_EHm_PACKET(this.player, "-", ligneID + "");//Enleve la ligne
-                    if (curHdv.getLine(ligneID) != null
-                            && !curHdv.getLine(ligneID).isEmpty())
+                    if (curHdv.getLine(ligneID) != null && !curHdv.getLine(ligneID).isEmpty())
                         SocketManager.GAME_SEND_EHm_PACKET(this.player, "+", curHdv.getLine(ligneID).parseToEHm());//R�ajthise la ligne si elle n'est pas vide
                     this.player.refreshStats();
                     SocketManager.GAME_SEND_Ow_PACKET(this.player);
@@ -2117,12 +2184,19 @@ public class GameClient {
                 break;
             case 'l'://Demande listage d'un template (les prix)
                 templateID = Integer.parseInt(packet.substring(3));
+                String str = World.world.getHdv(this.player.getCurMap().getId()).parseToEHl(Integer.parseInt(packet.substring(3)));
                 try {
-                    SocketManager.GAME_SEND_EHl(this.player, World.world.getHdv(Math.abs(exchangeAction.getValue())), templateID);
+                    if(str.isEmpty())
+                    {
+                        SocketManager.GAME_SEND_EHM_PACKET(this.player, "-", templateID + "");
+                    }
+                    else {
+                        SocketManager.GAME_SEND_EHl(this.player, str);
+                    }
                 } catch (NullPointerException e)//Si erreur il y a, retire le template de la liste chez le client
                 {
                     e.printStackTrace();
-                    SocketManager.GAME_SEND_EHM_PACKET(this.player, "-", templateID + "");
+                    SocketManager.GAME_SEND_EHM_PACKET(this.player, "-", String.valueOf(templateID) + "");
                 }
 
                 break;
@@ -2135,7 +2209,12 @@ public class GameClient {
                 int hdvid = 0;
                 if(exchangeAction.getValue() < 0)
                 {
-                    hdvid = -1;
+                    if(World.world.getHdv(this.player.getCurMap().getId()) != null) {
+                        hdvid = World.world.getHdv(this.player.getCurMap().getId()).getHdvId();
+                    }
+                    else{
+                        hdvid = -1;
+                    }
                 }
                 else{
                    hdvid = exchangeAction.getValue();
@@ -2906,7 +2985,7 @@ public class GameClient {
                             obj = newObj;
                         }
                         HdvEntry toAdd = new HdvEntry(World.world.getNextObjectHdvId(), price, amount, this.player.getAccount().getId(), obj);
-                        curHdv.addEntry(toAdd, false); //Ajthise l'entry dans l'HDV
+                        curHdv.addEntry(toAdd, false); //Ajoute l'entry dans l'HDV
                         SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this, '+', "", toAdd.parseToEmK()); //Envoie un packet pour ajthiser l'item dans la fenetre de l'HDV du client
                         SocketManager.GAME_SEND_HDVITEM_SELLING(this.player);
                         Database.getStatics().getPlayerData().update(this.player);
@@ -3229,7 +3308,7 @@ public class GameClient {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "123");
             return;
         }
-        if (SoulStone.isInArenaMap(this.player.getCurMap().getId()) || this.player.getCurMap().noMarchand) {
+        if (SoulStone.isInArenaMap(this.player.getCurMap().getId()) || this.player.getCurMap().mapNoMerchant()) {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "113");
             return;
         }
@@ -3261,7 +3340,7 @@ public class GameClient {
     }
 
     private void offlineExchange() {
-        if (SoulStone.isInArenaMap(this.player.getCurMap().getId()) || this.player.getCurMap().noMarchand) {
+        if (SoulStone.isInArenaMap(this.player.getCurMap().getId()) || this.player.getCurMap().mapNoMerchant()) {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "113");
             return;
         }
@@ -3691,6 +3770,15 @@ public class GameClient {
 
             Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
             if (hdv != null) {
+                String infos = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
+                SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
+                ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
+                this.player.setExchangeAction(exchangeAction);
+                SocketManager.GAME_SEND_HDVITEM_SELLING(this.player);
+            }
+            else
+            {
+                hdv = World.world.getHdv(-1);
                 String infos = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
                 ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
@@ -4221,7 +4309,7 @@ public class GameClient {
         switch (packet.charAt(2)) {
             case 'S'://Teleportation
                 // TP Mariage : mettre une condition de donjon ...
-                if (Wife.getCurMap().noTP || Wife.getCurMap().haveMobFix()) {
+                if (Wife.getCurMap().mapNoTeleport() || Wife.getCurMap().haveMobFix()) {
                     SocketManager.GAME_SEND_MESSAGE(this.player, "Une barrière magique vous empêche de rejoindre votre conjoint.");
                     return;
                 }
@@ -4712,6 +4800,10 @@ public class GameClient {
             SocketManager.GAME_SEND_DUEL_Y_AWAY(this, this.player.getId());
             return;
         }
+        if(this.player.getCurMap().mapNoDefie())
+        {
+            return;
+        }
         try {
             if (this.player.cantDefie())
                 return;
@@ -4850,6 +4942,8 @@ public class GameClient {
                 SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this.player.getGameClient(), 'S');
                 return;
             }
+            if (this.player.getCurMap().mapNoAgression())
+                return;
             if (this.player.cantAgro())
                 return;
             int id = Integer.parseInt(packet.substring(5));
@@ -5024,6 +5118,8 @@ public class GameClient {
             World.world.showPrismes(this.player);
             this.player.refreshCraftSecure(false);
             this.player.afterFight = false;
+            //Capabilities
+            SocketManager.send(this.player, "GDD" + this.player.getCurMap().getCapabilitiesCompiled());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -5485,6 +5581,11 @@ public class GameClient {
             SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this.player.getGameClient(), 'S');
             return;
         }
+        if(this.player.getCurMap().isArena() || this.player.getCurMap().mapNoCollector())
+        {
+            SocketManager.GAME_SEND_Im_PACKET(this.player, "113");
+            return;
+        }
 
         short price = (short) (1000 + 10 * guild.getLvl());//Calcul du prix du Collector
 
@@ -5496,7 +5597,7 @@ public class GameClient {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "1168;1");
             return;
         }
-        if (map.getPlaces().length() < 5 || SoulStone.isInArenaMap(map.getId()) || map.noCollector) {//La map ne poss�de pas de "places"
+        if (map.getPlaces().length() < 5 || SoulStone.isInArenaMap(map.getId()) || map.mapNoCollector()) {//La map ne poss�de pas de "places"
             SocketManager.GAME_SEND_Im_PACKET(this.player, "113");
             return;
         }

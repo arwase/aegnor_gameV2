@@ -57,6 +57,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class Player {
 
@@ -2050,7 +2051,7 @@ public class Player {
         ASData.append(stats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(donStats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(buffStats.getEffect(Constant.STATS_TRAPDOM)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_TRAPPER)).append(",").append(sutffStats.getEffect(Constant.STATS_TRAPPER)).append(",").append(donStats.getEffect(Constant.STATS_TRAPPER)).append(",").append(buffStats.getEffect(Constant.STATS_TRAPPER)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_RETDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_RETDOM)).append(",").append(donStats.getEffect(Constant.STATS_RETDOM)).append(",").append(buffStats.getEffect(Constant.STATS_RETDOM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_CC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_CC)).append("|");
+        ASData.append(stats.getEffect(Constant.STATS_ADD_CC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_CC)).append("|").append(totalStats.getEffect(Constant.STATS_ADD_CC)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_EC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_EC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_EC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_EC)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_AFLEE)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MFLEE)).append("|");
@@ -2086,6 +2087,58 @@ public class Player {
             if (_honor < World.world.getExpLevel(n).pvp)
                 return n - 1;
         return 0;
+    }
+
+    public String stringStatsComplemento()
+    {
+        refreshStats();
+        refreshLife(true);
+        StringBuilder ASData = new StringBuilder();
+        ASData.append("As").append(xpString(",")).append("|");
+        ASData.append(kamas).append("|").append(_capital).append("|").append(_spellPts).append("|");
+        ASData.append(_align).append("~").append(_align).append(",").append(_aLvl).append(",").append(getGrade()).append(",").append(_honor).append(",").append(_deshonor).append(",").append((_showWings ? "1" : "0")).append("|");
+        int pdv = this.curPdv;
+        int pdvMax = this.maxPdv;
+        if (fight != null && !fight.isFinish()) {
+            Fighter f = fight.getFighterByPerso(this);
+            if (f != null) {
+                pdv = f.getPdv();
+                pdvMax = f.getPdvMax();
+            }
+        }
+        ASData.append(pdv).append(",").append(pdvMax).append("|");
+        ASData.append(this.getEnergy()).append(",10000|");
+        ASData.append(getInitiative()).append("|");
+        return ASData.toString();
+    }
+
+    public String stringStats() {
+        final StringBuilder str = new StringBuilder();
+        str.append(stringStatsComplemento());
+        int base = 0, equipement = 0, bendMald = 0, buff = 0, total = 0;
+        Stats stats = this.getStats(), stuffStats = this.getStuffStats(), donStats = this.getDonsStats(), buffStats = this.getBuffsStats(), totalStats = this.getTotalStats();
+        total = totalStats.getEffect(Constant.STATS_ADD_PROS);
+        // prospeccion
+        str.append(total).append("|");
+        final int[] statsArray = {111, 128, 118, 125, 124, 123, 119, 126, 117, 182, 112, 142, 165, 138, 178, 225, 226, 220, 115,
+                122, 160, 161, 244, 214, 264, 254, 240, 210, 260, 250, 241, 211, 261, 251, 242, 212, 262, 252, 243, 213, 263, 253};
+        for (final int s : statsArray) {
+            if (fight != null && s == 182) {
+                base = 99;
+                equipement = 99;
+                bendMald = 99;
+                buff = 99;
+                total = 99;
+            } else {
+                base = stats.getEffect(s);
+                equipement = stuffStats.getEffect(s);
+                bendMald = donStats.getEffect(s);
+                buff = buffStats.getEffect(s);
+                total = totalStats.getEffect(s);
+            }
+            str.append(base).append(",").append(equipement).append(",").append(bendMald).append(",").append(buff).append(",").append(total).append("|");
+        }
+        return str.toString();
     }
 
     public String xpString(String c) {
@@ -5595,11 +5648,11 @@ public class Player {
     }
 
     public boolean cantDefie() {
-        return getCurMap().noDefie;
+        return getCurMap().mapNoDefie();
     }
 
     public boolean cantAgro() {
-        return getCurMap().noAgro;
+        return getCurMap().mapNoAgression();
     }
 
     public boolean cantCanal() {
@@ -5607,7 +5660,7 @@ public class Player {
     }
 
     public boolean cantTP() {
-        return this.isInPrison() || getCurMap().noTP || EventManager.isInEvent(this);
+        return this.isInPrison() || getCurMap().mapNoTeleport() || EventManager.isInEvent(this);
     }
 
     public boolean isInPrison() {
@@ -5934,5 +5987,117 @@ public class Player {
             str.append(hp.getSpellID()).append("~").append(hp.getLevel()).append("~").append(_sortsPlaces.get(hp.getSpellID()));
         }
         return str.toString();
+    }
+
+    public void changeColor(String packet) {
+        int playerOgrine = getAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_COULEUR();
+        getAccount().setPoints(playerOgrine);
+        if(!packet.isEmpty())
+        {
+            String[] colores = packet.substring(3).split(Pattern.quote("|"));
+            setColors(Integer.parseInt(colores[0]), Integer.parseInt(colores[1]), Integer.parseInt(colores[2]));
+            refreshToMap();
+            SocketManager.GAME_SEND_bV_CLOSE_PANEL(this);
+        }
+    }
+    public void setColors(int color1, int color2, int color3) {
+        if (color1 < -1) {
+            color1 = -1;
+        } else if (color1 > 16777215) {
+            color1 = 16777215;
+        }
+        if (color2 < -1) {
+            color2 = -1;
+        } else if (color2 > 16777215) {
+            color2 = 16777215;
+        }
+        if (color3 < -1) {
+            color3 = -1;
+        } else if (color3 > 16777215) {
+            color3 = 16777215;
+        }
+        this.color1 = color1;
+        this.color2 = color2;
+        this.color3 = color3;
+        Database.getStatics().getPlayerData().UPDATE_PLAYER_COLORS(this);
+    }
+
+    public void changePlayerName(String packet) {
+        if (!packet.isEmpty()) {
+            int playerOgrine = getAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_PSEUDO();
+            getAccount().setPoints(playerOgrine);
+            String[] params = packet.substring(3).split(";");
+            String nombre = params[0];
+            /*int colorN = 0;
+            try {
+                colorN = Integer.parseInt(params[1]);
+                if (colorN > 16777215) {
+                    colorN = 0;
+                }
+            } catch (Exception e) {
+                return;
+            }
+            if (nombre.equals(getName())) { // si tiene el mismo nombre y diferente color
+                if (colorN == colorNombre) {
+                    return
+                }
+            }*/
+            nombre = nombreValido(nombre, false);
+            if (nombre == null) {
+                SocketManager.ENVIAR_AAE_ERROR_CREAR_PJ(this, "a");
+                return;
+            }
+            if (nombre.isEmpty()) {
+                SocketManager.ENVIAR_AAE_ERROR_CREAR_PJ(this, "n");
+                return;
+            }
+            //_perso.colorNombre = colorN
+            setName(nombre);
+            SocketManager.ENVIAR_bn_CAMBIAR_NOMBRE_CONFIRMADO(this, nombre);
+            refreshToMap();
+            SocketManager.GAME_SEND_Im_PACKET(this, "1NAME_CHANGED;" + nombre);
+        } else {
+            //send(this, "bN" + this.colorNombre);
+        }
+    }
+
+    public static String nombreValido(String nombre, boolean comando) {
+        if (World.world.getPlayerPerName(nombre) != null) {
+            return null;
+        }
+        if (nombre.length() < 1 || nombre.length() > 20) {
+            return "";
+        }
+        if (!comando) {
+            StringBuilder nombreFinal = new StringBuilder();
+            final String nLower = nombre.toLowerCase();
+            final String abcMin = "abcdefghijklmnopqrstuvwxyz-";
+            int cantSimbol = 0;
+            char letra_A = ' ', letra_B = ' ';
+            boolean primera = true;
+            for (final char letra : nLower.toCharArray()) {
+                if (primera && letra == '-' || !abcMin.contains(letra + "") || letra == letra_A && letra == letra_B) {
+                    return "";
+                }
+                if (primera) {
+                    nombreFinal.append((letra + "").toUpperCase());
+                } else {
+                    nombreFinal.append(letra);
+                }
+                primera = false;
+                if (abcMin.contains(letra + "") && letra != '-') {
+                    letra_A = letra_B;
+                    letra_B = letra;
+                } else if (letra == '-') {
+                    primera = true;
+                    if (cantSimbol >= 1) {
+                        return "";
+                    }
+                    cantSimbol++;
+                }
+            }
+                nombre = nombreFinal.toString();
+        }
+        return nombre;
     }
 }

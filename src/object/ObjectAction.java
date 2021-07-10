@@ -523,7 +523,7 @@ public class ObjectAction {
                             SocketManager.GAME_SEND_MESSAGE(player, "Vos ailes doivent être activer afin de poser un prisme.");
                             return;
                         }
-                        if (map0.noPrism || (subArea != null && (subArea.getId() == 9 || subArea.getId() == 95)) || map0.haveMobFix() || map0.getMobGroups().isEmpty()) {
+                        if (map0.mapNoPrism() || (subArea != null && (subArea.getId() == 9 || subArea.getId() == 95)) || map0.haveMobFix() || map0.getMobGroups().isEmpty()) {
                             SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez pas poser de prisme sur cette map.");
                             return;
                         }

@@ -82,5 +82,29 @@ Version 1.2 (07/07/2021) :
 - Fix du Chargement des Maps
 - Réglages des étoiles
 
+Version 1.3 (08/07/2021) :
+- Ajout des crafts de Dofus Retro 1.35
+- Ajout des deux nouvelles panoplies
+- Ajout de toutes les ressources de Dofus Retro 1.35
+- Ajout des drops sur les monstres du Donjon Ilyzaelle
+- Ajout des drops sur les monstres du Donjon Qu'Tan
+- Refonte des conditions des maps, désormais on peut contrôller les éléments et caractéristique interdit d'une map avec le panel admin, (Donjon/Pas de prisme/ Pas d'agression/ pas de Défie/ Map VIP/ Pas de perco...)
+- Fix des Hdv, les normaux sont indépendants du global désormais
+
+Version 1.4 (09/07/2021) :
+- Fix de l'HDV global en mode Vente
+
+Version 1.5 (10/07/2021) :
+- Fix du Packet AS toutes les Stats sont envoyés (Les CC sont de nouveaux affichés)
+- Ajout de l'autorisation de mettre des fragments magiques dans la barre de raccourcis des items
+- Fix de l'IA 32, désormais après la fin de leurs attaques l'entité pars au loins
+- Correction du Chargement du nom des Monstres
+- Correction de la Commande Admin "ADD_DROP"
+- Création de l'IA 72
+- Fix des dernières recettes
+- Ajout de tout les nouveaux Drops
+- Ajout de deux nouvelles ressources
+
+
 //TODO
 - Tester toutes les commandes (plusieurs déjà testées)

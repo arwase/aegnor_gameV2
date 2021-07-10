@@ -2,6 +2,7 @@ package database.statics;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import client.Player;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.LoggerFactory;
 import database.DAO;

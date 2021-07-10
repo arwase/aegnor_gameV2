@@ -55,7 +55,22 @@ public class MapData extends AbstractDAO<GameMap> {
         }
         return false;
     }
-    public boolean updateForbidden(GameMap map) {
+    public boolean updateCapabilities(GameMap map) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE `maps` SET `capabilities` = ? WHERE id = ?");
+            p.setInt(1, map.getCapabilities());
+            p.setInt(2, map.getId());
+            execute(p);
+            return true;
+        } catch (SQLException e) {
+            super.sendError("MapData updateForbidden", e);
+        } finally {
+            close(p);
+        }
+        return false;
+    }
+    /*public boolean updateForbidden(GameMap map) {
         PreparedStatement p = null;
         try {
             p = getPreparedStatement("UPDATE `maps` SET `forbidden` = ? WHERE id = ?");
@@ -69,7 +84,7 @@ public class MapData extends AbstractDAO<GameMap> {
             close(p);
         }
         return false;
-    }
+    }*/
 
     public boolean updateFightCells(GameMap map)
     {

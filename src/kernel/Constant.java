@@ -2669,13 +2669,6 @@ public class Constant {
                 break;
             //Armure
             case 88:
-                stats.addOneStat(STATS_ADD_PERDOM, lvl / 2);
-                stats.addOneStat(STATS_ADD_RP_AIR, lvl / 20);
-                stats.addOneStat(STATS_ADD_RP_EAU, lvl / 20);
-                stats.addOneStat(STATS_ADD_RP_TER, lvl / 20);
-                stats.addOneStat(STATS_ADD_RP_FEU, lvl / 20);
-                stats.addOneStat(STATS_ADD_RP_NEU, lvl / 20);
-                break;
             case 75:
                 stats.addOneStat(STATS_ADD_PERDOM, lvl / 2);
                 stats.addOneStat(STATS_ADD_RP_AIR, lvl / 20);
@@ -3022,6 +3015,7 @@ public class Constant {
             case ITEM_TYPE_PRISME:
             case ITEM_TYPE_FEE_ARTIFICE:
             case ITEM_TYPE_DONS:
+            case ITEM_TYPE_PIERRE_MAGIQUE:
                 if (place >= 35 && place <= 48)
                     return true;
                 break;
@@ -3057,6 +3051,8 @@ public class Constant {
             case 25:
             case 27:
             case 41:
+
+            case 42:
                 perso.teleport((short) 8534, 196);
                 break;
 
@@ -3119,10 +3115,6 @@ public class Constant {
 
             case 37:
                 perso.teleport((short) 7796, 433);
-                break;
-
-            case 42:
-                perso.teleport((short) 8534, 196);
                 break;
 
             case 46:

@@ -340,6 +340,23 @@ public class PlayerData extends AbstractDAO<Player> {
         }
     }
 
+    public void UPDATE_PLAYER_COLORS(Player player) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE `players` SET `color1` = ?, `color2` = ?, `color3` = ? WHERE `id` = ?;");
+
+            p.setInt(1, player.getColor1());
+            p.setInt(2, player.getColor2());
+            p.setInt(3, player.getColor3());
+            p.setInt(4, player.getId());
+            execute(p);
+        } catch (SQLException e) {
+            super.sendError("PlayerData UPDATE_PLAYER_COLORS", e);
+        } finally {
+            close(p);
+        }
+    }
+
     public void updateGroupe(int group, String name) {
         PreparedStatement p = null;
         try {

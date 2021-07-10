@@ -1249,7 +1249,7 @@ public class Fight {
             String[] chalInfo;
 
             int challengeID, challengeXP, challengeDP, bonusGroupe;
-            int challengeNumber = ((this.getMapOld().hasEndFightAction(this.getType()) || SoulStone.isInArenaMap(this.getMapOld().getId())) ? 2 : 1);
+            int challengeNumber = ((this.getMapOld().hasEndFightAction(this.getType()) || this.getMapOld().isArena() || this.getMapOld().isDungeon() || SoulStone.isInArenaMap(this.getMapOld().getId())) ? 2 : 1);
 
             for (String chalInfos : World.world.getRandomChallenge(challengeNumber, challenges)) {
                 chalInfo = chalInfos.split(",");
@@ -3405,7 +3405,7 @@ public class Fight {
                     looseTeam.addAll(copyTeam1.values());
                 }
 
-                if (Constant.FIGHT_TYPE_PVM == this.getType() && this.getMapOld().hasEndFightAction(this.getType())) {
+                if (Constant.FIGHT_TYPE_PVM == this.getType() && this.getMapOld().hasEndFightAction(this.getType()) && this.getMapOld().isDungeon()) {
                     for (Fighter fighter : winTeam) {
                         Player player = fighter.getPlayer();
                         if (player == null)
@@ -4016,7 +4016,7 @@ public class Fight {
                 }
             }
 
-            if (mobCapturable && !SoulStone.isInArenaMap(this.getMapOld().getId())) {
+            if (mobCapturable && !SoulStone.isInArenaMap(this.getMapOld().getId()) && !this.getMapOld().isArena()) {
                 boolean isFirst = true;
                 int maxLvl = 0;
                 String stats = "";
@@ -4033,7 +4033,7 @@ public class Fight {
                 this.setFullSoul(new SoulStone(Database.getStatics().getObjectData().getNextId(), 1, 7010, Constant.ITEM_POS_NO_EQUIPED, stats)); // Cr�e la pierre d'�me
                 winners.stream().filter(F -> !F.isInvocation() && F.haveState(Constant.ETAT_CAPT_AME)).forEach(F -> getCapturer().add(F));
 
-                if (this.getCapturer().size() > 0 && !SoulStone.isInArenaMap(this.getMapOld().getId())) // S'il y a des captureurs
+                if (this.getCapturer().size() > 0 && !SoulStone.isInArenaMap(this.getMapOld().getId()) && !this.getMapOld().isArena()) // S'il y a des captureurs
                 {
                     for (int i = 0; i < this.getCapturer().size(); i++) {
                         try {

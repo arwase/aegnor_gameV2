@@ -112,7 +112,8 @@ public class SocketManager {
     }
 
     public static void GAME_SEND_STATS_PACKET(Player perso) {
-        String packet = perso.getAsPacket();
+        //String packet = perso.getAsPacket();
+        String packet = perso.stringStats();
         SocketManager.GAME_SEND_Ow_PACKET(perso);
         send(perso, packet);
 
@@ -1870,8 +1871,9 @@ public class SocketManager {
     }
 
     public static void GAME_SEND_ADD_NPC_TO_MAP(GameMap map, Npc npc) {
-        for (Player z : map.getPlayers())
+        for (Player z : map.getPlayers()) {
             send(z, "GM|" + npc.parse(false, z));
+        }
     }
 
     public static void GAME_SEND_ADD_NPC(Player player, Npc npc) {
@@ -2232,10 +2234,12 @@ public class SocketManager {
     public static void GAME_SEND_EHL_PACKET(Player out, int categ,
                                             String templates) //Packet de listage des templates dans une cat�gorie (En r�ponse au packet EHT)
     {
-        String packet = "EHL" + categ + "|" + templates;
-
+        String packet ="EHL" + categ + "|";
+        if(!templates.isEmpty())
+        {
+            packet += templates;
+        }
         send(out, packet);
-
     }
 
     public static void GAME_SEND_EHL_PACKET(Player out, String items) //Packet de listage des objets en vente
@@ -2731,6 +2735,21 @@ public class SocketManager {
 
     public static void GAME_SEND_bV_CLOSE_PANEL(Player player) {
         String packet = "bV";
+        send(player, packet);
+    }
+
+    public static void ENVIAR_AAE_ERROR_CREAR_PJ(Player player, String letra) {
+        String packet = "AAE"+ letra;
+        send(player, packet);
+    }
+
+    public static void ENVIAR_bn_CAMBIAR_NOMBRE_CONFIRMADO(Player player, String nombre) {
+        String packet = "bn"+nombre;
+        send(player, packet);
+    }
+
+    public static void GAME_SEND_EHl(Player player, String str) {
+        String packet = "EHl" + str;
         send(player, packet);
     }
 }

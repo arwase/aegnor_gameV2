@@ -1098,16 +1098,16 @@ public class World {
         changeHdv.put(4607, 4271); // HDV Alchimistes
         changeHdv.put(4622, 4216); // HDV Bijoutiers
         changeHdv.put(4627, 4232); // HDV Bricoleurs
-        changeHdv.put(5112, 4178); // HDV B�cherons
+        changeHdv.put(5112, 4178); // HDV Bûcherons
         changeHdv.put(4562, 4183); // HDV Cordonniers
-        changeHdv.put(8754, 8760); // HDV Biblioth�que
+        changeHdv.put(8754, 8760); // HDV Bibliothèque
         changeHdv.put(5317, 4098); // HDV Forgerons
-        changeHdv.put(4615, 4247); // HDV P�cheurs
+        changeHdv.put(4615, 4247); // HDV Pêcheurs
         changeHdv.put(4646, 4262); // HDV Ressources
         changeHdv.put(8756, 8757); // HDV Forgemagie
         changeHdv.put(4618, 4174); // HDV Sculpteurs
         changeHdv.put(4588, 4172); // HDV Tailleurs
-        changeHdv.put(8482, 10129); // HDV �mes
+        changeHdv.put(8482, 10129); // HDV Âmes
         changeHdv.put(4595, 4287); // HDV Bouchers
         changeHdv.put(4630, 2221); // HDV Boulangers
         changeHdv.put(5311, 4179); // HDV Mineurs
@@ -2165,6 +2165,18 @@ public class World {
         return array;
     }
 
+    public Player getPlayerPerName(String nombre) {
+        Player p = null;
+        for(Player player : players.values())
+        {
+            if(player.getName().equals(nombre))
+            {
+                p = player;
+            }
+        }
+        return p;
+    }
+
     public static class Drop {
         private int objectId, ceil, action, level;
         private String condition;
@@ -2227,6 +2239,15 @@ public class World {
             double percent = percents.get(Grade -1);
             return percent;
         }
+    }
+
+    public House getCasaDentroPorMapa(Short mapaID) {
+        for (House casa : Houses.values()) {
+            if (casa.getHouseMaps().contains(mapaID)) {
+                return casa;
+            }
+        }
+        return null;
     }
 
     public static class Couple<L, R> {

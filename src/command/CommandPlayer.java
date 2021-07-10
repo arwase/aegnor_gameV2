@@ -451,7 +451,7 @@ public class CommandPlayer {
                         SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter votre équipe sur cette carte");
                         return true;
                     }
-                    if(GameMap.IsInDj(player.getCurMap())){
+                    if(GameMap.IsInDj(player.getCurMap()) || player.getCurMap().isDungeon()){
                         SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter votre équipe sur cette carte");
                         return true;
                     }
@@ -764,6 +764,23 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous passerez vos tours automatiquement");
                 }
                 return true;
+            } else if(command(msg, "passall")){
+                if(player.getSlaveLeader() == null) {
+                    for (Player p : player.PlayerList1) {
+                        if (p.passturn) {
+                            p.passturn = false;
+                            SocketManager.GAME_SEND_MESSAGE(p, "<b>(Information)</b> Vous ne passerez plus vos tours automatiquement");
+                        } else {
+                            p.passturn = true;
+                            SocketManager.GAME_SEND_MESSAGE(p, "<b>(Information)</b> Vous passerez vos tours automatiquement");
+                        }
+                    }
+                    return true;
+                }
+                else{
+                    SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information)</b> Vous n'êtes pas le maître.");
+                    return false;
+                }
             } else if(command(msg, "event")) {
                 if(player.cantTP()) return true;
                 return EventManager.getInstance().subscribe(player) == 1;

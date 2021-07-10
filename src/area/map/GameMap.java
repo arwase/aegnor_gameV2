@@ -107,6 +107,7 @@ public class GameMap {
     private Map<Integer, Integer> mobExtras = new HashMap<>();
     private String mapData;
     private short capabilities;
+    private short capabilitiesCompiled;
     private int musicID;
     private int ambianceID;
     private int backgroundID;
@@ -175,7 +176,7 @@ public class GameMap {
             noDefie = split[4].equals("1");
             noAgro = split[5].equals("1");
             noCanal = split[6].equals("1");
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
 
         String unique = "";
         if(monsters.contains("@")) {
@@ -274,35 +275,6 @@ public class GameMap {
         return this.endFightAction ;
     }
 
-    public Short capabilitiesCompilado()
-    {
-        Short parametros = 0;
-        if (noAgro) {
-            parametros = (short)((int)parametros + 1);
-        }
-        if (noCanal) {
-            parametros = (short)((int)parametros + 2);
-        }
-        if (noTP) {
-            parametros = (short)((int)parametros + 4);
-        }
-        if (noDefie) {
-            parametros = (short)((int)parametros + 8);
-        }
-        if (noCollector) {
-            parametros = (short)((int)parametros + 16);
-        }
-        if (noMarchand) {
-            parametros = (short)((int)parametros + 32);
-        }
-        /*if (mapaAbonado()) {
-            parametros = (parametros.toInt() + 64).toShort()
-        }*/
-        if (noPrism) {
-            parametros = (short)((int)parametros+ 128);
-        }
-        return parametros;
-    }
 
     public static void removeMountPark(int guildId) {
         try {
@@ -466,67 +438,7 @@ public class GameMap {
         return durabilityMax;
     }
 
-    public String getForbidden()
-    {
-        StringBuilder infos = new StringBuilder();
-        if(noMarchand == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noCollector == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noPrism == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noTP == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noDefie == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noAgro == true)
-        {
-            infos.append("1;");
-        }
-        else
-        {
-            infos.append("0;");
-        }
-        if(noCanal == true)
-        {
-            infos.append("1");
-        }
-        else
-        {
-            infos.append("0");
-        }
-        return infos.toString();
-    }
+
     public void setRestriction(String forbidden)
     {
         try
@@ -1082,6 +994,86 @@ public class GameMap {
 
     public int getCapabilities() {
         return capabilities;
+    }
+    public void setParametros(Short d) {
+        capabilities = d;
+        capabilities = capabilitiesCompiled;
+        /*if (colorCeldasAtacante.isEmpty() && (esDungeon() || esArena())) {
+            colorCeldasAtacante = "red"
+        }*/
+    }
+    public Boolean mapNoAgression() {
+        return (((int)capabilities) & 1) == 1;
+    }
+
+    public Boolean isArena() {
+        return (((int)capabilities) & 2) == 2;
+    }
+
+    public Boolean isDungeon() {
+        return (((int)capabilities) & 4) == 4;
+    }
+
+    public Boolean mapNoDefie() {
+        return (((int)capabilities) & 8) == 8;
+    }
+
+    public Boolean mapNoCollector() {
+        return (((int)capabilities) & 16) == 16;
+    }
+
+    public Boolean mapNoMerchant() {
+        return (((int)capabilities) & 32) == 32;
+    }
+
+    public Boolean mapAbo() {
+        return (((int)capabilities) & 64) == 64;
+    }
+
+    public Boolean mapNoPrism() {
+        if (isDungeon() || isArena() || World.world.getCasaDentroPorMapa(id) != null || !trabajos.isEmpty()) {
+            return true;
+        } else
+        {
+            return (((int) capabilities) & 128) == 128;
+        }
+    }
+
+    public Boolean mapNoSaveTeleport() {
+        return (((int) capabilities) & 256) == 256;
+    }
+
+    public Boolean mapNoTeleport() {
+        return (((int) capabilities) & 512) == 512;
+    }
+
+    public Short getCapabilitiesCompiled() {
+        short parametros = 0;
+        if (mapNoAgression()) {
+            parametros = (short)(parametros + 1);
+        }
+        if (isArena()) {
+            parametros = (short)(parametros + 2);
+        }
+        if (isDungeon()) {
+            parametros = (short)(parametros + 4);
+        }
+        if (mapNoDefie()) {
+            parametros = (short)(parametros + 8);
+        }
+        if (mapNoCollector()) {
+            parametros = (short)(parametros + 16);
+        }
+        if (mapNoMerchant()) {
+            parametros = (short)(parametros + 32);
+        }
+        if (mapAbo()) {
+            parametros = (short)(parametros + 64);
+        }
+        if (mapNoPrism()) {
+            parametros = (short)(parametros + 128);
+        }
+        return parametros;
     }
 
     public void setCapabilities(short capabilities) {

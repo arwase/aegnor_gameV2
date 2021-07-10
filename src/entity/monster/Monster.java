@@ -41,6 +41,7 @@ public class Monster {
                    String thisInit, int minKamas, int maxKamas, String thisXp, int ia,
                    boolean capturable, int aggroDistance) {
         this.id = id;
+        this.name = name;
         this.gfxId = gfxId;
         this.align = align;
         this.colors = colors;

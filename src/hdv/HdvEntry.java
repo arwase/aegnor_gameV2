@@ -79,15 +79,17 @@ public class HdvEntry implements Comparable<HdvEntry> {
     }
 
     public int compareTo(HdvEntry o) {
-        HdvEntry e = o;
         int celuiCi = this.getPrice();
-        int autre = e.getPrice();
-        if (autre > celuiCi)
+        int autre = o.getPrice();
+        if (autre > celuiCi) {
             return -1;
-        if (autre == celuiCi)
+        }
+        else if (autre < celuiCi) {
+        return 1;
+        }
+        if (autre == celuiCi) {
             return 0;
-        if (autre < celuiCi)
-            return 1;
+        }
         return 0;
     }
 }

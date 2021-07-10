@@ -8,6 +8,7 @@ import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
 import fight.spells.LaunchedSpell;
+import fight.spells.Spell;
 import fight.spells.Spell.SortStats;
 import fight.spells.SpellEffect;
 import fight.traps.Glyph;
@@ -15,10 +16,7 @@ import game.action.GameAction;
 import game.world.World;
 import kernel.Constant;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -1968,6 +1966,51 @@ public class Function {
             return 0;
 
         return nbrcase * 500;
+    }
+
+    public int getMaxLaunchableAttaque(Fight fight, Fighter launcher)
+    {
+        ArrayList<Integer> CostBySpell = new ArrayList<Integer>();
+        int FighterPa = launcher.getCurPa(fight);
+        List<Integer> damageID = Arrays.asList(85, 86, 87, 88, 89, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100);
+        if (fight == null)
+            return 0;
+        if (launcher == null)
+            return 0;
+        for(Spell.SortStats s : launcher.getMob().getSpells().values())
+        {
+            ArrayList<SpellEffect> effects = s.getEffects();
+            boolean isAttackSpell = false;
+            for(SpellEffect spellEffect : effects) {
+                if (damageID.contains(spellEffect.getEffectID())) {
+                    isAttackSpell = true;
+                    break;
+                }
+            }
+            if(isAttackSpell)
+            {
+                CostBySpell.add(s.getPACost());
+            }
+        }
+        int count = 0;
+        boolean boucle = true;
+        while(boucle)
+        {
+            for(Integer i : CostBySpell)
+            {
+                int newPa = FighterPa - i;
+                if(newPa >= 0)
+                {
+                    FighterPa = newPa;
+                    count++;
+                }
+                else
+                {
+                    boucle = false;
+                }
+            }
+        }
+        return count;
     }
 
     public int moveenfaceIfPossible(Fight fight, Fighter F, Fighter T, int dist)

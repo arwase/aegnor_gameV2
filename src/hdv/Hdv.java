@@ -10,6 +10,7 @@ import kernel.Constant;
 import kernel.Logging;
 import object.ObjectTemplate;
 
+import java.io.Console;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -187,7 +188,7 @@ public class Hdv {
             ObjectTemplate OT = World.world.getObjTemplate(templateID);
             HdvCategory Hdv = this.getCategorys().get(OT.getType());
             HdvTemplate HdvT = Hdv.getTemplate(templateID);
-            if (HdvT == null) // Il a pu �tre achet� avant et supprim� de l'HDV. getTemplate devient null.
+            if (HdvT == null) // Il a pu être acheté avant et supprimé de l'HDV. getTemplate devient null.
                 return "";
             return HdvT.parseToEHl();
         } catch (Exception e) {
@@ -198,10 +199,30 @@ public class Hdv {
     }
 
     public String parseTemplate(int categID) {
-        var categ = this.getCategorys().get(categID).parseTemplate();
-        if(categ == null)
+        String categ = "";
+        //var catego = World.world.getObjTemplate(categID).getType();
+        try {
+            categ = this.getCategorys().get(categID).parseTemplate();
+            if (categ == null) {
+                categ = "";
+            }
+        } catch (Exception ignored)
         {
-            categ = "";
+            ignored.printStackTrace();
+        }
+        return categ;
+    }
+
+    public String parseTemplateByIdObject(int categID) {
+        String categ = "";
+        var catego = World.world.getObjTemplate(categID).getType();
+        try {
+            categ = this.getCategorys().get(catego).parseTemplate();
+            if (categ == null) {
+                categ = "";
+            }
+        } catch (Exception ignored)
+        {
         }
         return categ;
     }

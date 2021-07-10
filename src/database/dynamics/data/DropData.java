@@ -76,33 +76,32 @@ public class DropData extends AbstractDAO<World.Drop> {
             close(result);
         }
     }
-    public boolean insertDrop(int monsterID, int objID, int pp, double taux, int action, String objName)
+    public boolean  insertDrop(int monsterID, int objID, int pp, double taux, int action, String objName, String mobName)
     {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("DELETE FROM `drops` WHERE monsterId = ? AND objectId = ?");
+            p = getPreparedStatement("DELETE FROM `drops` WHERE `monsterId` = ? AND `objectId` = ?");
             p.setInt(1, monsterID);
             p.setInt(2, objID);
             execute(p);
-            return true;
+            close(p);
         } catch (SQLException e) {
             super.sendError("DropData insertDrop DELETE", e);
-        } finally {
-            close(p);
         }
         PreparedStatement p2 = null;
         try {
-            p2 = getPreparedStatement("INSERT INTO `drops` (`monsterId`, `objectName`, `objectId`, `percentGrade1`, `percentGrade2`, `percentGrade3`, `percentGrade4`, `percentGrade5`, `ceil`, `action`) VALUES (?,?,?,?,?,?,?,?,?,?);");
-            p2.setInt(1, monsterID);
-            p2.setString(2, objName);
-            p2.setInt(3, objID);
-            p2.setDouble(4, taux);
+            p2 = getPreparedStatement("INSERT INTO `drops` (`monsterName`, `monsterId`, `objectName`, `objectId`, `percentGrade1`, `percentGrade2`, `percentGrade3`, `percentGrade4`, `percentGrade5`, `ceil`, `action`, `level`) VALUES (?,?,?,?,?,?,?,?,?,?,?,-1);");
+            p2.setString(1, mobName);
+            p2.setInt(2, monsterID);
+            p2.setString(3, objName);
+            p2.setInt(4, objID);
             p2.setDouble(5, taux);
             p2.setDouble(6, taux);
             p2.setDouble(7, taux);
             p2.setDouble(8, taux);
-            p2.setInt(3, pp);
-            p2.setInt(3, action);
+            p2.setDouble(9, taux);
+            p2.setInt(10, pp);
+            p2.setInt(11, action);
             execute(p2);
             return true;
         } catch (SQLException e) {
@@ -116,7 +115,7 @@ public class DropData extends AbstractDAO<World.Drop> {
     {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("DELETE FROM `drops` WHERE monsterId = ? AND objectId = ?");
+            p = getPreparedStatement("DELETE FROM `drops` WHERE `monsterId` = ? AND `objectId` = ?");
             p.setInt(1, monsterID);
             p.setInt(2, objID);
             execute(p);

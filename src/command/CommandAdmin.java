@@ -3400,7 +3400,7 @@ public class CommandAdmin extends AdminUser {
             try {
                 GameMap mapa2 = this.getPlayer().getCurMap();
                 StringBuilder packet = new StringBuilder();
-                packet.append("ÑP").append(mapa2.capabilitiesCompilado()).append("|").append(mapa2.getMaxGroupNumb()).append("|").append(mapa2.getMaxSize()).append("|").append(mapa2.getMaxMerchant());
+                packet.append("ÑP").append(mapa2.getCapabilitiesCompiled().toString()).append("|").append(mapa2.getMaxGroupNumb()).append("|").append(mapa2.getMaxSize()).append("|").append(mapa2.getMaxMerchant());
                         SocketManager.send(getPlayer().getGameClient(), packet.toString());
             } catch (Exception e) {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception a été relevée");
@@ -3412,8 +3412,8 @@ public class CommandAdmin extends AdminUser {
             } catch (Exception ignored) {
             }
 
-            getPlayer().getCurMap().setRestriction(cantShort);
-            Database.getDynamics().getMapData().updateForbidden(getPlayer().getCurMap());
+            getPlayer().getCurMap().setCapabilities(Short.parseShort(cantShort));
+            Database.getDynamics().getMapData().updateCapabilities(getPlayer().getCurMap());
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Les paramètres de la map on bien été modifié");
         } else if (command.equalsIgnoreCase("ELIMINAR_POSICIONES")) {
             getPlayer().getCurMap().SuppFightCell();
@@ -3771,8 +3771,8 @@ public class CommandAdmin extends AdminUser {
                     return;
                 }
                 mobModelo.addDrop(new World.Drop(objModID, porcentaje, prospecc));
-                Database.getDynamics().getDropData().insertDrop(mobID, objModID, prospecc, porcentaje, max, objModelo.getName());
-                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Ajout du drop sur le monstre (" + mobModelo.getId() + ") de l'item " + objModelo.getName() + " (" + objModelo.getId() + ") Seuil: " + prospecc + ", " + porcentaje + "%, Action: " + max);
+                Database.getDynamics().getDropData().insertDrop(mobID, objModID, prospecc, porcentaje, max, objModelo.getName(), mobModelo.getName());
+                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Ajout du drop sur le monstre "+ mobModelo.getName() +" (" + mobModelo.getId() + ") de l'item " + objModelo.getName() + " (" + objModelo.getId() + ") Seuil: " + prospecc + ", " + porcentaje + "%, Action: " + max);
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une erreur est survenue");
         } else if(command.equalsIgnoreCase("ADD_TRIGGER"))

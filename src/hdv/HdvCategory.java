@@ -54,21 +54,20 @@ public class HdvCategory {
     }
 
     public ArrayList<HdvEntry> getAllEntry() {
-        ArrayList<HdvEntry> toReturn = new ArrayList<HdvEntry>();
+        ArrayList<HdvEntry> toReturn = new ArrayList<>();
         for (HdvTemplate template : this.getTemplates().values())
             toReturn.addAll(template.getAllEntry());
         return toReturn;
     }
 
     public String parseTemplate() {
-        boolean isFirst = true;
-        String strTemplate = "";
+        StringBuilder strTemplate = new StringBuilder();
         for (int templateId : this.getTemplates().keySet()) {
-            if (!isFirst)
-                strTemplate += ";";
-            strTemplate += templateId;
-            isFirst = false;
+            if (!strTemplate.isEmpty()) {
+                strTemplate.append(";");
+            }
+            strTemplate.append(templateId);
         }
-        return strTemplate;
+        return strTemplate.toString();
     }
 }

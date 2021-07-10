@@ -92,7 +92,8 @@ public class French extends AbstractLang {
                 + "<b>.getmaster</b> - Permet d'afficher qui est ton maitre.\n"
                 + "<b>.getslave</b> - Permet d'afficher tes esclaves.\n"
                 + "<b>.resetmaitre</b> - Si tu es maitre, libères tes esclaves.\n"
-                + "<b>.pass</b> - Permet de passer ton tour automatiquement."); index++;
+                + "<b>.pass</b> - Permet de passer ton tour automatiquement.\n"
+                + "<b>.passall</b> - Permet de mettre en état passe-tour toutes ses esclaves."); index++;
         //19
         this.sentences.add(index,"<b>***COMMANDES VIP***</b> disponibles sont :\n"
                 + "<b>.banque</b> - Permet d'ouvrir la banque.\n"

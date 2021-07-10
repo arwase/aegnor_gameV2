@@ -52,21 +52,63 @@ public class IA32 extends AbstractNeedSpell  {
                     action = true;
                 }
             }
-
-            if(this.fighter.getCurPa(this.fight) > 0 && longestEnnemy != null && !action) {
+            int MaxAttackPossible = Function.getInstance().getMaxLaunchableAttaque(this.fight, this.fighter);
+            for(int i = 0; i < MaxAttackPossible; i++)
+            {
+                if(this.fighter.getCurPa(this.fight) > 0 && longestEnnemy != null && !action) {
+                    int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                    if(value != 0) {
+                        time = value;
+                        action = true;
+                        this.attack++;
+                    }
+                    if(i == MaxAttackPossible - 1)
+                    {
+                        if(this.fighter.getCurPm(this.fight) > 0)
+                        {
+                            value = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
+                            if(value != 0) time = value;
+                        }
+                    }
+            }
+            /*if(this.fighter.getCurPa(this.fight) > 0 && longestEnnemy != null && !action) {
                 int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
                 if(value != 0) {
                     time = value;
                     action = true;
                     this.attack++;
-                } else if(this.fighter.getCurPm(this.fight) > 0 && this.attack == 0) {
-                    value = Function.getInstance().movediagIfPossible(this.fight, this.fighter, nearestEnnemy);
-                    if(value != 0) {
+                } else if(this.fighter.getCurPa(this.fight) > 0) {
+                    value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                    if (value != 0) {
                         time = value;
                         action = true;
-                        Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, maxPo + 1);
+                        this.attack++;
+                    } else if (this.fighter.getCurPm(this.fight) > 0 && this.attack == 0) {
+                        value = Function.getInstance().movediagIfPossible(this.fight, this.fighter, nearestEnnemy);
+                        if (value != 0) {
+                            Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, maxPo + 1);
+                        } else if (this.fighter.getCurPa(this.fight) > 0) {
+                            value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                            if (value != 0) {
+                                time = value;
+                                action = true;
+                                this.attack++;
+                            } else if (this.fighter.getCurPa(this.fight) > 0) {
+                                value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                                if (value != 0) {
+                                    time = value;
+                                    action = true;
+                                    this.attack++;
+                                } else if (this.fighter.getCurPm(this.fight) > 0 && this.attack == 0) {
+                                    value = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
+                                    if (value != 0) {
+                                        time = value;
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
+                }*/
             }
 
             if(this.fighter.getCurPm(this.fight) > 0 && !action && this.attack > 0) {
