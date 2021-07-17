@@ -4076,7 +4076,7 @@ public class Player {
             }
 
             this.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_ZAAPING, 0));
-            verifAndAddZaap(curMap.getId());
+            //verifAndAddZaap(curMap.getId());
             SocketManager.GAME_SEND_WC_PACKET(this);
         }
     }
