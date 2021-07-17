@@ -241,6 +241,7 @@ public class GameClient {
                 }
                 if (!canBuy3)
                 {
+
                     return;
                 }
                 SocketManager.send(this.player, "wEa;"+prix_de_base3);
@@ -305,7 +306,7 @@ public class GameClient {
                         return;
                     }
                     byte clase = Byte.parseByte(packet.substring(2));
-                    player.changeClasse(clase);
+                    player.SwapClasse(clase);
                     SocketManager.GAME_SEND_bV_CLOSE_PANEL(player);
                 }
                 break;
