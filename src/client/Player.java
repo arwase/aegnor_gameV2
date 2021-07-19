@@ -2297,13 +2297,13 @@ public class Player {
         int pods = total.getEffect(Constant.STATS_ADD_PODS);
         pods += total.getEffect(Constant.STATS_ADD_FORC) * 5;
         for (JobStat SM : _metiers.values()) {
-            pods += SM.get_lvl() * 5;
+            pods += SM.get_lvl() * 5 * Config.INSTANCE.getRATE_JOB();
             if (SM.get_lvl() == 100)
                 pods += 1000;
         }
         if (pods < 1000)
             pods = 1000;
-        return pods;
+        return pods+7500;
     }
 
     public void refreshLife(boolean refresh) {

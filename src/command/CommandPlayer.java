@@ -163,7 +163,19 @@ public class CommandPlayer {
                 }
                 player.sendMessage(message);
                 return true;
-            } else if (command(msg, "parcho")) {
+            }
+            else if(command(msg, "shop")){
+                if (player.isInPrison())
+                    return true;
+                if (player.cantTP())
+                    return true;
+                if (player.getFight() != null)
+                    return true;
+
+                player.teleport((short) 10114, 282);
+                return true;
+            }
+            else if (command(msg, "parcho")) {
                 int prix = 100;
                 int points = player.getAccount().getPoints();
                 if(player.getisParcho() != 1){

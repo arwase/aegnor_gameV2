@@ -2999,7 +2999,7 @@ public class GameClient {
                 if (!((JobAction) this.player.getExchangeAction().getValue()).isCraft())
                     return;
 
-                if (packet.charAt(2) == 'O' && ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
+                if (packet.charAt(2) == 'O') { // && ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
                     packet = packet.replace("-", ";-").replace("+", ";+").substring(4);
 
                     for(String part : packet.split(";")) {

@@ -819,7 +819,7 @@ public class Action {
                         return true;
 
                     long TotalXp = player.getExp() + XpAdd;
-                    player.setExp(TotalXp);
+                    player.addXp(XpAdd);
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();

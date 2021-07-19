@@ -150,6 +150,7 @@ public class ObjectAction {
                                     break;
                                 case 614://Exp�rience m�tier.
                                     JobStat job = player.getMetierByID(Integer.parseInt(arg0.split(";")[1]));
+                                    val = 50000;
                                     if (job == null) {
                                         isOk1 = false;
                                         isOk2 = false;

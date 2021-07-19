@@ -493,7 +493,9 @@ public class ObjectTemplate {
 
     public GameObject createNewItemWithoutDuplication(Collection<GameObject> objects, int qua, boolean useMax) {
         int id = -1;
-        GameObject item;
+        GameObject item = null;
+        try{
+
         List<Integer> verif = new ArrayList<>(Arrays.asList(ItemsRarityAllowed));
         if (getType() == Constant.ITEM_TYPE_QUETES && (Constant.isCertificatDopeuls(getId()) || getId() == 6653)) {
             Map<Integer, String> txtStat = new HashMap<>();
@@ -532,7 +534,14 @@ public class ObjectTemplate {
                             String[] splitted = getStrTemplate().split(",");
                             for (String s : splitted) {
                                 String[] stats = s.split("#");
-                                int statID = Integer.parseInt(stats[0], 16);
+                                int statID = 64;
+                                try {
+                                     statID = Integer.parseInt(stats[0], 16);
+                                }
+                                catch(Exception e) {
+                                     statID = 64;
+                                    e.printStackTrace();
+                                }
                                 if (statID == Constant.STATS_RESIST) {
                                     String ResistanceIni = stats[1];
                                     Stat.put(statID, ResistanceIni);
@@ -557,6 +566,11 @@ public class ObjectTemplate {
             if (World.world.getConditionManager().stackIfSimilar2(object, item, true)) {
                 return object;
             }
+        }
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
         return item;
     }
