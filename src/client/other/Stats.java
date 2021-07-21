@@ -206,10 +206,14 @@ public class Stats {
                 val = Constant.STATS_ADD_VIE;
                 break;
             case Constant.STATS_ADD_DOMA:
+                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
                 break;
             case Constant.STATS_ADD_DOMA2:
+                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
                 break;
