@@ -435,37 +435,37 @@ public class JobConstant {
                 break;
             case JOB_PECHEUR:
                 if (lvl > 74) {
-                    //P�cher Poissons g�ants de mer
-                    list.add(new JobAction(131, 0, 1, false, 12000 - timeWin, 35));
+                    //Pï¿½cher Poissons gï¿½ants de mer
+                    list.add(new JobAction(131, 1, 1, false, 12000 - timeWin, 35));
                 }
                 if (lvl > 69) {
-                    //P�cher Poissons g�ants de rivi�re
-                    list.add(new JobAction(127, 0, 1, false, 12000 - timeWin, 35));
+                    //Pï¿½cher Poissons gï¿½ants de riviï¿½re
+                    list.add(new JobAction(127, 1, 1, false, 12000 - timeWin, 35));
                 }
                 if (lvl > 49) {
-                    //P�cher Gros poissons de mers
-                    list.add(new JobAction(130, 0, 1, false, 12000 - timeWin, 30));
+                    //Pï¿½cher Gros poissons de mers
+                    list.add(new JobAction(130, 1, 1, false, 12000 - timeWin, 30));
                 }
                 if (lvl > 39) {
-                    //P�cher Gros poissons de rivi�re
-                    list.add(new JobAction(126, 0, 1, false, 12000 - timeWin, 25));
+                    //Pï¿½cher Gros poissons de riviï¿½re
+                    list.add(new JobAction(126, 1, 1, false, 12000 - timeWin, 25));
                 }
                 if (lvl > 19) {
-                    //P�cher Poissons de mer
-                    list.add(new JobAction(129, 0, 1, false, 12000 - timeWin, 20));
+                    //Pï¿½cher Poissons de mer
+                    list.add(new JobAction(129, 1, 1, false, 12000 - timeWin, 20));
                 }
                 if (lvl > 9) {
-                    //P�cher Poissons de rivi�re
-                    list.add(new JobAction(125, 0, 1, false, 12000 - timeWin, 15));
+                    //Pï¿½cher Poissons de riviï¿½re
+                    list.add(new JobAction(125, 1, 1, false, 12000 - timeWin, 15));
                 }
-                //P�cher Ombre Etrange
-                list.add(new JobAction(140, 0, 1, false, 12000 - timeWin, 50));
-                //P�cher Pichon
+                //Pï¿½cher Ombre Etrange
+                list.add(new JobAction(140, 1, 1, false, 12000 - timeWin, 50));
+                //Pï¿½cher Pichon
                 list.add(new JobAction(136, 1, 1, false, 12000 - timeWin, 5));
-                //P�cher Petits poissons de rivi�re
-                list.add(new JobAction(124, 0, 1, false, 12000 - timeWin, 10));
-                //P�cher Petits poissons de mer
-                list.add(new JobAction(128, 0, 1, false, 12000 - timeWin, 10));
+                //Pï¿½cher Petits poissons de riviï¿½re
+                list.add(new JobAction(124, 1, 1, false, 12000 - timeWin, 10));
+                //Pï¿½cher Petits poissons de mer
+                list.add(new JobAction(128, 1, 1, false, 12000 - timeWin, 10));
                 //Vider
                 list.add(new JobAction(133, getTotalCaseByJobLevel(lvl), 0, true, getChanceForMaxCase(lvl), -1));
                 break;

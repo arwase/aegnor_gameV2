@@ -78,7 +78,12 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
+<<<<<<< HEAD
             if (id == 112) id = Constant.STATS_ADD_DOMA;
+=======
+
+            if (id == 112) id = Constant.STATS_ADD_DOMA2;
+>>>>>>> cc51efd49957522c18c91624a5886da5daca680b
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -88,6 +93,10 @@ public class Stats {
                     return 0;
                 } else this.effects.put(id, newVal);
             }
+<<<<<<< HEAD
+=======
+
+>>>>>>> cc51efd49957522c18c91624a5886da5daca680b
         if(this.effects.containsKey(id)) {
             return this.effects.get(id);
         }
@@ -204,10 +213,21 @@ public class Stats {
                 val = Constant.STATS_ADD_VIE;
                 break;
             case Constant.STATS_ADD_DOMA:
+                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
+<<<<<<< HEAD
                 if(this.effects.get(Constant.STATS_ADD_DOMA2) != null)
                     val += this.effects.get(Constant.STATS_ADD_DOMA2);
+=======
+                break;
+            case Constant.STATS_ADD_DOMA2:
+                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
+                if (this.effects.get(Constant.STATS_REM_DOMA) != null)
+                    val -= this.effects.get(Constant.STATS_REM_DOMA);
+>>>>>>> cc51efd49957522c18c91624a5886da5daca680b
                 break;
             case Constant.STATS_ADD_PODS:
                 if (this.effects.get(Constant.STATS_REM_PODS) != null)

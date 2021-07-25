@@ -283,6 +283,42 @@ public class Action {
                     short newMapID = Short.parseShort(args.split(",", 2)[0]);
                     int newCellID = Integer.parseInt(args.split(",", 2)[1]);
                     if (!player.isInPrison()) {
+                        if (player.getSlaves() != null) {
+                            if (player.getSlaves().size() > 0) {
+                                if ( !GameMap.IsInDj(player.getCurMap()) ){ // Géré la double téléportation en DJ
+                                    boolean test;
+                                    test = true;
+                                    if (test) {
+                                        for (Player slave : player.PlayerList1) {
+                                            //Si l'esclave est null
+                                            if (slave == null) {
+                                                continue;
+                                            }
+                                            //Si l'esclave n'est pas sur notre map
+                                            if (slave.getCurMap() != player.getCurMap()) {
+                                                continue;
+                                            }
+                                            if (slave.getCurMap().hasEndFightAction(0)) {
+                                                continue;
+                                            }
+                                            //Si l'esclave est en combat
+                                            if (slave.getFight() != null) {
+                                                continue;
+                                            }
+
+                                            //Verification recursives
+                                            if (slave.getAccount() != null) {
+                                                if (slave.getAccount().getGameClient() != null) {
+                                                    //On duplique la game action du maitre pour les slaves
+                                                    slave.teleport(newMapID, newCellID);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         player.teleport(newMapID, newCellID);
                     } else {
                         if (player.getCurCell().getId() == 268) {
@@ -819,7 +855,11 @@ public class Action {
                         return true;
 
                     long TotalXp = player.getExp() + XpAdd;
+<<<<<<< HEAD
                     player.addXp(TotalXp);
+=======
+                    player.addXp(XpAdd);
+>>>>>>> cc51efd49957522c18c91624a5886da5daca680b
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();

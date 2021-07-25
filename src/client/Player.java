@@ -2310,13 +2310,13 @@ public class Player {
         int pods = total.getEffect(Constant.STATS_ADD_PODS);
         pods += total.getEffect(Constant.STATS_ADD_FORC) * 5;
         for (JobStat SM : _metiers.values()) {
-            pods += SM.get_lvl() * 5;
+            pods += SM.get_lvl() * 5 * Config.INSTANCE.getRATE_JOB();
             if (SM.get_lvl() == 100)
                 pods += 1000;
         }
         if (pods < 1000)
             pods = 1000;
-        return pods;
+        return pods+7500;
     }
 
     public void refreshLife(boolean refresh) {
@@ -4089,7 +4089,7 @@ public class Player {
             }
 
             this.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_ZAAPING, 0));
-            verifAndAddZaap(curMap.getId());
+            //verifAndAddZaap(curMap.getId());
             SocketManager.GAME_SEND_WC_PACKET(this);
         }
     }
@@ -5919,6 +5919,98 @@ public class Player {
     public int getProspection () {
         return (getTotalStats().getEffect(Constant.STATS_ADD_PROS) + Math.round(getTotalStats().getEffect(Constant.STATS_ADD_CHAN) / 10));
     }
+    public void SwapClasse(int classetochange){
+
+        if(isMorph())
+        {
+            return;
+        }
+        if (classetochange < 1) {
+            classetochange = 1;
+        } else if (classetochange > 12) {
+            classetochange = 12;
+        }
+        if (classetochange == getClasse()) {
+            SocketManager.GAME_SEND_BN_OUT(this, "Changement de Classe - Même Classe");
+            return;
+        }
+
+        Database.getStatics().getPlayerData().update(this);
+
+        parseSpells(parseSpellToDB());
+
+        for( int id : _sorts.keySet() ){
+            int AncLevel = getSortStatBySortIfHas(id).getLevel();
+            //this.sendMessage("Le sort "+id+" est lvl "+ AncLevel);
+            if (getSortStatBySortIfHas(id) != null){
+                if (AncLevel <= 1){}
+                else{
+                    unlearnSpell(this, id, 1, AncLevel, true, true);
+                }
+            }
+            //getGameClient().forgetSpell(id);
+        }
+
+        _sorts.clear();
+        _sortsPlaces.clear();
+        //On garde le tout
+        SocketManager.GAME_SEND_STATS_PACKET(this);
+
+
+        //this.sendMessage("Retrait des sorts terminé");
+        //_saveSpellPts = _spellPts;
+        //_saveSorts.putAll(_sorts);
+        //_saveSortsPlaces.putAll(_sortsPlaces);
+
+        //Pas besoin
+        //this.setLevel(1);
+        //this.addXp(oldXp);
+        //this.sendMessage("Reset des caractéristiques");
+        this.getStatsParcho().getMap().clear();
+        this.getStats().addOneStat(125,-this.getStats().getEffect(125));
+        this.getStats().addOneStat(124,-this.getStats().getEffect(124));
+        this.getStats().addOneStat(118,-this.getStats().getEffect(118));
+        this.getStats().addOneStat(123,-this.getStats().getEffect(123));
+        this.getStats().addOneStat(119,-this.getStats().getEffect(119));
+        this.getStats().addOneStat(126,-this.getStats().getEffect(126));
+        this.addCapital((this.getLevel() - 1) * 5 - this.get_capital());
+        //perso.addCapital((perso.getLevel() * 5) - 5);
+        SocketManager.GAME_SEND_STATS_PACKET(this);
+        SocketManager.GAME_SEND_Im_PACKET(this,"023;" + (this.getLevel() * 5 - 5));
+
+        this.setClasse(classetochange);
+
+        //this.sendMessage("Nouveau Morph");
+        // On morph avec la Nouvelle Classe
+        int UnMorphID = this.getClasse() * 10 + this.getSexe();
+        this.setGfxId(UnMorphID);
+        SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.getCurMap(), this.getId());
+        SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.getCurMap(), this);
+
+
+        if (this.fight == null) SocketManager.GAME_SEND_ALTER_GM_PACKET(this.getCurMap(), this);
+
+        //this.sendMessage("Ajouts des sort de la nouvelle classe");
+        //on ajoute les nouveau sort
+        _sorts = Constant.getStartSorts(classetochange);
+        for (int a = 1; a <= this.getLevel(); a++)
+            Constant.onLevelUpSpells(this, a);
+        _sortsPlaces = Constant.getStartSortsPlaces(classetochange);
+
+
+        //this._sorts.putAll(_saveSorts);
+        //_sortsPlaces.putAll(_saveSortsPlaces);
+
+
+        if (this.fight == null) {
+            SocketManager.GAME_SEND_ASK(this.getGameClient(), this);
+            SocketManager.GAME_SEND_SPELL_LIST(this);
+        }
+
+        //if (this.fight == null) SocketManager.GAME_SEND_STATS_PACKET(this);
+        //parseSpells(parseSpellToDB());
+        Database.getStatics().getPlayerData().update(this);
+    }
 
     public boolean changeClasse(byte clase) {
         if(isMorph())
@@ -5934,6 +6026,7 @@ public class Player {
             SocketManager.GAME_SEND_BN_OUT(this, "Changement de Classe - Même Classe");
             return false;
         }
+
         setClasse(clase);
         //Clase = Mundo.getClase(ClaseID);
         SocketManager.GAME_SEND_AC_CHANGE_CLASSE(this, getClasse());
@@ -5961,6 +6054,10 @@ public class Player {
         SocketManager.GAME_SEND_MESSAGE(this, message);
         SocketManager.GAME_SEND_Im_PACKET(this, "1CHANGED_CLASSE_SUCCESS");
         return true;
+
+
+
+
     }
 
     private void refreshToMap() {
