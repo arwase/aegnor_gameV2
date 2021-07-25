@@ -1069,7 +1069,7 @@ public class World {
 
     }
 
-    public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit, int rarity) {
+    public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit, int rarity, int mimibiote) {
         if (getObjTemplate(template) == null) {
             return null;
         }
@@ -1082,13 +1082,13 @@ public class World {
             try {
                 Map<Integer, String> txtStat = new HashMap<>();
                 txtStat.put(Constant.STATS_DATE, stats.substring(3) + "");
-                return new GameObject(id, template, qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), txtStat, puit, rarity);
+                return new GameObject(id, template, qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), txtStat, puit, rarity, mimibiote);
             } catch (Exception e) {
                 e.printStackTrace();
-                return new GameObject(id, template, qua, pos, stats, 0,rarity);
+                return new GameObject(id, template, qua, pos, stats, 0,rarity, -1);
             }
         } else {
-            return new GameObject(id, template, qua, pos, stats, 0,rarity);
+            return new GameObject(id, template, qua, pos, stats, 0,rarity, mimibiote);
         }
     }
 
@@ -1779,6 +1779,7 @@ public class World {
             case Constant.STATS_ADD_PA2:
                 r = 100.0;
                 break;
+            case Constant.STATS_ADD_DOMA2:
             case Constant.STATS_ADD_DOMA:
                 r = 20.0;
                 break;
@@ -1927,6 +1928,7 @@ public class World {
             case Constant.STATS_ADD_PA2:
                 r = 0.0;
                 break;
+            case Constant.STATS_ADD_DOMA2:
             case Constant.STATS_ADD_DOMA:
                 r = 5.0;
                 break;

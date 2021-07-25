@@ -324,7 +324,113 @@ public class GameClient {
                 }
                 SocketManager.send(this.player, "wEn;"+prix_de_base2);
                 break;
+            case 'm':
+                parsePanelMorph(packet, this.player);
+                break;
         }
+    }
+
+    private void parsePanelMorph(String packet, Player player) {
+        switch(packet.charAt(2))
+        {
+            case 'm':
+                MorphitemChange(packet, player);
+                break;
+            /*case 'i':
+                CustomItem(packet,_perso);
+                break;*/
+            default:
+                System.out.println(packet);
+                break;
+        }
+    }
+
+    private void MorphItemDiscard(String packet, Player player)
+    {
+        if(player == null)return;
+        GameObject object = World.world.getGameObject(Integer.parseInt(packet.substring(2)));
+        if(object == null) {
+            return;
+        }
+        if(object.getTxtStat().containsKey(Constant.APPARAT_ITEM)) {
+            object.getTxtStat().remove(Constant.APPARAT_ITEM);
+        }
+        else
+        {
+            SocketManager.GAME_SEND_MESSAGE(player, "Votre objet n'a pas d'apparence !");
+        }
+        if(object.getMimibiote() != -1)
+        {
+            object.setMimibiote(-1);
+        }
+        Database.getStatics().getObjectData().update(object);
+        SocketManager.GAME_SEND_OCK_ACTUALISED_OBJECT(player, object);
+        SocketManager.GAME_SEND_ASK(player.getAccount().getGameClient(), player);
+        SocketManager.GAME_SEND_MESSAGE(player, "Votre objet à bien retrouvé son apparence !");
+    }
+
+    private void MorphitemChange(String packet, Player player) {
+        if (player == null)return;
+        String verif = packet.substring(5);
+        if (!verif.contains("|")){
+            SocketManager.GAME_SEND_MESSAGE(player, "Une erreur ses produite !");
+            return;
+        }
+        String infos[] = verif.split("\\|");
+        int stats = (infos.length >= 1)?Integer.parseInt(infos[0]):0;
+        int apparence = (infos.length >= 2)?Integer.parseInt(infos[1]):0;
+        if (stats == apparence){
+            SocketManager.GAME_SEND_MESSAGE(player, "Vous devez prendre deux objet différent !");
+            return;
+        }
+        GameObject obj = player.getItems().get(stats);
+        if (obj == null){
+            SocketManager.GAME_SEND_MESSAGE(player, "Une erreur ses produite !");
+            return;
+        }
+        if (obj.getTxtStat().containsKey(Constant.APPARAT_ITEM)){
+            SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez encore changer cette item d'apparance !");
+            return;
+        }
+        ObjectTemplate T = player.getItems().get(apparence).getTemplate();
+        if (T == null || obj.getTemplate().getLevel() < T.getLevel() || obj.getTemplate().getType() != T.getType() || !Constant.MimibioteItem(T.getType()) || !Constant.MimibioteItem(obj.getTemplate().getType())){
+            SocketManager.GAME_SEND_MESSAGE(player, "Les deux objet ne peuvent êtres lié !");
+            return;
+        }
+        int prix = Config.INSTANCE.getPRIX_MIMIBIOTE();
+        int points = player.getAccount().getPoints();
+        if (points < prix){
+            SocketManager.GAME_SEND_MESSAGE(player, "Tu n'a pas assez de points boutique il te faut "+prix+" points.");
+            return;
+        }
+        //Objects morphitem = T.createNewMorphItem(T.getID(), obj);
+        if (obj.getQuantity() > 1){
+            GameObject newitem = T.createNewItem(1, false, -1);
+            //newitem.addTxtStat(Constant.MIMIBIOTE, T.getId()+"");
+            newitem.addTxtStat(Constant.APPARAT_ITEM, T.getId()+"");
+            newitem.setMimibiote(T.getId());
+            if(newitem != null && player.addObjet(newitem, true)){
+                player.removeItem(stats,1,true,true);
+                player.getAccount().setPoints(points-prix);
+                SocketManager.GAME_SEND_MESSAGE(player, "Il vous reste "+ player.getAccount().getPoints() +" points, vous avez été débité de "+prix+" points.");
+                World.world.addGameObject(newitem, true);
+            }else{
+                SocketManager.GAME_SEND_MESSAGE(player, "Une erreur ses produite !");
+                return;
+            }
+        }else{
+            //obj.addTxtStat(Constant.MIMIBIOTE, T.getId() + "");
+            obj.addTxtStat(Constant.APPARAT_ITEM, T.getId() + "");
+            //obj.addTxtStat(972, T.getId()+"");
+            obj.setMimibiote(T.getId());
+        }
+
+        player.removeItem(apparence,1,true,true);
+        Database.getStatics().getObjectData().insert(obj);
+        Database.getStatics().getObjectData().update(obj);
+        SocketManager.GAME_SEND_OCK_ACTUALISED_OBJECT(player, obj);
+        SocketManager.GAME_SEND_ASK(player.getAccount().getGameClient(), player);
+        SocketManager.GAME_SEND_MESSAGE(player, "Votre objet à bien été transformer !");
     }
 
     private void parseMapPacket(String packet) {
@@ -638,6 +744,16 @@ public class GameClient {
                             this.player.changeColor(packet);
                         }
                         break;
+                    case 'i':
+                        switch(packet.charAt(3))
+                        {
+                            case '1':
+                                MorphitemChange(packet, this.player);
+                                break;
+                            case '0':
+                                MorphItemDiscard(packet, this.player);
+                                break;
+                        }
                 }
             case 'f':
                 getQueuePosition();
@@ -2998,7 +3114,8 @@ public class GameClient {
                 if (!((JobAction) this.player.getExchangeAction().getValue()).isCraft())
                     return;
 
-                if (packet.charAt(2) == 'O' && ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
+                if (packet.charAt(2) == 'O') //((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null
+                {
                     packet = packet.replace("-", ";-").replace("+", ";+").substring(4);
 
                     for(String part : packet.split(";")) {
@@ -6177,6 +6294,8 @@ public class GameClient {
             case 'M':
                 movementObject(packet);
                 break;
+            case 'm':
+                MorphItemDiscard(packet, this.player);
             case 'U':
                 useObject(packet);
                 break;
@@ -6475,8 +6594,12 @@ public class GameClient {
                     this.player.removeItem(object.getGuid(), 1, false, false); // on enl�ve l'existance de l'obvi en lui-m�me
                     SocketManager.send(this.player, "OR" + object.getGuid()); // on le pr�cise au client.
                     Database.getStatics().getObjectData().delete(object.getGuid());
-
-                    exObj.refreshStatsObjet(object.parseStatsStringSansUserObvi() + ",3ca#" + Integer.toHexString(objGUID) + "#0#0#0d0+" + objGUID);
+                    StringBuilder cibleNewStats = new StringBuilder();
+                    cibleNewStats.append(object.parseStatsStringSansUserObvi()).append(",").append(exObj.parseStatsStringSansUserObvi());
+                    cibleNewStats.append(",3ca#").append(objGUID).append("#0#").append(objGUID);
+                    exObj.clearStats();
+                    exObj.parseStringToStats(cibleNewStats.toString(), true);
+                    //exObj.refreshStatsObjet(object.parseStatsStringSansUserObvi() + ",3ca#" + Integer.toHexString(objGUID) + "#0#0#0d0+" + objGUID);
 
                     SocketManager.send(this.player, exObj.obvijevanOCO_Packet(position));
                     SocketManager.GAME_SEND_ON_EQUIP_ITEM(this.player.getCurMap(), this.player); // Si l'obvi �tait cape ou coiffe : packet au client
@@ -6772,7 +6895,6 @@ public class GameClient {
             return;
         GameObject obj = this.player.getItems().get(guid);
         int idOBVI = Database.getStatics().getObvejivanData().getAndDelete(obj, true);
-
         if (idOBVI == -1) {
             switch (obj.getTemplate().getType()) {
                 case 1:
@@ -6792,7 +6914,6 @@ public class GameClient {
                     return;
             }
         }
-
         ObjectTemplate t = World.world.getObjTemplate(idOBVI);
         GameObject obV = t.createNewItem(1, true,0);
         String obviStats = obj.getObvijevanStatsOnly();
@@ -6825,7 +6946,7 @@ public class GameClient {
 
         if ((guid == -1) || (!this.player.hasItemGuid(guid)))
             return;
-        GameObject obj = this.player.getItems().get(guid);
+        GameObject obj = World.world.getGameObject(guid);
         GameObject objVictime = World.world.getGameObject(victime);
         obj.obvijevanNourir(objVictime);
 
@@ -6855,10 +6976,10 @@ public class GameClient {
         }
         if ((guid == -1) || (!this.player.hasItemGuid(guid)))
             return;
-        GameObject obj = this.player.getItems().get(guid);
+        GameObject obj = World.world.getGameObject(guid);
         if ((val >= 21) || (val <= 0))
             return;
-
+        obj.setObvijevanLook(val);
         obj.obvijevanChangeStat(972, val);
         SocketManager.send(this.player, obj.obvijevanOCO_Packet(pos));
         if (pos != -1)
@@ -7165,10 +7286,7 @@ public class GameClient {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "198");
             return;
         }
-        if((System.currentTimeMillis() - this.player.getGuild().getDate()) <= 1209600000L /**2419200000L**/) {//FIXME Ankalike: 2 semaines, en commentaire = 2 mois officiel
-            this.player.send("Im1103");
-            return;
-        }
+
         byte enclosMax = (byte) Math.floor(this.player.getGuild().getLvl() / 10);
         byte TotalEncloGuild = (byte) World.world.totalMPGuild(this.player.getGuild().getId());
         if (TotalEncloGuild >= enclosMax) {

@@ -10,7 +10,7 @@ public class SoulStone extends GameObject {
     private ArrayList<Couple<Integer, Integer>> monsters;
 
     public SoulStone(int id, int quantity, int template, int pos, String strStats) {
-        super(id, template, quantity, pos, strStats, 0,0);
+        super(id, template, quantity, pos, strStats, 0,0,-1);
         this.monsters = new ArrayList<>();
         this.parseStringToStats(strStats);
     }

@@ -26,6 +26,7 @@ public class GameObject {
     protected int guid;
     protected int obvijevanPos;
     protected int obvijevanLook;
+    protected int obvijevanId;
     protected int puit;
     protected int rarity;
     private Stats Stats = new Stats();
@@ -33,16 +34,18 @@ public class GameObject {
     private ArrayList<String> SortStats = new ArrayList<>();
     private Map<Integer, String> txtStats = new HashMap<>();
     private Map<Integer, Integer> SoulStats = new HashMap<>();
+    private int mimibiote;
 
     public byte modification = -1;
 
-    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit,int rarity) {
+    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit,int rarity, int mimibiote) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
         this.position = pos;
         this.puit = puit;
         this.rarity = rarity;
+        this.mimibiote = mimibiote;
         Stats = new Stats();
         this.parseStringToStats(strStats, false);
     }
@@ -56,7 +59,7 @@ public class GameObject {
         this.rarity = 0;
     }
 
-    public GameObject(int Guid, int template, int qua, int pos, Stats stats, ArrayList<SpellEffect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit, int rarity) {
+    public GameObject(int Guid, int template, int qua, int pos, Stats stats, ArrayList<SpellEffect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit, int rarity, int mimibiote) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
@@ -67,8 +70,10 @@ public class GameObject {
         this.txtStats = _txtStats;
         this.obvijevanPos = 0;
         this.obvijevanLook = 0;
+        this.obvijevanId = 0;
         this.puit = puit;
         this.rarity = rarity;
+        this.mimibiote = mimibiote;
     }
 
     public static GameObject getCloneObjet(GameObject obj, int qua) {
@@ -76,9 +81,19 @@ public class GameObject {
         maps.putAll(obj.getStats().getMap());
         Stats newStats = new Stats(maps);
 
-        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, obj.getEffects(), obj.getSoulStat(), obj.getTxtStat(), obj.getPuit(),obj.getRarity());
+        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, obj.getEffects(), obj.getSoulStat(), obj.getTxtStat(), obj.getPuit(),obj.getRarity(), obj.getMimibiote());
         ob.modification = 0;
         return ob;
+    }
+
+    public int getMimibiote()
+    {
+        return mimibiote;
+    }
+
+    public void setMimibiote(int mimibiote)
+    {
+        this.mimibiote = mimibiote;
     }
 
     public int setId() {
@@ -112,12 +127,39 @@ public class GameObject {
         this.setModification();
     }
 
+    public void setObvijevanId(int id) {
+        this.obvijevanId = id;
+    }
+    public int getObvijevanId() {
+        return this.obvijevanId;
+    }
+
     public void setModification() {
         if(this.modification == -1)
             this.modification = 1;
     }
+    public String stringObjetoConGuiño() {
+        StringBuilder str = new StringBuilder();
+        try {
+            str.append(Integer.toHexString(guid)).append("~")
+                    .append(Integer.toHexString(getTemplate().getId())).append("~").append(
+                    Integer.toHexString(quantity))
+                    .append("~");
+                            if (position == Constant.ITEM_POS_NO_EQUIPED)
+                                str.append("");
+                            else
+                            {
+                                str.append(Integer.toHexString(position));
+                            }
+                    str.append("~").append(parseStatsString()).append("~").append(getTemplate().getPrice() / 10);
+            str.append(";");
+        } catch (Exception e) {
+            System.out.println("OBJETO BUG stringObjetoConGuiño " + guid + " Exception: " + e.toString());
+        }
+        return str.toString();
+    }
 
-    private void parseStringToStats(String strStats, boolean save) {
+    public void parseStringToStats(String strStats, boolean save) {
         if(this.template != null & this.template.getId() == 7010) return;
         String dj1 = "";
         if (!strStats.equalsIgnoreCase("")) {
@@ -129,6 +171,7 @@ public class GameObject {
                         txtStats.put(Constant.STATS_DATE, split.substring(3) + "");
                         continue;
                     }
+
                     if (split.substring(0, 3).equalsIgnoreCase("3dc")) {// Si c'est une rune de signature crï¿½e
                         txtStats.put(Constant.STATS_SIGNATURE, split.split("#")[4]);
                         continue;
@@ -140,7 +183,6 @@ public class GameObject {
 
                     String[] stats = split.split("#");
                     int id = Integer.parseInt(stats[0], 16);
-
                     if (id == Constant.STATS_PETS_DATE
                             && this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
                         txtStats.put(id, split.substring(3));
@@ -163,6 +205,11 @@ public class GameObject {
                         txtStats.put(Constant.STATS_NAME_DJ, dj1);
                         continue;
                     }
+                    if(id == Constant.COMPATIBLE_AVEC) {
+                        txtStats.put(Constant.COMPATIBLE_AVEC, stats[4]);
+                        continue;
+                    }
+
                     if (id == 997 || id == 996) {
                         txtStats.put(id, stats[4]);
                         continue;
@@ -175,8 +222,12 @@ public class GameObject {
                         txtStats.put(id, stats[3]);
                         continue;
                     }
+                    if(id == Constant.APPARAT_ITEM) {
+                        txtStats.put(id, stats[3]);
+                        continue;
+                    }
                     //Si stats avec Texte (Signature, apartenance, etc)//FIXME
-                    if (id != Constant.STATS_RESIST && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
+                    if (id != Constant.STATS_RESIST && id < 970 && id > 974 && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
                         if (!(this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL && id == Constant.STATS_PETS_DATE)) {
                             txtStats.put(id, stats[3]);
                             continue;
@@ -193,6 +244,24 @@ public class GameObject {
 
                     if (id >= 281 && id <= 294) {
                         int jet = Integer.parseInt(stats[1], 16);
+                        Stats.addOneStat(id, jet);
+                        continue;
+                    }
+
+                    if(id >= 970 && id <= 974)
+                    {
+                        int jet = Integer.parseInt(stats[3]);
+                        if(id == Constant.OBVIJEVANT_SKIN)
+                        {
+                            setObvijevanLook(Integer.parseInt(stats[3], 16));
+                        } else if(id == Constant.REAL_TYPE)
+                        {
+                            setObvijevanPos(Integer.parseInt(stats[3], 16));
+                        } else if(id == 970)
+                        {
+                            setObvijevanId(Integer.parseInt(stats[3], 16));
+                        }
+                        txtStats.put(id, String.valueOf(jet));
                         Stats.addOneStat(id, jet);
                         continue;
                     }
@@ -225,9 +294,7 @@ public class GameObject {
                     if (!follow2)
                         continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
                     int jet = Integer.parseInt(stats[1], 16);
-                    if(jet > 0) {
                         Stats.addOneStat(id, jet);
-                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -258,6 +325,17 @@ public class GameObject {
     public void setStats(Stats SS) {
         Stats = SS;
         this.setModification();
+    }
+
+    public String stringObjectMimibiote()
+    {
+        StringBuilder str = new StringBuilder(String.valueOf(Integer.toHexString(this.guid))
+        + "~" + Integer.toHexString(getTemplate().getId())
+        + "~" + Integer.toHexString(getQuantity()) + "~"
+                + ((getPosition() == -1) ? "" : Integer.toHexString(getPosition()) + "~"
+        + this.parseStatsString()));
+
+        return str.toString();
     }
 
     public int getQuantity() {
@@ -358,6 +436,19 @@ public class GameObject {
                 + rarity + ";";
     }
 
+    public String getParamStatTexto(int stat, int parametro) {
+        try {
+            String s = getTxtStat().get(stat);
+            if (!s.isEmpty()) {
+                if (s.split("#").length > parametro - 1) {
+                    return s.split("#")[parametro - 1];
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
     public String parseStatsString() {
         if (getTemplate().getType() == 83) //Si c'est une pierre d'ï¿½me vide
             return getTemplate().getStrTemplate();
@@ -409,6 +500,7 @@ public class GameObject {
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
                     if (entry.getKey() == Constant.STATS_PETS_REPAS)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
+
                     if (entry.getKey() == Constant.STATS_PETS_POIDS) {
                         int corpu = 0;
                         int corpulence = 0;
@@ -420,7 +512,7 @@ public class GameObject {
                                 e.printStackTrace();
                             }
                         }
-                        if (corpulence > 0 || corpulence < 0)
+                        if (corpulence != 0)
                             corpu = 7;
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(corpu)).append("#").append(corpulence > 0 ? corpu : 0).append("#").append(Integer.toHexString(corpu));
                     }
@@ -431,6 +523,24 @@ public class GameObject {
                         else
                             stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
                     }
+                } else if(entry.getKey() == Constant.APPARAT_ITEM) {
+                    stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(Integer.parseInt(entry.getValue())));
+                }
+                else if ((entry.getKey() == 970) || (entry.getKey() == 971) || (entry.getKey() == 972) || (entry.getKey() == 973) || (entry.getKey() == 974))
+                {
+                    int value = Integer.parseInt(entry.getValue());
+                    int value2 = Integer.parseInt(entry.getValue(), 16);
+                    int statid = entry.getKey();
+                    if(statid == 970)
+                    {
+                        stats.append(Integer.toHexString(statid)).append("#0#0#").append(Integer.toHexString(Integer.parseInt(entry.getValue())));
+                    }
+                    else {
+                        stats.append(Integer.toHexString(statid)).append("#0#0#").append(value);
+                    }
+                    if (statid == 973) setObvijevanPos(value2);
+                    if (statid == 972) setObvijevanLook(value);
+                    if (statid == 970) setObvijevanId(value);
                 } else if (entry.getKey() == Constant.STATS_CHANGE_BY || entry.getKey() == Constant.STATS_NAME_TRAQUE || entry.getKey() == Constant.STATS_OWNER_1) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
                 } else if (entry.getKey() == Constant.STATS_GRADE_TRAQUE || entry.getKey() == Constant.STATS_ALIGNEMENT_TRAQUE || entry.getKey() == Constant.STATS_NIVEAU_TRAQUE) {
@@ -525,38 +635,37 @@ public class GameObject {
                             isFirst = false;
                         }
                     }
-                    continue;
                 } else {
 
                     if (!isFirst)
-                        if (entry.getValue() > 0) {
-                            stats.append(",");
-                        }
+                        stats.append(",");
                     if (statID == 615) {
                         stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(entry.getValue()));
                     } else if ((statID == 970) || (statID == 971) || (statID == 972)
                             || (statID == 973) || (statID == 974)) {
                         int jet = entry.getValue();
-                        if ((statID == 974) || (statID == 972) || (statID == 970))
+                        if(statID == 970)
+                        {
                             stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
-                        else
+                        }
+                        else {
                             stats.append(Integer.toHexString(statID)).append("#0#0#").append(jet);
+                        }
                         if (statID == 973)
-                            setObvijevanPos(jet);
+                            setObvijevanPos(Integer.parseInt(String.valueOf(jet), 16));
                         if (statID == 972)
                             setObvijevanLook(jet);
+                        if(statID == 970)
+                            setObvijevanId(jet);
                     } else if (statID == Constant.STATS_TURN) {
                         String jet = "0d0+" + entry.getValue();
                         stats.append(Integer.toHexString(statID)).append("#");
                         stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
                     } else {
-                        if (entry.getValue() > 0) {
                             String jet = "0d0+" + entry.getValue();
                             stats.append(Integer.toHexString(statID)).append("#");
                             stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
-
                             isFirst = false;
-                        }
                     }
                 }
             }
@@ -607,6 +716,12 @@ public class GameObject {
                     stats.append(",").append(Integer.toHexString(entry.getKey())).append("#0#0#").append(i);
             } else if (entry.getKey() == Constant.CAPTURE_MONSTRE) {
                 stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue());
+            } else if(entry.getKey() == Constant.APPARAT_ITEM) {
+                stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(entry.getValue());
+            }
+            else if(entry.getKey() >= 970 && entry.getKey() <= 974)
+            {
+                continue;
             } else if (entry.getKey() == Constant.STATS_PETS_PDV
                     || entry.getKey() == Constant.STATS_PETS_POIDS
                     || entry.getKey() == Constant.STATS_PETS_DATE) {
@@ -630,9 +745,7 @@ public class GameObject {
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0)).append("#0#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0));
                 }
             } else {
-                if(Integer.parseInt(entry.getValue()) > 0) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#0#").append(entry.getValue());
-                }
             }
             isFirst = false;
         }
@@ -660,22 +773,23 @@ public class GameObject {
             isFirst = false;
         }
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            if(entry.getValue() > 0) {
                 if (!isFirst)
                     stats.append(",");
 
                 if (entry.getKey() == 615) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(entry.getValue()));
-                } else {
-                    if(entry.getValue() > 0) {
+                }
+                else if (entry.getKey() >= 970 && entry.getKey() <= 974)
+                {
+                    stats.append(Integer.toHexString(entry.getKey())).append('#').append(entry.getValue()).append("#0#").append(entry.getValue());
+                }
+                else {
                         String jet = "0d0+" + entry.getValue();
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(entry.getValue()));
                         stats.append("#0#0#").append(jet);
-                    }
                 }
                 isFirst = false;
             }
-        }
         return stats.toString();
     }
 
@@ -701,35 +815,66 @@ public class GameObject {
         if (obj == null)
             return;
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            if (entry.getKey().intValue() != 974) // on ne boost que la stat de l'expï¿½rience de l'obvi
+            if (entry.getKey() != 974) // on ne boost que la stat de l'expï¿½rience de l'obvi
                 continue;
-            if (entry.getValue().intValue() > 500) // si le boost a une valeur supï¿½rieure ï¿½ 500 (irrï¿½aliste)
+            if (entry.getValue() > 500) // si le boost a une valeur supï¿½rieure ï¿½ 500 (irrï¿½aliste)
                 return;
-            entry.setValue(Integer.valueOf(entry.getValue().intValue()
-                    + obj.getTemplate().getLevel() / 3));
+            entry.setValue(entry.getValue()
+                    + obj.getTemplate().getLevel() / 3);
+        }
+        for (Entry<Integer, String> entry : txtStats.entrySet()) {
+            if(entry.getKey() != 974)
+            {
+                continue;
+            }
+            if(Integer.parseInt(entry.getValue()) > 500)
+            {
+                return;
+            }
+            entry.setValue(String.valueOf(Integer.parseInt(entry.getValue()) + obj.getTemplate().getLevel() / 3));
         }
         this.setModification();
     }
 
     public void obvijevanChangeStat(int statID, int val) {
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            if (entry.getKey().intValue() != statID)
+            if (entry.getKey() != statID)
                 continue;
-            entry.setValue(Integer.valueOf(val));
+            entry.setValue(val);
+        }
+
+        for (Entry<Integer, String> entry : txtStats.entrySet()) {
+            if(entry.getKey() != statID)
+            {
+                continue;
+            }
+            entry.setValue(String.valueOf(val));
         }
         this.setModification();
     }
 
     public void removeAllObvijevanStats() {
         setObvijevanPos(0);
+        setObvijevanId(0);
+        setObvijevanLook(0);
         client.other.Stats StatsSansObvi = new Stats();
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            int statID = entry.getKey().intValue();
+            int statID = entry.getKey();
             if ((statID == 970) || (statID == 971) || (statID == 972)
                     || (statID == 973) || (statID == 974))
                 continue;
-            StatsSansObvi.addOneStat(statID, entry.getValue().intValue());
+            StatsSansObvi.addOneStat(statID, entry.getValue());
         }
+        Map<Integer, String> newTxtStats = new HashMap<>();
+        for (Entry<Integer, String> entry : txtStats.entrySet()) {
+            int statID = entry.getKey();
+            if ((statID == 970) || (statID == 971) || (statID == 972)
+                    || (statID == 973) || (statID == 974)) {
+                continue;
+            }
+            newTxtStats.put(entry.getKey(), entry.getValue());
+        }
+        txtStats = newTxtStats;
         Stats = StatsSansObvi;
         this.setModification();
     }
@@ -738,11 +883,11 @@ public class GameObject {
         setObvijevanPos(0);
         client.other.Stats StatsSansObvi = new Stats();
         for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
-            int statID = entry.getKey().intValue();
+            int statID = entry.getKey();
             if ((statID != 971) && (statID != 972) && (statID != 973)
                     && (statID != 974))
                 continue;
-            StatsSansObvi.addOneStat(statID, entry.getValue().intValue());
+            StatsSansObvi.addOneStat(statID, entry.getValue());
         }
         Stats = StatsSansObvi;
         this.setModification();

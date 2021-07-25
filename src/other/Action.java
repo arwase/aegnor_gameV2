@@ -819,7 +819,7 @@ public class Action {
                         return true;
 
                     long TotalXp = player.getExp() + XpAdd;
-                    player.setExp(TotalXp);
+                    player.addXp(TotalXp);
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -4213,6 +4213,9 @@ public class Action {
                 map = Short.parseShort(this.args.split(",")[0]);
                 cell = Integer.parseInt(this.args.split(",")[1]);
                 player.teleport(map, cell);
+                break;
+            case 1002 :
+                SocketManager.send(player, "XM");
                 break;
 
             default:

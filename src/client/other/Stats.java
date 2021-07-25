@@ -78,8 +78,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-        if(val > 0) {
-            if (id == 112) id = Constant.STATS_ADD_DOMA2;
+            if (id == 112) id = Constant.STATS_ADD_DOMA;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -89,7 +88,6 @@ public class Stats {
                     return 0;
                 } else this.effects.put(id, newVal);
             }
-        }
         if(this.effects.containsKey(id)) {
             return this.effects.get(id);
         }
@@ -208,10 +206,8 @@ public class Stats {
             case Constant.STATS_ADD_DOMA:
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
-                break;
-            case Constant.STATS_ADD_DOMA2:
-                if (this.effects.get(Constant.STATS_REM_DOMA) != null)
-                    val -= this.effects.get(Constant.STATS_REM_DOMA);
+                if(this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 break;
             case Constant.STATS_ADD_PODS:
                 if (this.effects.get(Constant.STATS_REM_PODS) != null)

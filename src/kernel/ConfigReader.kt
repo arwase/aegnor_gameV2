@@ -61,6 +61,7 @@ object ConfigReader {
         val prix_changement_classe by intType
         val prix_changement_couleur by intType
         val prix_changement_pseudo by intType
+        val prix_mimibiote by intType
     }
 
     object mode : PropertyGroup() {

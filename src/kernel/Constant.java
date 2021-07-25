@@ -349,11 +349,19 @@ public class Constant {
     public static final int STATS_NIVEAU_TRAQUE = 962;
 
     public static final int STATS_DATE = 805;
+
     public static final int STATS_NIVEAU = 962;
+    public static final int APPARENCE = 970;
+    public static final int OBVIJEVANT_HUMOR = 971;
+    public static final int OBVIJEVANT_SKIN = 972;
+    public static final int REAL_TYPE = 973;
     public static final int STATS_NAME_DJ = 814;
+    public static final int MIMIBIOTE = 915;
     public static final int STATS_OWNER_1 = 987;//#4
     public static final int STATS_SIGNATURE = 988;
     public static final int ERR_STATS_XP = 1000;
+    public static final int COMPATIBLE_AVEC = 1003;
+    public static final int APPARAT_ITEM = 915;
     //ZAAPI <alignID,{mapID,mapID,...,mapID}>
     public static Map<Integer, String> ZAAPI = new HashMap<Integer, String>();
     //ZAAP <mapID,cellID>
@@ -4230,5 +4238,18 @@ public class Constant {
             }
         }
         return -1;
+    }
+
+    public static boolean MimibioteItem(int type){
+        boolean ok = false;
+        switch(type){
+            case ITEM_TYPE_CAPE:
+            case ITEM_TYPE_COIFFE:
+            case ITEM_TYPE_BOUCLIER:
+            case ITEM_TYPE_FAMILIER:
+                ok = true;
+                break;
+        }
+        return ok;
     }
 }

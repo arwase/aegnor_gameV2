@@ -73,7 +73,6 @@ public class GameMap {
                 TimerWaiter.addNext(() -> {
                     for (GameMap map : World.world.getMaps()) {
                         map.onMapMonsterDeplacement();
-                        map.onMapMonstersSetStarsOnTime();
                         if (map.getMountPark() != null) map.getMountPark().startMoveMounts();
                     }
                     World.world.getCollectors().values().forEach(Collector::moveOnMap);
@@ -88,18 +87,6 @@ public class GameMap {
             return groups;
         }
     };
-
-    private void onMapMonstersSetStarsOnTime() {
-        if (this.getMobGroups().size() == 0) {
-            return;
-        }
-        for (final Monster.MobGroup group : this.getMobGroups().values()) {
-            if( group.getStarBonus() <= 180)
-            {
-                group.setStarBonus(group.getStarBonus()+20);
-            }
-        }
-    }
 
     public int nextObjectId = -1;
     public boolean noMarchand = false, noCollector = false, noPrism = false, noTP = false, noDefie = false, noAgro = false, noCanal = false;

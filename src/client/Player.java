@@ -1973,8 +1973,17 @@ public class Player {
 
             Integer obvi = object.getStats().getEffects().get(970);
             if (obvi == null) {
-                str.append(Integer.toHexString(object.getTemplate().getId()));
+                String mimibiote = object.getTxtStat().get(915);
+                if(mimibiote != null)
+                {
+                    str.append(Integer.toHexString(Integer.parseInt(mimibiote)));
+                }
+                else {
+                    str.append(Integer.toHexString(object.getTemplate().getId()));
+                }
             } else {
+                int st = Integer.parseInt(String.valueOf(obvi), 16);
+                String st2 = Integer.toHexString(obvi);
                 str.append(Integer.toHexString(obvi)).append("~16~").append(object.getObvijevanLook());
             }
         }
@@ -2116,8 +2125,12 @@ public class Player {
         final StringBuilder str = new StringBuilder();
         str.append(stringStatsComplemento());
         int base = 0, equipement = 0, bendMald = 0, buff = 0, total = 0;
-        Stats stats = this.getStats(), stuffStats = this.getStuffStats(), donStats = this.getDonsStats(), buffStats = this.getBuffsStats(), totalStats = this.getTotalStats();
-        total = totalStats.getEffect(Constant.STATS_ADD_PROS);
+        Stats stats = this.getStats();
+        Stats stuffStats = this.getStuffStats();
+        Stats donStats = this.getDonsStats();
+        Stats buffStats = this.getBuffsStats();
+        Stats totalStats = this.getTotalStats();
+        total = (stats.getEffect(Constant.STATS_ADD_PROS) + this.getStuffStats().getEffect(Constant.STATS_ADD_PROS) + (int)(Math.ceil(totalStats.getEffect(Constant.STATS_ADD_CHAN) / 10)) + buffStats.getEffect(Constant.STATS_ADD_PROS) + (int)Math.ceil(buffStats.getEffect(Constant.STATS_ADD_CHAN) / 10));
         // prospeccion
         str.append(total).append("|");
         final int[] statsArray = {111, 128, 118, 125, 124, 123, 119, 126, 117, 182, 112, 142, 165, 138, 178, 225, 226, 220, 115,

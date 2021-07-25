@@ -65,13 +65,13 @@ public class Mount {
 		this.id = Database.getStatics().getMountData().getNextId();
 		this.color = color;
 		this.sex = Formulas.getRandomValue(0, 1);
-		this.level = 1;
-		this.exp = 0;
+		this.level = 5;
+		this.exp = 4000;
 		this.name = "SansNom";
 		this.fatigue = 0;
-		this.energy = 0;
+		this.energy = 1000;
 		this.reproduction = ((color == 75 || color == 88) ? -1 : 0);
-		this.maturity = 0;
+		this.maturity = getMaxMaturity();
 		this.state = 0;
 		this.stats = Constant.getMountStats(this.color, this.level);
 		this.ancestors = "?,?,?,?,?,?,?,?,?,?,?,?,?,?";
@@ -90,13 +90,13 @@ public class Mount {
 		this.id = Database.getStatics().getMountData().getNextId();
 		this.color = color;
 		this.sex = Formulas.getRandomValue(0, 1);
-		this.level = 1;
-		this.exp = 0;
+		this.level = 5;
+		this.exp = 4000;
 		this.name = "SansNom";
 		this.fatigue = 0;
-		this.energy = 0;
+		this.energy = 1000;
 		this.reproduction = 0;
-		this.maturity = 0;
+		this.maturity = getMaxMaturity();
 		this.state = Formulas.getRandomValue(-10000, 10000);
         this.stats = Constant.getMountStats(this.color, this.level);
 		

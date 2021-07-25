@@ -127,18 +127,22 @@ public class Formulas {
     {
         try {
             int num = 0;
-            int des = Integer.parseInt(jet.split("d")[0]);
-            int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
-            int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
-            if (faces == 0 && add == 0) {
-                num = getRandomValue(0, des);
-            } else {
-                for (int a = 0; a < des; a++) {
-                    num += getRandomValue(1, faces);
+            int splited = jet.split("d").length;
+            if(jet.split("d").length > 1) {
+                int des = Integer.parseInt(jet.split("d")[0]);
+                int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
+                int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
+                if (faces == 0 && add == 0) {
+                    num = getRandomValue(0, des);
+                } else {
+                    for (int a = 0; a < des; a++) {
+                        num += getRandomValue(1, faces);
+                    }
                 }
+                num += add;
+                return num;
             }
-            num += add;
-            return num;
+            return Integer.parseInt(jet);
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return -1;

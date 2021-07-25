@@ -59,6 +59,22 @@ public class SocketManager {
         send(out, packet);
     }
 
+    public static void GAME_SEND_OCK_ACTUALISED_OBJECT(GameClient out, GameObject obj, String statsMimo){
+        String packet = "OCK" + obj.stringObjectMimibiote() + "," + statsMimo + ";";
+        send(out, packet);
+    }
+
+    public static void GAME_SEND_OCK_ACTUALISED_OBJECT(Player player, GameObject obj, String statsMimo){
+        String packet = "OCK" + obj.stringObjectMimibiote() + "," + statsMimo + ";";
+        send(player, packet);
+    }
+    public static void GAME_SEND_OCK_ACTUALISED_OBJECT(Player player, GameObject obj){
+        if (obj == null)
+            return;
+        String packet = "OCK" + obj.stringObjetoConGuiño();
+        send(player, packet);
+    }
+
     public static void GAME_SEND_AV0(GameClient out) {
         String packet = "AV0";
         send(out, packet);

@@ -724,6 +724,10 @@ public class ObjectAction {
                             return;
                         }
                         break;
+                    case 36 : // Mimibiote
+                    {
+                        SocketManager.send(player, "XM");
+                    }
                 }
                 turn++;
             }

@@ -173,7 +173,7 @@ public class JobAction {
             IO.desactive();
             SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), cell);
             //int qua = (this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min); PETIT PLUS
-            int qua = Math.round((this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min) * (Config.INSTANCE.getRATE_JOB()/3)) ;
+            int qua = Math.round((this.max > this.min ? Formulas.getRandomValue(this.min, this.max) : this.min) * (int)(Config.INSTANCE.getRATE_JOB()/3)) ;
 
             if (SM.getTemplate().getId() == 36) {
                 if (qua > 0)
@@ -2280,70 +2280,47 @@ public class JobAction {
         double r = 0.0;
         switch (effect) {
             case Constant.STATS_ADD_PA:
-                r = 100.0;
-                break;
-            case Constant.STATS_ADD_PM2:
-                r = 90.0;
-                break;
-            case Constant.STATS_ADD_VIE:
-                r = 0.25;
-                break;
+            case Constant.STATS_ADD_PA2:
             case Constant.STATS_MULTIPLY_DOMMAGE:
                 r = 100.0;
                 break;
+            case Constant.STATS_ADD_PM2:
+            case Constant.STATS_ADD_PM:
+                r = 90.0;
+                break;
+            case Constant.STATS_ADD_VIE:
+            case Constant.STATS_ADD_VITA:
+            case Constant.STATS_ADD_PODS:
+                r = 0.25;
+                break;
             case Constant.STATS_ADD_CC:
+            case Constant.STATS_CREATURE:
                 r = 30.0;
                 break;
             case Constant.STATS_ADD_PO:
                 r = 51.0;
                 break;
             case Constant.STATS_ADD_FORC:
-                r = 1.0;
-                break;
             case Constant.STATS_ADD_AGIL:
+            case Constant.STATS_ADD_EC:
+            case Constant.STATS_ADD_CHAN:
+            case Constant.STATS_ADD_INTE:
+            case Constant.STATS_ADD_AFLEE:
+            case Constant.STATS_ADD_MFLEE:
                 r = 1.0;
-                break;
-            case Constant.STATS_ADD_PA2:
-                r = 100.0;
                 break;
             case Constant.STATS_ADD_DOMA:
-                r = 20.0;
-                break;
             case Constant.STATS_ADD_DOMA2:
                 r = 20.0;
                 break;
-            case Constant.STATS_ADD_EC:
-                r = 1.0;
-                break;
-            case Constant.STATS_ADD_CHAN:
-                r = 1.0;
-                break;
             case Constant.STATS_ADD_SAGE:
                 r = 3.0;
-                break;
-            case Constant.STATS_ADD_VITA:
-                r = 0.25;
-                break;
-            case Constant.STATS_ADD_INTE:
-                r = 1.0;
-                break;
-            case Constant.STATS_ADD_PM:
-                r = 90.0;
                 break;
             case Constant.STATS_ADD_PERDOM:
                 r = 2.0;
                 break;
             case Constant.STATS_ADD_PDOM:
                 r = 2.0;
-                break;
-            case Constant.STATS_ADD_PODS:
-                r = 0.25;
-                break;
-            case Constant.STATS_ADD_AFLEE:
-                r = 1.0;
-                break;
-            case Constant.STATS_ADD_MFLEE:
-                r = 1.0;
                 break;
             case Constant.STATS_ADD_INIT:
                 r = 0.1;
@@ -2353,9 +2330,6 @@ public class JobAction {
                 break;
             case Constant.STATS_ADD_SOIN:
                 r = 20.0;
-                break;
-            case Constant.STATS_CREATURE:
-                r = 30.0;
                 break;
             case Constant.STATS_ADD_RP_TER:
                 r = 6.0;
@@ -2433,145 +2407,72 @@ public class JobAction {
         double r = 0.0;
         switch (effect) {
             case Constant.STATS_ADD_PA:
-                r = 0.0;
-                break;
-            case Constant.STATS_ADD_PM2:
-                r = 404.0;
-                break;
-            case Constant.STATS_ADD_VIE:
-                r = 404.0;
-                break;
+            case Constant.STATS_ADD_EC:
+            case Constant.STATS_ADD_PM:
+            case Constant.STATS_ADD_AFLEE:
+            case Constant.STATS_ADD_MFLEE:
+            case Constant.STATS_ADD_PA2:
+            case Constant.STATS_ADD_PO:
             case Constant.STATS_MULTIPLY_DOMMAGE:
                 r = 0.0;
                 break;
+            case Constant.STATS_ADD_PM2:
+            case Constant.STATS_ADD_VITA:
+            case Constant.STATS_ADD_PODS:
+            case Constant.STATS_ADD_VIE:
+                r = 404.0;
+                break;
             case Constant.STATS_ADD_CC:
+            case Constant.STATS_CREATURE:
                 r = 3.0;
                 break;
-            case Constant.STATS_ADD_PO:
-                r = 0.0;
-                break;
             case Constant.STATS_ADD_FORC:
-                r = 101.0;
-                break;
+            case Constant.STATS_ADD_CHAN:
+            case Constant.STATS_ADD_INTE:
             case Constant.STATS_ADD_AGIL:
                 r = 101.0;
                 break;
-            case Constant.STATS_ADD_PA2:
-                r = 0.0;
-                break;
             case Constant.STATS_ADD_DOMA:
+            case Constant.STATS_ADD_DOMA2:
+            case Constant.STATS_ADD_SOIN:
                 r = 5.0;
                 break;
-            case Constant.STATS_ADD_EC:
-                r = 0.0;
-                break;
-            case Constant.STATS_ADD_CHAN:
-                r = 101.0;
-                break;
             case Constant.STATS_ADD_SAGE:
+            case Constant.STATS_ADD_PROS:
                 r = 33.0;
                 break;
-            case Constant.STATS_ADD_VITA:
-                r = 404.0;
-                break;
-            case Constant.STATS_ADD_INTE:
-                r = 101.0;
-                break;
-            case Constant.STATS_ADD_PM:
-                r = 0.0;
-                break;
             case Constant.STATS_ADD_PERDOM:
-                r = 50.0;
-                break;
             case Constant.STATS_ADD_PDOM:
+            case Constant.STATS_TRAPPER:
+            case Constant.STATS_ADD_R_FEU:
+            case Constant.STATS_ADD_R_NEU:
+            case Constant.STATS_ADD_R_TER:
+            case Constant.STATS_ADD_R_EAU:
+            case Constant.STATS_ADD_R_AIR:
+            case Constant.STATS_ADD_R_PVP_EAU:
+            case Constant.STATS_ADD_R_PVP_AIR:
+            case Constant.STATS_ADD_R_PVP_FEU:
+            case Constant.STATS_ADD_R_PVP_NEU:
+            case Constant.STATS_ADD_R_PVP_TER:
                 r = 50.0;
-                break;
-            case Constant.STATS_ADD_PODS:
-                r = 404.0;
-                break;
-            case Constant.STATS_ADD_AFLEE:
-                r = 0.0;
-                break;
-            case Constant.STATS_ADD_MFLEE:
-                r = 0.0;
                 break;
             case Constant.STATS_ADD_INIT:
                 r = 1010.0;
                 break;
-            case Constant.STATS_ADD_PROS:
-                r = 33.0;
-                break;
-            case Constant.STATS_ADD_SOIN:
-                r = 5.0;
-                break;
-            case Constant.STATS_CREATURE:
-                r = 3.0;
-                break;
             case Constant.STATS_ADD_RP_TER:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_EAU:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_AIR:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_FEU:
-                r = 16.0;
-                break;
+            case Constant.STATS_ADD_RP_PVP_FEU:
+            case Constant.STATS_ADD_RP_PVP_AIR:
+            case Constant.STATS_ADD_RP_PVP_NEU:
+            case Constant.STATS_ADD_RP_PVP_TER:
+            case Constant.STATS_ADD_RP_PVP_EAU:
             case Constant.STATS_ADD_RP_NEU:
+            case Constant.STATS_ADD_RP_FEU:
+            case Constant.STATS_ADD_RP_AIR:
+            case Constant.STATS_ADD_RP_EAU:
                 r = 16.0;
                 break;
             case Constant.STATS_TRAPDOM:
                 r = 6.0;
-                break;
-            case Constant.STATS_TRAPPER:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_FEU:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_NEU:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_TER:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_EAU:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_AIR:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_RP_PVP_TER:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_PVP_EAU:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_PVP_AIR:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_PVP_FEU:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_RP_PVP_NEU:
-                r = 16.0;
-                break;
-            case Constant.STATS_ADD_R_PVP_TER:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_PVP_EAU:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_PVP_AIR:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_PVP_FEU:
-                r = 50.0;
-                break;
-            case Constant.STATS_ADD_R_PVP_NEU:
-                r = 50.0;
                 break;
         }
         //System.out.println("LE poid trouvé "+r);

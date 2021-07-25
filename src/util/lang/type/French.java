@@ -82,7 +82,8 @@ public class French extends AbstractLang {
                 + "<b>.spellforget</b> - Permet d'oublier un sort.\n"
                 + "<b>.hdv</b> - Permet d'afficher un hdv global.\n"
                 + "<b>.boutique</b> - Permet d'afficher les objets boutiques.\n"
-                + "<b>.points</b> - Permet d'afficher tes points boutiques."); index++;
+                + "<b>.points</b> - Permet d'afficher tes points boutiques."
+                + "<b>.sellitem</b> - Vend tout votre inventaire excepté les dofus, items équipés et objet de quête."); index++;
         //18
         this.sentences.add(index,"<b>***COMMANDES MAITRE***</b> disponibles sont :\n"
                 + "<b>.groupe</b> - Permet de grouper l'ensemble de tes persos.\n"
