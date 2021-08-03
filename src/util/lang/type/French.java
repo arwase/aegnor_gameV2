@@ -41,7 +41,7 @@ public class French extends AbstractLang {
         //11
         this.sentences.add(index, "\nRecord de connexion : #1"); index++;
         //12
-        this.sentences.add(index, "Les commandes disponnibles sont :\n"
+        this.sentences.add(index, "Les commandes disponibles sont :\n"
                 + "<b>.infos</b> - Permet d'obtenir des informations sur le serveur.\n"
                 + "<b>.deblo</b> - Permet de vous débloquer en vous téléportant à une cellule libre.\n"
                 + "<b>.staff</b> - Permet de voir les membres du staff connectés.\n"
@@ -52,7 +52,8 @@ public class French extends AbstractLang {
                 (Config.INSTANCE.getDEATH_MATCH() ? "<b>.deathmatch</b> - Vous inscrit/désincrit de la liste d'attente de DeathMatch.\n" : "") +
                 "<b>.banque</b> - Ouvre votre banque.\n" +
                 "<b>.transfert</b> - Nécessite d'être dans sa banque et permet de transférer toutes vos ressources.\n" +
-                "<b>.groupe</b> - Groupe vos mules.\n"); index++;
+                "<b>.groupe</b> - Groupe vos mules.\n" +
+                "<b>.demorph</b> - Remet votre apparence normal.\n"); index++;
         //13
         this.sentences.add(index, "Vous pouvez dès à présent voter, <b><a href='" + Config.INSTANCE.getUrl() + "'>clique ici</a></b> !"); index++;
         //14
@@ -82,7 +83,7 @@ public class French extends AbstractLang {
                 + "<b>.spellforget</b> - Permet d'oublier un sort.\n"
                 + "<b>.hdv</b> - Permet d'afficher un hdv global.\n"
                 + "<b>.boutique</b> - Permet d'afficher les objets boutiques.\n"
-                + "<b>.points</b> - Permet d'afficher tes points boutiques."
+                + "<b>.points</b> - Permet d'afficher tes points boutiques.\n"
                 + "<b>.sellitem</b> - Vend tout votre inventaire excepté les dofus, items équipés et objet de quête."); index++;
         //18
         this.sentences.add(index,"<b>***COMMANDES MAITRE***</b> disponibles sont :\n"

@@ -37,33 +37,50 @@ public class IA12 extends AbstractNeedSpell  {
                 if (target.isHide())
                     target = null;
 
-            if (PM > 0 && target == null && this.attack == 0 || PM > 0 && target == null && this.attack == 1 && this.boost) {
-                int num = Function.getInstance().movediagIfPossible(this.fight, this.fighter, ennemy);
-                if (num != 0) {
-                    time = num;
-                    action = true;
-                    target = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 3);
-                }
-            }
 
             PA = this.fighter.getCurPa(this.fight);
             PM = this.fighter.getCurPm(this.fight);
 
-            if (PA > 0 && target != null && !action) {
-                int num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                if (num != 0) {
-                    time = num;
-                    action = true;
-                    this.attack++;
+            if (PA > 0 && ennemy != null) {
+                int num = 0;
+                while (PA > 3) {
+                    num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                    if (num != 0) {
+                        PM = this.fighter.getCurPm(this.fight);
+                        if(PM > 0)
+                        {
+                            num = Function.getInstance().movediagIfPossible(this.fight, this.fighter, ennemy);
+                            if(num == 0)
+                            {
+                                boolean numable = Function.getInstance().moveNearIfPossible(this.fight, this.fighter, ennemy);
+                                if(!numable)
+                                {
+                                    time = num;
+                                    action = true;
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            time = num;
+                            action = true;
+                            this.attack++;
+                            break;
+                        }
+                    } else {
+                        PA = this.fighter.getCurPa(this.fight);
+                    }
+                }
+                if (num == 0 && PM > 0) {
+                    num = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
+                    if (num != 0) {
+                        time = num;
+                        action = true;
+                    }
                 }
             }
 
-            if (PM > 0 && !action && this.attack > 0) {
-                int num = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
-                if (num != 0) time = num;
-            }
-
-            if (this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0)
+            if ((this.fighter.getCurPa(this.fight) == 0 || this.fighter.getCurPa(this.fight) < 4) && this.fighter.getCurPm(this.fight) == 0)
                 this.stop = true;
 
             addNext(this::decrementCount, time);

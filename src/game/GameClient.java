@@ -393,6 +393,10 @@ public class GameClient {
             SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez encore changer cette item d'apparance !");
             return;
         }
+        if (obj.getStats().getEffects().containsKey(970))
+        {
+            SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez pas mimibioter un item qui a un objet vivant !");
+        }
         ObjectTemplate T = player.getItems().get(apparence).getTemplate();
         if (T == null || obj.getTemplate().getLevel() < T.getLevel() || obj.getTemplate().getType() != T.getType() || !Constant.MimibioteItem(T.getType()) || !Constant.MimibioteItem(obj.getTemplate().getType())){
             SocketManager.GAME_SEND_MESSAGE(player, "Les deux objet ne peuvent êtres lié !");
@@ -414,7 +418,13 @@ public class GameClient {
                 player.removeItem(stats,1,true,true);
                 player.getAccount().setPoints(points-prix);
                 SocketManager.GAME_SEND_MESSAGE(player, "Il vous reste "+ player.getAccount().getPoints() +" points, vous avez été débité de "+prix+" points.");
-                World.world.addGameObject(newitem, true);
+                player.getItems().get(4);
+                GameObject mimi = player.getItems().get(4);
+                if(mimi != null)
+                {
+                    player.removeItem(mimi.getGuid(), 1, true, true);
+                }
+                SocketManager.GAME_SEND_Ow_PACKET(player);
             }else{
                 SocketManager.GAME_SEND_MESSAGE(player, "Une erreur ses produite !");
                 return;
@@ -424,6 +434,12 @@ public class GameClient {
             obj.addTxtStat(Constant.APPARAT_ITEM, T.getId() + "");
             //obj.addTxtStat(972, T.getId()+"");
             obj.setMimibiote(T.getId());
+            GameObject mimi = player.getItems().get(4);
+            if(mimi != null)
+            {
+                player.removeItem(mimi.getGuid(), 1, true, true);
+            }
+            SocketManager.GAME_SEND_Ow_PACKET(player);
         }
 
         player.removeItem(apparence,1,true,true);
@@ -431,6 +447,7 @@ public class GameClient {
         Database.getStatics().getObjectData().update(obj);
         SocketManager.GAME_SEND_OCK_ACTUALISED_OBJECT(player, obj);
         SocketManager.GAME_SEND_ASK(player.getAccount().getGameClient(), player);
+        SocketManager.GAME_SEND_STATS_PACKET(player);
         SocketManager.GAME_SEND_MESSAGE(player, "Votre objet à bien été transformer !");
     }
 
@@ -3114,13 +3131,8 @@ public class GameClient {
                 //Si pas action de craft, on s'arrete la
                 if (!((JobAction) this.player.getExchangeAction().getValue()).isCraft())
                     return;
-
-<<<<<<< HEAD
                 if (packet.charAt(2) == 'O') //((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null
                 {
-=======
-                if (packet.charAt(2) == 'O') { // && ((JobAction) this.player.getExchangeAction().getValue()).getJobCraft() == null) {
->>>>>>> cc51efd49957522c18c91624a5886da5daca680b
                     packet = packet.replace("-", ";-").replace("+", ";+").substring(4);
 
                     for(String part : packet.split(";")) {
@@ -4563,8 +4575,16 @@ public class GameClient {
                 readyFight(packet);
                 break;
             case 't':
-                if (this.player.getFight() != null)
-                    this.player.getFight().playerPass(this.player);
+                if (this.player.getFight() != null) {
+                    if (this.player.getCurrentCompagnon() != null)
+                    {
+                        Fighter compagnon = this.player.getCurrentCompagnon();
+                        this.player.getFight().playerPass(compagnon.getPlayer());
+                    }
+                    else {
+                        this.player.getFight().playerPass(this.player);
+                    }
+                }
                 break;
         }
     }
@@ -4741,8 +4761,7 @@ public class GameClient {
             }
             //Si d�placement inutile
             GameCase targetCell = this.player.getCurMap().getCase(World.world.getCryptManager().cellCode_To_ID(path.substring(path.length() - 2)));
-
-            if(this.player.getCurMap().getId() == 6824 && this.player.start != null && targetCell.getId() == 325 && !this.player.start.leave) {
+            if (this.player.getCurMap().getId() == 6824 && this.player.start != null && targetCell.getId() == 325 && !this.player.start.leave) {
                 this.player.start.leave = true;
                 SocketManager.GAME_SEND_GA_PACKET(this, "", "0", "", "");
                 removeAction(GA);
@@ -4755,8 +4774,12 @@ public class GameClient {
             }
 
             AtomicReference<String> pathRef = new AtomicReference<>(path);
-            int result = PathFinding.isValidPath(this.player.getCurMap(), this.player.getCurCell().getId(), pathRef, null, this.player, targetCell.getId());
-
+            int result = 0;
+            if (this.player.getCurrentCompagnon() != null) {
+                result = PathFinding.isValidPath(this.player.getCurMap(), this.player.getCurrentCompagnon().getCell().getId(), pathRef, null, this.player.getCurrentCompagnon().getPlayer(), targetCell.getId());
+            } else {
+                result = PathFinding.isValidPath(this.player.getCurMap(), this.player.getCurCell().getId(), pathRef, null, this.player, targetCell.getId());
+            }
             if (result <= -9999) {
                 result += 10000;
                 GA.tp = true;
@@ -4814,17 +4837,32 @@ public class GameClient {
                 SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.player.getCurMap(), this.player);
                 return;
             } else {
-                SocketManager.GAME_SEND_GA_PACKET_TO_MAP(this.player.getCurMap(), "" + GA.id, 1, this.player.getId() + "", "a" + World.world.getCryptManager().cellID_To_Code(this.player.getCurCell().getId()) + path);
+                if(this.player.getCurrentCompagnon() != null) {
+                    SocketManager.GAME_SEND_GA_PACKET_TO_MAP(this.player.getCurMap(), "" + GA.id, 1, this.player.getCurrentCompagnon().getPlayer().getId() + "", "a" + World.world.getCryptManager().cellID_To_Code(this.player.getCurrentCompagnon().getCell().getId()) + path);
+                }
+                else {
+                    SocketManager.GAME_SEND_GA_PACKET_TO_MAP(this.player.getCurMap(), "" + GA.id, 1, this.player.getId() + "", "a" + World.world.getCryptManager().cellID_To_Code(this.player.getCurCell().getId()) + path);
+                }
             }
 
             this.addAction(GA);
             this.player.setSitted(false);
             this.player.setAway(true);
         } else {
-            final Fighter fighter = this.player.getFight().getFighterByPerso(this.player);
-            if (fighter != null) {
-                GA.args = path;
-                this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().onFighterDeplace(fighter, GA));
+            if(this.player.getCurrentCompagnon() != null) {
+                Player player = this.player.getCurrentCompagnon().getPlayer();
+                final Fighter fighter = this.player.getFight().getFighterByPerso(player);
+                if (fighter != null) {
+                    GA.args = path;
+                    this.player.getFight().cast(this.player.getFight().getFighterByPerso(player), () -> this.player.getFight().onFighterDeplace(fighter, GA));
+                }
+            }
+            else{
+                final Fighter fighter = this.player.getFight().getFighterByPerso(this.player);
+                if (fighter != null) {
+                    GA.args = path;
+                    this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().onFighterDeplace(fighter, GA));
+                }
             }
         }
     }
@@ -4847,13 +4885,24 @@ public class GameClient {
 
             final int id = Integer.parseInt(split[0].substring(5)), cellId = Integer.parseInt(split[1]);
             final Fight fight = this.player.getFight();
+            if(this.player.getCurrentCompagnon() == null) {
+                if (fight != null) {
+                    Spell.SortStats SS = this.player.getSortStatBySortIfHas(id);
 
-            if (fight != null) {
-                Spell.SortStats SS = this.player.getSortStatBySortIfHas(id);
+                    if (SS != null)
+                        if (this.player.getFight().getCurAction().isEmpty())
+                            this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCastSpell(this.player.getFight().getFighterByPerso(this.player), SS, cellId));
+                }
+            }
+            else {
+                Player player = this.player.getCurrentCompagnon().getPlayer();
+                if (fight != null) {
+                    Spell.SortStats SS = player.getSortStatBySortIfHas(id);
 
-                if (SS != null)
-                    if(this.player.getFight().getCurAction().isEmpty())
-                        this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCastSpell(this.player.getFight().getFighterByPerso(this.player), SS, cellId));
+                    if (SS != null)
+                        if (player.getFight().getCurAction().isEmpty())
+                            this.player.getFight().cast(this.player.getFight().getFighterByPerso(player), () -> this.player.getFight().tryCastSpell(this.player.getFight().getFighterByPerso(player), SS, cellId));
+                }
             }
         } catch (NumberFormatException e) {
             System.err.println(packet + "\n" + e);
@@ -5338,7 +5387,12 @@ public class GameClient {
                             return;
                         }
                     } else {
-                        this.player.getFight().onGK(this.player);
+                        if(this.player.getCurrentCompagnon() != null) {
+                            this.player.getFight().onGK(this.player.getCurrentCompagnon().getPlayer());
+                        }
+                        else{
+                            this.player.getFight().onGK(this.player);
+                        }
                         return;
                     }
                 } else {
@@ -5422,6 +5476,7 @@ public class GameClient {
                 return;
 
             fight.leftFight(this.player, target);
+            SocketManager.send(target, "FC");
         } else {
             fight.leftFight(this.player, null);
         }
@@ -5434,16 +5489,43 @@ public class GameClient {
             return;
 
         this.player.setReady(packet.substring(2).equalsIgnoreCase("1"));
+        if ( this.player.getSlaves() != null) {
+            if ( this.player.getSlaves().size() > 0) {
+
+                boolean ok;
+                ok = true;
+                if (ok) {
+                    for (Player slave :  this.player.PlayerList1) {
+                        //Si l'esclave est null
+                        if (slave == null) {
+                            continue;
+                        }
+                        //Si l'esclave n'est pas sur notre map
+                        if (slave.getCurMap() !=  this.player.getCurMap()) {
+                            continue;
+                        }
+
+                        //Verification recursives
+                        if (slave.getAccount() != null) {
+                            if (slave.getAccount().getGameClient() != null) {
+                                //On duplique la game action du maitre pour les slaves
+                                // slave.getAccount().getGameClient().gameParseDeplacementPacket(GA);
+                                try{
+                                    slave.setReady(packet.substring(2).equalsIgnoreCase("1"));
+                                    SocketManager.GAME_SEND_FIGHT_PLAYER_READY_TO_FIGHT(slave.getFight(), 3, slave.getId(), packet.substring(2).equalsIgnoreCase("1"));
+                                }
+                                catch(Exception e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         this.player.getFight().verifIfAllReady();
         SocketManager.GAME_SEND_FIGHT_PLAYER_READY_TO_FIGHT(this.player.getFight(), 3, this.player.getId(), packet.substring(2).equalsIgnoreCase("1"));
 
-        final Party party = this.player.getParty();
-
-        if(party != null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
-            TimerWaiter.addNext(() -> party.getPlayers().stream()
-                    .filter(follower -> party.isWithTheMaster(follower, true))
-                    .forEach(follower -> follower.getGameClient().readyFight(packet)), 1, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
-        }
     }
 
     /** Fin Game Packet **/
@@ -6569,7 +6651,7 @@ public class GameClient {
                         String[] split = stat.split("#");
                         int effect = Integer.parseInt(split[0], 16),spell = Integer.parseInt(split[1], 16);
                         int value = Integer.parseInt(split[3], 16);
-                        if(effect == 289)
+                        if(effect == 289 || effect == 282 || effect == 288)
                             value = 1;
                         SocketManager.SEND_SB_SPELL_BOOST(this.player, effect + ";" + spell + ";" + value);
                         this.player.addObjectClassSpell(spell, effect, value);
@@ -6630,6 +6712,11 @@ public class GameClient {
                     }
                     if (exObj.getObvijevanPos() != 0) {// si il y a d�j� un obvi
                         SocketManager.GAME_SEND_BN(this.player);
+                        return;
+                    }
+                    if (exObj.getTxtStat().containsKey(Constant.APPARAT_ITEM))
+                    {
+                        SocketManager.GAME_SEND_MESSAGE(this.player, "Vous ne pouvez pas équiper un objet vivant sur un item Mimibioté.");
                         return;
                     }
                     exObj.setObvijevanPos(object.getObvijevanPos()); // L'objet qui �tait en place a maintenant un obvi

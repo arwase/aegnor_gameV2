@@ -1348,6 +1348,12 @@ public class GameMap {
         return "";
     }
 
+    public String getFighterGMPacket(Fighter fighter) {
+        StringBuilder str = new StringBuilder("GM");
+        str.append("|").append(fighter.getGmPacket('+', false));
+        return str.toString();
+    }
+
     public String getMobGroupGMsPackets() {
         if (this.mobGroups.isEmpty())
             return "";
@@ -1601,7 +1607,7 @@ public class GameMap {
                 return;
             }
 
-        final Party party = player.getParty();
+        /*final Party party = player.getParty();
 
         if(party != null && party.getMaster() != null && !party.getMaster().getName().equals(player.getName()) && party.isWithTheMaster(player, false)) return;
 
@@ -1623,6 +1629,55 @@ public class GameMap {
                 else
                     fight.joinFight(follower, player.getId());
             }), 1, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+        }*/
+        int id = 1;
+        if(this.fights == null)
+            this.fights = new ArrayList<>();
+        if (!this.fights.isEmpty())
+            id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
+        this.mobGroups.remove(group.getId());
+        this.fights.add(new Fight(id, this, player, group));
+        SocketManager.GAME_SEND_MAP_FIGHT_COUNT_TO_MAP(this);
+
+        Fight fight = null;
+        fight = player.getFight();
+        int guid = player.getId();
+        if (player.getSlaves() != null) {
+            if (player.getSlaves().size() > 0) {
+
+                boolean ok;
+                ok = true;
+                if (ok) {
+                    for (Player slave : player.PlayerList1) {
+                        //Si l'esclave est null
+                        if (slave == null) {
+                            continue;
+                        }
+                        //Si l'esclave n'est pas sur notre map
+                        if (slave.getCurMap() != player.getCurMap()) {
+                            continue;
+                        }
+                        //Si l'esclave est en combat
+                        if (slave.getFight() != null) {
+                            continue;
+                        }
+
+                        //Verification recursives
+                        if (slave.getAccount() != null) {
+                            if (slave.getAccount().getGameClient() != null) {
+                                //On duplique la game action du maitre pour les slaves
+                                // slave.getAccount().getGameClient().gameParseDeplacementPacket(GA);
+                                try{
+                                    fight.joinFight(slave,guid);
+                                }
+                                catch(Exception e){
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

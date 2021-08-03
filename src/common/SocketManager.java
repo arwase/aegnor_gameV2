@@ -135,6 +135,14 @@ public class SocketManager {
 
     }
 
+    public static void GAME_SEND_STATS_PACKET_TO_LEADER(Player perso, Player leader) {
+        //String packet = perso.getAsPacket();
+        String packet = perso.stringStats();
+        SocketManager.GAME_SEND_Ow_PACKET(leader);
+        send(leader, packet);
+
+    }
+
     public static void GAME_SEND_Rx_PACKET(Player out) {
         String packet = "Rx" + out.getMountXpGive();
         send(out, packet);
@@ -1739,6 +1747,16 @@ public class SocketManager {
 
     }
 
+    public static void ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(Fight pelea, int equipos, int id, int celdaID) {
+        String packet = "Gf"+id + "|" + celdaID;
+        for (Fighter fighter : pelea.getFighters(equipos)) {
+            if (fighter.hasLeft() || fighter.isMultiman()) {
+                continue;
+            }
+            send(fighter.getPlayer(), packet);
+        }
+    }
+
     public static void GAME_SEND_Ea_PACKET(Player perso, String str) {
         String packet = "Ea" + str;
         send(perso, packet);
@@ -2733,6 +2751,16 @@ public class SocketManager {
         send(player, packet);
     }
 
+    public static void GAME_SEND_SL_LISTE_SORTS_TO_LEADER(Player player, Player leader) {
+        var packet = "SL" + player.stringListeSorts();
+        send(leader, packet);
+    }
+
+    public static void ENVIAR_AI_CAMBIAR_ID(Player perso, int id) {
+        String packet = "AI"+ id;
+        send(perso, packet);
+    }
+
     public static void GAME_SEND_GM_REFRESH_PL_TO_MAP(GameMap curMap, Player player) {
         String packet = "GM|~" + player.parseToGM();
         for (Player p : curMap.getPlayers()) {
@@ -2747,6 +2775,14 @@ public class SocketManager {
         for (Fighter luchadore : fight.getTeam(3).values()) {
             send(luchadore.getPlayer(), packet);
         }
+    }
+
+    public static void ENVIAR_GM_LUCHADORES_A_PERSO2(GameMap map, Fighter fighter) {
+        String packet = map.getFighterGMPacket(fighter);
+        if (packet.isEmpty()) {
+            return;
+        }
+        send(fighter.getPlayer(), packet);
     }
 
     public static void GAME_SEND_bV_CLOSE_PANEL(Player player) {

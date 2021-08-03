@@ -219,6 +219,7 @@ public class Constant {
     public static final int CLASS_SADIDA = 10;
     public static final int CLASS_SACRIEUR = 11;
     public static final int CLASS_PANDAWA = 12;
+    public static final int CLASS_MULTIMAN = 13;
     //Sexes
     public static final int SEX_MALE = 0;
     public static final int SEX_FEMALE = 1;
@@ -323,6 +324,11 @@ public class Constant {
     public static final int STATS_ADD_R_PVP_AIR = 262;
     public static final int STATS_ADD_R_PVP_FEU = 263;
     public static final int STATS_ADD_R_PVP_NEU = 264;
+    public static final int STATS_PO_MODIFIABLE_SPELL = 282; //11a#idSpell en Hexa#0#0#0d0+idSpell
+    public static final int STATS_ADD_DO_SPELL = 283; //11b#0#0#+Do en Hexa#0d0+idSpell
+    public static final int STATS_REDUCE_SPELL_DELAY = 286; //11e#0#0#+Nb Delais Reduit en Hexa#0d0+idSpell
+    public static final int STATS_ADD_CC_SPELL = 287;//11f#0#0#+CC en Hexa#0d0+idSpell
+    public static final int STATS_LAUNCHABLE_IN_LINE = 288; //120#idSpellEnHexa#0#0#0d0+idSpell
     //Effets ID & Buffs
     public static final int EFFECT_PASS_TURN = 140;
 
@@ -403,10 +409,14 @@ public class Constant {
     public static String HUNT_ZATOISHWAN_DOC = "98_0706251211";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                // Zatoïshwan
     public static String HUNT_LETHALINE_DOC = "65_0706251123";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                // Léthaline Sigisbul
     //public static String HUNT_NERVOES_DOC    = "64_0706251123";  // Nervoes Brakdoun
-    public static String HUNT_FOUDUGLEN_DOC = "70_0706251122";                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                // Fouduglen l'�cureuil
+    public static String HUNT_FOUDUGLEN_DOC = "70_0706251122"; // Fouduglen l'�cureuil
+
 
     // {(int)BorneId, (int)CellId, (str)SwfDocName, (int)MobId, (int)ItemFollow, (int)QuestId, (int)reponseID
     public static String[][] HUNTING_QUESTS = {{"1988", "234", HUNT_DETAILS_DOC, "-1", "-1", "-1", "-1"}, {"1986", "161", HUNT_LETHALINE_DOC, "-1", "-1", "-1", "-1"}, {"1985", "119", HUNT_MARZWEL_DOC, "554", "7353", "117", "2552"}, {"1986", "120", HUNT_PADGREF_DOC, "459", "6870", "29", "2108"}, {"1985", "149", HUNT_FRAKACIA_DOC, "460", "6871", "30", "2109"}, {"1986", "150", HUNT_QILBIL_DOC, "481", "6873", "32", "2111"}, {"1986", "179", HUNT_BRUMEN_DOC, "464", "6874", "33", "2112"}, {"1986", "180", HUNT_OGIVOL_DOC, "462", "6876", "35", "2114"}, {"1985", "269", HUNT_MUSHA_DOC, "552", "7352", "116", "2551"}, {"1986", "270", HUNT_FOUDUGLEN_DOC, "463", "6875", "34", "2113"}, {"1985", "299", HUNT_ROK_DOC, "550", "7351", "115", "2550"}, {"1986", "300", HUNT_AERMYNE_DOC, "446", "7350", "119", "2554"}, {"1985", "329", HUNT_ZATOISHWAN_DOC, "555", "7354", "118", "2553"},};
+
+    // SpellPlaces
+    public static List<Character> SPELL_PLACES =  Arrays.asList('b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l');
 
     public static int getQuestByMobSkin(int mobSkin) {
         for (int v = 0; v < HUNTING_QUESTS.length; v++)

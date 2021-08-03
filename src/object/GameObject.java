@@ -1071,29 +1071,34 @@ public class GameObject {
                 stats += ",";
 
             //World.world.logger.trace( ""+Integer.toHexString(entry.getKey())+" "+statsstr +" "+ add+ " "+ entry.getValue());
-            if (Integer.toHexString(entry.getKey()).compareTo(statsstr) == 0) {
-                int newstats = 0;
-                @SuppressWarnings("unused")
-                int newstats2 = 0;
-                //World.world.logger.trace( "Negative ? " + negatif);
-                if (negatif) {
-                    newstats = entry.getValue() - add;
-                    if (add < 1)
-                        continue;
+            if(entry.getKey() < 970 | entry.getKey() > 974) {
+                if (Integer.toHexString(entry.getKey()).compareTo(statsstr) == 0) {
+                    int newstats = 0;
+                    @SuppressWarnings("unused")
+                    int newstats2 = 0;
+                    //World.world.logger.trace( "Negative ? " + negatif);
+                    if (negatif) {
+                        newstats = entry.getValue() - add;
+                        if (add < 1)
+                            continue;
+                    } else {
+                        newstats = entry.getValue() + add;
+                    }
+                    String jet = "0d0+" + newstats;
+                    stats += Integer.toHexString(entry.getKey()) + "#"
+                            + Integer.toHexString(newstats) + "#0#0#"
+                            + jet;
                 } else {
-                    newstats = entry.getValue() + add;
+
+                    String jet = "0d0+" + entry.getValue();
+                    stats += Integer.toHexString(entry.getKey()) + "#"
+                            + Integer.toHexString(entry.getValue()) + "#0#0#" + jet;
+
+                    //World.world.logger.trace( ""+entry.getKey()+" "+statsstr +" "+ add+ " "+ entry.getValue());
                 }
-                String jet = "0d0+" + newstats;
-                stats += Integer.toHexString(entry.getKey()) + "#"
-                        + Integer.toHexString(newstats) + "#0#0#"
-                        + jet;
-            } else {
-
-                String jet = "0d0+" + entry.getValue();
-                stats += Integer.toHexString(entry.getKey()) + "#"
-                        + Integer.toHexString(entry.getValue()) + "#0#0#" + jet;
-
-                //World.world.logger.trace( ""+entry.getKey()+" "+statsstr +" "+ add+ " "+ entry.getValue());
+            } else
+            {
+                stats += Integer.toHexString(entry.getKey()) + "#0#0#" + entry.getValue();
             }
             isFirst = false;
         }
@@ -1101,8 +1106,17 @@ public class GameObject {
         for (Entry<Integer, String> entry : this.txtStats.entrySet()) {
             if (!isFirst)
                 stats += ",";
-                stats += Integer.toHexString(entry.getKey()) + "#0#0#0#"
-                        + entry.getValue();
+                if(entry.getKey() < 970 ||entry.getKey() > 974) {
+                    if(entry.getKey() != Constant.APPARAT_ITEM)
+                    {
+                        stats += Integer.toHexString(entry.getKey()) + "#0#0#" + entry.getValue();
+                    }
+                    stats += Integer.toHexString(entry.getKey()) + "#0#0#0#"
+                            + entry.getValue();
+                }
+                else{
+                    stats += Integer.toHexString(entry.getKey()) + "#0#0#" + entry.getValue();
+                }
                 isFirst = false;
         }
         // World.world.logger.trace( ""+stats);
@@ -1278,16 +1292,18 @@ public class GameObject {
         if (keys.size() > 1) {
             for (Integer i : keys) // On cherche un OverFM
             {
-                //if(i == 121){
-                //	i = 112;
-                //}
-                int value = statsObj.get(i);
-                if (this.isOverFm(i, value)) {
-                    key = i;
-                    //System.out.println(value + " On est over" + i);
-                    break;
+                if(i < 970 | i > 974) {
+                    //if(i == 121){
+                    //	i = 112;
+                    //}
+                    int value = statsObj.get(i);
+                    if (this.isOverFm(i, value)) {
+                        key = i;
+                        //System.out.println(value + " On est over" + i);
+                        break;
+                    }
+                    p++;
                 }
-                p++;
             }
             if (key > 0) // On place l'OverFm en tï¿½te de liste pour ï¿½tre niquï¿½
             {
@@ -1386,8 +1402,19 @@ public class GameObject {
         for (Entry<Integer, String> entry : obj.txtStats.entrySet()) {
             if (first)
                 stats += ",";
-            stats += Integer.toHexString((entry.getKey())) + "#0#0#0#"
-                    + entry.getValue();
+            if(entry.getKey() < 970 | entry.getKey() > 974) {
+                if(entry.getKey() == Constant.APPARAT_ITEM)
+                {
+                    stats += Integer.toHexString(entry.getKey()) + "#0#0#" + entry.getValue();
+                }
+                else {
+                    stats += Integer.toHexString((entry.getKey())) + "#0#0#0#"
+                            + entry.getValue();
+                }
+            }
+            else{
+                stats += Integer.toHexString(entry.getKey()) + "#0#0#" + entry.getValue();
+            }
             first = true;
         }
         return stats;

@@ -855,11 +855,7 @@ public class Action {
                         return true;
 
                     long TotalXp = player.getExp() + XpAdd;
-<<<<<<< HEAD
                     player.addXp(TotalXp);
-=======
-                    player.addXp(XpAdd);
->>>>>>> cc51efd49957522c18c91624a5886da5daca680b
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();

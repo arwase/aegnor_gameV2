@@ -214,12 +214,7 @@ public class SpellEffect {
 					case 607://Chatiment (ancien)
 					case 608:
 					case 609:
-						stat = buff.getValue();
-						jet = Formulas.getRandomJet(buff.getJet());
-						target.addBuff(stat, jet, -1, -1, false, buff.getSpell(), buff.getArgs(), caster, true);
-						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, stat, caster.getId() + "", target.getId() + "," + jet + "," + -1, elementId);
-						break;
-					case 611://Chatiment (ancien)
+					case 611:
 						stat = buff.getValue();
 						jet = Formulas.getRandomJet(buff.getJet());
 						target.addBuff(stat, jet, -1, -1, false, buff.getSpell(), buff.getArgs(), caster, true);
@@ -651,6 +646,9 @@ public class SpellEffect {
 			case 186://Diminue les dommages %
 				applyEffect_186(fight, cibles);
 				break;
+			case 200: //Contrôle Invocation
+				applyEffect_200(fight, caster, cell);
+				break;
 			case 202://Perception
 				applyEffect_202(fight, cibles);
 				break;
@@ -789,6 +787,85 @@ public class SpellEffect {
 		}
 	}
 
+	private void applyEffect_200(Fight fight, Fighter acaster, GameCase CaseObjectif) {
+			if (acaster.nbrInvoc >= acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)) {
+				SocketManager.GAME_SEND_Im_PACKET(
+						acaster.getPlayer(),
+						"0CANT_SUMMON_MORE_CREATURE;" + acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)
+				);
+				return;
+			}
+			if (effectID == 405) { // mata para invocar
+				if (CaseObjectif.getFirstFighter() != null) {
+					fight.onFighterDie(CaseObjectif.getFirstFighter(), acaster);
+				}
+			}
+			if (!CaseObjectif.isWalkable(true)) {
+				SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(fight, 7, "1CELDA_NO_CAMINABLE");
+				SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
+				return;
+			}
+			if (CaseObjectif.getFirstFighter() != null) {
+				SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 151, acaster.getId() + "", spell + "");
+				SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
+				return;
+			}
+			int mobID = 0;
+			int mobNivel = 0;
+			try {
+				mobID = Integer.parseInt(args.split(";")[0]);
+				mobNivel = Integer.parseInt(args.split(";")[1]);
+			} catch (Exception ignored) {
+			}
+			MobGrade mob = null;
+			var idInvocacion = fight.getSigIDFighter();
+			mob = World.world.getMonstre(mobID).getGradeByLevel(mobNivel);
+		mob.setInFightID(fight.getNextLowerFighterGuid());
+		/*if (caster.getPlayer() != null) {
+			mob.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
+		}*/
+		Player mobControlable = Player.crearInvoControlable(acaster.getFight().getSigIDFighter(), mob, acaster);
+			var invocacion = new Fighter(fight, mobControlable);
+			try {
+				acaster.getPlayer().addCompagnon(invocacion.getPlayer());
+				invocacion.getPlayer().addCompagnon(acaster.getPlayer());
+				invocacion.setInvocator(acaster);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			mobControlable.setFight(fight);
+			invocacion.setTeam(caster.getTeam());
+			invocacion.setCell(CaseObjectif);
+			invocacion.setControllable(true);
+			fight.getMap().getCase(cell.getId()).addFighter(invocacion);
+			fight.getOrderPlaying().add((fight.getOrderPlaying().indexOf(caster) + 1), invocacion);
+			fight.addFighterInTeam(invocacion, caster.getTeam());
+			String gm = invocacion.getGmPacket('+', true).substring(3);
+			String gtl = fight.getGTL();
+			TimerWaiter.addNext(() -> {
+			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 181, caster.getId() + "", gm, this.effectID);
+			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId() + "", gtl, this.effectID);
+			caster.nbrInvoc++;
+			this.checkTraps(fight, invocacion);
+			}, this.caster != null && this.caster.getMob() != null ? 1000 : 0, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+			/*if (AtlantaMain.PARAM_MOSTRAR_STATS_INVOCACION) {
+				val str = StringBuilder()
+				str.append("<b>Stats de l'invocation[</b>")
+				str.append("<b>Force:</b> ")
+						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_FUERZA))
+						.append(", ")
+				str.append("<b>Intel:</b> ")
+						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_INTELIGENCIA)).append(", ")
+				str.append("<b>Chance:</b> ")
+						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_SUERTE))
+						.append(", ")
+				str.append("<b>Agilité:</b> ")
+						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_AGILIDAD)).append("<b>]</b>")
+				ENVIAR_cs_CHAT_MENSAJE_A_PELEA(pelea, str.toString(), Constantes.COLOR_NARANJA)
+			}*/
+			checkTraps(fight, invocacion);
+	}
+
 
 	private void applyEffect_4(Fight fight, ArrayList<Fighter> cibles) {
 		if (turns > 1)
@@ -853,7 +930,7 @@ public class SpellEffect {
 				if (newCellId == 0)
 					return;
 				if (newCellId < 0) {
-					int a = -newCellId, factor = Formulas.getRandomJet("1d8+1"); // 2 à 9
+					int a = -newCellId, factor = Formulas.getRandomJet("8d1+8"); // 2 à 9
 					double b = (caster.isInvocation() ? caster.getInvocator().getLvl() : caster.getLvl()) / 50;
 					if (b < 0.1) b = 0.1;
 
@@ -5249,8 +5326,37 @@ public class SpellEffect {
 		this.recursiveCheckTrap(traps, 0, traps.size(), fight, fighter, nbr);
 	}
 
-	private void recursiveCheckTrap(List<Trap> traps, int i, int size, Fight fight, Fighter fighter, short[] nbr) {
-		if(i < size) {
+	private void recursiveCheckTrap(List<Trap> traps,int i, int size, Fight fight, Fighter fighter, short[] nbr) {
+		if(traps.size() > 0)
+		{
+			ArrayList<Trap> traptoExplode = new ArrayList<>();
+			ArrayList<Trap> trapRepuAExploser = new ArrayList<>();
+			for(Trap trap : traps)
+			{
+				if(PathFinding.getDistanceBetween(fight.getMap(), trap.getCell().getId(), fighter.getCell().getId()) <= trap.getSize())
+				{
+					if(trap.getSpellID() == 73)
+					{
+						trapRepuAExploser.add(trap);
+					}
+					else{
+						traptoExplode.add(trap);
+					}
+				}
+			}
+			for(Trap trapsToExplode : traptoExplode)
+			{
+				trapsToExplode.onTraped(fighter);
+				nbr[0]++;
+			}
+
+			for(Trap trapRepu : trapRepuAExploser)
+			{
+				trapRepu.onTraped(fighter);
+				nbr[0]++;
+			}
+		}
+		/*if(i < size) {
 			final Trap trap = traps.get(i);
 			int time = 0;
 
@@ -5260,6 +5366,6 @@ public class SpellEffect {
 				nbr[0]++;
 			}
 			TimerWaiter.addNext(() -> recursiveCheckTrap(traps, i + 1, size, fight, fighter, nbr), time, TimerWaiter.DataType.FIGHT);
-		}
+		}*/
 	}
 }

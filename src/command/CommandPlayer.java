@@ -9,6 +9,7 @@ import common.SocketManager;
 import database.Database;
 import event.EventManager;
 import exchange.ExchangeClient;
+import fight.Fight;
 import fight.arena.FightManager;
 import fight.arena.TeamMatch;
 import game.GameClient;
@@ -25,9 +26,7 @@ import util.lang.Lang;
 
 import javax.xml.crypto.Data;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class CommandPlayer {
 
@@ -75,7 +74,27 @@ public class CommandPlayer {
             } else if (command(msg, "commande")) {
                 SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
                 return true;
-            } else if (command(msg, "sellitem")) {
+            } else if (command(msg, "fightdeblo")) {//180min
+                if (player.getFight() == null){
+
+                    player.sendMessage("Vous n'êtes pas en combat");
+                    return true;
+                }
+                else{
+                    player.sendMessage("Vous avez passez votre tour pour débloquer le combat");
+                    Fight playerFight = player.getFight();
+                    playerFight.getStartTurn();
+                    return true;
+                }
+            } else if(command(msg, "demorph")) {
+                if(player.getGfxId() != player.getClasse() * 10)
+                {
+                    player.setGfxId(player.getClasse() * 10);
+                }
+                else{
+                    SocketManager.GAME_SEND_MESSAGE(player, "Vous avez déjà le bon skin.");
+                }
+            }else if (command(msg, "sellitem")) {
                 if(player.getItems() == null)
                 {
                     SocketManager.GAME_SEND_MESSAGE(player, "Votre Inventaire est vide");
@@ -87,25 +106,25 @@ public class CommandPlayer {
                 }
                 List<GameObject> EquipedObject = player.getEquippedObjects();
                 int kamastoGive = 0;
-                List<GameObject> ObjectToKill = new ArrayList<GameObject>();
+                Map<GameObject, Integer> ObjectToKill = new HashMap<>();
                 for(GameObject object : player.getItems().values())
                 {
                     if(!object.isAttach() && !EquipedObject.contains(object) && Constant.ITEM_TYPE_TO_SELL.contains(object.getTemplate().getType()))
                     {
-                        kamastoGive += (object.getTemplate().getPrice() * 10);
-                        ObjectToKill.add(object);
+                        kamastoGive += (object.getTemplate().getPrice() / 10) * object.getQuantity();
+                        ObjectToKill.put(object, object.getQuantity());
                         /*player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
                         SocketManager.GAME_SEND_Ow_PACKET(player);
                         SocketManager.GAME_SEND_Im_PACKET(player, "022;"
                                 + -object.getQuantity() + "~" + object.getTemplate().getId());*/
                     }
                 }
-                for(GameObject object : ObjectToKill)
+                for(Map.Entry<GameObject, Integer> entry : ObjectToKill.entrySet())
                 {
-                    player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
+                    player.removeByTemplateID(entry.getKey().getTemplate().getId(), entry.getValue());
                     SocketManager.GAME_SEND_Ow_PACKET(player);
                     SocketManager.GAME_SEND_Im_PACKET(player, "022;"
-                            + -object.getQuantity() + "~" + object.getTemplate().getId());
+                            + -entry.getValue() + "~" + entry.getKey().getTemplate().getId());
                 }
                 player.setKamas(player.getKamas() + kamastoGive);
                 Database.getStatics().getPlayerData().update(player);
@@ -166,8 +185,6 @@ public class CommandPlayer {
             }
             else if(command(msg, "shop")){
                 if (player.isInPrison())
-                    return true;
-                if (player.cantTP())
                     return true;
                 if (player.getFight() != null)
                     return true;
@@ -361,8 +378,6 @@ public class CommandPlayer {
                 return true;
             } else if(command(msg, "astrub")){
                 if (player.isInPrison())
-                    return true;
-                if (player.cantTP())
                     return true;
                 if (player.getFight() != null)
                     return true;

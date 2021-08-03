@@ -1,6 +1,7 @@
 package client.other;
 
 import client.Player;
+import entity.monster.Monster;
 import guild.Guild;
 import kernel.Constant;
 
@@ -37,6 +38,15 @@ public class Stats {
             this.effects.put(Constant.STATS_CREATURE, 1);
             this.effects.put(Constant.STATS_ADD_INIT, 1);
         }
+    }
+
+    public Stats(Monster.MobGrade monster)
+    {
+        this.effects.put(Constant.STATS_ADD_PA, monster.getPa());
+        this.effects.put(Constant.STATS_ADD_PM, monster.getPm());
+        this.effects.put(Constant.STATS_ADD_VITA, monster.getPdv());
+        this.effects.put(Constant.STATS_ADD_INIT, monster.getInit());
+        this.effects.putAll(monster.getStats().getEffects());
     }
 
     public Stats(boolean a) { // Parchotage
@@ -78,12 +88,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-<<<<<<< HEAD
             if (id == 112) id = Constant.STATS_ADD_DOMA;
-=======
-
-            if (id == 112) id = Constant.STATS_ADD_DOMA2;
->>>>>>> cc51efd49957522c18c91624a5886da5daca680b
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -93,10 +98,6 @@ public class Stats {
                     return 0;
                 } else this.effects.put(id, newVal);
             }
-<<<<<<< HEAD
-=======
-
->>>>>>> cc51efd49957522c18c91624a5886da5daca680b
         if(this.effects.containsKey(id)) {
             return this.effects.get(id);
         }
@@ -213,21 +214,11 @@ public class Stats {
                 val = Constant.STATS_ADD_VIE;
                 break;
             case Constant.STATS_ADD_DOMA:
-                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
-                if (this.effects.get(Constant.STATS_REM_DOMA) != null)
-                    val -= this.effects.get(Constant.STATS_REM_DOMA);
-<<<<<<< HEAD
-                if(this.effects.get(Constant.STATS_ADD_DOMA2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
-=======
-                break;
             case Constant.STATS_ADD_DOMA2:
                 if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
                     val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
->>>>>>> cc51efd49957522c18c91624a5886da5daca680b
                 break;
             case Constant.STATS_ADD_PODS:
                 if (this.effects.get(Constant.STATS_REM_PODS) != null)

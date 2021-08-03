@@ -229,6 +229,9 @@ public class Player {
     public boolean noitems = false;
     public boolean passturn = false;
     public boolean boutique =  false;
+    public boolean isInvocControlable = false;
+    private ArrayList<Player> compagnon = new ArrayList<>();
+    private Fighter currentCompagnon = null;
     //Systeme de Maitre
     //Commande .maitre
     public List<Player> PlayerList1 = new ArrayList<Player>();
@@ -566,14 +569,112 @@ public class Player {
         return perso;
     }
 
+    //controlable
+    public Player(final int id, final Monster.MobGrade mobModelo, Fighter caster) {
+        Stats stats = new Stats(mobModelo);
+        int  PDV = mobModelo.getPdv();
+        this.id = id;
+        name = mobModelo.getTemplate().getName();
+        classe = Constant.CLASS_MULTIMAN;
+        level = mobModelo.getLevel();
+        gfxId = mobModelo.getTemplate().getGfxId();
+        _size = 100;
+        this.stats = stats;
+        maxPdv = curPdv = PDV;
+        modifStatByInvocator(caster, mobModelo);
+        account = null;
+        restriction = null;
+        int i = 0;
+        for (Entry<Integer, Spell.SortStats> entry : mobModelo.getSpells().entrySet()) {
+            Spell.SortStats st = entry.getValue();
+            if (st == null) {
+                continue;
+            }
+            learnSpell(st.getSpellID(), st.getLevel(), Constant.SPELL_PLACES.get(i));
+            i++;
+        }
+        _saveSorts.putAll(mobModelo.getSpells());
+    }
+    public void modifStatByInvocator(Fighter caster, Monster.MobGrade MobModelo) {
+        float taux = (1.0F + (caster.getLvl()) / 100.0F);
+        int life = Math.round(MobModelo.getPdvMax() * taux);
+        this.curPdv = life;
+        this.maxPdv = this.curPdv;
+        int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
+        int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
+        int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
+        int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
+        int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+        this.stats.addOneStat(Constant.STATS_ADD_FORC, -(this.stats.get(Constant.STATS_ADD_FORC)));
+        this.stats.addOneStat(Constant.STATS_ADD_INTE, -(this.stats.get(Constant.STATS_ADD_INTE)));
+        this.stats.addOneStat(Constant.STATS_ADD_AGIL, -(this.stats.get(Constant.STATS_ADD_AGIL)));
+        this.stats.addOneStat(Constant.STATS_ADD_SAGE, -(this.stats.get(Constant.STATS_ADD_SAGE)));
+        this.stats.addOneStat(Constant.STATS_ADD_CHAN, -(this.stats.get(Constant.STATS_ADD_CHAN)));
+        this.stats.addOneStat(Constant.STATS_ADD_FORC, force);
+        this.stats.addOneStat(Constant.STATS_ADD_INTE, intel);
+        this.stats.addOneStat(Constant.STATS_ADD_AGIL, agili);
+        this.stats.addOneStat(Constant.STATS_ADD_SAGE, sages);
+        this.stats.addOneStat(Constant.STATS_ADD_CHAN, chanc);
+    }
+
+
+    public static Player crearInvoControlable(final int id, final Monster.MobGrade grado, Fighter acaster) {
+        Player multiman = new Player(id, grado, acaster);
+        multiman.isInvocControlable  = true;
+        return multiman;
+    }
+
     public static String getCompiledEmote(List<Integer> i) {
         int i2 = 0;
         for (Integer b : i) i2 += (2 << (b - 2));
         return i2 + "|0";
     }
 
+    public void setCurrentCompagnon(Fighter fighter)
+    {
+        currentCompagnon = fighter;
+    }
+
+    public Fighter getCurrentCompagnon() {return currentCompagnon; }
+
+    public void deleteCurrentCompagnon()
+    {
+        currentCompagnon = null;
+    }
+
     public int getisParcho() { return isParcho;}
     public void setisParcho(int activate) { this.isParcho = activate;}
+
+    public ArrayList<Player> getAllCompagnons()
+    {
+        return compagnon;
+    }
+
+    public Player getCompagnon(Player player)
+    {
+        for(Player p : compagnon)
+        {
+            if(p == player)
+            {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    public void addCompagnon(Player player)
+    {
+        compagnon.add(player);
+    }
+
+    public boolean isMultiman()
+    {
+        if(classe == Constant.CLASS_MULTIMAN)
+        {
+            return true;
+        }
+        return false;
+    }
 
     //CLONAGE
     public static Player ClonePerso(Player P, int id, int pdv) {
@@ -1317,8 +1418,8 @@ public class Player {
             return;
         }
 
-        if (!_sorts.containsKey(Integer.valueOf(spell))) {
-            _sorts.put(Integer.valueOf(spell), World.world.getSort(spell).getStatsByLevel(level));
+        if (!_sorts.containsKey(spell)) {
+            _sorts.put(spell, World.world.getSort(spell).getStatsByLevel(level));
             replace_SpellInBook(pos);
             _sortsPlaces.remove(spell);
             _sortsPlaces.put(spell, pos);
@@ -1982,8 +2083,6 @@ public class Player {
                     str.append(Integer.toHexString(object.getTemplate().getId()));
                 }
             } else {
-                int st = Integer.parseInt(String.valueOf(obvi), 16);
-                String st2 = Integer.toHexString(obvi);
                 str.append(Integer.toHexString(obvi)).append("~16~").append(object.getObvijevanLook());
             }
         }
@@ -1997,7 +2096,14 @@ public class Player {
 
             Integer obvi = object.getStats().getEffects().get(970);
             if (obvi == null) {
-                str.append(Integer.toHexString(object.getTemplate().getId()));
+                String mimibiote = object.getTxtStat().get(915);
+                if(mimibiote != null)
+                {
+                    str.append(Integer.toHexString(Integer.parseInt(mimibiote)));
+                }
+                else {
+                    str.append(Integer.toHexString(object.getTemplate().getId()));
+                }
             } else {
                 str.append(Integer.toHexString(obvi)).append("~17~").append(object.getObvijevanLook());
             }
@@ -2007,15 +2113,29 @@ public class Player {
 
         object = getObjetByPos(Constant.ITEM_POS_FAMILIER);
 
-        if (object != null)
-            str.append(Integer.toHexString(object.getTemplate().getId()));
+        if (object != null) {
+            object.parseStatsString();
+            String mimibiote = object.getTxtStat().get(915);
+            if (mimibiote != null) {
+                str.append(Integer.toHexString(Integer.parseInt(mimibiote)));
+            } else {
+                str.append(Integer.toHexString(object.getTemplate().getId()));
+            }
+        }
 
         str.append(",");
 
         object = getObjetByPos(Constant.ITEM_POS_BOUCLIER);
 
-        if (object != null)
-            str.append(Integer.toHexString(object.getTemplate().getId()));
+        if (object != null) {
+            object.parseStatsString();
+            String mimibiote = object.getTxtStat().get(915);
+            if (mimibiote != null) {
+                str.append(Integer.toHexString(Integer.parseInt(mimibiote)));
+            } else {
+                str.append(Integer.toHexString(object.getTemplate().getId()));
+            }
+        }
 
         return str.toString();
     }
@@ -2136,19 +2256,12 @@ public class Player {
         final int[] statsArray = {111, 128, 118, 125, 124, 123, 119, 126, 117, 182, 112, 142, 165, 138, 178, 225, 226, 220, 115,
                 122, 160, 161, 244, 214, 264, 254, 240, 210, 260, 250, 241, 211, 261, 251, 242, 212, 262, 252, 243, 213, 263, 253};
         for (final int s : statsArray) {
-            if (fight != null && s == 182) {
-                base = 99;
-                equipement = 99;
-                bendMald = 99;
-                buff = 99;
-                total = 99;
-            } else {
                 base = stats.getEffect(s);
                 equipement = stuffStats.getEffect(s);
                 bendMald = donStats.getEffect(s);
                 buff = buffStats.getEffect(s);
                 total = totalStats.getEffect(s);
-            }
+
             str.append(base).append(",").append(equipement).append(",").append(bendMald).append(",").append(buff).append(",").append(total).append("|");
         }
         return str.toString();
@@ -5481,7 +5594,7 @@ public class Player {
                         String[] split = stat.split("#");
                         int effect = Integer.parseInt(split[0], 16), spell = Integer.parseInt(split[1], 16);
                         int value = Integer.parseInt(split[3], 16);
-                        if(effect == 289)
+                        if(effect == 289 || effect == 282 || effect == 288)
                             value = 1;
                         SocketManager.SEND_SB_SPELL_BOOST(this, effect + ";" + spell + ";" + value);
                         addObjectClassSpell(spell, effect, value);

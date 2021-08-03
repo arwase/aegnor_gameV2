@@ -34,7 +34,7 @@ public class Boutique {
             }
             else{
 
-                stats = obj.generateNewStatsFromTemplate(obj.getStrTemplate(), true,0);
+                stats = obj.generateNewStatsFromTemplate(obj.getStrTemplate(), true,3);
             }
             items.append(obj.getId()).append(";").append(stats.parseToItemSetStats()).append(";").append(obj.getPoints()).append("|");
         }

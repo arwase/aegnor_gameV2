@@ -405,13 +405,13 @@ public class ObjectTemplate {
 
                 if(rarity < 1) {
                     if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, getType() ) ) {
-                        rarete = rarity;
+                        rarete = GameObject.getAleaRarity();
                     }
                 }
                 else {
                     if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, getType() ) )
                     {
-                        rarete = GameObject.getAleaRarity();
+                        rarete = rarity;
                     }
                 }
                 item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(getStrTemplate(), useMax, rarete), getEffectTemplate(getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarete, -1);

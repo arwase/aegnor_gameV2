@@ -54,6 +54,11 @@ public class Trap {
         return this.color;
     }
 
+    public int getSpellID() { return spell;}
+
+    public SortStats getTrapSpell() { return trapSpell;
+    }
+
     public void desappear() {
         StringBuilder str = new StringBuilder();
         StringBuilder str2 = new StringBuilder();

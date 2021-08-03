@@ -1578,6 +1578,10 @@ public class Function {
         if (target == null)
             return false;
         SortStats SS = null;
+        if(target.getFightBuff().isEmpty())
+        {
+            return false;
+        }
         for(SortStats spell : fighter.getMob().getSpells().values()) {
             for(SpellEffect spellEffect : spell.getEffects())
             {
@@ -2035,8 +2039,13 @@ public class Function {
         if (PathFinding.isNextTo(map, cell.getId(), cell2.getId()))
             return 0;
         int nbrcase = 0;
-
-        int cellID = PathFinding.getNearestligneGA(fight, cell2.getId(), cell.getId(), null, dist);
+        ArrayList<GameCase> forbiddens = new ArrayList<>();
+        Map<Integer, Fighter> allies = fight.getTeam(F.getTeam());
+        for(Fighter alier : allies.values())
+        {
+            forbiddens.add(alier.getCell());
+        }
+        int cellID = PathFinding.getNearestligneGA(fight, cell2.getId(), cell.getId(), forbiddens, dist);
         //On demande le chemin plus court
         //Mais le chemin le plus court ne prend pas en compte les bords de map.
         if (cellID == -1)
@@ -2044,7 +2053,7 @@ public class Function {
             Map<Integer, Fighter> ennemys = getLowHpEnnemyList(fight, F);
             for (Map.Entry<Integer, Fighter> target : ennemys.entrySet())
             {
-                int cellID2 = PathFinding.getNearestligneGA(fight, target.getValue().getCell().getId(), cell.getId(), null, dist);
+                int cellID2 = PathFinding.getNearestligneGA(fight, target.getValue().getCell().getId(), cell.getId(), forbiddens, dist);
                 if (cellID2 != -1)
                 {
                     cellID = cellID2;
@@ -2060,13 +2069,27 @@ public class Function {
         boolean ligneok = false;
         for (int a = 0; a < F.getCurPm(fight); a++)
         {
+            boolean contains1AlliesinLine = false;
             if (path.size() == a)
                 break;
-            if(ligneok == true)
+            if(ligneok)
                 break;
-            if(PathFinding.casesAreInSameLine(fight.getMap(), path.get(a).getId(), T.getCell().getId(), 'z', 70))
-                ligneok = true;
-            finalPath.add(path.get(a));
+            if(PathFinding.casesAreInSameLine(fight.getMap(), path.get(a).getId(), T.getCell().getId(), 'z', 70)) {
+                for (Fighter allie : allies.values()) {
+                    if (!PathFinding.casesAreInSameLine(fight.getMap(), T.getCell().getId(), allie.getCell().getId(), 'z', 70)) {
+                        ligneok = true;
+                    } else {
+                        contains1AlliesinLine = true;
+                    }
+                }
+                if(!contains1AlliesinLine) {
+                    finalPath.add(path.get(a));
+                }
+                else
+                {
+                    return 2;
+                }
+            }
         }
         String pathstr = "";
         try
@@ -2633,7 +2656,7 @@ public class Function {
     public int attackIfPossible(Fight fight, Fighter fighter, List<SortStats> Spell)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null)
-            return 0;
+            return -1;
         Map<Integer, Fighter> ennemyList = getLowHpEnnemyList(fight, fighter);
         SortStats SS = null;
         Fighter target = null;
@@ -2673,7 +2696,7 @@ public class Function {
         else
         {
             if (SS == null)
-                return 0;
+                return -1;
             if(target != null) {
                 int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
                 if (attack != 0) {

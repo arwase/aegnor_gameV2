@@ -439,7 +439,8 @@ public class PathFinding {
             int nextCase = GetCaseIDFromDirrection(id, dir, map, true);
 
             for (Trap trap : fight.getAllTraps()) {
-                if (getDistanceBetweenTwoCase(map, trap.getCell(), map.getCase(nextCase)) <= trap.getSize()) {
+                int val = getDistanceBetweenTwoCase(map, trap.getCell(), map.getCase(nextCase));
+                if (getDistanceBetweenTwoCase(map, trap.getCell(), map.getCase(nextCase)) >= trap.getSize()) {
                     id = nextCase;
                     b = true;
                 }

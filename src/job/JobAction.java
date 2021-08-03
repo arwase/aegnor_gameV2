@@ -1171,7 +1171,6 @@ public class JobAction {
             return;
         }
 
-
         if(runeOrPotion.getTemplate().getId() == 17200){
 
             if (SM == null || objectFm == null) {
@@ -1513,6 +1512,18 @@ public class JobAction {
                     if( (statJetActuel*poidUnitaire)+poidRune > limitPerLigne ) {
                         this.player.sendMessage("Cette statistique ne montra pas plus haut");
                         canFM = false;
+                    }
+                }
+
+                if(objectFm.getTemplate().getPanoId() == 163 || objectFm.getTemplate().getPanoId() == 164)
+                {
+                    if(objectFm.getRarity() <= 3)
+                    {
+                        limitPerLigne = 351;
+                    }
+                    if(objectFm.getRarity() > 3)
+                    {
+                        limitPerLigne = 451;
                     }
                 }
 

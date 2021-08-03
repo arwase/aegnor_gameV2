@@ -3185,10 +3185,10 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(str);
                 return;
             }
-            if(team == 1) {
+            if(team == 2) {
                 team = 0;
             }
-            if(team == 2)
+            if(team == 1)
             {
                 team = 1;
             }

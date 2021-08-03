@@ -61,6 +61,7 @@ public class Fighter implements Comparable<Fighter> {
     private Map<Integer, Integer> chatiValue = new HashMap<Integer, Integer>();
     private ArrayList<LaunchedSpell> launchedSpell = new ArrayList<LaunchedSpell>();
     public World.Couple<Byte, Long> killedBy;
+    public boolean isControllable = false;
 
     public Fighter(Fight f, Monster.MobGrade mob) {
         this.fight = f;
@@ -170,6 +171,13 @@ public class Fighter implements Comparable<Fighter> {
         return null;
     }
 
+    public void setControllable(boolean state)
+    {
+        isControllable = state;
+    }
+
+    public boolean isControllable() {return isControllable;}
+
     public boolean isCollector() {
         return (this.collector != null);
     }
@@ -244,6 +252,12 @@ public class Fighter implements Comparable<Fighter> {
         if (pdv > 0)
             this.getFight().getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> challenge.onFighterAttacked(caster, this));
         this.pdv -= pdv;
+    }
+
+    public boolean isMultiman() {
+        if(this.getPlayer() != null)
+            return this.getPlayer().isMultiman();
+        return false;
     }
 
     public void fullPdv() {

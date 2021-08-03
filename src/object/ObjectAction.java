@@ -727,7 +727,16 @@ public class ObjectAction {
                         break;
                     case 36 : // Mimibiote
                     {
+                        if(player.getFight() != null) {
+                            player.sendMessage("Vous ne pouvez pas utiliser un Mimibiote en combat");
+                            return;
+                        }
+                        GameObject object1 = World.world.getObjTemplate(4).createNewItem(1, false,0);
+                        if (player.addObjet(object1, true))
+                            World.world.addGameObject(object1, true);
+                        SocketManager.GAME_SEND_Ow_PACKET(player);
                         SocketManager.send(player, "XM");
+                        break;
                     }
                 }
                 turn++;
