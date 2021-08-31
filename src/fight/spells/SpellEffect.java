@@ -4039,6 +4039,7 @@ public class SpellEffect {
 		int cell = this.cell.getId();
 		if (!this.cell.getFighters().isEmpty())
 			return;
+
 		int id = fight.getNextLowerFighterGuid();
 		Player clone = Player.ClonePerso(caster.getPlayer(), -id - 10000, (caster.getPlayer().getMaxPdv() - ((caster.getLvl() - 1) * 5 + 50)));
 		clone.setFight(fight);
