@@ -1662,7 +1662,34 @@ public class Fight {
 
         Fighter current = this.getFighterByOrdreJeu();
 
-        if(current == this.getOrderPlaying().get(0))
+        if(current.isControllable())
+        {
+
+            current.getInvocator().getPlayer().setCurrentCompagnon(current);
+            if(current.isInvocation()) {
+                SocketManager.send(current.getInvocator().getPlayer(), "SC");
+                SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getId());
+                SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, current.getInvocator().getPlayer());
+                SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
+                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+
+            }
+        }
+        else{
+            if(current.getPlayer() != null) {
+                if (current.getPlayer().getCurrentCompagnon() != null) {
+                    current.getPlayer().deleteCurrentCompagnon();
+
+                }
+                SocketManager.send(current.getPlayer(), "SC");
+                SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
+                SocketManager.GAME_SEND_SL_LISTE(current);
+            }
+        }
+
+        if(current == this.getOrderPlaying().get(0) && !current.isControllable() )
         {
             turnTotal++;
         }
@@ -1691,8 +1718,10 @@ public class Fight {
             endTurn(false, current);
             return;
         }
-        // On actualise les sorts launch
-        current.refreshLaunchedSort();
+
+
+
+
         // reset des Max des Chatis
         current.getChatiValue().clear();
 
@@ -1713,36 +1742,17 @@ public class Fight {
             endTurn(false, current);
             return;
         }
+        //System.out.println("Ici");
 
-        if(current.isControllable())
-        {
-            /*if(current.isInvocation())
-            {
-                SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
-                SocketManager.GAME_SEND_SL_LISTE_SORTS_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
-                SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-            }*/
-            current.getInvocator().getPlayer().setCurrentCompagnon(current);
-            SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
-            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-            SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getId());
-            SocketManager.GAME_SEND_SL_LISTE_SORTS_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
 
-        }
-        else{
-            if(current.getPlayer() != null) {
-                if (current.getPlayer().getCurrentCompagnon() != null) {
-                    current.getPlayer().deleteCurrentCompagnon();
-                    SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-                }
-                SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
-                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                SocketManager.GAME_SEND_SL_LISTE_SORTS(current.getPlayer());
-            }
-        }
 
+        current.refreshLaunchedSort();
         SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
         current.setCanPlay(true);
+
+        // On actualise les sorts launch
+
+
         this.turn = new Turn(this, current);
 
         // Gestion des glyphes
@@ -1791,6 +1801,15 @@ public class Fight {
 
     public synchronized void endTurn(boolean onAction, Fighter f) {
         final Fighter current = this.getFighterByOrdreJeu();
+
+        if(current.isInvocation() && current.isControllable() ){
+            SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getInvocator().getPlayer(), current.getInvocator().getPlayer());
+            SocketManager.GAME_SEND_STATS_PACKET(current.getInvocator().getPlayer());
+            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current.getInvocator());
+            SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getInvocator().getId());
+            SocketManager.GAME_SEND_SL_LISTE(current.getInvocator());
+        }
+
         if (current != null)
             if (f == current)
                 this.endTurn(onAction);
@@ -1800,6 +1819,8 @@ public class Fight {
         final Fighter current = this.getFighterByOrdreJeu();
         if (current == null)
             return;
+
+
 
         try {
             if (getState() >= Constant.FIGHT_STATE_FINISHED)
@@ -3731,7 +3752,7 @@ public class Fight {
                     SocketManager.ENVIAR_AI_CAMBIAR_ID(player, player.getId());
                 }
                 SocketManager.GAME_SEND_STATS_PACKET(player);
-                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, fighter);
+               // SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, fighter);
                 SocketManager.GAME_SEND_SL_LISTE_SORTS(player);
 
                 if (!player.getCurCell().isWalkable(true))
@@ -4847,7 +4868,7 @@ public class Fight {
                             Player chief = target.getSlaveLeader();
                             if(chief != null){ // Si le chef a noitem
                                 if(chief.noitems ){
-                                    if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() )){
+                                    if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() ) && objectTemplate.getType() != 23 ){
                                         //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
                                         continue;
                                     }
@@ -4856,7 +4877,7 @@ public class Fight {
                             }
 
                             if( target.noitems){ // Si la cible a noitem
-                                if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() )){
+                                if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() ) && objectTemplate.getType() != 23 ){
                                     //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
                                     continue;
                                 }

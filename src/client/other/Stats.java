@@ -88,7 +88,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-            if (id == 112) id = Constant.STATS_ADD_DOMA;
+            if (id == 112) id = Constant.STATS_ADD_DOMA2;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -105,8 +105,33 @@ public class Stats {
             return 0;
         }
     }
+    public boolean isSameStats(Stats other) { //Compare uniquement les stats de l'item sans les degat de l'arme
 
-    public boolean isSameStats(Stats other) {
+
+        //String stats = this.parseToItemSetStats();
+        //String stats2 = other.parseToItemSetStats();
+
+        //System.out.println("stats" + stats);
+        //System.out.println("stats2" + stats2);
+        /* Map<Integer, Integer> stats1 = this.getEffects();
+        Map<Integer, Integer> stats3 = this.getEffects();
+
+        for (Entry<Integer, Integer> entry : stats1.entrySet()) {
+            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
+        }
+
+        for (Entry<Integer, Integer> entry : stats3.entrySet()) {
+            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
+        }*/
+
+/*
+        if(!stats.equals(stats2)){
+            return false;
+        }
+        else{
+            return true;
+        }*/
+
         if(this.effects.size() == 0 && other.getEffects().size() == 0)
         {
             return true;
@@ -214,11 +239,11 @@ public class Stats {
                 val = Constant.STATS_ADD_VIE;
                 break;
             case Constant.STATS_ADD_DOMA:
-            case Constant.STATS_ADD_DOMA2:
-                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 if (this.effects.get(Constant.STATS_REM_DOMA) != null)
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
+                break;
+            case Constant.STATS_ADD_DOMA2:
+                val = Constant.STATS_ADD_DOMA2;
                 break;
             case Constant.STATS_ADD_PODS:
                 if (this.effects.get(Constant.STATS_REM_PODS) != null)

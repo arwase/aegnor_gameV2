@@ -1042,4 +1042,8 @@ public class Fighter implements Comparable<Fighter> {
     public int compareTo(Fighter t) {
         return ((this.getPros() > t.getPros() && !this.isInvocation()) ? 1 : 0);
     }
+
+    public ArrayList<LaunchedSpell> getLaunchedSpell() {
+        return this.launchedSpell;
+    }
 }

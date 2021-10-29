@@ -436,6 +436,7 @@ public class Formulas {
         int multiplier = 0;
         if (!isHeal) {
             domC = caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA);
+            domC +=	caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA2);
             perdomC = caster.getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
             multiplier = caster.getTotalStats().getEffect(Constant.STATS_MULTIPLY_DOMMAGE);
             if (caster.hasBuff(114))

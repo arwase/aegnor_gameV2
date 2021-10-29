@@ -14,6 +14,7 @@ import entity.mount.Mount;
 import entity.npc.Npc;
 import fight.Fight;
 import fight.Fighter;
+import fight.spells.LaunchedSpell;
 import game.GameClient;
 import game.world.World;
 import guild.Guild;
@@ -2778,10 +2779,14 @@ public class SocketManager {
     }
 
     public static void ENVIAR_GM_LUCHADORES_A_PERSO2(GameMap map, Fighter fighter) {
+        if(map == null) {
+            return;
+        }
         String packet = map.getFighterGMPacket(fighter);
         if (packet.isEmpty()) {
             return;
         }
+
         send(fighter.getPlayer(), packet);
     }
 
@@ -2803,5 +2808,43 @@ public class SocketManager {
     public static void GAME_SEND_EHl(Player player, String str) {
         String packet = "EHl" + str;
         send(player, packet);
+    }
+
+    public static void GAME_SEND_SL_LISTE_FROM_INVO(Fighter invoc, Player leader) {
+        var packet = "SL" + invoc.getPlayer().stringListeSorts();
+        send(leader, packet);
+        StringBuilder p = new StringBuilder();
+        if (invoc.getLaunchedSpell() != null) {
+            if ((long) invoc.getLaunchedSpell().size() > 0) {
+                for (LaunchedSpell launchedSpell : invoc.getLaunchedSpell()) {
+                    if (launchedSpell.getCooldown() > 0) {
+                        p.append("SLA").append(invoc.getId()).append(",").append(launchedSpell.getSpellId()).append(",").append(invoc.getCell().getId()).append(",").append(launchedSpell.getCooldown());
+                        send(leader, p.toString());
+                        p = new StringBuilder();
+                    }
+                }
+            }
+        }
+    }
+    public static void GAME_SEND_SL_LISTE(Fighter leader) {
+        var packet = "SL" + leader.getPlayer().stringListeSorts();
+        send(leader.getPlayer(), packet);
+        StringBuilder p = new StringBuilder();
+        if (leader.getLaunchedSpell() != null) {
+            if ((long) leader.getLaunchedSpell().size() > 0) {
+                for (LaunchedSpell launchedSpell : leader.getLaunchedSpell()) {
+                    if (launchedSpell.getCooldown() > 0) {
+                        p.append("SLA").append(leader.getId()).append(",").append(launchedSpell.getSpellId()).append(",").append(leader.getCell().getId()).append(",").append(launchedSpell.getCooldown());
+                        send(leader.getPlayer(), p.toString());
+                        p = new StringBuilder();
+                    }
+                }
+            }
+        }
+    }
+
+    public static void GAME_SEND_Aa_TURN_LIDER(Player leader, Player player) {
+        String packet = "Aa" + player.getId();
+        send(leader, packet);
     }
 }

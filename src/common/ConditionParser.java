@@ -16,11 +16,12 @@ import quest.QuestPlayer;
 import quest.QuestStep;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class ConditionParser {
 
-    public boolean validConditions(Player perso, String req) {
+    public static boolean validConditions(Player perso, String req) {
         if (req == null || req.equals(""))
             return true;
         if (req.contains("BI"))
@@ -113,7 +114,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveMorph(String c, Player p) {
+    private static boolean haveMorph(String c, Player p) {
         if (c.equalsIgnoreCase(""))
             return false;
         int morph = -1;
@@ -128,7 +129,7 @@ public class ConditionParser {
             return !c.contains("==");
     }
 
-    private boolean haveMetier(String c, Player p) {
+    private static boolean haveMetier(String c, Player p) {
         if (p.getMetiers() == null || p.getMetiers().isEmpty())
             return false;
         for (Entry<Integer, JobStat> entry : p.getMetiers().entrySet()) {
@@ -138,7 +139,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean havePj(String c, Player p) {
+    private static boolean havePj(String c, Player p) {
         if (c.equalsIgnoreCase(""))
             return false;
         for (String s : c.split("\\|\\|")) {
@@ -157,7 +158,7 @@ public class ConditionParser {
     }
 
     //Avoir la qu�te en cours
-    private boolean haveQa(String req, Player player) {
+    private static boolean haveQa(String req, Player player) {
         int id = Integer.parseInt((req.contains("==") ? req.split("==")[1] : req.split("!=")[1]));
         Quest q = Quest.getQuestById(id);
         if (q == null)
@@ -172,7 +173,7 @@ public class ConditionParser {
     }
 
     // �tre � l'�tape id. Elle ne doit pas �tre valid� et celle d'avant doivent l'�tre.
-    private boolean haveQEt(String req, Player player) {
+    private static boolean haveQEt(String req, Player player) {
         int id = Integer.parseInt((req.contains("==") ? req.split("==")[1] : req.split("!=")[1]));
         QuestStep qe = QuestStep.getQuestStepById(id);
         if (qe != null) {
@@ -191,7 +192,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveTiT(String req, Player player) {
+    private static boolean haveTiT(String req, Player player) {
         if (req.contains("==")) {
             String split = req.split("==")[1];
             if (split.contains("&&")) {
@@ -209,7 +210,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveTi(String req, Player player) {
+    private static boolean haveTi(String req, Player player) {
         if (req.contains("==")) {
             String split = req.split("==")[1];
             if (split.contains(",")) {
@@ -226,7 +227,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveCe(String req, Player player) {
+    private static boolean haveCe(String req, Player player) {
         java.util.Map<Integer, Couple<Integer, Integer>> dopeuls = Action.getDopeul();
         GameMap map = player.getCurMap();
         if (dopeuls.containsKey((int) map.getId())) {
@@ -253,7 +254,7 @@ public class ConditionParser {
     }
 
     // Avoir la qu�te en cours.
-    private boolean haveQE(String req, Player player) {
+    private static boolean haveQE(String req, Player player) {
         if (player == null)
             return false;
         int id = Integer.parseInt((req.contains("==") ? req.split("==")[1] : req.split("!=")[1]));
@@ -265,7 +266,7 @@ public class ConditionParser {
         }
     }
 
-    private boolean haveQT(String req, Player player) {
+    private static boolean haveQT(String req, Player player) {
         int id = Integer.parseInt((req.contains("==") ? req.split("==")[1] : req.split("!=")[1]));
 
         QuestPlayer quest = player.getQuestPersoByQuestId(id);
@@ -275,7 +276,7 @@ public class ConditionParser {
             return (quest == null || !quest.isFinish());
     }
 
-    private boolean haveNPC(String req, Player perso) {
+    private static boolean haveNPC(String req, Player perso) {
         switch (perso.getCurMap().getId()) {
             case 9052:
                 if (perso.getCurCell().getId() == 268
@@ -291,7 +292,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveRO(String condition, Player player) {
+    private static boolean haveRO(String condition, Player player) {
         try {
             for (String cond : condition.split("&&")) {
                 String[] split = cond.split("==")[1].split(",");
@@ -311,7 +312,7 @@ public class ConditionParser {
         return false;
     }
 
-    private boolean haveRA(String condition, Player player) {
+    private static boolean haveRA(String condition, Player player) {
         try {
             for (String cond : condition.split("&&")) {
                 String[] split = cond.split("==")[1].split(",");
@@ -326,7 +327,7 @@ public class ConditionParser {
         return true;
     }
 
-    private String havePO(String cond, Player perso)//On remplace les PO par leurs valeurs si possession de l'item
+    private static String havePO(String cond, Player perso)//On remplace les PO par leurs valeurs si possession de l'item
     {
         boolean Jump = false;
         boolean ContainsPO = false;
@@ -486,7 +487,7 @@ public class ConditionParser {
         return copyCond;
     }
 
-    public String canPN(String cond, Player perso)//On remplace le PN par 1 et si le nom correspond == 1 sinon == 0
+    public static String canPN(String cond, Player perso)//On remplace le PN par 1 et si le nom correspond == 1 sinon == 0
     {
         String copyCond = "";
         for (String cur : cond.split("==")) {
@@ -502,7 +503,7 @@ public class ConditionParser {
         return copyCond;
     }
 
-    public String canPJ(String cond, Player perso)//On remplace le PJ par 1 et si le metier correspond == 1 sinon == 0
+    public static String canPJ(String cond, Player perso)//On remplace le PJ par 1 et si le metier correspond == 1 sinon == 0
     {
         String copyCond = "";
         if (cond.contains("==")) {
@@ -541,7 +542,7 @@ public class ConditionParser {
         return copyCond;
     }
 
-    public String haveJOB(String cond, Player perso) {
+    public static String haveJOB(String cond, Player perso) {
         String copyCond = "";
         if (perso.getMetierByID(Integer.parseInt(cond.split("==")[1])) != null)
             copyCond = "1==1";
@@ -559,7 +560,10 @@ public class ConditionParser {
         }
 
         if( ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, newObj.getTemplate().getType() ) ) {
-            return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar && obj.getStats().isSameStats(newObj.getStats()) && (obj.getRarity() == newObj.getRarity()) && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
+            return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar
+                    && obj.getStats().isSameStats(newObj.getStats())
+                    && (obj.getRarity() == newObj.getRarity())
+                    && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
@@ -569,7 +573,9 @@ public class ConditionParser {
                     && (newObj.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(obj.getTemplate().getId()) || Constant.isDoplon(obj.getTemplate().getId()))
                     && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED;
         }
-        return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar && obj.getStats().isSameStats(newObj.getStats()) && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
+        return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar
+                && obj.getStats().isSameStats(newObj.getStats())
+                && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
@@ -586,10 +592,14 @@ public class ConditionParser {
                 if(obj.getTemplate().getId() == newObj.getTemplate().getId())
                     return false;
         }
+        String stats1 = obj.parseStatsString();
+        String stats2 = newObj.parseStatsString();
+
         if(obj.getTemplate().getId() == newObj.getTemplate().getId()
                 && stackIfSimilar
                 && obj.getStats().isSameStats(newObj.getStats())
-                && (obj.getRarity() == newObj.getRarity())
+                && obj.getRarity() == newObj.getRarity()
+                && stats1.equals(stats2)
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER

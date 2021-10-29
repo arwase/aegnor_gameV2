@@ -1154,7 +1154,7 @@ public class JobAction {
             }
         }
         // System.out.println("La :" + objectFm.getTemplate().getId() + " " + runeOrPotion + " " + SM );
-        if( objectFm.getTemplate() == null || runeOrPotion == null ) {
+        if( objectFm.getTemplate() == null || runeOrPotion == null ) { // pas de runes
             this.player.sendMessage("Aucune rune détecté");
             if (objectFm != null) {
                 World.world.addGameObject(objectFm, true);
@@ -1169,8 +1169,7 @@ public class JobAction {
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
             this.ingredients.clear();
             return;
-        }
-
+        } // Pas de rune
         if(runeOrPotion.getTemplate().getId() == 17200){
 
             if (SM == null || objectFm == null) {
@@ -1247,7 +1246,7 @@ public class JobAction {
             //SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
             //SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
 
-        }
+        } // Rune de réini
         else if(runeOrPotion.getTemplate().getId() == 17202 || runeOrPotion.getTemplate().getId() == 17203
                 || runeOrPotion.getTemplate().getId() == 17204 || runeOrPotion.getTemplate().getId() == 17205){
 
@@ -1356,7 +1355,7 @@ public class JobAction {
             SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
             SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
 
-        }
+        } //Rune de pouvoir rareté
         else{
 
             int StatEnInt = Integer.parseInt(statsObjectFm, 16);
@@ -1405,7 +1404,10 @@ public class JobAction {
                 chances.add(0, chance);
                 chances.add(1, 0);
                 chances.add(2, 100 - chance);
-            } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) { // Le cas du FM normal est trÃ¨s complÃ¨xe !
+            }
+            else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) {
+
+                // Le cas du FM normal est trÃ¨s complÃ¨xe !
                 //this.player.sendMessage("C'est une rune normal (pour buff de stats)"+lvlQuaStatsRune);
                 int PoidActuelStatAFm = 1;
                 int PoidTotStatsExoItemActuel = 1;
@@ -1607,7 +1609,6 @@ public class JobAction {
                     return;
                 }
             }
-
 
             int aleatoryChance = Formulas.getRandomValue(1, 100);
             int SC = chances.get(0);
@@ -1815,7 +1816,7 @@ public class JobAction {
             }
 
             this.player.sendMessage("Puit libre sur l'item :"+ objectFm.getPuit() );
-        }
+        } //Rune de FM
 
         this.lastCraft.clear();
         this.lastCraft.putAll(this.ingredients);

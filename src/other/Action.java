@@ -9,10 +9,12 @@ import area.map.labyrinth.PigDragon;
 import client.Player;
 import client.other.Stalk;
 import client.other.Stats;
+import common.ConditionParser;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
 import entity.monster.Monster;
+import entity.monster.Monster.MobGroup;
 import entity.npc.Npc;
 import entity.npc.NpcQuestion;
 import entity.pet.PetEntry;
@@ -33,6 +35,8 @@ import util.TimerWaiter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class Action {
@@ -673,7 +677,36 @@ public class Action {
 
                     String groupData = pierrePleine.parseGroupData();
                     String condition = "MiS = " + player.getId(); //Condition pour que le groupe ne soit lan�able que par le personnage qui � utiliser l'objet
-                    player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), groupData, condition);
+                    if( player.getCurMap().getMobGroups().size() == 0) {
+
+                        player.sendMessage("la :" + player.getCurMap().getMobGroups().size() );
+
+                        player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), groupData, condition);
+                    }
+                    else {
+                        Map<Integer, MobGroup> Mobgroups = player.getCurMap().getMobGroups();
+                        Iterator<Entry<Integer, MobGroup>> it = Mobgroups.entrySet().iterator();
+                        MobGroup i = null;
+                        while (it.hasNext()) {
+                            Entry<Integer, MobGroup> pair = it.next();
+                            i = pair.getValue();
+
+                            if (!i.getCondition().equals("")) {
+                                if (ConditionParser.validConditions(player, i.getCondition() )) {
+                                    //SocketManager.GAME_SEND_Im_PACKET(player, "119");
+                                    player.sendMessage("Vous possédez déjà un combat en arène. Merci de finir celui ouvert avant d'en poser un autre");
+                                    break;
+                                }
+                                else {
+
+                                   // player.sendMessage("la :" + i.getCondition().toString() );
+                                }
+                            }
+                        }
+                        player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), groupData, condition);
+                    }
+
+
 
                     if (delObj)
                         player.removeItem(itemID, 1, true, true);

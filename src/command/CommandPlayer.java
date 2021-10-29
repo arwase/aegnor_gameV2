@@ -10,6 +10,7 @@ import database.Database;
 import event.EventManager;
 import exchange.ExchangeClient;
 import fight.Fight;
+import fight.Fighter;
 import fight.arena.FightManager;
 import fight.arena.TeamMatch;
 import game.GameClient;
@@ -81,9 +82,18 @@ public class CommandPlayer {
                     return true;
                 }
                 else{
-                    player.sendMessage("Vous avez passez votre tour pour débloquer le combat");
+
                     Fight playerFight = player.getFight();
-                    playerFight.getStartTurn();
+                    Fighter fighter = playerFight.getFighterByPerso(player);
+                    Fighter lol2 = playerFight.getFighterByOrdreJeu();
+
+                    if(fighter == lol2) {
+                        player.sendMessage("Vous avez passez votre tour pour débloquer le combat");
+                        playerFight.getStartTurn();
+                    }
+                    else{
+                        player.sendMessage("Vous n'êtes pas le combattant qui est bloqué");
+                    }
                     return true;
                 }
             } else if(command(msg, "demorph")) {
@@ -183,13 +193,16 @@ public class CommandPlayer {
                 player.sendMessage(message);
                 return true;
             }
-            else if(command(msg, "shop")){
-                if (player.isInPrison())
-                    return true;
-                if (player.getFight() != null)
-                    return true;
-
-                player.teleport((short) 10114, 282);
+             if(command(msg, "shop")){
+                //if (player.isInPrison())
+                  //  return true;
+                //if (player.getFight() != null)
+                 //   return true;
+                    if(  player.getGroupe().getId() >= 1 &&  player.getGroupe().getId() < 6 ) {
+                        player.teleport((short) 10114, 282);
+                    }else {
+                        player.sendMessage("Cette commande n'existe plus");
+                    }
                 return true;
             }
             else if (command(msg, "parcho")) {
@@ -270,7 +283,19 @@ public class CommandPlayer {
                     player.sendMessage("Vous êtes de nouveau parchoté");
                 }
                 return true;
-            } else if(command(msg, "spellforget")) {
+            }
+             else if(command(msg, "mapXP")){
+                 if (player.isInPrison())
+                     return true;
+                 if (player.cantTP())
+                     return true;
+                 if (player.getFight() != null)
+                     return true;
+
+                 player.teleport((short) 13000, 222);
+                 return true;
+             }
+             else if(command(msg, "spellforget")) {
                 player.setExchangeAction(new ExchangeAction<>(ExchangeAction.FORGETTING_SPELL, 0));
                 SocketManager.GAME_SEND_FORGETSPELL_INTERFACE('+', player);
                 return true;
@@ -515,10 +540,10 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "banque")) {
-                if (player.getAccount().getVip() == 0) {
-                    player.sendMessage("Tu n'es pas VIP.");
-                    return true;
-                }
+                //if (player.getAccount().getVip() == 0) {
+                   // player.sendMessage("Tu n'es pas VIP.");
+                    //return true;
+                //}
                 final int cost = player.getBankCost();
                 if (cost > 0) {
                     final long playerKamas = player.getKamas();
@@ -791,7 +816,17 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous passerez vos tours automatiquement");
                 }
                 return true;
-            } else if(command(msg, "passall")){
+            } else if(command(msg, "controlinvo")){
+                if(player.controleinvo){
+                    player.controleinvo = false;
+                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous ne controllez plus vos invocations");
+                }
+                else{
+                    player.controleinvo = true;
+                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous controllez vos invocations");
+                }
+                return true;
+             } else if(command(msg, "passall")){
                 if(player.getSlaveLeader() == null) {
                     for (Player p : player.PlayerList1) {
                         if (p.passturn) {

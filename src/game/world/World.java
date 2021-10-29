@@ -1125,7 +1125,12 @@ public class World {
     }
 
     public Hdv getHdv(int map) {
-        return Hdvs.get(changeHdv(map));
+        if(Hdvs.get(changeHdv(map)) != null){
+            return Hdvs.get(changeHdv(map));
+        }
+        else{
+            return Hdvs.get(-1);
+        }
     }
 
     public synchronized int getNextObjectHdvId() {

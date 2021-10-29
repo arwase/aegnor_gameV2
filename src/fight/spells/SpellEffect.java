@@ -647,7 +647,8 @@ public class SpellEffect {
 				applyEffect_186(fight, cibles);
 				break;
 			case 200: //Contrôle Invocation
-				applyEffect_200(fight, caster, cell);
+				applyEffect_181(fight);
+				//applyEffect_200(fight, caster, cell);
 				break;
 			case 202://Perception
 				applyEffect_202(fight, cibles);
@@ -788,66 +789,117 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_200(Fight fight, Fighter acaster, GameCase CaseObjectif) {
-			if (acaster.nbrInvoc >= acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)) {
-				SocketManager.GAME_SEND_Im_PACKET(
-						acaster.getPlayer(),
-						"0CANT_SUMMON_MORE_CREATURE;" + acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)
-				);
-				return;
-			}
-			if (effectID == 405) { // mata para invocar
-				if (CaseObjectif.getFirstFighter() != null) {
-					fight.onFighterDie(CaseObjectif.getFirstFighter(), acaster);
-				}
-			}
-			if (!CaseObjectif.isWalkable(true)) {
-				SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(fight, 7, "1CELDA_NO_CAMINABLE");
-				SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
-				return;
-			}
+
+		// On test si le joueur peut encore invoqué
+		if (acaster.nbrInvoc >= acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)) {
+			SocketManager.GAME_SEND_Im_PACKET(
+					acaster.getPlayer(),
+					"0CANT_SUMMON_MORE_CREATURE;" + acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)
+			);
+			return;
+		}
+
+		//System.out.println("effet" + effectID);
+
+		if (effectID == 405) { // On tue pour invoqué
+			System.out.println("On tue pour invo");
 			if (CaseObjectif.getFirstFighter() != null) {
-				SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 151, acaster.getId() + "", spell + "");
-				SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
-				return;
+				fight.onFighterDie(CaseObjectif.getFirstFighter(), acaster);
 			}
-			int mobID = 0;
-			int mobNivel = 0;
-			try {
-				mobID = Integer.parseInt(args.split(";")[0]);
-				mobNivel = Integer.parseInt(args.split(";")[1]);
-			} catch (Exception ignored) {
-			}
-			MobGrade mob = null;
-			var idInvocacion = fight.getSigIDFighter();
-			mob = World.world.getMonstre(mobID).getGradeByLevel(mobNivel);
+		}
+
+		// Si la case n'est pas marchable
+		if (!CaseObjectif.isWalkable(true)) {
+			System.out.println("Case non marchable");
+			SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(fight, 7, "1CELDA_NO_CAMINABLE");
+			SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
+
+			return;
+		}
+
+		// Si Il n'y a pas d'invocateur
+		if (CaseObjectif.getFirstFighter() != null) {
+			System.out.println("Pas d'invocateur");
+			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 151, acaster.getId() + "", spell + "");
+			SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
+			return;
+		}
+
+		int mobID = 0;
+		int mobNivel = 0;
+		try {
+			mobID = Integer.parseInt(args.split(";")[0]);
+			mobNivel = Integer.parseInt(args.split(";")[1]);
+		} catch (Exception ignored) {
+
+
+
+
+		}
+
+		//System.out.println("Le monstre " + mobID);
+		//System.out.println("Est invoqué lvl : " + mobNivel);
+
+
+		MobGrade mob = null;
+		//var idInvocacion = fight.getSigIDFighter();
+		Monster monster = World.world.getMonstre(mobID);
+		try {
+			mob = monster.getGradeByLevel(mobNivel);
+				if(mob == null) {
+					mob = monster.getRandomGrade();
+					if(mob == null) return;
+				}
+			mob = mob.getCopy();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+
+		//System.out.println("Il a  : " + mob.getPdvMax() + " HP");
+		//System.out.println("Est invoqué lvl : " + mob.getLevel() );
+		if (mobID == 0 || mobNivel == 0 || mob == null)
+			return;
+		mob.setPdv( mob.getPdvMax() );
 		mob.setInFightID(fight.getNextLowerFighterGuid());
-		/*if (caster.getPlayer() != null) {
+
+		if (caster.getPlayer() != null) {
 			mob.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
-		}*/
-		Player mobControlable = Player.crearInvoControlable(acaster.getFight().getSigIDFighter(), mob, acaster);
-			var invocacion = new Fighter(fight, mobControlable);
-			try {
-				acaster.getPlayer().addCompagnon(invocacion.getPlayer());
-				invocacion.getPlayer().addCompagnon(acaster.getPlayer());
-				invocacion.setInvocator(acaster);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			mobControlable.setFight(fight);
+		}
+
+		Player mobControlable = Player.createInvoControlable(acaster.getFight().getSigIDFighter(), mob, acaster);
+		var invocacion = new Fighter(fight, mobControlable);
+
+
+		try {
+			acaster.getPlayer().addCompagnon(invocacion.getPlayer());
+			invocacion.getPlayer().addCompagnon(acaster.getPlayer());
 			invocacion.setTeam(caster.getTeam());
-			invocacion.setCell(CaseObjectif);
 			invocacion.setControllable(true);
-			fight.getMap().getCase(cell.getId()).addFighter(invocacion);
-			fight.getOrderPlaying().add((fight.getOrderPlaying().indexOf(caster) + 1), invocacion);
-			fight.addFighterInTeam(invocacion, caster.getTeam());
-			String gm = invocacion.getGmPacket('+', true).substring(3);
-			String gtl = fight.getGTL();
-			TimerWaiter.addNext(() -> {
+			invocacion.setInvocator(acaster);
+			//invocacion.setPdvMax(mob.getPdvMax());
+			invocacion.fullPdv();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		mobControlable.setFight(fight);
+		mob.setInFightID(fight.getNextLowerFighterGuid());
+
+		fight.getMap().getCase(cell.getId()).addFighter(invocacion);
+		invocacion.setCell(CaseObjectif);
+		fight.getOrderPlaying().add((fight.getOrderPlaying().indexOf(caster) + 1), invocacion);
+		fight.addFighterInTeam(invocacion, caster.getTeam());
+
+		String gm = invocacion.getGmPacket('+', true).substring(3);
+		String gtl = fight.getGTL();
+
+		TimerWaiter.addNext(() -> {
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 181, caster.getId() + "", gm, this.effectID);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId() + "", gtl, this.effectID);
 			caster.nbrInvoc++;
 			this.checkTraps(fight, invocacion);
-			}, this.caster != null && this.caster.getMob() != null ? 1000 : 0, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+		}, this.caster != null && this.caster.getMob() != null ? 1000 : 0, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+
+
 			/*if (AtlantaMain.PARAM_MOSTRAR_STATS_INVOCACION) {
 				val str = StringBuilder()
 				str.append("<b>Stats de l'invocation[</b>")
@@ -863,9 +915,8 @@ public class SpellEffect {
 						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_AGILIDAD)).append("<b>]</b>")
 				ENVIAR_cs_CHAT_MENSAJE_A_PELEA(pelea, str.toString(), Constantes.COLOR_NARANJA)
 			}*/
-			checkTraps(fight, invocacion);
+		//checkTraps(fight, invocacion);
 	}
-
 
 	private void applyEffect_4(Fight fight, ArrayList<Fighter> cibles) {
 		if (turns > 1)
@@ -4110,11 +4161,26 @@ public class SpellEffect {
 		MG.setInFightID(fight.getNextLowerFighterGuid());
 		if (caster.getPlayer() != null)
 			MG.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
-		Fighter F = new Fighter(fight, MG);
-		F.setTeam(caster.getTeam());
+
+		Fighter F;
+
+		if(caster.getPlayer().controleinvo) {
+			Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
+			F = new Fighter(fight, mobControlable);
+			F.setControllable(true);
+			F.setTeam(caster.getTeam());
+			caster.getPlayer().addCompagnon(F.getPlayer());
+			mobControlable.setFight(fight);
+		}
+		else{
+			F = new Fighter(fight, MG);
+			F.setTeam(caster.getTeam());
+		}
+
 		F.setInvocator(caster);
 		fight.getMap().getCase(cell).addFighter(F);
 		F.setCell(fight.getMap().getCase(cell));
+		F.fullPdv();
 		fight.getOrderPlaying().add((fight.getOrderPlaying().indexOf(caster) + 1), F);
 		fight.addFighterInTeam(F, caster.getTeam());
 		String gm = F.getGmPacket('+', true).substring(3);

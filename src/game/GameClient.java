@@ -3316,6 +3316,7 @@ public class GameClient {
                                 break;
 
                             case '-'://Retirer de la banque
+                                System.out.println( "On retire de la banque");
                                 t.removeFromTrunk(guid, qua, this.player);
                                 break;
                         }

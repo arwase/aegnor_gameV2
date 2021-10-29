@@ -51,6 +51,7 @@ public class French extends AbstractLang {
                 (Config.INSTANCE.getTEAM_MATCH() ? "<b>.kolizeum</b> - Vous inscrit/désincrit de la liste d'attente de Kolizeum.\n" : "") +
                 (Config.INSTANCE.getDEATH_MATCH() ? "<b>.deathmatch</b> - Vous inscrit/désincrit de la liste d'attente de DeathMatch.\n" : "") +
                 "<b>.banque</b> - Ouvre votre banque.\n" +
+                "<b>.controlinvo</b> - Permet de controler ou ne plus controler ses invocations.\n" +
                 "<b>.transfert</b> - Nécessite d'être dans sa banque et permet de transférer toutes vos ressources.\n" +
                 "<b>.groupe</b> - Groupe vos mules.\n" +
                 "<b>.demorph</b> - Remet votre apparence normal.\n"); index++;

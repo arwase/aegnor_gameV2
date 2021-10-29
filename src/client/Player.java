@@ -70,6 +70,7 @@ public class Player {
     public final Restriction restriction;
     public Stats stats;
     public boolean isNew = false;
+    public boolean controleinvo=false;
     //Job
     private JobAction _curJobAction;
     //Disponibilit�
@@ -618,8 +619,8 @@ public class Player {
     }
 
 
-    public static Player crearInvoControlable(final int id, final Monster.MobGrade grado, Fighter acaster) {
-        Player multiman = new Player(id, grado, acaster);
+    public static Player createInvoControlable(final int id, final Monster.MobGrade grade, Fighter caster) {
+        Player multiman = new Player(id, grade, caster);
         multiman.isInvocControlable  = true;
         return multiman;
     }
@@ -805,8 +806,14 @@ public class Player {
     }
 
     public int getCurPdv() {
-        refreshLife(false);
-        return this.curPdv;
+        if(isInvocControlable)
+        {
+            return this.curPdv;
+        }
+        else {
+            refreshLife(false);
+            return this.curPdv;
+        }
     }
 
     public void setPdv(int pdv) {
@@ -2172,7 +2179,7 @@ public class Player {
         ASData.append(stats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(donStats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_INTE)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_PO)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PO)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PO)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PO)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_CREATURE)).append(",").append(sutffStats.getEffect(Constant.STATS_CREATURE)).append(",").append(donStats.getEffect(Constant.STATS_CREATURE)).append(",").append(buffStats.getEffect(Constant.STATS_CREATURE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_DOMA)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_DOMA)).append(",").append(donStats.getEffect(Constant.STATS_ADD_DOMA)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_DOMA)).append("|");
+        ASData.append(stats.getEffect(Constant.STATS_ADD_DOMA)+stats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_DOMA)+sutffStats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(donStats.getEffect(Constant.STATS_ADD_DOMA)+donStats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_DOMA)+buffStats.getEffect(Constant.STATS_ADD_DOMA2)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PDOM)).append("|");
         ASData.append(stats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(donStats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MAITRISE)).append("|");//ASData.append("0,0,0,0|");//Maitrise ?
         ASData.append(stats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PERDOM)).append("|");
@@ -2883,9 +2890,29 @@ public class Player {
         if (exGameObject.getTemplate().getId() == 8378)
             return null;
 
-        for (GameObject gameObject : this.objects.values())
-            if (gameObject.getTemplate().getId() == exGameObject.getTemplate().getId() && gameObject.getStats().isSameStats(exGameObject.getStats()) && gameObject.getGuid() != exGameObject.getGuid() && !Constant.isIncarnationWeapon(exGameObject.getTemplate().getId()) && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE && (exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(gameObject.getTemplate().getId())) && !Constant.isCertificatDopeuls(gameObject.getTemplate().getId()) && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT && gameObject.getPosition() == Constant.ITEM_POS_NO_EQUIPED)
+        String stats1 = exGameObject.parseStatsString();
+
+
+        for (GameObject gameObject : this.objects.values()){
+            String stats2 = gameObject.parseStatsString();
+            if (gameObject.getTemplate().getId() == exGameObject.getTemplate().getId()
+                    && gameObject.getStats().isSameStats(exGameObject.getStats())
+                    && gameObject.getRarity() == exGameObject.getRarity()
+                    && gameObject.getGuid() != exGameObject.getGuid()
+                    && stats1.equals(stats2)
+                    && !Constant.isIncarnationWeapon(exGameObject.getTemplate().getId())
+                    && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
+                    && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                    && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
+                    && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
+                    && (exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(gameObject.getTemplate().getId()))
+                    && !Constant.isCertificatDopeuls(gameObject.getTemplate().getId())
+                    && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
+                    && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT
+                    && gameObject.getPosition() == Constant.ITEM_POS_NO_EQUIPED){
                 return gameObject;
+            }
+        }
 
         return null;
     }
