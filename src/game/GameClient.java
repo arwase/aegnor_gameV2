@@ -3118,10 +3118,11 @@ public class GameClient {
                             World.world.addGameObject(newObj, true);
                             obj = newObj;
                         }
+                        Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
                         HdvEntry toAdd = new HdvEntry(World.world.getNextObjectHdvId(), price, amount, this.player.getAccount().getId(), obj);
                         curHdv.addEntry(toAdd, false); //Ajoute l'entry dans l'HDV
                         SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this, '+', "", toAdd.parseToEmK()); //Envoie un packet pour ajthiser l'item dans la fenetre de l'HDV du client
-                        SocketManager.GAME_SEND_HDVITEM_SELLING(this.player);
+                        SocketManager.GAME_SEND_HDVITEM_SELLING(this.player, hdv);
                         Database.getStatics().getPlayerData().update(this.player);
                         break;
                 }
@@ -3909,16 +3910,15 @@ public class GameClient {
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
                 ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
                 this.player.setExchangeAction(exchangeAction);
-                SocketManager.GAME_SEND_HDVITEM_SELLING(this.player);
+                SocketManager.GAME_SEND_HDVITEM_SELLING(this.player, hdv);
             }
             else
             {
-                hdv = World.world.getHdv(-1);
                 String infos = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
                 ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
                 this.player.setExchangeAction(exchangeAction);
-                SocketManager.GAME_SEND_HDVITEM_SELLING(this.player);
+                SocketManager.GAME_SEND_HDVITEM_SELLING(this.player, hdv);
             }
             return;
         }

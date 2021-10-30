@@ -1661,31 +1661,40 @@ public class Fight {
             setCurPlayer(0);
 
         Fighter current = this.getFighterByOrdreJeu();
-
-        if(current.isControllable())
-        {
-
-            current.getInvocator().getPlayer().setCurrentCompagnon(current);
-            if(current.isInvocation()) {
-                SocketManager.send(current.getInvocator().getPlayer(), "SC");
-                SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getId());
-                SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, current.getInvocator().getPlayer());
-                SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), current.getInvocator().getPlayer());
-                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-
-            }
+        Fighter master = null;
+        if(current.getInvocator() != null) {
+            master = current.getInvocator();
         }
-        else{
-            if(current.getPlayer() != null) {
-                if (current.getPlayer().getCurrentCompagnon() != null) {
-                    current.getPlayer().deleteCurrentCompagnon();
+        else
+        {
+            master = current;
+        }
+        if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
+            if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
+                if (current.isControllable()) {
 
+                    master.getPlayer().setCurrentCompagnon(current);
+                    if (current.isInvocation()) {
+                        SocketManager.send(master.getPlayer(), "SC");
+                        SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
+                        SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
+                        SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master.getPlayer());
+                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+
+                    }
+                } else {
+                    if (current.getPlayer() != null) {
+                        if (current.getPlayer().getCurrentCompagnon() != null) {
+                            current.getPlayer().deleteCurrentCompagnon();
+
+                        }
+                        SocketManager.send(current.getPlayer(), "SC");
+                        SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                        SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
+                        SocketManager.GAME_SEND_SL_LISTE(current);
+                    }
                 }
-                SocketManager.send(current.getPlayer(), "SC");
-                SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
-                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-                SocketManager.GAME_SEND_SL_LISTE(current);
             }
         }
 
@@ -1802,14 +1811,6 @@ public class Fight {
     public synchronized void endTurn(boolean onAction, Fighter f) {
         final Fighter current = this.getFighterByOrdreJeu();
 
-        if(current.isInvocation() && current.isControllable() ){
-            SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getInvocator().getPlayer(), current.getInvocator().getPlayer());
-            SocketManager.GAME_SEND_STATS_PACKET(current.getInvocator().getPlayer());
-            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current.getInvocator());
-            SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getInvocator().getId());
-            SocketManager.GAME_SEND_SL_LISTE(current.getInvocator());
-        }
-
         if (current != null)
             if (f == current)
                 this.endTurn(onAction);
@@ -1840,17 +1841,6 @@ public class Fight {
 
             if(current.getState(Constant.ETAT_PORTEUR) == 0)
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 950, current.getId() + "", current.getId() + "," + Constant.ETAT_PORTE + ",0");
-
-            /*if(current.isControllable())
-            {
-                if(current.isInvocation())
-                {
-                    current.getInvocator().getPlayer().deleteCurrentCompagnon();
-                    SocketManager.GAME_SEND_STATS_PACKET(current.getInvocator().getPlayer());
-                    SocketManager.GAME_SEND_SL_LISTE_SORTS(current.getInvocator().getPlayer());
-                    SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getInvocator().getPlayer(), current.getInvocator().getId());
-                }
-            }*/
 
             SocketManager.GAME_SEND_GAMETURNSTOP_PACKET_TO_FIGHT(this, 7, current.getId());
             current.setCanPlay(false);
@@ -2854,8 +2844,10 @@ public class Fight {
             {
                 // On envoie le path qu'au joueur qui se d�place
                 GameClient out = current.getPlayer().getGameClient();
-                if(current.getInvocator().getPlayer().getCurrentCompagnon() != null) {
-                    out = current.getInvocator().getPlayer().getGameClient();
+                if(current.getInvocator() != null) {
+                    if (current.getInvocator().getPlayer().getCurrentCompagnon() != null) {
+                        out = current.getInvocator().getPlayer().getGameClient();
+                    }
                 }
                 SocketManager.GAME_SEND_GA_PACKET(out, GA.id + "", "1", current.getId() + "", "a" + World.world.getCryptManager().cellID_To_Code(fighter.getCell().getId()) + newPath);
             }

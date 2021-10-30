@@ -144,6 +144,11 @@ public class SocketManager {
 
     }
 
+    public static void GAME_SEND_EHP_PRICE_HDV_OBJ(Player perso, int templateID, Long price) {
+        String packet = "EHP" + templateID + "|" + price;
+        send(perso, packet);
+    }
+
     public static void GAME_SEND_Rx_PACKET(Player out) {
         String packet = "Rx" + out.getMountXpGive();
         send(out, packet);
@@ -2285,9 +2290,10 @@ public class SocketManager {
 
     }
 
-    public static void GAME_SEND_HDVITEM_SELLING(Player perso) {
+    public static void GAME_SEND_HDVITEM_SELLING(Player perso, Hdv hdv) {
         String packet = "EL";
-        HdvEntry[] entries = perso.getAccount().getHdvEntries(Math.abs(((Integer) perso.getExchangeAction().getValue()))); //R�cup�re un tableau de tout les items que le personnage � en vente dans l'HDV o� il est
+        HdvEntry[] entries = perso.getAccount().getHdvEntries(hdv.getHdvId());
+        //HdvEntry[] entries = perso.getAccount().getHdvEntries(Math.abs(((Integer) perso.getExchangeAction().getValue()))); //R�cup�re un tableau de tout les items que le personnage � en vente dans l'HDV o� il est
         boolean isFirst = true;
         for (HdvEntry curEntry : entries) {
             if (curEntry == null)

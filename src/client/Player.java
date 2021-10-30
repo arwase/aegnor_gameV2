@@ -70,7 +70,7 @@ public class Player {
     public final Restriction restriction;
     public Stats stats;
     public boolean isNew = false;
-    public boolean controleinvo=false;
+    public boolean controleinvo = false;
     //Job
     private JobAction _curJobAction;
     //Disponibilit�
