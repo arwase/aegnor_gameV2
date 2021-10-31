@@ -78,7 +78,7 @@ public class Constant {
     //Types
     public static final List<Integer> ITEM_TYPE_TO_SELL = Arrays.asList(1,9,12,14,26,43,44,45,66,70,71,86,18,72,77,90,97,113,116,63,64,69,33,42,84,93,112,114,38,95,96,98,108,10,11,13,25,73,75,76,5,6,7,8,19,20,21,22,39,40,50,51,88,87,34,52,60,41,49,62,15,35,36,46,47,48,53,54,55,56,57,58,59,65,68,103,105,106,107,109,110,111,78,2,3,4,16,17,81,83,85);
     public static final int[] ITEM_TYPE_OBJ_BLACK = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};
-    public static final Integer[] ITEM_TYPE_OBJ_BLACK2 = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};// 1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81
+    public static final int[] ITEM_TYPE_OBJ_BLACK2 = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};// 1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81
     public static final int[] ITEM_TYPE_WITH_RARITY = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,23,81};
     public static final int ITEM_TYPE_AMULETTE = 1;
     public static final int ITEM_TYPE_ARC = 2;
