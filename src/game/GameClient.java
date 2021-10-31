@@ -705,13 +705,13 @@ public class GameClient {
             SocketManager.send(this, "Xr");
         }
         else{
-            Collection<Monster> Monstres =	World.world.getMonstres();
+            Collection<Monster> Monstres = World.world.getMonstres();
             String packet = "";
 
             try{
                 for (Monster mob : Monstres)
                 {
-                    Collection<World.Drop> dropofMonster = mob.getDrops();
+                    ArrayList<World.Drop> dropofMonster = mob.getDrops();
                     for(World.Drop Drop : dropofMonster ) {
                         String ItemName = World.world.getObjTemplate(Drop.getObjectId()).getName().toLowerCase();
                         if( (ItemName.contains(Drops) || ItemName.equals(Drops)) && !(mob.getGrade(1).getSpells().keySet().isEmpty()) ){

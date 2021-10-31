@@ -173,3 +173,9 @@ Version 2.6 (30/10/2021) :
 - Fix contrôle d'invocation (modulable via commande)
 - Fix bug d'invisibilité
 - Fix de l'interface de vente des HDV + Achat
+
+Version 2.7 (31/10/2021) :
+
+- Fix bug d'invocation par une IA
+- Fix des recettes pour les clefs des donjons Qu'Tan et Illyzael
+- Fix du Panel de Visualisation des drops
