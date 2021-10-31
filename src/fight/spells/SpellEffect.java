@@ -4164,7 +4164,7 @@ public class SpellEffect {
 
 		Fighter F;
 
-		if(caster.getPlayer().controleinvo) {
+		if(caster.getPlayer() != null && caster.getPlayer().controleinvo) {
 			Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
 			F = new Fighter(fight, mobControlable);
 			F.setControllable(true);
