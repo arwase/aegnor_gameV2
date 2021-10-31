@@ -293,10 +293,15 @@ public class GameObject {
                     }
                     if (!follow2)
                         continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
-                    int jet = Integer.parseInt(stats[1], 16);
+
+
+                        int jet = Integer.parseInt(stats[1], 16);
                         Stats.addOneStat(id, jet);
+
+
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    //e.printStackTrace();
+                    System.out.println("stats" + strStats + "item : " + this.template.getId() + " " +  this.template.getName() + " id " + this.guid );
                 }
             }
         }

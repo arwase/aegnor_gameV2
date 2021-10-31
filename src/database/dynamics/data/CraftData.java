@@ -37,7 +37,8 @@ public class CraftData extends AbstractDAO<Object> {
                         int qua = Integer.parseInt(str.split("\\*")[1]);
                         m.add(new World.Couple<>(tID, qua));
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        //e.printStackTrace();
+                        System.out.println(RS.getString("craft") + "  " +  str );
                         cont = false;
                     }
                 }

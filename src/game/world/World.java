@@ -2167,7 +2167,7 @@ public class World {
             level=175;
         }
         final int levelMin = (level - 5 <= 1 ? 2 : level - 5), levelMax = level + 5;
-        getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#")
+        getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && !objectTemplate.getName().contains("Polyk")
                 && (levelMin <= objectTemplate.getLevel() && objectTemplate.getLevel() <= levelMax) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  ).forEach(array::add);
         return array;
     }

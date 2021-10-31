@@ -2772,6 +2772,79 @@ public class Fight {
         return !(numLunchT - LaunchedSpell.getNbLaunchTarget(caster, t, spell.getSpellID()) <= 0 && numLunchT > 0);
     }
 
+    public synchronized void exchangePlace2(Player perso, int FighterID) {
+        Fighter fighter = getFighterByPerso(perso);
+        Fighter fightercible = getFighterByID(1,FighterID);
+        int cell = fightercible.getCell().getId();
+        int cell2 = fighter.getCell().getId();
+        //System.out.println("La cellule voulu :" + cell);
+        //System.out.println("Le fighter dessus :" + fightercible);
+        //System.out.println("La cellule que j'ai :" + cell2);
+
+        assert fighter != null;
+        assert fightercible != null;
+        int team = fighter.getTeam();
+        if (collector != null && this.collectorProtect && collector.getDefenseFight() != null && !collector.getDefenseFight().containsValue(perso))
+            return;
+
+        boolean valid1 = false, valid2 = false;
+
+        for (int a = 0; a < getStart0().size(); a++)
+            if (getStart0().get(a).getId() == cell)
+                valid1 = true;
+        for (int a = 0; a < getStart1().size(); a++)
+            if (getStart1().get(a).getId() == cell)
+                valid2 = true;
+        if (getState() != 2  || perso.isReady() || fightercible.getPlayer().isReady() || (team == 0 && !valid1) || (team == 1 && !valid2)){
+            perso.sendMessage("Le joueur n'est pas dans votre équipe");
+
+            return;
+        }
+
+
+
+        List<Player> Players = perso.getParty().getPlayers();
+
+        if (!Players.contains(fightercible.getPlayer())){
+            perso.sendMessage("Le joueur n'est pas dans votre équipe");
+
+            return;
+
+        }
+
+        fightercible.getCell().getFighters().clear();
+        fighter.getCell().getFighters().clear();
+
+        fightercible.setCell(getMap().getCase(cell2));
+        fighter.setCell(getMap().getCase(cell));
+        getMap().getCase(cell).addFighter(fighter);
+        getMap().getCase(cell2).addFighter(fightercible);
+        SocketManager.GAME_SEND_FIGHT_CHANGE_PLACE_PACKET_TO_FIGHT(this, 3, getMap(), perso.getId(), cell);
+        SocketManager.GAME_SEND_FIGHT_CHANGE_PLACE_PACKET_TO_FIGHT(this, 3, getMap(), fightercible.getPlayer().getId(), cell2);
+    }
+
+    public Fighter getFighterByID(int teams,int ID) {
+        ArrayList<Fighter> fighters = new ArrayList<>();
+        Fighter fighter = null;
+        if (teams == 0)
+            fighters.addAll(getViewer().entrySet().stream().map(entry -> new Fighter(this, entry.getValue())).collect(Collectors.toList()));
+        if (teams == 2)
+            fighters.addAll(getTeam1().entrySet().stream().map(Entry::getValue).collect(Collectors.toList()));
+        if (teams == 1)
+            fighters.addAll(getTeam0().entrySet().stream().map(Entry::getValue).collect(Collectors.toList()));
+
+        for(Fighter ok : fighters){
+
+            if(ok.getId() == ID){
+                fighter = ok;
+                return fighter;
+            }
+
+        }
+
+        return fighter;
+    }
+
     public boolean onFighterDeplace(Fighter fighter, GameAction GA) {
         final Fighter current = this.getFighterByOrdreJeu();
         if (current == null)
