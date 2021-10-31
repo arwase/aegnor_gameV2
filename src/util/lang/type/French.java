@@ -50,8 +50,8 @@ public class French extends AbstractLang {
                 "<b>.maitre</b> - Active le mode maitre sur le personnage indiqué, néccesite d'être le chef du groupe.\n" +
                 (Config.INSTANCE.getTEAM_MATCH() ? "<b>.kolizeum</b> - Vous inscrit/désincrit de la liste d'attente de Kolizeum.\n" : "") +
                 (Config.INSTANCE.getDEATH_MATCH() ? "<b>.deathmatch</b> - Vous inscrit/désincrit de la liste d'attente de DeathMatch.\n" : "") +
-                "<b>.banque</b> - Ouvre votre banque.\n" +
-                "<b>.controlinvo</b> - Permet de controler ou ne plus controler ses invocations.\n" +
+
+
                 "<b>.transfert</b> - Nécessite d'être dans sa banque et permet de transférer toutes vos ressources.\n" +
                 "<b>.groupe</b> - Groupe vos mules.\n" +
                 "<b>.demorph</b> - Remet votre apparence normal.\n"); index++;
@@ -74,11 +74,13 @@ public class French extends AbstractLang {
                 + "<b>.fightdeblo</b> - Permet de vous débloquer en combat (passe le tour).\n"
                 + "<b>.astrub</b> - Permet de vous téléporter a Astrub.\n"
                 + "<b>.incarnam</b> - Permet de vous téléporter a Incarnam.\n"
+                + "<b>.controlinvo</b> - Permet de controler ou ne plus controler ses invocations.\n"
                 + "<b>.mapXP</b> - Permet de vous téléporter a la map Xp Kani.\n"
                 + "<b>.staff</b> - Permet de voir les membres du staff connectés.\n"
                 + "<b>.save</b> - Permet de sauvegarder votre personnage.\n"
                 + "<b>.all</b> - Permet d'envoyer un message à tous les joueurs.\n"
                 + "<b>.noall</b> - Permet de ne plus recevoir les messages globaux.\n"
+                + "<b>.banque</b> - Ouvre votre banque.(payant si non VIP)\n"
                 + "<b>.restat</b> - Permet de vous restat.\n"
                 + "<b>.notiems</b> - Permet d'empecher le drop d'objets.\n"
                 + "<b>.spellforget</b> - Permet d'oublier un sort.\n"
@@ -96,10 +98,10 @@ public class French extends AbstractLang {
                 + "<b>.getslave</b> - Permet d'afficher tes esclaves.\n"
                 + "<b>.resetmaitre</b> - Si tu es maitre, libères tes esclaves.\n"
                 + "<b>.pass</b> - Permet de passer ton tour automatiquement.\n"
-                + "<b>.passall</b> - Permet de mettre en état passe-tour toutes ses esclaves."); index++;
+                + "<b>.slavepass</b> - Permet de mettre en état passe-tour toutes ses esclaves."); index++;
         //19
         this.sentences.add(index,"<b>***COMMANDES VIP***</b> disponibles sont :\n"
-                + "<b>.banque</b> - Permet d'ouvrir la banque.\n"
+                + "<b>.banque</b> - Permet d'ouvrir la banque gratuitement.\n"
                 + "<b>.refreshMobs</b> - Permet de rafraichir les monstre de la map.\n"
                 + "<b>.zaap</b> - Permet d'ouvrir la liste des zaap."); index++;
         // + "<b>.zaap</b> - Permet d'ouvrir la banque."
