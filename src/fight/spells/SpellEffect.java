@@ -4163,14 +4163,18 @@ public class SpellEffect {
 			MG.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
 
 		Fighter F;
-
-		if(caster.getPlayer() != null && caster.getPlayer().controleinvo) {
-			Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
-			F = new Fighter(fight, mobControlable);
-			F.setControllable(true);
-			F.setTeam(caster.getTeam());
-			caster.getPlayer().addCompagnon(F.getPlayer());
-			mobControlable.setFight(fight);
+		if(caster.getPlayer() != null) {
+			if (caster.getPlayer().controleinvo) {
+				Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
+				F = new Fighter(fight, mobControlable);
+				F.setControllable(true);
+				F.setTeam(caster.getTeam());
+				caster.getPlayer().addCompagnon(F.getPlayer());
+				mobControlable.setFight(fight);
+			} else{
+				F = new Fighter(fight, MG);
+				F.setTeam(caster.getTeam());
+			}
 		}
 		else{
 			F = new Fighter(fight, MG);
