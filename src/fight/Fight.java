@@ -4896,7 +4896,9 @@ public class Fight {
                             if (objectTemplate.getType() == 32 && player != null) {
                                 player.setMascotte(entry.getKey());
                             } else {
-
+                                List<Integer> forbidden = Arrays.asList(Constant.ITEM_TYPE_OBJ_BLACK2);
+                                Integer typeObj = objectTemplate.getType();
+                                if((player.noitems && !forbidden.contains(typeObj)) || !player.noitems) {
                                     GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplication(target.getItems().values(), entry.getValue(), false);
                                     if (newObj != null) {
                                         int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
@@ -4925,7 +4927,7 @@ public class Fight {
                                     {
                                         //Main.INSTANCE..error( "L'objet " + objectTemplate.getId() + " semble poser un problème à la création");
                                     }
-
+                                }
                             }
 
                         }

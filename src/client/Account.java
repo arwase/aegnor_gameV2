@@ -474,7 +474,8 @@ public class Account {
         if ((Integer) this.currentPlayer.getExchangeAction().getValue() >= 0)
             return false;
 
-        int hdvID = Math.abs((Integer) this.currentPlayer.getExchangeAction().getValue());//R�cup�re l'ID de l'HDV
+        //int hdvID = Math.abs((Integer) this.currentPlayer.getExchangeAction().getValue());//R�cup�re l'ID de l'HDV
+        int hdvID = World.world.getHdv(this.currentPlayer.getCurMap().getId()).getHdvId();
 
         HdvEntry entry = null;
         try {

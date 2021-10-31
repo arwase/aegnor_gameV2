@@ -67,6 +67,7 @@ public class HdvEntry implements Comparable<HdvEntry> {
     public String parseToEL() {
         StringBuilder toReturn = new StringBuilder();
         int count = getAmount(true);//Transf�re dans le format (1,10,100) le montant qui etait dans le format (1,2,3)
+
         toReturn.append(this.getLineId()).append(";").append(count).append(";").append(this.getGameObject().getTemplate().getId()).append(";").append(this.getGameObject().parseStatsString()).append(";").append(this.price).append(";350");//350 = temps restant
         return toReturn.toString();
     }
