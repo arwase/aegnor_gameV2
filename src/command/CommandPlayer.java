@@ -540,11 +540,13 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "banque")) {
-                //if (player.getAccount().getVip() == 0) {
+                int cost =0;
+                if (player.getAccount().getVip() == 0) {
                    // player.sendMessage("Tu n'es pas VIP.");
                     //return true;
-                //}
-                final int cost = player.getBankCost();
+                    cost = player.getBankCost();
+                }
+
                 if (cost > 0) {
                     final long playerKamas = player.getKamas();
                     final long kamasRemaining = playerKamas - cost;
@@ -780,8 +782,9 @@ public class CommandPlayer {
                     }
                     try {
                         if (p.getSlaveLeader() != null) {
+
+                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> a déjà un maitre :" + p.getSlaveLeader().getName());
                             p.setSlaveLeader(null) ;
-                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> avait déjà un maitre :" + p.getSlaveLeader().getName());
                             //continue;
                         }
                         p.setSlaveLeader(player);
@@ -826,7 +829,7 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous controllez vos invocations");
                 }
                 return true;
-             } else if(command(msg, "passall")){
+             } else if(command(msg, "slavepass")){
                 if(player.getSlaveLeader() == null) {
                     for (Player p : player.PlayerList1) {
                         if (p.passturn) {

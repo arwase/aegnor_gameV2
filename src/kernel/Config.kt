@@ -21,8 +21,8 @@ object Config {
     var ENCRYPT_PACKET = ConfigReader.data[ConfigReader.options.encryptPacket]
     var TIME_PER_EVENT: Short = ConfigReader.data[ConfigReader.options.event.timePerEvent].toShort()
 
-    var NAME: String = "Aegnor Beta"
-    var url: String = ""
+    var NAME: String = "Aegnor V3"
+    var url: String = "https://aegnor.arwase.fr/"
     var startMessage = "Bienvenue sur le serveur $NAME !"
     var colorMessage = "B9121B"
 
