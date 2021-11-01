@@ -4575,9 +4575,6 @@ public class GameClient {
             case 'R':
                 readyFight(packet);
                 break;
-            case 'm':
-                echangePlayerPosition(packet);
-                break;
             case 't':
                 if (this.player.getFight() != null) {
                     if (this.player.getCurrentCompagnon() != null)
@@ -4590,24 +4587,6 @@ public class GameClient {
                     }
                 }
                 break;
-        }
-    }
-
-    private void echangePlayerPosition(String packet) {
-
-
-        if (this.player.getFight() == null)
-            return;
-        try {
-
-            packet = packet.substring(2);
-            //String[] parts = packet.split(";");
-            //int cellcible = Integer.parseInt(parts[0]);
-            int FighterId = Integer.parseInt(packet);
-
-            this.player.getFight().exchangePlace2(this.player, FighterId);
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
         }
     }
 

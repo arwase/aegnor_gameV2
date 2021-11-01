@@ -115,7 +115,6 @@ public class Collector {
             path = PathFinding.getShortestStringPathBetween(map, this.cell, cell, 0);
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("map " + map.getId() + "");
             return;
         }
 

@@ -34,7 +34,7 @@ public class ExchangePacketHandler {
                                 switch (packet.charAt(2)) {
                                     case 'K': //Ok
                                         ExchangeClient.logger.info("The login server has validated the connection.");
-
+                                        GameServer.INSTANCE.setState(1);
                                         break;
                                 }
                                 break;

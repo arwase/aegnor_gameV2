@@ -50,13 +50,12 @@ object Main {
             stop("Can't init discussion with login",3)
             return
         }
-        GameServer.INSTANCE.setState(1)
+
         World.world.createWorld()
         if(!GameServer.INSTANCE.start()) {
             stop("Can't init game server",2)
             return
         }
-
 
         Main.logger.info("Server is ready ! Waiting for connection..\n")
 

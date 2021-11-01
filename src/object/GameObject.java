@@ -188,6 +188,17 @@ public class GameObject {
                         txtStats.put(id, split.substring(3));
                         continue;
                     }
+                    if(id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS)
+                    {
+                        if(stats[3].contains("1d"))
+                        {
+                            txtStats.put(id, stats[3].substring(0,2));
+                        }
+                        else {
+                            txtStats.put(id, stats[3]);
+                        }
+                        continue;
+                    }
                     if (id == Constant.STATS_CHANGE_BY || id == Constant.STATS_NAME_TRAQUE || id == Constant.STATS_OWNER_1) {
                         txtStats.put(id, stats[4]);
                         continue;
@@ -293,15 +304,10 @@ public class GameObject {
                     }
                     if (!follow2)
                         continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
-
-
-                        int jet = Integer.parseInt(stats[1], 16);
+                    int jet = Integer.parseInt(stats[1], 16);
                         Stats.addOneStat(id, jet);
-
-
                 } catch (Exception e) {
-                    //e.printStackTrace();
-                    System.out.println("stats" + strStats + "item : " + this.template.getId() + " " +  this.template.getName() + " id " + this.guid );
+                    e.printStackTrace();
                 }
             }
         }
@@ -662,7 +668,7 @@ public class GameObject {
                             setObvijevanLook(jet);
                         if(statID == 970)
                             setObvijevanId(jet);
-                    } else if (statID == Constant.STATS_TURN) {
+                    } else  if (statID == Constant.STATS_TURN) {
                         String jet = "0d0+" + entry.getValue();
                         stats.append(Integer.toHexString(statID)).append("#");
                         stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
@@ -742,7 +748,7 @@ public class GameObject {
                     if (entry.getKey() == Constant.STATS_PETS_PDV)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getPdv())).append("#0#").append(Integer.toHexString(p.getPdv()));
                     if (entry.getKey() == Constant.STATS_PETS_POIDS)
-                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toString(p.parseCorpulence())).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(Integer.toString(p.parseCorpulence()));
+                        stats.append(Integer.toHexString(entry.getKey())).append("#").append(p.parseCorpulence()).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(p.parseCorpulence());
                     if (entry.getKey() == Constant.STATS_PETS_DATE)
                         stats.append(Integer.toHexString(entry.getKey())).append(p.parseLastEatDate());
                     if (p.getIsEupeoh()

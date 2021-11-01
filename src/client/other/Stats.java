@@ -88,7 +88,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-            if (id == 121) id = Constant.STATS_ADD_DOMA;
+            if (id == 112) id = Constant.STATS_ADD_DOMA2;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
