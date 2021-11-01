@@ -180,3 +180,7 @@ Version 2.7 (31/10/2021) :
 - Fix des recettes pour les clefs des donjons Qu'Tan et Illyzael
 - Fix du Panel de Visualisation des drops
 - Fix retirer un item de l'hdv
+
+Version 2.8 (01/11/2021):
+
+- Fix Familiers (Stats)
