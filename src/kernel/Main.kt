@@ -56,7 +56,7 @@ object Main {
             stop("Can't init game server",2)
             return
         }
-
+        GameServer.INSTANCE.setState(1)
         Main.logger.info("Server is ready ! Waiting for connection..\n")
 
         while (Config.isRunning) {
