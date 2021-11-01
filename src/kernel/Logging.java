@@ -1,9 +1,12 @@
 package kernel;
 
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+//import org.apache.slf4j.BasicConfigurator.configure();
 
 public class Logging {
+
 
     public static final Logger objects = LoggerFactory.getLogger("Object");
     public static final Logger globalMessage = LoggerFactory.getLogger("GlobalMessage");

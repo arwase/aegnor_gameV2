@@ -105,7 +105,8 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player, "Vous avez déjà le bon skin.");
                 }
             }else if (command(msg, "sellitem")) {
-                if(player.getItems() == null)
+                player.sendMessage("Commande désactivé");
+               /* if(player.getItems() == null)
                 {
                     SocketManager.GAME_SEND_MESSAGE(player, "Votre Inventaire est vide");
                     return false;
@@ -122,12 +123,12 @@ public class CommandPlayer {
                     if(!object.isAttach() && !EquipedObject.contains(object) && Constant.ITEM_TYPE_TO_SELL.contains(object.getTemplate().getType()))
                     {
                         kamastoGive += (object.getTemplate().getPrice() / 10) * object.getQuantity();
-                        ObjectToKill.put(object, object.getQuantity());
+                        ObjectToKill.put(object, object.getQuantity());*/
                         /*player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
                         SocketManager.GAME_SEND_Ow_PACKET(player);
                         SocketManager.GAME_SEND_Im_PACKET(player, "022;"
                                 + -object.getQuantity() + "~" + object.getTemplate().getId());*/
-                    }
+                    /*}
                 }
                 for(Map.Entry<GameObject, Integer> entry : ObjectToKill.entrySet())
                 {
@@ -140,6 +141,7 @@ public class CommandPlayer {
                 Database.getStatics().getPlayerData().update(player);
                 SocketManager.GAME_SEND_STATS_PACKET(player);
                 SocketManager.GAME_SEND_MESSAGE(player,"Votre inventaire a été vidé ! Vous avez gagné " + kamastoGive + " kamas !");
+                */
                 return true;
             } else if (command(msg, "noall")) {
                 if (player.noall) {
