@@ -3001,20 +3001,20 @@ public class Fight {
         {
         //   System.out.println("alors que la Action id" +  GA.id);
             //fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
-           Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
+           //Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
 
-            if(Leader != null){
-                if(Leader.oneWindows){
-                    Leader.getGameClient().addAction(GA);
-                }
-                else{
+            //if(Leader != null){
+               // if(Leader.oneWindows){
+                //    Leader.getGameClient().addAction(GA);
+                //}
+               // else{
                     //System.out.println("Action id" +  GA.id);
-                    fighter.getPlayer().getGameClient().addAction(GA);
-                }
-            }
-            else{
-                fighter.getPlayer().getGameClient().addAction(GA);
-            }
+                    fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+                //}
+           // }
+            //else{
+             //   fighter.getPlayer().getGameClient().addAction(GA);
+            //}
         // SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(this, fighter);
          }
          else { // Si c'est un perso controllé
