@@ -2878,10 +2878,11 @@ public class Fight {
             if (fighter.getPlayer() != null) {
                 Fighter lol = fighter.getInvocator();
                 if(lol != null) {
-                    if (lol.getPlayer().getCurrentCompagnon() != null) {
-                        SocketManager.GAME_SEND_GA_PACKET(fighter.getInvocator().getPlayer().getGameClient(), "", "0", "", "");
-                    } else {
-                        SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
+                    Player Leader = lol.getPlayer().getSlaveLeader();
+                    if (Leader != null) {
+                         SocketManager.GAME_SEND_GA_PACKET(Leader.getGameClient(), "", "0", "", "");
+                     } else {
+                         SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
                     }
                 }
                 else {
@@ -3000,21 +3001,21 @@ public class Fight {
         if(fighter.getInvocator() != null)
         {
         //   System.out.println("alors que la Action id" +  GA.id);
-            //fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
-           //Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
+            fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+           Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
 
-            //if(Leader != null){
-               // if(Leader.oneWindows){
-                //    Leader.getGameClient().addAction(GA);
-                //}
-               // else{
-                    //System.out.println("Action id" +  GA.id);
+            if(Leader != null){
+               if(Leader.oneWindows){
+                    Leader.getGameClient().addAction(GA);
+                }
+               else{
+                   //ystem.out.println("Action id" +  GA.id);
                     fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
-                //}
-           // }
-            //else{
-             //   fighter.getPlayer().getGameClient().addAction(GA);
-            //}
+                }
+            }
+            else{
+                fighter.getPlayer().getGameClient().addAction(GA);
+            }
         // SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(this, fighter);
          }
          else { // Si c'est un perso controllé
