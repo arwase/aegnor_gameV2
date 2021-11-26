@@ -114,14 +114,6 @@ public class HdvLine {
         return true;
     }
 
-    public String parseToEHlold() {
-        StringBuilder toReturn = new StringBuilder();
-        int[] price = getFirsts();
-        toReturn.append(this.getLineId()).append(";").append(this.getStrStats()).append(";").append((price[0] == 0 ? "" : price[0])).append(";").append((price[1] == 0 ? "" : price[1])).append(";").append((price[2] == 0 ? "" : price[2]));
-
-        return toReturn.toString();
-    }
-
     public String parseToEHl() {
         StringBuilder toReturn = new StringBuilder();
         int[] price = getFirsts();
@@ -134,15 +126,6 @@ public class HdvLine {
         return rarity;
     }
 
-
-    public String parseToEHmold() {
-        StringBuilder toReturn = new StringBuilder();
-
-        int[] prix = getFirsts();
-        toReturn.append(this.getLineId()).append("|").append(this.getTemplateId()).append("|").append(this.getStrStats()).append("|").append((prix[0] == 0 ? "" : prix[0])).append("|").append((prix[1] == 0 ? "" : prix[1])).append("|").append((prix[2] == 0 ? "" : prix[2]));
-
-        return toReturn.toString();
-    }
 
     public String parseToEHm() {
         StringBuilder toReturn = new StringBuilder();
