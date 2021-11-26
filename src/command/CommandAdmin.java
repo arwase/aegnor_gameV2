@@ -45,11 +45,8 @@ import util.lang.Lang;
 import javax.swing.text.StyledEditorKit;
 import javax.xml.crypto.Data;
 import java.io.Console;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 public class CommandAdmin extends AdminUser {
@@ -147,8 +144,28 @@ public class CommandAdmin extends AdminUser {
                 SocketManager.GAME_SEND_Im_PACKET_TO_ALL("116;" + prefix + "~" + suffix);
             }
             return;
+        } else if (command.equalsIgnoreCase("GETUNKNOWOBJECT")) {
+            Player perso = this.getPlayer();
+            perso.sendMessage("Test 3 ");
+            Collection<GameObject> objCOll = GameObject.getunkownOriginObject();
+            String mess = null;
+
+            for (GameObject entry : objCOll) {
+                mess = entry.getGuid() + " || "
+                        + entry.getTemplate().getName() + " || "
+                        + entry.getQuantity();
+                this.sendMessage(mess);
+            }
+
+            this.sendMessage("Il y a : "
+                    + objCOll.size() + " objets non trouvé.\n");
+            mess = "==========";
+            this.sendMessage(mess);
+
+            return;
         } else if (command.equalsIgnoreCase("GONAME")
                 || command.equalsIgnoreCase("JOIN")
+                || command.equalsIgnoreCase("join")
                 || command.equalsIgnoreCase("GON")) {
             Player P = World.world.getPlayerByName(infos[1]);
             if (P == null) {
@@ -2746,6 +2763,10 @@ public class CommandAdmin extends AdminUser {
             }
 
             perso.set_title(TitleID);
+            if(perso.haveTitrebyID(TitleID)){
+                perso.setAllTitle(""+TitleID);
+            }
+
             this.sendMessage("Vous avez modifie le titre de "
                     + perso.getName() + ".");
             Database.getStatics().getPlayerData().update(perso);

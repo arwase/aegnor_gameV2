@@ -177,9 +177,9 @@ public class JobAction {
 
             if (SM.getTemplate().getId() == 36) {
                 if (qua > 0)
-                    SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB() * World.world.getConquestBonus(player)));
+                    SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB() * World.world.getConquestBonusNew(player)));
             } else
-                SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB()   * World.world.getConquestBonus(player)));
+                SM.addXp(player, (long) (this.getXpWin() * Config.INSTANCE.getRATE_JOB()   * World.world.getConquestBonusNew(player)));
 
             int tID = JobConstant.getObjectByJobSkill(this.id);
 
@@ -646,6 +646,9 @@ public class JobAction {
                 idRune = idIngredient;
             switch (templateID) { 	// Longue serie de Switch Case pour déterminé si c'est la rune on récupÃ¨re ces infos SI c'est l'object c'est le cas par défault
                 // ca c'est poure reformer un item
+                case 17197:
+                case 17198:
+                case 17199:
                 case 17200:
                 case 17202:
                 case 17203:
@@ -1170,7 +1173,7 @@ public class JobAction {
             this.ingredients.clear();
             return;
         } // Pas de rune
-        if(runeOrPotion.getTemplate().getId() == 17200){
+        if( runeOrPotion.getTemplate().getId() >= 17197 &&  runeOrPotion.getTemplate().getId() <= 17200 ){
 
             if (SM == null || objectFm == null) {
                 this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
@@ -1188,8 +1191,41 @@ public class JobAction {
 
                 return;
             }
+
+            int maxLvlItem = 1;
+            switch (runeOrPotion.getTemplate().getId()){
+                case 17197:
+                    maxLvlItem = 100;
+                    break;
+                case 17198:
+                    maxLvlItem = 150;
+                    break;
+                case 17199:
+                    maxLvlItem = 180;
+                    break;
+                case 17200:
+                    maxLvlItem = 200;
+                    break;
+            }
+
+
+
             int rarity = objectFm.getRarity();
             ObjectTemplate objTemplate = objectFm.getTemplate();
+            if(objTemplate.getLevel() > maxLvlItem){
+                this.player.sendMessage("La rune de pouvoir utilisé ne convient pas pour un item de ce level, Level maximum : "+maxLvlItem);
+                if (objectFm != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
+
+                this.ingredients.clear(); // On nettoie les ingrédients
+
+                return;
+            }
 
             GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,rarity);
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
@@ -1416,16 +1452,14 @@ public class JobAction {
                     //this.player.sendMessage("L'objet n'est pas vide");
                     PoidTotItemActuel = currentTotalWeigthBase(statStringObj, objectFm); // Poids total de l'objet
                     //this.player.sendMessage("Poid de l'obj (Repris)  "+PoidTotItemActuel);
-                    PoidTotStatsExoItemActuel = currentWeithStatsExo(statStringObj, objectFm); // Poid des stats EXO (car si ca dépasse 101 ca echec)
+                    PoidTotStatsExoItemActuel = currentWeithStatsExo(statStringObj, objectFm); // Poid des stats EXO (car si ca dépasse 151 ca echec)
+                    //System.out.println("Poid exo actuel :" + PoidTotStatsExoItemActuel);
                     //this.player.sendMessage("Le poid des Exo :"+PoidTotStatsExoItemActuel);
                 }
                 else {
                     PoidActuelStatAFm = 0;
                     PoidTotStatsExoItemActuel = 0;
                 }
-
-
-
 
                 int PoidMaxItem = 0;
                 if(rarity>3){
@@ -1451,9 +1485,59 @@ public class JobAction {
                 }
 
                 float coef = 1;
+                int statJetActuel = 0;
+                // Gestyion des dommages bizarres
+                if(statsObjectFm.equals("70") || statsObjectFm.equals("79") ) {
+                    int statJetActuel1 = getActualJet(objectFm, "79");
+                    int statJetActuel2 = getActualJet(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                    if(statJetActuel1 > statJetActuel2) {
+                        statsObjectFm = "79";
+                        statJetActuel = statJetActuel1;
+
+                    }
+                    else {
+                        statsObjectFm = "70";
+                        statJetActuel = statJetActuel2;
+                    }
+                    //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
+                }
+
+
 
                 int CheckStatItemTemplate = viewBaseStatsItem(objectFm, statsObjectFm); // Check si La stats est sur l'item de base
                 int CheckStatItemActuel = viewActualStatsItem(objectFm, statsObjectFm); // Check si La stats est sur l'item 1 = oui 2 = oui 0 = non
+
+                if(statsObjectFm.equals("70") || statsObjectFm.equals("79") ) {
+                    int statJetActuel1 = viewBaseStatsItem(objectFm, "79");
+                    int statJetActuel2 = viewBaseStatsItem(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                    if(statJetActuel1 > statJetActuel2) {
+                        //statsObjectFm = "79";
+                        CheckStatItemTemplate = statJetActuel1;
+
+                    }
+                    else {
+                        //statsObjectFm = "70";
+                        CheckStatItemTemplate = statJetActuel2;
+                    }
+                    //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
+                }
+                if(statsObjectFm.equals("70") || statsObjectFm.equals("79") ) {
+                    int statJetActuel1 = viewActualStatsItem(objectFm, "79");
+                    int statJetActuel2 = viewActualStatsItem(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                    if(statJetActuel1 > statJetActuel2) {
+                        //statsObjectFm = "79";
+                        CheckStatItemTemplate = statJetActuel1;
+
+                    }
+                    else {
+                        //statsObjectFm = "70";
+                        CheckStatItemTemplate = statJetActuel2;
+                    }
+                    //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
+                }
+
+                //System.out.println("Soit disant pas sur l'item " + CheckStatItemTemplate);
+                //System.out.println("Soit actuellement " + CheckStatItemTemplate);
 
                 // A FAIRE !!!!
                 // Trouver un moment pour diminuer une stats négative plutot que la considéré comme un stat différente
@@ -1461,29 +1545,57 @@ public class JobAction {
 
                 if(rarity > 3){
                     statMax = getStatBaseMaxLegendaire(objTemplate, statsObjectFm);// stat maximum de l'obj Legendaire intéressant pour les cas ou les stats dépasse le poid théorique max
+                    if(statMax == 0 && (statsObjectFm.equals("70") || statsObjectFm.equals("79")) ) {
+                        int statJetActuel1 = getStatBaseMaxLegendaire(objTemplate, "79");
+                        int statJetActuel2 = getStatBaseMaxLegendaire(objTemplate, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                        if(statJetActuel1 > statJetActuel2) {
+                            //statsObjectFm = "79";
+                            statMax = statJetActuel1;
+
+                        }
+                        else {
+                            //statsObjectFm = "70";
+                            statMax = statJetActuel2;
+                        }
+                        //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
+                    }
                 }
                 else{
                     statMax = getStatBaseMax(objTemplate, statsObjectFm); // stat maximum de l'obj intéressant pour les cas ou les stats dépasse le poid théorique max
+                    if(statMax == 0 && (statsObjectFm.equals("70") || statsObjectFm.equals("79")) ) {
+                        int statJetActuel1 = getStatBaseMaxLegendaire(objTemplate, "79");
+                        int statJetActuel2 = getStatBaseMaxLegendaire(objTemplate, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                        if(statJetActuel1 > statJetActuel2) {
+                            //statsObjectFm = "79";
+                            statMax = statJetActuel1;
+
+                        }
+                        else {
+                            //statsObjectFm = "70";
+                            statMax = statJetActuel2;
+                        }
+                        //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
+                    }
                 }
 
                 int statMin = getStatBaseMin(objTemplate, statsObjectFm); // stat Minimum de l'obj intéressant pour les cas ou les stats dépasse le poid théorique max
+                if(statMin == 0 && (statsObjectFm.equals("70") || statsObjectFm.equals("79")) ) {
+                    int statJetActuel1 = getStatBaseMaxLegendaire(objTemplate, "79");
+                    int statJetActuel2 = getStatBaseMaxLegendaire(objTemplate, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
+                    if(statJetActuel1 > statJetActuel2) {
+                        //statsObjectFm = "79";
+                        statMin = statJetActuel1;
 
-                int statJetActuel = 0;
-
-                // Gestyion des dommages bizarres
-                if(statsObjectFm == "70" || statsObjectFm == "79" ) {
-                    int statJetActuel1 = getActualJet(objectFm, "79");
-                    int statJetActuel2 = getActualJet(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
-                    if(statJetActuel1>=statJetActuel2) {
-                        statJetActuel = statJetActuel1;
                     }
                     else {
-                        statJetActuel = statJetActuel2;
+                        //statsObjectFm = "70";
+                        statMin = statJetActuel2;
                     }
+                    //System.out.println("On a choisit "+ statsObjectFm + " " +statJetActuel1 + " et " + statJetActuel2);
                 }
-                else {
-                    statJetActuel = getActualJet(objectFm, statsObjectFm);
-                }
+
+                 statJetActuel = getActualJet(objectFm, statsObjectFm);
+
                 int statJetFutur = statJetActuel + statsAdd;
 
 
@@ -1517,18 +1629,6 @@ public class JobAction {
                     }
                 }
 
-                if(objectFm.getTemplate().getPanoId() == 163 || objectFm.getTemplate().getPanoId() == 164)
-                {
-                    if(objectFm.getRarity() <= 3)
-                    {
-                        limitPerLigne = 351;
-                    }
-                    if(objectFm.getRarity() > 3)
-                    {
-                        limitPerLigne = 451;
-                    }
-                }
-
                 if((CheckStatItemTemplate == 0 && CheckStatItemActuel == 0) || (CheckStatItemTemplate == 0 && CheckStatItemActuel == 1)) {
                     // La stat qu'on ajoute est un over et son poid est de PoidRune
                     if( PoidTotStatsExoItemActuel + poidRune > limitPerLigne) {
@@ -1555,7 +1655,7 @@ public class JobAction {
                     this.player.sendMessage("Ton métier n'est pas suffisant pour améliorer cet objet !");
                     canFM = false; // On rate le FM si le mï¿½tier n'est pas suffidant
                 }
-
+                //System.out.println( statMax + " pour " + statJetFutur + " Jet actuel " + statJetActuel);
                 // La notien de loi + permet de cibler le coef
                 if(poidRune > 30) {
                     if( statMax < statJetFutur) {
@@ -2028,7 +2128,7 @@ public class JobAction {
             String[] stats = s.split("#");
             if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
             } else if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
-                //World.world.logger.trace(stats[0].toLowerCase()+" ICI/ "+statsModif.toLowerCase());
+
                 int max = Integer.parseInt(stats[2], 16);
                 if (max == 0)
                     max = Integer.parseInt(stats[1], 16);
@@ -2191,11 +2291,25 @@ public class JobAction {
 
 
                 String StatsHex = Integer.toHexString(statID);
-                if (StatsHex.equals("79")) {
-                    StatsHex = "70";
-                }
+                //if (StatsHex.equals("79")) {
+                //    StatsHex = "70";
+                //}
                 //System.out.println("On test :" + StatsHex);
                 int BaseStats = viewBaseStatsItem(obj, StatsHex);
+
+                if( (StatsHex.equals("79") || StatsHex.equals("70")) && BaseStats ==0 ) {
+                    //    StatsHex = "70";
+                    int stats1 = viewBaseStatsItem(obj, "79");
+                    int stats2 = viewBaseStatsItem(obj, "70");
+
+                    if(stats1>stats2){
+                        BaseStats = viewBaseStatsItem(obj, "79");
+                    }
+                    else{
+                        BaseStats = viewBaseStatsItem(obj, "70");
+                    }
+                }
+
                 if (BaseStats == 2 || BaseStats == 1) {
                     continue;
                 }

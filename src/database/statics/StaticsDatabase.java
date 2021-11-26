@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import database.DAO;
 import org.slf4j.LoggerFactory;
 import database.Database;
 import database.statics.data.*;
@@ -36,6 +37,8 @@ public class StaticsDatabase {
     private SubAreaData subAreaData;
     private TrunkData trunkData;
     private WorldEntityData worldEntityData;
+    private TitleData titleData;
+
 
     private void initializeData() {
         this.accountData = new AccountData(this.dataSource);
@@ -59,6 +62,7 @@ public class StaticsDatabase {
         this.petData = new PetData(this.dataSource);
         this.questPlayerData = new QuestPlayerData(this.dataSource);
         this.worldEntityData = new WorldEntityData(this.dataSource);
+        this.titleData = new TitleData(this.dataSource);
     }
 
     public boolean initializeConnection() {
@@ -180,4 +184,6 @@ public class StaticsDatabase {
     public WorldEntityData getWorldEntityData() {
         return worldEntityData;
     }
+
+    public TitleData getTitleData() { return titleData;}
 }

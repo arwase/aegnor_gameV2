@@ -1618,6 +1618,8 @@ public class PathFinding {
         int stepNum = 0;
         boolean stop = false;
 
+
+
         while (!stop && stepNum++ <= limit) {
             int nearestCell = getNearestCellAround(map, curCase.getId(), dest, closeCells);
             if (nearestCell == -1) {

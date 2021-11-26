@@ -242,6 +242,10 @@ public class DynamicsDatabase {
         return objectTemplateData;
     }
 
+    public ObjectTemplateData getObjectTemplateDataById() {
+        return objectTemplateData;
+    }
+
     public ObjectSetData getObjectSetData() {
         return objectSetData;
     }

@@ -7,7 +7,10 @@ import area.map.entity.InteractiveObject;
 import area.map.entity.MountPark;
 import area.map.labyrinth.Minotoror;
 import area.map.labyrinth.PigDragon;
-import client.other.*;
+import client.other.Party;
+import client.other.Restriction;
+import client.other.Stalk;
+import client.other.Stats;
 import command.administration.Group;
 import common.Formulas;
 import common.SocketManager;
@@ -44,14 +47,15 @@ import kernel.Reboot;
 import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 import other.Action;
 import other.Dopeul;
+import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
 import util.TimerWaiter;
 import util.lang.Lang;
 
-import java.net.Socket;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -227,6 +231,8 @@ public class Player {
 
     private boolean maitre;
     public boolean ipdrop = false;
+    public boolean oneWindows = false;
+    public int difficulty = 0;
     public boolean noitems = false;
     public boolean passturn = false;
     public boolean boutique =  false;
@@ -412,8 +418,14 @@ public class Player {
             try {
                 if (parcho != null && !parcho.equalsIgnoreCase(""))
                     for (String stat : parcho.split(";"))
-                        if (!stat.equalsIgnoreCase(""))
-                            this.statsParcho.addOneStat(Integer.parseInt(stat.split(",")[0]), Integer.parseInt(stat.split(",")[1]));
+                        if (!stat.equalsIgnoreCase("")){
+                            int value = Integer.parseInt(stat.split(",")[1]);
+                            if( value > 101 ){
+                                value = 101;
+                            }
+                            this.statsParcho.addOneStat(Integer.parseInt(stat.split(",")[0]), value );
+                        }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -848,8 +860,15 @@ public class Player {
 
     public String parseStatsParcho() {
         String parcho = "";
-        for (Entry<Integer, Integer> i : statsParcho.getEffects().entrySet())
-            parcho += (parcho.isEmpty() ? i.getKey() + "," + i.getValue() : ";" + i.getKey() + "," + i.getValue());
+        for (Entry<Integer, Integer> i : statsParcho.getEffects().entrySet()){
+            int value = i.getValue();
+            if(value > 101){
+                value = 101;
+            }
+
+            parcho += (parcho.isEmpty() ? i.getKey() + "," + value : ";" + i.getKey() + "," + value);
+        }
+
         return parcho;
     }
 
@@ -1086,8 +1105,35 @@ public class Player {
         return _allTitle;
     }
 
+    public boolean haveTitrebyID(int Id){
+        Map<Integer, Titre> titres = World.world.getTitres();
+        String titlepossess = this.getAllTitle();
+        if(titlepossess == null || titlepossess =="" )
+            return false;
+
+        if(titlepossess.contains(",")) {
+            String[] words = titlepossess.split(",");
+            int[] arr = new int[words.length];
+
+            for (int i = 0; i < words.length; i++) {
+                arr[i] = Integer.valueOf(words[i]);
+            }
+
+            if( ArrayUtils.contains( arr, Id ) ){
+                return true;
+            }
+        }
+        else{
+            int titreid = Integer.valueOf(titlepossess);
+            if(titreid == Id){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void setAllTitle(String title) {
-        getAllTitle();
         boolean erreur = false;
         if (title.equals(""))
             title = "0";
@@ -1877,6 +1923,10 @@ public class Player {
                 }
                 if (pets.getType() == 0 || pets.getType() == 1)
                     continue;
+
+                //System.out.println( " Stats texte : " + object.getTxtStat() );
+                //System.out.println( " Lol " + object.getStats() );
+
                 p.updatePets(this, Integer.parseInt(pets.getGap().split(",")[1]));
             } else if (object.getTemplate().getId() == 10207) {
                 String date = object.getTxtStat().get(Constant.STATS_DATE);
@@ -6155,6 +6205,7 @@ public class Player {
     public boolean changeClasse(byte clase) {
         if(isMorph())
         {
+            this.sendMessage("Vous ne pouvez pas changer de classe lorsque que vous êtes transformé");
             return false;
         }
         if (clase < 1) {
@@ -6163,7 +6214,8 @@ public class Player {
             clase = 12;
         }
         if (clase == getClasse()) {
-            SocketManager.GAME_SEND_BN_OUT(this, "Changement de Classe - Même Classe");
+            this.sendMessage("Vous ne pouvez pas changer de classe pour la même classe");
+            //ocketManager.GAME_SEND_BN_OUT(this, "Changement de Classe - Même Classe");
             return false;
         }
 
@@ -6192,11 +6244,9 @@ public class Player {
         Database.getStatics().getPlayerData().update(this);
         String	message = "Sauvegarde du Personnage terminé";
         SocketManager.GAME_SEND_MESSAGE(this, message);
-        SocketManager.GAME_SEND_Im_PACKET(this, "1CHANGED_CLASSE_SUCCESS");
+        this.sendMessage("Bravo ! vous avez changé de classe");
+       // SocketManager.GAME_SEND_Im_PACKET(this, "1CHANGED_CLASSE_SUCCESS");
         return true;
-
-
-
 
     }
 
@@ -6350,4 +6400,5 @@ public class Player {
         }
         return nombre;
     }
+
 }

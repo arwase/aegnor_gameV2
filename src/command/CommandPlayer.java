@@ -26,8 +26,11 @@ import object.GameObject;
 import util.lang.Lang;
 
 import javax.xml.crypto.Data;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import javax.swing.Timer;
 
 public class CommandPlayer {
 
@@ -85,14 +88,32 @@ public class CommandPlayer {
 
                     Fight playerFight = player.getFight();
                     Fighter fighter = playerFight.getFighterByPerso(player);
-                    Fighter lol2 = playerFight.getFighterByOrdreJeu();
+                    int lol2 = playerFight.getFighterByOrdreJeu().getTeam();
 
-                    if(fighter == lol2) {
-                        player.sendMessage("Vous avez passez votre tour pour débloquer le combat");
+                    if(lol2 == 0) {
+                        player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getPlayer().getName() +" pour débloquer le combat");
                         playerFight.getStartTurn();
                     }
                     else{
-                        player.sendMessage("Vous n'êtes pas le combattant qui est bloqué");
+                        player.sendMessage("On attends 10 sec pour voir si c'est toujours le monstre qui jouer");
+                        Fighter  monstrequijoue = playerFight.getFighterByOrdreJeu();
+
+                        Timer timer = new Timer(10000, new ActionListener() {
+                            public void actionPerformed(ActionEvent e) {
+
+                                if ( monstrequijoue == playerFight.getFighterByOrdreJeu() ) {
+                                    player.sendMessage("Le monstre "+ playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() +" passe son tour");
+                                    playerFight.getStartTurn();
+                                } else {
+                                    player.sendMessage("Le monstre ne joue plus, le combat n'était pas bloqué");
+                                }
+
+                            }
+                        });
+
+                        timer.setRepeats(false);
+                        timer.start();
+
                     }
                     return true;
                 }
@@ -105,8 +126,13 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player, "Vous avez déjà le bon skin.");
                 }
             }else if (command(msg, "sellitem")) {
-                player.sendMessage("Commande désactivé");
-               /* if(player.getItems() == null)
+
+                if(player.getGroupe().getId() <= 0){
+                    player.sendMessage("Commande désactivé");
+                    return false;
+                }
+
+                if(player.getItems() == null)
                 {
                     SocketManager.GAME_SEND_MESSAGE(player, "Votre Inventaire est vide");
                     return false;
@@ -123,12 +149,12 @@ public class CommandPlayer {
                     if(!object.isAttach() && !EquipedObject.contains(object) && Constant.ITEM_TYPE_TO_SELL.contains(object.getTemplate().getType()))
                     {
                         kamastoGive += (object.getTemplate().getPrice() / 10) * object.getQuantity();
-                        ObjectToKill.put(object, object.getQuantity());*/
+                        ObjectToKill.put(object, object.getQuantity());
                         /*player.removeByTemplateID(object.getTemplate().getId(), object.getQuantity());
                         SocketManager.GAME_SEND_Ow_PACKET(player);
                         SocketManager.GAME_SEND_Im_PACKET(player, "022;"
                                 + -object.getQuantity() + "~" + object.getTemplate().getId());*/
-                    /*}
+                    }
                 }
                 for(Map.Entry<GameObject, Integer> entry : ObjectToKill.entrySet())
                 {
@@ -141,7 +167,7 @@ public class CommandPlayer {
                 Database.getStatics().getPlayerData().update(player);
                 SocketManager.GAME_SEND_STATS_PACKET(player);
                 SocketManager.GAME_SEND_MESSAGE(player,"Votre inventaire a été vidé ! Vous avez gagné " + kamastoGive + " kamas !");
-                */
+
                 return true;
             } else if (command(msg, "noall")) {
                 if (player.noall) {
@@ -227,11 +253,13 @@ public class CommandPlayer {
                             int val4 = player.getStats().get(119);
                             int val5 = player.getStats().get(123);
 
-                            if (val + val1 + val2 +val3+val4+val5 != 0){
+                            if (val + val1 + val2 +val3+val4+val5+val5 != 0){
                                 player.sendMessage("Il faut restat vos stats avant de vous parcho");
                                 return true;
                             }
 
+                            player.getStatsParcho().getMap().clear();
+                            player.getStatsParcho().getEffects().clear();
                             player.getStats().addOneStat(125, 101);
                             player.getStats().addOneStat(124, 101);
                             player.getStats().addOneStat(118, 101);
@@ -262,11 +290,12 @@ public class CommandPlayer {
                         int val4 = player.getStats().get(119);
                         int val5 = player.getStats().get(123);
 
-                        if (val + val1 + val2 +val3+val4+val5 != 0){
+                        if (val + val1 + val2 +val3+val4+val5+val5 != 0){
                             player.sendMessage("Il faut restat vos stats avant de vous parcho");
                             return true;
                         }
-
+                        player.getStatsParcho().getMap().clear();
+                        player.getStatsParcho().getEffects().clear();
                         player.getStats().addOneStat(125, 101);
                         player.getStats().addOneStat(124, 101);
                         player.getStats().addOneStat(118, 101);
@@ -335,7 +364,22 @@ public class CommandPlayer {
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Il faut être maitre d'un groupe pour utiliser cette commande");
                 }
                 return true;
-            } else if(command(msg, "noitems")){
+            }else if(command(msg, "oneWindows")){
+                 if (!player.PlayerList1.isEmpty()) {
+                     if(player.oneWindows){
+                         player.oneWindows = false;
+                         SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez désactivé le mode one windows");
+                     }
+                     else{
+                         player.oneWindows = true;
+                         SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez activé le mode one windows");
+                     }
+                 }
+                 else {
+                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Il faut être maitre d'un groupe pour utiliser cette commande");
+                 }
+                 return true;
+             } else if(command(msg, "noitems")){
                 if (!player.PlayerList1.isEmpty() || player.getSlaveLeader()==null) {
                     if(!player.noitems){
                         player.noitems = true;
@@ -382,6 +426,7 @@ public class CommandPlayer {
                 return true;
             } else if (command(msg, "restat")) {
                 player.getStatsParcho().getMap().clear();
+                player.getStatsParcho().getEffects().clear();
                 player.getStats().addOneStat(125,-player.getStats().getEffect(125));
                 player.getStats().addOneStat(124,-player.getStats().getEffect(124));
                 player.getStats().addOneStat(118,-player.getStats().getEffect(118));
@@ -468,7 +513,7 @@ public class CommandPlayer {
 
                             Party party = player.getParty();
                             if (party == null) {
-                                party = new Party(z, player);
+                                party = new Party(player, z);
                                 SocketManager.GAME_SEND_GROUP_CREATE(player.getGameClient(), party);
                                 SocketManager.GAME_SEND_PL_PACKET(player.getGameClient(), party);
                                 SocketManager.GAME_SEND_GROUP_CREATE(z.getGameClient(), party);
@@ -846,7 +891,7 @@ public class CommandPlayer {
                 }
                 else{
                     SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information)</b> Vous n'êtes pas le maître.");
-                    return false;
+                    return true;
                 }
             } else if(command(msg, "event")) {
                 if(player.cantTP()) return true;

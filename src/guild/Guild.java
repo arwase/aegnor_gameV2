@@ -8,10 +8,7 @@ import fight.spells.Spell.SortStats;
 import game.world.World;
 import kernel.Constant;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -21,7 +18,7 @@ public class Guild {
     private long xp, date;
     private String name = "", emblem = "", announce = "";
     private int lvl, capital = 0, nbCollectors = 0;
-    private List<GuildMember> members = new ArrayList<>();
+    private Map<Integer, GuildMember> members = new TreeMap<>();
     private Map<Integer, SortStats> spells = new HashMap<>(); // <Id, Level>
     private Map<Integer, Integer> stats = new HashMap<>(); // <Effect, Quantity>
 
@@ -55,14 +52,14 @@ public class Guild {
         Player player = World.world.getPlayer(id);
         if (player == null) return null;
         GuildMember guildMember = new GuildMember(player, this, r, x, pXp, ri, lastCo);
-        this.members.add(guildMember);
+        this.members.put(id, guildMember);
         player.setGuildMember(guildMember);
         return guildMember;
     }
 
     public GuildMember addNewMember(Player player) {
         GuildMember guildMember = new GuildMember(player, this, 0, 0, (byte) 0, 0, player.getAccount().getLastConnectionDate());
-        this.members.add(guildMember);
+        this.members.put(player.getId(), guildMember);
         player.setGuildMember(guildMember);
         return guildMember;
     }
@@ -145,14 +142,15 @@ public class Guild {
     }
 
     public List<Player> getPlayers() {
-        return this.members.stream().filter(guildMember -> guildMember.getPlayer() != null).map(GuildMember::getPlayer).collect(Collectors.toList());
+        List<Player> players = this.members.values().stream().filter(guildMember -> guildMember.getPlayer() != null).map(GuildMember::getPlayer).collect(Collectors.toList());
+        return players;
     }
 
     public GuildMember getMember(int id) {
-        for(GuildMember guildMember : this.members)
-            if(guildMember.getPlayerId() == id)
-                return guildMember;
-        return null;
+        GuildMember guildMember = this.members.get(id);
+        if(guildMember == null)
+            Database.getDynamics().getGuildMemberData().load(id);
+        return this.members.get(id) == null ? this.members.get(id) : guildMember;
     }
 
     public void removeMember(Player player) {
@@ -246,7 +244,7 @@ public class Guild {
 
     public String parseMembersToGM() {
         StringBuilder str = new StringBuilder();
-        for (GuildMember GM : this.members) {
+        for (GuildMember GM : this.members.values()) {
             String online = "0";
             if (GM.getPlayer() != null)
                 if (GM.getPlayer().isOnline())

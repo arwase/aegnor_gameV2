@@ -583,4 +583,10 @@ public class Account {
         else this.heureVote = Long.parseLong(hour);
         this.lastVoteIP = ip;
     }
+
+    public static Player getFirstPlayer(Account test) {
+        Map<Integer, Player> players = test.getPlayers();
+
+        return players.get(0);
+    }
 }

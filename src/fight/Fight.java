@@ -4,6 +4,7 @@ import area.SubArea;
 import area.map.GameCase;
 import area.map.GameMap;
 import area.map.labyrinth.Minotoror;
+import client.Classe;
 import client.Player;
 import client.other.Party;
 import client.other.Stalk;
@@ -1662,19 +1663,49 @@ public class Fight {
 
         Fighter current = this.getFighterByOrdreJeu();
         Fighter master = null;
+
+
         if(current.getInvocator() != null) {
             master = current.getInvocator();
+            Player joueur= master.getPlayer();
+            if(joueur != null){
+                Player Maitre = joueur.getSlaveLeader();
+                if(Maitre != null){
+                    if(Maitre.oneWindows){
+                        if(joueur.getFight().getFighterByPerso(Maitre) != null )
+                            master=joueur.getFight().getFighterByPerso(Maitre);
+
+                    }
+                }
+            }
         }
         else
         {
             master = current;
+            Player joueur= current.getPlayer();
+            if(joueur != null){
+                Player Maitre = joueur.getSlaveLeader();
+                if(Maitre != null){
+                    if(Maitre.oneWindows){
+                        if(joueur.getFight().getFighterByPerso(Maitre) != null )
+                           master=joueur.getFight().getFighterByPerso(Maitre);
+
+                    }
+                }
+            }
         }
+
+
+
+        // Controle d'invocation, pas utile pour le moment
         if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
-            if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
+            if (master.getPlayer().controleinvo || current.getPlayer().controleinvo ) {
+
                 if (current.isControllable()) {
 
-                    master.getPlayer().setCurrentCompagnon(current);
                     if (current.isInvocation()) {
+
+                        master.getPlayer().setCurrentCompagnon(current);
                         SocketManager.send(master.getPlayer(), "SC");
                         SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
                         SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
@@ -1682,6 +1713,30 @@ public class Fight {
                         SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
 
                     }
+
+                } else {
+                    if (current.getPlayer() != null) {
+                        if (current.getPlayer().getCurrentCompagnon() != null) {
+                            current.getPlayer().deleteCurrentCompagnon();
+
+                        }
+                        SocketManager.send(current.getPlayer(), "SC");
+                        SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                        SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
+                        SocketManager.GAME_SEND_SL_LISTE(current);
+                    }
+                }
+            }
+
+            if( !(current.isInvocation()) ) {
+                if (master != current) {
+                    master.getPlayer().setCurrentCompagnon(current);
+                    SocketManager.send(master.getPlayer(), "SC");
+                    SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
+                    SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
+                    SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master.getPlayer());
+                    SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
                 } else {
                     if (current.getPlayer() != null) {
                         if (current.getPlayer().getCurrentCompagnon() != null) {
@@ -1757,7 +1812,15 @@ public class Fight {
 
         current.refreshLaunchedSort();
         SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
-        current.setCanPlay(true);
+
+        if(master == current){
+            current.setCanPlay(true);
+        }
+        else{
+            master.setCanPlay(true);
+            current.setCanPlay(true);
+        }
+
 
         // On actualise les sorts launch
 
@@ -2813,9 +2876,15 @@ public class Fight {
 
         if (nStep > getCurFighterPm() || nStep == -1000) {
             if (fighter.getPlayer() != null) {
-                if (fighter.getInvocator().getPlayer().getCurrentCompagnon() != null) {
-                    SocketManager.GAME_SEND_GA_PACKET(fighter.getInvocator().getPlayer().getGameClient(), "", "0", "", "");
-                } else {
+                Fighter lol = fighter.getInvocator();
+                if(lol != null) {
+                    if (lol.getPlayer().getCurrentCompagnon() != null) {
+                        SocketManager.GAME_SEND_GA_PACKET(fighter.getInvocator().getPlayer().getGameClient(), "", "0", "", "");
+                    } else {
+                        SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
+                    }
+                }
+                else {
                     SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
                 }
             }
@@ -2928,7 +2997,16 @@ public class Fight {
             this.getAllChallenges().values().stream().filter(c -> c != null).forEach(c -> c.onPlayerMove(fighter));
         if(fighter.getInvocator() != null)
         {
-            fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+            Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
+            if(Leader != null){
+                if(Leader.controleinvo){
+                    Leader.getGameClient().addAction(GA);
+                }
+                else{
+                    fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+                }
+            }
+
             SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(this, fighter);
         }
         else {
@@ -3599,7 +3677,7 @@ public class Fight {
                     looseTeam.addAll(copyTeam1.values());
                 }
 
-                if (Constant.FIGHT_TYPE_PVM == this.getType() && this.getMapOld().hasEndFightAction(this.getType()) && this.getMapOld().isDungeon()) {
+                if (Constant.FIGHT_TYPE_PVM == this.getType() && this.getMapOld().hasEndFightAction(this.getType()) ) {
                     for (Fighter fighter : winTeam) {
                         Player player = fighter.getPlayer();
                         if (player == null)
@@ -4232,13 +4310,13 @@ public class Fight {
                 if(fighter.getMob() == null || fighter.getMob().getTemplate() == null || !fighter.getMob().getTemplate().isCapturable()) {
                     mobCapturable = false;
                 }
-                if(fighter.getMob() != null && fighter.getMob().getTemplate() != null) {
+                /*if(fighter.getMob() != null && fighter.getMob().getTemplate() != null) {
                     for (int[] protector : JobConstant.JOB_PROTECTORS) {
                         if(protector[0] == fighter.getMob().getTemplate().getId()) {
                             mobCapturable = false;
                         }
                     }
-                }
+                }*/
             }
 
             if (mobCapturable && !SoulStone.isInArenaMap(this.getMapOld().getId()) && !this.getMapOld().isArena()) {
@@ -4395,9 +4473,9 @@ public class Fight {
                 if (c != null && c.getWin())
                     challXp += c.getXp();
 
-            for (Fighter entry : loosers)
+            for (Fighter entry : loosers) {
                 lvlLoosers += entry.getLvl();
-
+            }
             for (Fighter entry : winners) {
                 lvlWinners += entry.getLvl();
                 if (entry.getLvl() > lvlMaxLooser
@@ -4480,7 +4558,31 @@ public class Fight {
                                     if (drop1.getCeil() <= totalProspecting && fighter.getMob() != null) {
                                         drop = drop1.copy(fighter.getMob().getGrade());
                                         if(drop == null) break;
-                                        dropsPlayers.add(drop);
+
+                                        ObjectTemplate test = World.world.getTemplateById(drop.getObjectId());
+
+                                        if(  ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,test.getType()) ){
+                                            boolean IsAlreadyOnlist = false;
+                                            for (Drop c : dropsPlayers) {
+                                                if (drop.getObjectId() == c.getObjectId() ) {
+                                                    c.setLocalPercent(drop.getLocalPercent()+ c.getLocalPercent() );
+                                                    //System.out.println(test.getName() + "On a boosté le drop " + c.getLocalPercent() );
+                                                    IsAlreadyOnlist = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if(IsAlreadyOnlist){
+                                                //System.out.println(test.getName() + "On a boosté le drop");
+                                            }
+                                            else{
+                                                dropsPlayers.add(drop);
+                                            }
+                                        }
+                                        else{
+                                            dropsPlayers.add(drop);
+                                        }
+
                                         chancebase = 2;
 
                                     }
@@ -4494,7 +4596,30 @@ public class Fight {
 
                                         drop = drop1.copy(fighter.getMob().getGrade());
                                         if(drop == null) break;
-                                        dropsPlayers.add(drop);
+
+                                        ObjectTemplate test = World.world.getTemplateById(drop.getObjectId());
+
+                                        if(  ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,test.getType()) ){
+                                            boolean IsAlreadyOnlist = false;
+                                            for (Drop c : dropsPlayers) {
+                                                if (drop.getObjectId() == c.getObjectId() ) {
+                                                    c.setLocalPercent(drop.getLocalPercent()+ c.getLocalPercent() );
+                                                    IsAlreadyOnlist = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if(IsAlreadyOnlist){
+                                                //System.out.println(test.getName() + "On a boosté le drop");
+                                            }
+                                            else{
+                                                dropsPlayers.add(drop);
+                                            }
+                                        }
+                                        else{
+                                            dropsPlayers.add(drop);
+                                        }
+
                                     }
                                     break;
                             }
@@ -4509,9 +4634,7 @@ public class Fight {
             }
 
             int Maxlvlgroupe =  Collections.max(levels);
-            if(Maxlvlgroupe>175) {
-                Maxlvlgroupe = 175;
-            }
+
 
             // Sort fighter by prospecting.
             ArrayList<Fighter> temporary1 = new ArrayList<>();
@@ -4648,7 +4771,59 @@ public class Fight {
                         break;
                 }
             }
+
             /** End heroic **/
+
+            /** New Bonuses **/
+            ArrayList<String> playersip = new ArrayList<String>();
+            ArrayList<Integer> playersclass = new ArrayList<Integer>();
+            for (Fighter i : winners) {
+                if(i.isInvocation() && i.getMob() != null && i.getMob().getTemplate().getId() != 285)
+                    continue;
+                if(i.isDouble())
+                    continue;
+
+
+                
+                Player player = i.getPlayer();
+                if(player != null) {
+                    if (!(playersclass.contains(player.getClasse()))) {
+                        playersclass.add(player.getClasse());
+                    }
+
+                    if (!(playersip.contains(player.getAccount().getCurrentIp()))) {
+                        playersip.add(player.getAccount().getCurrentIp());
+                    }
+                }
+            }
+
+            double Maxlvlmob = Maxlvlgroupe;
+            if(Maxlvlmob>200){
+                Maxlvlmob=200;
+            }
+            double lvlMoyenPlayer = lvlWinners / winners.size();
+            double BonuslvlMoyen = 1;
+            if(lvlMoyenPlayer >= Maxlvlmob){
+                BonuslvlMoyen =  (Maxlvlmob/lvlMoyenPlayer) ;
+            }
+            else{
+                BonuslvlMoyen =  (lvlMoyenPlayer/Maxlvlmob) ;
+            }
+
+            System.out.println(BonuslvlMoyen + "car : " + lvlMoyenPlayer + " / " + Maxlvlmob);
+
+            double BonusPerdiffclasse = 1 +  ( playersclass.size() / winners.size() )*0.8;
+            double BonusPerdiffip = 1 +  ( playersip.size() / winners.size() )*0.8 ;
+
+            if(BonusPerdiffclasse < 1 ){
+                BonusPerdiffclasse = 1;
+            }
+            if(BonusPerdiffip < 1 ){
+                BonusPerdiffip = 1;
+            }
+
+
+            /** End New Bonuses **/
 
             /** Winners **/
             for (Fighter i : winners) {
@@ -4657,20 +4832,28 @@ public class Fight {
                 if(i.isDouble())
                     continue;
 
+                double bonusVip = 1;
                 final Player player = i.getPlayer();
-
+                if (player != null) {
+                    if (player.getAccount().getVip() == 1) {
+                        bonusVip = 1.15;
+                    }
+                }
                 if (player != null && getType() != Constant.FIGHT_TYPE_CHALLENGE)
                     player.calculTurnCandy();
                 if (getType() == Constant.FIGHT_TYPE_PVT || getType() == Constant.FIGHT_TYPE_PVM || getType() == Constant.FIGHT_TYPE_CHALLENGE || getType() == Constant.FIGHT_TYPE_DOPEUL) {
                     String drops = "";
-                    long xpPlayer = 0, xpGuild = 0, xpMount = 0;
+                    long xpPlayer = 0, xpGuild = 0, xpMount = 0, xpPlayer2 = 0 ;
                     int winKamas;
 
                     AtomicReference<Long> XP = new AtomicReference<>();
                     /** Xp,kamas **/
                     if (player != null) {
                         xpPlayer = FormuleOfficiel.getXp(i, winners, totalXP, nbbonus, (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners);
-                        XP.set(xpPlayer);
+                        xpPlayer2 = FormuleOfficiel.getXp2(i, winners, totalXP,BonuslvlMoyen , (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners,BonusPerdiffip,BonusPerdiffclasse);
+                        player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
+                        player.sendMessage("contre " + xpPlayer2+ " XP gagné");
+                        XP.set(xpPlayer2);
 
                         if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                             if (player != null && memberGuild != 0)
@@ -4715,7 +4898,13 @@ public class Fight {
                         try {
                             if (this.getType() == Constant.FIGHT_TYPE_PVM && win == 1) {
                                 temporary3.addAll(World.world.getPotentialBlackItem(Maxlvlgroupe).stream().map(objectTemplate ->
-                                        new Drop(objectTemplate.getId(), 0.03, 0)).collect(Collectors.toList()));
+                                        new Drop(objectTemplate.getId(), 0.025, 0)).collect(Collectors.toList()));
+
+                                for (Fighter entry : loosers) {
+                                    temporary3.add( World.world.getPotentialRuneReini( entry.getLvl()) );
+                                }
+
+
                             }
                         }
                         catch (Exception e) {
@@ -4731,8 +4920,10 @@ public class Fight {
 
 
                             final double jet = Double.parseDouble(formatter.format(Math.random() * 100).replace(',', '.')),
-                                    chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonus(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP()* chancebase ).replace(',', '.'));
+                                    chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonusNew(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP() * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
                             boolean ok = false;
+                            //System.out.println(jet + " Chances pour drop " + World.world.getTemplateById(drop.getObjectId()).getName() );
+                            //System.out.println( chance );
 
                             switch (drop.getAction()) {
                                 case 4:

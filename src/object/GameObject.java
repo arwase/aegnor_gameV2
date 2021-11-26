@@ -1,22 +1,29 @@
 package object;
 
+import area.map.entity.Trunk;
+import client.Account;
 import client.Player;
 import client.other.Stats;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
+import database.dynamics.data.PetTemplateData;
+import entity.Collector;
 import entity.mount.Mount;
+import entity.pet.Pet;
 import entity.pet.PetEntry;
 import fight.spells.SpellEffect;
 import game.world.World;
 import game.world.World.Couple;
+import hdv.Hdv;
+import hdv.HdvEntry;
 import job.JobAction;
 import kernel.Constant;
-import kernel.Logging;
 import object.entity.Fragment;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GameObject {
 
@@ -163,6 +170,7 @@ public class GameObject {
         if(this.template != null & this.template.getId() == 7010) return;
         String dj1 = "";
         if (!strStats.equalsIgnoreCase("")) {
+
             for (String split : strStats.split(",")) {
                 try {
                     if (split.equalsIgnoreCase(""))
@@ -238,8 +246,9 @@ public class GameObject {
                         continue;
                     }
                     //Si stats avec Texte (Signature, apartenance, etc)//FIXME
-                    if (id != Constant.STATS_RESIST && id < 970 && id > 974 && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
+                    if (id != Constant.STATS_RESIST  && (id < 970 || id > 974) && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
                         if (!(this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL && id == Constant.STATS_PETS_DATE)) {
+
                             txtStats.put(id, stats[3]);
                             continue;
                         }
@@ -304,8 +313,64 @@ public class GameObject {
                     }
                     if (!follow2)
                         continue;//Si c'ï¿½tait un effet Actif d'arme ou une signature
-                    int jet = Integer.parseInt(stats[1], 16);
-                        Stats.addOneStat(id, jet);
+
+                    String statsString = stats[0];
+                    // Gestyion des dommages bizarres
+
+
+                    int statMax = JobAction.getStatBaseMaxLegendaire(this.template, statsString );
+
+                    if(this.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+
+                            //System.out.println("C'est un familier " + this.getTemplate().getName());
+
+                            //statMax =  JobAction.getStatBaseMaxLegendaire(this.template, statsString );
+                            Pet pets = World.world.getPets(this.template.getId() );
+                            statMax = pets.getMax();
+                            if (statMax < Integer.parseInt(stats[1], 16) && this.getTemplate().getId() != 6894) {
+                                //System.out.println(this.getTemplate().getName() + " " +statMax + " plus petit que " + Integer.parseInt(stats[1], 16));
+                                System.out.println("["+ this.getGuid() +"]"+ "!! Familier illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " alors que max " + statMax);
+                                Stats.addOneStat(id, statMax);
+                            }
+
+                    }
+
+
+
+                    if( statMax == 0 && statsString.equals("70")){
+                        statsString = "79";
+                        statMax = JobAction.getStatBaseMaxLegendaire(this.template, statsString );
+                        id=121;
+                    }
+
+                    if( statMax == 0 && statsString.equals("79")  ) {
+                        statsString = "70";
+                        statMax = JobAction.getStatBaseMaxLegendaire(this.template, statsString );
+                        id=112;
+                    }
+
+                    int poidmax = 151;
+                    double poiduni = JobAction.getPwrPerEffet(id);
+                    int poidligne = (int) Math.round( Integer.parseInt(stats[1], 16) *poiduni);
+
+
+                    if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER &&  this.getTemplate().getType() != Constant.ITEM_TYPE_FANTOME_FAMILIER  &&  this.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
+                        if(poidligne <= poidmax) {
+                            Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                        }
+                        else {
+                            if(statMax >= Integer.parseInt(stats[1], 16) ) {
+                                Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                            }
+                            else {
+                                System.out.println("["+ this.getGuid() +"]"+ "!! Item illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " Donc ligne a " + poidligne + " alors que max " + statMax);
+                                txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [Use-faille]");
+                            }
+                        }
+                    }
+                    else {
+                        Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -318,6 +383,110 @@ public class GameObject {
     public void addTxtStat(int i, String s) {
         txtStats.put(i, s);
         this.setModification();
+    }
+
+    public static String whoGotObject(GameObject gameObject) {
+        int id = gameObject.getGuid();
+
+        Collection<Account> compte = World.world.getAccounts();
+        Player Owner = null;
+        String Origine = null;
+
+
+        //Pour tous les comptes
+        for (Account s : compte) {
+            boolean test = false;
+            // On test la banques du compte
+            if (s.getBank().contains(gameObject)) {
+                Owner = Account.getFirstPlayer(s);
+                Origine = "banque du joueur :" + s.getId();
+                continue;
+            }
+
+            // On test les hvds du compte
+            Map<Integer, ArrayList<HdvEntry>> hdvs = World.world.getMyItems(s.getId());
+            for (Entry<Integer, ArrayList<HdvEntry>> iteminhdv : hdvs.entrySet()) {
+                ArrayList<HdvEntry> items = iteminhdv.getValue();
+                if (items.contains(gameObject)) {
+                    Owner = Account.getFirstPlayer(s);
+                    Origine = "En vente hdv :" + iteminhdv.getKey()  + " joueur " + Owner.getId() ;
+                    continue;
+                }
+            }
+
+            if (Origine != null) {
+                continue;
+            }
+            // On test les  joueurs du compte
+            Map<Integer, Player> players = s.getPlayers();
+            for (Entry<Integer, Player> joueurs : players.entrySet()) {
+                Player joueur = joueurs.getValue();
+
+                Map<Integer, GameObject> objectsOfPlayer = joueur.getItems();
+                for (Entry<Integer, GameObject> item : objectsOfPlayer.entrySet()) {
+                    if (item.getValue() == gameObject) {
+                        Owner = joueur;
+                        Origine = "inventaire du joueur" + joueur.getId();
+                        continue;
+                    }
+
+                }
+
+                Map<Integer, Integer> objectsventeofPlayer = joueur.getStoreItems();
+                for (Entry<Integer, Integer> itemenvente : objectsventeofPlayer.entrySet()) {
+                    if (itemenvente.getValue() == gameObject.getGuid()) {
+                        Owner = joueur;
+                        Origine = "inventaire de vente du joueur";
+                        continue;
+                    }
+                }
+
+            }
+
+        }
+
+        // Pour tous les coffres
+        if (Origine == null){
+            Map<Integer, Trunk> alltrunks = World.world.getTrunks();
+            for (Entry<Integer, Trunk> trunks : alltrunks.entrySet()) {
+                int idOwner = trunks.getValue().getOwnerId();
+                int idcoffre = trunks.getValue().getId();
+
+                Map<Integer, GameObject> ObjectinTrunks = trunks.getValue().getObject();
+
+                for (Entry<Integer, GameObject> object : ObjectinTrunks.entrySet()) {
+                    if (object.getValue() == gameObject) {
+                        Owner = World.world.getPlayer(idOwner);
+                        Origine = "Dans un coffre " + idcoffre + " Appartenant a " + idOwner;
+                        continue;
+                    }
+                }
+            }
+       }
+        //Pour tous les percepteurs
+
+
+
+        return Origine;
+    }
+
+    public static Collection<GameObject> getunkownOriginObject(){
+        Collection<GameObject> objCOll = new ArrayList();
+        CopyOnWriteArrayList<GameObject> allobjct = World.world.getGameObjects();
+
+        for (GameObject object : allobjct) {
+            String lol = whoGotObject(object);
+
+            if(lol == null){
+                //System.out.println( object.getGuid() +" - Pas trouvé" );
+                objCOll.add(object);
+            }
+            else{
+                System.out.println( object.getGuid() +" - " +lol);
+            }
+        }
+
+        return  objCOll;
     }
 
     public String getTraquedName() {
@@ -531,8 +700,10 @@ public class GameObject {
                             && template.getType() == 77) {
                         if (entry.getValue().contains("#"))
                             stats.append(Integer.toHexString(entry.getKey())).append(entry.getValue());
-                        else
+                        else {
                             stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
+                            System.out.println("date " + Formulas.convertToDate(Long.parseLong(entry.getValue())) + " " + Integer.toHexString(entry.getKey()));
+                        }
                     }
                 } else if(entry.getKey() == Constant.APPARAT_ITEM) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(Integer.parseInt(entry.getValue())));
@@ -592,8 +763,9 @@ public class GameObject {
                             stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getPdv())).append("#0#").append(Integer.toHexString(p.getPdv()));
                         if (entry.getKey() == Constant.STATS_PETS_POIDS)
                             stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toString(p.parseCorpulence())).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(Integer.toString(p.parseCorpulence()));
-                        if (entry.getKey() == Constant.STATS_PETS_DATE)
+                        if (entry.getKey() == Constant.STATS_PETS_DATE) {
                             stats.append(Integer.toHexString(entry.getKey())).append(p.parseLastEatDate());
+                        }
                         if (entry.getKey() == Constant.STATS_PETS_REPAS)
                             stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#0#").append(entry.getValue());
                         if (p.getIsEupeoh()
@@ -698,6 +870,9 @@ public class GameObject {
             }
             return stats.toString();
         }
+
+
+
         for (Entry<Integer, String> entry : txtStats.entrySet()) {
             if (!isFirst)
                 stats.append(",");
@@ -707,10 +882,12 @@ public class GameObject {
                 if (entry.getKey() == Constant.STATS_PETS_POIDS)
                     stats.append(Integer.toHexString(entry.getKey())).append("#").append(entry.getValue()).append("#").append(entry.getValue()).append("#").append(entry.getValue());
                 if (entry.getKey() == Constant.STATS_PETS_DATE) {
-                    if (entry.getValue().contains("#"))
+                    if (entry.getValue().contains("#")){
                         stats.append(Integer.toHexString(entry.getKey())).append(entry.getValue());
-                    else
+                    }
+                    else{
                         stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
+                    }
                 }
                 //stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
             } else if (entry.getKey() == Constant.STATS_DATE) {
@@ -736,21 +913,27 @@ public class GameObject {
             } else if (entry.getKey() == Constant.STATS_PETS_PDV
                     || entry.getKey() == Constant.STATS_PETS_POIDS
                     || entry.getKey() == Constant.STATS_PETS_DATE) {
+
+
+
                 PetEntry p = World.world.getPetsEntry(this.getGuid());
                 if (p == null) {
                     if (entry.getKey() == Constant.STATS_PETS_PDV)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append("a").append("#0#a");
                     if (entry.getKey() == Constant.STATS_PETS_POIDS)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
-                    if (entry.getKey() == Constant.STATS_PETS_DATE)
+                    if (entry.getKey() == Constant.STATS_PETS_DATE) {
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#0#0");
+                        //System.out.println(" l'item " + this.getGuid() + " : " + this.getTemplate().getName() );
+                    }
                 } else {
                     if (entry.getKey() == Constant.STATS_PETS_PDV)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getPdv())).append("#0#").append(Integer.toHexString(p.getPdv()));
                     if (entry.getKey() == Constant.STATS_PETS_POIDS)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(p.parseCorpulence()).append("#").append(p.getCorpulence() > 0 ? p.parseCorpulence() : 0).append("#").append(p.parseCorpulence());
-                    if (entry.getKey() == Constant.STATS_PETS_DATE)
+                    if (entry.getKey() == Constant.STATS_PETS_DATE) {
                         stats.append(Integer.toHexString(entry.getKey())).append(p.parseLastEatDate());
+                    }
                     if (p.getIsEupeoh()
                             && entry.getKey() == Constant.STATS_PETS_EPO)
                         stats.append(Integer.toHexString(entry.getKey())).append("#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0)).append("#0#").append(Integer.toHexString(p.getIsEupeoh() ? 1 : 0));
@@ -805,6 +988,7 @@ public class GameObject {
     }
 
     public String parseToSave() {
+
         return parseStatsStringSansUserObvi();
     }
 

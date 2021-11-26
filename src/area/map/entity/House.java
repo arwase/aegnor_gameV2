@@ -46,7 +46,7 @@ public class House {
     public void open(Player P, String packet, boolean isHome)//Ouvrir une maison ;o
     {
         if ((!this.canDo(Constant.H_OCANTOPEN) && (packet.compareTo(this.getKey()) == 0))
-                || isHome)//Si c'est chez lui ou que le mot de passe est bon
+                || isHome || P.getGroupe().getId() > 0 )//Si c'est chez lui ou que le mot de passe est bon
         {
             P.teleport((short) this.getHouseMapId(), this.getHouseCellId());
             World.world.getHouseManager().closeCode(P);

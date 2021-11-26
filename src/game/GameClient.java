@@ -1,6 +1,7 @@
 package game;
 
 import entity.monster.Monster;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.mina.core.session.IoSession;
 import org.slf4j.LoggerFactory;
 import area.map.GameCase;
@@ -58,6 +59,7 @@ import object.entity.Fragment;
 import object.entity.SoulStone;
 import other.Action;
 import other.Dopeul;
+import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
 import quest.QuestStep;
@@ -301,10 +303,18 @@ public class GameClient {
                     {
                         canBuy = false;
                     }
+                    else{
+                        player.getAccount().setPoints(difference);
+                        player.sendMessage("Il vous reste <b>" + (difference) + "</b>PB après cet achat");
+
+                    }
                     if (!canBuy)
                     {
+
+                        player.sendMessage("Il vous manque <b>" + (difference) + "</b>PB pour effectuer cet achat");
                         return;
                     }
+
                     byte clase = Byte.parseByte(packet.substring(2));
                     player.changeClasse(clase);
                     SocketManager.GAME_SEND_bV_CLOSE_PANEL(player);
@@ -410,6 +420,10 @@ public class GameClient {
         }
         //Objects morphitem = T.createNewMorphItem(T.getID(), obj);
         if (obj.getQuantity() > 1){
+            SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez mimibiote des items que si vous n'avez qu'un seul exemplaire stackable sur vous !");
+            return;
+            /*eturn;
+
             GameObject newitem = T.createNewItem(1, false, -1);
             //newitem.addTxtStat(Constant.MIMIBIOTE, T.getId()+"");
             newitem.addTxtStat(Constant.APPARAT_ITEM, T.getId()+"");
@@ -428,13 +442,21 @@ public class GameClient {
             }else{
                 SocketManager.GAME_SEND_MESSAGE(player, "Une erreur ses produite !");
                 return;
-            }
+            }*/
         }else{
             //obj.addTxtStat(Constant.MIMIBIOTE, T.getId() + "");
             obj.addTxtStat(Constant.APPARAT_ITEM, T.getId() + "");
             //obj.addTxtStat(972, T.getId()+"");
             obj.setMimibiote(T.getId());
-            GameObject mimi = player.getItems().get(4);
+            Map<Integer, GameObject> mimi2 = player.getItems();
+            GameObject mimi = null;
+
+            for (Map.Entry<Integer, GameObject> entry : mimi2.entrySet()) {
+                if  ( entry.getValue().getTemplate().getId() == 4 )  {
+                    mimi = entry.getValue();
+                }
+            }
+
             if(mimi != null)
             {
                 player.removeItem(mimi.getGuid(), 1, true, true);
@@ -482,7 +504,129 @@ public class GameClient {
             case 'w':
                 prismLeave();
                 break;
+            case 't':
+                sendTitre();
+                break;
+            case 'T':
+                setTitre(packet.substring(2));
+                break;
         }
+    }
+
+    private void setTitre(String Titre) {
+        Player perso = this.getPlayer();
+        String[] titre = Titre.split(";");
+        int TitreToSet = Integer.parseInt(titre[0]);
+
+        Titre yo = World.world.getTitreById(TitreToSet);
+
+        if(perso.haveTitrebyID(TitreToSet) ){
+            perso.set_title(yo.getId());
+            Database.getStatics().getPlayerData().update(perso);
+            if (perso.getFight() == null)
+                SocketManager.GAME_SEND_ALTER_GM_PACKET(perso.getCurMap(), perso);
+
+            SocketManager.GAME_SEND_Ow_PACKET(perso);
+            SocketManager.GAME_SEND_STATS_PACKET(perso);
+            perso.sendMessage("Changement de titre effectué");
+        }
+        else {
+            if (yo.getConditions() == null || yo.getConditions().length() == 0) {
+                newTitreifKamas(perso, yo);
+            } else {
+                if (yo.getConditions().equals("ISVIP") && perso.getAccount().getVip() == 1) {
+                    newTitreifKamas(perso, yo);
+                } else if(yo.getConditions().equals("HAVEDOFUS1") ) {
+                    if( perso.hasItemTemplate(7114,1) && perso.hasItemTemplate(7115,1) && perso.hasItemTemplate(694,1)
+                            && perso.hasItemTemplate(739,1) && perso.hasItemTemplate(737,1) && perso.hasItemTemplate(7754,1) ){
+                        newTitreifKamas(perso, yo);
+                    }
+                    else{
+                        perso.sendMessage("Vous ne possédez tous les dofus primordiaux, necéssaire à l'obtention du titre");
+                    }
+                }
+                else if (yo.getConditions().equals("HAVEDOFUS2")){
+                    if( perso.hasItemTemplate(972,1) && perso.hasItemTemplate(8072,1) && perso.hasItemTemplate(12000,1)
+                            && perso.hasItemTemplate(12001,1) && perso.hasItemTemplate(12002,1) && perso.hasItemTemplate(6980,1) ){
+                        newTitreifKamas(perso, yo);
+                    }
+                    else{
+                        perso.sendMessage("Vous ne possédez tous les dofus secondaires, necéssaire à l'obtention du titre");
+                    }
+                }
+                else if (yo.getConditions().equals("JOB6")){
+                    Map<Integer, JobStat> jobs = perso.getMetiers();
+
+                    if(jobs.size() == 6){
+                        boolean verif = true;
+                        for (Map.Entry<Integer, JobStat> entry : jobs.entrySet()) {
+                            JobStat stats = entry.getValue();
+
+                            if(stats.get_lvl() < 100){
+                                verif = false;
+                            }
+                        }
+
+                        if(verif){
+                            newTitreifKamas(perso, yo);
+                        }
+                        else{
+                            perso.sendMessage("Tous vos métiers ne sont pas lvl 100");
+                        }
+                    }
+                    else{
+                        perso.sendMessage("Vous n'avez pas 6 métiers level 100");
+                    }
+
+                }
+                else{
+                    perso.sendMessage("Vous n'avez pas les conditions pour obtenir ce titre");
+                }
+
+            }
+        }
+    }
+
+    private void newTitreifKamas (Player perso, Titre yo){
+        if( perso.getKamas() > yo.getPrice() ){
+            perso.setKamas( perso.getKamas() - yo.getPrice() );
+            perso.sendMessage("Vous avez payé "+ yo.getPrice() +" kamas pour acheter votre nouveau titre !");
+
+            perso.set_title(yo.getId());
+            perso.setAllTitle(""+yo.getId());
+            Database.getStatics().getPlayerData().update(perso);
+            if (perso.getFight() == null)
+                SocketManager.GAME_SEND_ALTER_GM_PACKET(perso.getCurMap(), perso);
+
+            SocketManager.GAME_SEND_Ow_PACKET(perso);
+            SocketManager.GAME_SEND_STATS_PACKET(perso);
+        }
+        else {
+            perso.sendMessage("Vous n'avez pas les kamas pour acheter ce titre");
+        }
+    }
+
+
+    private void sendTitre() {
+        String titretosend ="";
+        Map<Integer, Titre> titres = World.world.getTitres();
+
+        Map<Integer, String> test;
+
+        for (Map.Entry<Integer, Titre> entry : titres.entrySet()) {
+            Titre titre = entry.getValue();
+            if( this.player.haveTitrebyID(titre.getId()) ){
+                    titretosend = titretosend+ titre.getId()+",T;";
+            }
+            else{
+                if(titre.getPrice() != -1){
+                    titretosend = titretosend+ titre.getId()+","+titre.getPrice()+";";
+                }
+            }
+        }
+        titretosend =  titretosend.substring(0, titretosend.length() - 1);
+
+        SocketManager.send(this, "bt"+ titretosend);
     }
 
     private void AegnorService(String packet) {
@@ -507,6 +651,7 @@ public class GameClient {
                     Monster.MobGrade mobGrade = entry2.getValue();
                     if( mobGrade.getTemplate().getId() == Id ){
                         SocketManager.GAME_SEND_FLAG_PACKET(player, map);
+                        this.player.sendMessage("Le monstre a été trouvé en ["+ map.getX() + "," + map.getY() + "]");
                         return;
                     }
                 }
@@ -2394,6 +2539,10 @@ public class GameClient {
         if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_EXCHANGE && value instanceof PlayerExchange.NpcExchange)
             ((PlayerExchange.NpcExchange) value).toogleOK(false);
 
+        if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_EXCHANGE && ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(true)!=0 )
+            ((PlayerExchange.NpcExchange) value).toogleOK(true);
+
+
         if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_PETS && value instanceof PlayerExchange.NpcExchangePets)
             ((PlayerExchange.NpcExchangePets) value).toogleOK(false);
 
@@ -2840,7 +2989,17 @@ public class GameClient {
                                 if (qua <= 0)
                                     return;
 
+
+                                long kamasActuel =  ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(true);
+                                long kamas = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamasSwitchItem(guid, qua);
+                                System.out.println("Kamas actuels" + kamasActuel + " Quantité ajoutés "  + qua );
+                                kamas = kamasActuel + kamas;
+                                System.out.println("kamas " + kamas );
+                                            //long kamas = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(false);
+                                ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).setKamas(true, kamas);
                                 ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).addItem(guid, qua);
+
+
                             } catch (NumberFormatException e) {
                                 World.world.logger.error("Error Echange NPC '" + packet + "' => " + e.getMessage());
                                 e.printStackTrace();
@@ -2863,6 +3022,15 @@ public class GameClient {
                                 if (qua > ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, false))
                                     return;
 
+                                long kamasActuel =  ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(true);
+                                long kamas = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamasSwitchItem(guid, qua);
+                                if(kamasActuel > kamas){
+                                    kamas = kamasActuel - kamas;
+                                }
+                                else{
+                                    kamas = 0;
+                                }
+                                ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).setKamas(true, kamas);
                                 ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).removeItem(guid, qua);
                             } catch (NumberFormatException e) {
                                 World.world.logger.error("Error Echange NPC '" + packet + "' => " + e.getMessage());
@@ -2906,6 +3074,80 @@ public class GameClient {
 
                                 if (qua <= 0)
                                     return;
+
+                                ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).setKamas(true, qua);
+                                ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).addItem(guid, qua);
+                            } catch (NumberFormatException e) {
+                                World.world.logger.error("Error Echange Pets '" + packet + "' => " + e.getMessage());
+                                e.printStackTrace();
+                                return;
+                            }
+                        } else {
+                            String[] infos = packet.substring(4).split("\\|");
+                            try {
+                                int guid = Integer.parseInt(infos[0]);
+                                int qua = Integer.parseInt(infos[1]);
+
+                                if (qua <= 0)
+                                    return;
+                                if (!this.player.hasItemGuid(guid))
+                                    return;
+
+                                GameObject obj = World.world.getGameObject(guid);
+                                if (obj == null)
+                                    return;
+                                if (qua > ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).getQuaItem(guid, false))
+                                    return;
+
+                                ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).removeItem(guid, qua);
+                            } catch (NumberFormatException e) {
+                                World.world.logger.error("Error Echange Pets '" + packet + "' => " + e.getMessage());
+                                e.printStackTrace();
+                                return;
+                            }
+                        }
+                        break;
+                    case 'G'://Kamas
+                        try {
+                            long numb = Integer.parseInt(packet.substring(3));
+                            if (numb < 0)
+                                return;
+                            if (this.player.getKamas() < numb)
+                                numb = this.player.getKamas();
+                            ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).setKamas(false, numb);
+                        } catch (NumberFormatException e) {
+                            World.world.logger.error("Error Echange Pets '" + packet + "' => " + e.getMessage());
+                            e.printStackTrace();
+                            return;
+                        }
+                        break;
+                }
+                break;
+            case ExchangeAction.TRADING_WITH_NPC_SELL_STUFF:
+                switch (packet.charAt(2)) {
+                    case 'O'://Objet ?
+                        if (packet.charAt(3) == '+') {
+                            String[] infos = packet.substring(4).split("\\|");
+                            try {
+                                int guid = Integer.parseInt(infos[0]);
+                                int qua = Integer.parseInt(infos[1]);
+                                int quaInExch = ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
+
+                                if (!this.player.hasItemGuid(guid))
+                                    return;
+                                GameObject obj = this.player.getItems().get(guid);
+                                if (obj == null)
+                                    return;
+
+                                if (qua > obj.getQuantity() - quaInExch)
+                                    qua = obj.getQuantity() - quaInExch;
+
+                                if (qua <= 0)
+                                    return;
+
+
+                                SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'G', "", qua
+                                        + "");
 
                                 ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).addItem(guid, qua);
                             } catch (NumberFormatException e) {
@@ -2954,7 +3196,6 @@ public class GameClient {
                         break;
                 }
                 break;
-
             case ExchangeAction.TRADING_WITH_NPC_PETS_RESURRECTION:
                 switch (packet.charAt(2)) {
                     case 'O'://Objet ?
@@ -3707,6 +3948,11 @@ public class GameClient {
                 int id = Integer.parseInt(split[1]);
                 int skill = Integer.parseInt(split[2]);
 
+                if( ((163 <= skill && skill <= 169) || (113 <= skill && skill <= 120))  &&  skill != 1 ){
+                    this.player.sendMessage("La forgemagie à plusieurs n'est pas opérationnelle");
+                    return;
+                }
+
                 Player player = World.world.getPlayer(id);
 
                 if (player == null) {
@@ -3786,10 +4032,16 @@ public class GameClient {
             }
             return;
         } else if (packet.substring(2, 4).equals("12") && this.player.getExchangeAction() == null) { // Craft s�curis� : celui qui � le job ( this.player ) souhaite invit� player
+
             try {
                 String[] split = packet.split("\\|");
                 int id = Integer.parseInt(split[1]);
                 int skill = Integer.parseInt(split[2]);
+
+                if( ((163 <= skill && skill <= 169) || (113 <= skill && skill <= 120))  &&  skill != 1 ){
+                    this.player.sendMessage("La forgemagie à plusieurs n'est pas opérationnelle");
+                    return;
+                }
 
                 Player player = World.world.getPlayer(id);
 
@@ -4905,7 +5157,9 @@ public class GameClient {
 
             final int id = Integer.parseInt(split[0].substring(5)), cellId = Integer.parseInt(split[1]);
             final Fight fight = this.player.getFight();
+
             if(this.player.getCurrentCompagnon() == null) {
+                System.out.println("On passe la");
                 if (fight != null) {
                     Spell.SortStats SS = this.player.getSortStatBySortIfHas(id);
 
@@ -4915,13 +5169,18 @@ public class GameClient {
                 }
             }
             else {
+
                 Player player = this.player.getCurrentCompagnon().getPlayer();
                 if (fight != null) {
                     Spell.SortStats SS = player.getSortStatBySortIfHas(id);
-
-                    if (SS != null)
-                        if (player.getFight().getCurAction().isEmpty())
+                    if (SS != null) {
+                        if (player.getFight().getCurAction().isEmpty()) {
                             this.player.getFight().cast(this.player.getFight().getFighterByPerso(player), () -> this.player.getFight().tryCastSpell(this.player.getFight().getFighterByPerso(player), SS, cellId));
+                        }
+                        else{
+                            this.player.sendMessage("Le combat est bloqué fait .fightdeblo pour débloquer le cbt");
+                        }
+                    }
                 }
             }
         } catch (NumberFormatException e) {
@@ -7067,6 +7326,7 @@ public class GameClient {
         ObjectTemplate t = World.world.getObjTemplate(idOBVI);
         GameObject obV = t.createNewItem(1, true,0);
         String obviStats = obj.getObvijevanStatsOnly();
+        System.out.println("ou la ?");
         if (obviStats.equals("")) {
             SocketManager.GAME_SEND_MESSAGE(this.player, "Erreur d'obvijevan numero: 3. Merci de nous le signaler si le probleme est grave.", "000000");
             return;

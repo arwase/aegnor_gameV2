@@ -94,10 +94,10 @@ public class PetEntry {
 
     public int getCurrentStatsPoids() {
         /*
-		 * d6,d5,d4,d3,d2 = 4U de poids 8a = 2U de poids 7c = 2U de poids POUR
-		 * PETIT WABBIT = 3U de poids b2 = 8U de poids 70 = 8U de poids le reste
-		 * a 1U de poids
-		 */
+         * d6,d5,d4,d3,d2 = 4U de poids 8a = 2U de poids 7c = 2U de poids POUR
+         * PETIT WABBIT = 3U de poids b2 = 8U de poids 70 = 8U de poids le reste
+         * a 1U de poids
+         */
         GameObject obj = World.world.getGameObject(this.objectId);
         if (obj == null)
             return 0;
@@ -175,6 +175,7 @@ public class PetEntry {
     }
 
     public void eat(Player p, int min, int max, int statsID, GameObject feed) {
+        System.out.println("On passe la ?");
         GameObject obj = World.world.getGameObject(this.objectId);
         if (obj == null)
             return;
@@ -186,13 +187,15 @@ public class PetEntry {
         {
             //Update du petsEntry
             this.lastEatDate = System.currentTimeMillis();
-            this.corpulence++;
+            //this.corpulence++;
             this.quaEat++;
+            this.corpulence = 0;
             //Update de l'item
             obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
             obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
-            SocketManager.GAME_SEND_Im_PACKET(p, "029");
-            if (this.quaEat >= 3) {
+            //SocketManager.GAME_SEND_Im_PACKET(p, "029");
+            SocketManager.GAME_SEND_Im_PACKET(p, "032");
+            if (this.quaEat >= 1) {
                 //Update de l'item
                 if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
                 {
@@ -213,20 +216,17 @@ public class PetEntry {
         {
             //Update du petsEntry
             this.lastEatDate = System.currentTimeMillis();
-            this.corpulence++;
+            //this.corpulence++;
             //Update de l'item
             obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
             obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
-            if (corpulence == 1) {
-                this.quaEat++;
-                SocketManager.GAME_SEND_Im_PACKET(p, "026");
-            } else {
-                this.pdv--;
-                obj.getTxtStat().remove(Constant.STATS_PETS_PDV);
-                obj.getTxtStat().put(Constant.STATS_PETS_PDV, Integer.toHexString((this.pdv > 0 ? (this.pdv) : 0)));
-                SocketManager.GAME_SEND_Im_PACKET(p, "027");
-            }
-            if (this.quaEat >= 3) {
+            this.corpulence = 0;
+            this.quaEat++;
+            //SocketManager.GAME_SEND_Im_PACKET(p, "026");
+            SocketManager.GAME_SEND_Im_PACKET(p, "032");
+
+
+            if (this.quaEat >= 1) {
                 //Update de l'item
                 if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
                 {
@@ -247,12 +247,12 @@ public class PetEntry {
         {
             //Update du petsEntry
             this.lastEatDate = System.currentTimeMillis();
-
+            this.corpulence = 0;
             if (statsID != 0)
                 this.quaEat++;
             else
                 return;
-            if (this.quaEat >= 3) {
+            if (this.quaEat >= 1) {
                 //Update de l'item
                 if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
                 {
@@ -334,7 +334,7 @@ public class PetEntry {
                             int pts = 0;
                             for (Entry<Integer, Integer> list : obj.getSoulStat().entrySet())
                                 pts += ((int) Math.floor(list.getValue() / pet.getNumbMonster(ent.getKey(), list.getKey())) * pet.getGain());
-                            System.out.println(pts);
+
                             if (pts > 0) {
                                 if (pts > this.getMaxStat())
                                     pts = this.getMaxStat();
@@ -361,6 +361,7 @@ public class PetEntry {
 
     public void updatePets(Player p, int max) {
         GameObject obj = World.world.getGameObject(this.objectId);
+        //System.out.println(this.objectId  + "deès le debut " + obj.parseStatsString()  );
         if (obj == null)
             return;
         Pet pets = World.world.getPets(obj.getTemplate().getId());
@@ -376,16 +377,17 @@ public class PetEntry {
             int nbrepas = (int) Math.floor((System.currentTimeMillis() - this.lastEatDate)
                     / (max * 3600000));
             //Perte corpulence
-            this.corpulence = this.corpulence - nbrepas;
+            //this.corpulence = this.corpulence - nbrepas;
 
-            if (nbrepas != 0) {
-                obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
-                obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
-            }
+            //if (nbrepas != 0) {
+            //    obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
+            //    obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
+            //}
             //Perte pdv
-            this.pdv--;
-            obj.getTxtStat().remove(Constant.STATS_PETS_PDV);
-            obj.getTxtStat().put(Constant.STATS_PETS_PDV, Integer.toHexString((this.pdv > 0 ? (this.pdv) : 0)));
+            //this.pdv--;
+            SocketManager.GAME_SEND_Im_PACKET(p, "025");
+            //obj.getTxtStat().remove(Constant.STATS_PETS_PDV);
+            //obj.getTxtStat().put(Constant.STATS_PETS_PDV, Integer.toHexString((this.pdv > 0 ? (this.pdv) : 0)));
             this.lastEatDate = System.currentTimeMillis();
         } else {
             if (this.pdv > 0)
@@ -411,7 +413,10 @@ public class PetEntry {
             }
             SocketManager.GAME_SEND_Im_PACKET(p, "154");
         }
+
+
         SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(p, obj);
+
         Database.getStatics().getObjectData().update(obj);
         Database.getStatics().getPetData().update(this);
     }

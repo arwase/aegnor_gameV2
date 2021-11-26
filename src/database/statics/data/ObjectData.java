@@ -77,6 +77,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
 
         PreparedStatement p = null;
         try {
+
             p = getPreparedStatement("UPDATE `world.entity.objects` SET `template` = ?, `quantity` = ?, `position` = ?, `puit` = ?, `rarity` = ?, `mimibiote` = ?, `stats` = ? WHERE `id` = ?;");
             p.setInt(1, object.getTemplate().getId());
             p.setInt(2, object.getQuantity());
@@ -86,6 +87,8 @@ public class ObjectData extends AbstractDAO<GameObject> {
             p.setInt(6, object.getMimibiote());
             p.setString(7, object.parseToSave());
             p.setInt(8, object.getGuid());
+
+
             execute(p);
             return true;
         } catch (SQLException e) {

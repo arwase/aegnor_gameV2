@@ -93,6 +93,7 @@ public class French extends AbstractLang {
                 + "<b>.groupe</b> - Permet de grouper l'ensemble de tes persos.\n"
                 + "<b>.tp</b> - Permet de téléporter tes persos sur ta map.\n"
                 + "<b>.maitre</b> - Permet de faire suivre tes esclaves (combat,map,pret).\n"
+                + "<b>.onewindows</b> - Permet de jouer tout tes perso depuis le maitre en combat.\n"
                 + "<b>.ipdrop</b> - Permet de récuperer les drops de tes esclaces.\n"
                 + "<b>.getmaster</b> - Permet d'afficher qui est ton maitre.\n"
                 + "<b>.getslave</b> - Permet d'afficher tes esclaves.\n"

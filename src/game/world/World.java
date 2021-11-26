@@ -41,6 +41,7 @@ import object.ObjectSet;
 import object.ObjectTemplate;
 import object.entity.Fragment;
 import object.entity.SoulStone;
+import other.Titre;
 import util.TimerWaiter;
 
 import java.text.SimpleDateFormat;
@@ -76,6 +77,7 @@ public class World {
     private Map<Integer, Job> Jobs = new HashMap<>();
     private Map<Integer, ArrayList<Couple<Integer, Integer>>> Crafts = new HashMap<>();
     private Map<Integer, ObjectSet> ItemSets = new HashMap<>();
+    private Map<Integer, Titre> titres = new HashMap<>();
     private Map<Integer, Guild> Guildes = new HashMap<>();
     private Map<Integer, Hdv> Hdvs = new HashMap<>();
     private Map<Integer, Map<Integer, ArrayList<HdvEntry>>> hdvsItems = new HashMap<>();
@@ -192,6 +194,18 @@ public class World {
         return players.get(id);
     }
 
+    public Map<Integer, Titre> getTitres() {
+        return titres;
+    }
+
+    public Titre getTitreById(int id) {
+        return titres.get(id);
+    }
+
+    public ObjectTemplate getTemplateById(int id) {
+        return ObjTemplates.get(id);
+    }
+
     public List<Player> getOnlinePlayers() {
         return players.values().stream().filter(player -> player.isOnline() && player.getGameClient() != null).collect(Collectors.toList());
     }
@@ -225,6 +239,7 @@ public class World {
                 gameObject.modification = 0;
         }
     }
+
 
     public GameObject getGameObject(int guid) {
         return objects.get(guid);
@@ -301,6 +316,9 @@ public class World {
 
         Database.getStatics().getWorldEntityData().load(null);
         logger.debug("The max id of all entities were done successfully.");
+
+        Database.getDynamics().getPetTemplateData().load();
+        logger.debug("The templates of pets were loaded successfully.");
 
         Database.getStatics().getCommandData().load(null);
         logger.debug("The administration commands were loaded successfully.");
@@ -394,6 +412,7 @@ public class World {
         Database.getDynamics().getNpcData().load();
         logger.debug("The placement of non-player character were done successfully.");
 
+
         Database.getDynamics().getObjectActionData().load();
         logger.debug("The action of objects were loaded successfully.");
 
@@ -417,8 +436,9 @@ public class World {
         Database.getStatics().getPetData().load();
         logger.debug("The pets were loaded successfully.");
 
-        Database.getDynamics().getPetTemplateData().load();
-        logger.debug("The templates of pets were loaded successfully.");
+        Database.getStatics().getTitleData().load();
+        logger.debug("The titles were loaded successfully.");
+
 
         Database.getDynamics().getTutorialData().load();
         logger.debug("The tutorials were loaded successfully.");
@@ -669,9 +689,43 @@ public class World {
             if (subarea.getAlignement() == alignement)
                 cant++;
         }
+
         if (cant == 0)
             return 0;
         return Math.rint((10 * cant / 4) / 10);
+    }
+
+    public double getBalanceWorldNew(int alignement) {
+        int i = 0;
+        int tot = 0;
+        for (SubArea subarea : subAreas.values()) {
+            if (subarea.getAlignement() != 0){
+                tot++;
+                if (subarea.getAlignement() == alignement) {
+                    i++;
+                }
+            }
+        }
+
+        double factor =  (Math.rint(2 - i/tot)*100) - 100 ;
+
+        if (tot == 0 || factor<0 || i==0)
+            return 0;
+
+        return factor;
+    }
+
+    public double getConquestBonusNew(Player player) {
+        if(player == null) return 1;
+        if(player.get_align() == 0) return 1;
+        if(player.getCurMap().getSubArea().getAlignement() == player.get_align()) {
+            final double factor = (100 + (getBalanceWorldNew(player.get_align()) + ((Math.rint((player.getGrade() / 2.5) + 1)) * 4))) / 100;
+            if (factor < 1) return 1;
+            return factor;
+        }
+        else {
+            return 1;
+        }
     }
 
     public double getConquestBonus(Player player) {
@@ -1090,6 +1144,8 @@ public class World {
         } else {
             return new GameObject(id, template, qua, pos, stats, 0,rarity, mimibiote);
         }
+
+
     }
 
     public Map<Integer, Integer> getChangeHdv() {
@@ -1154,6 +1210,8 @@ public class World {
             hdvsItems.get(compteID).put(hdvID, new ArrayList<>());
         hdvsItems.get(compteID).get(hdvID).add(toAdd);
     }
+
+
 
     public void removeHdvItem(int compteID, int hdvID, HdvEntry toDel) {
         hdvsItems.get(compteID).get(hdvID).remove(toDel);
@@ -2172,6 +2230,30 @@ public class World {
         return array;
     }
 
+    public Drop getPotentialRuneReini(int level) {
+
+        Drop runesfinal;
+        if(1 <= level && level <= 100 ){
+            runesfinal = new Drop(17197, 0.1, 0);
+        }
+        else if(100 < level && level <= 150 ){
+
+            runesfinal = new Drop(17198, 0.075, 0);
+        }
+        else if(150 < level && level <= 180 ){
+
+            runesfinal = new Drop(17199, 0.05, 0);
+        }
+        else if(180 < level){
+            runesfinal = new Drop(17200, 0.025, 0);
+        }
+        else{
+            runesfinal = new Drop(17197, 0.1, 0);
+        }
+
+        return runesfinal;
+    }
+
     public Player getPlayerPerName(String nombre) {
         Player p = null;
         for(Player player : players.values())
@@ -2182,6 +2264,10 @@ public class World {
             }
         }
         return p;
+    }
+
+    public void addTitre(Titre titre) {
+        titres.put(titre.getId(), titre);
     }
 
     public static class Drop {
@@ -2229,6 +2315,10 @@ public class World {
 
         public double getLocalPercent() {
             return localPercent;
+        }
+
+        public void setLocalPercent(double localPercent) {
+            this.localPercent = localPercent;
         }
 
         public Drop copy(int grade) {

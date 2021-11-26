@@ -364,7 +364,9 @@ public class ObjectTemplate {
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
+            System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "sans duppli verif " );
             Database.getStatics().getPetData().add(id, time, getId());
+
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
             item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(getStrTemplate(), useMax, 0), getEffectTemplate(getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
         } else {
@@ -515,6 +517,7 @@ public class ObjectTemplate {
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
+            System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "without rarity " );
             Database.getStatics().getPetData().add(id, time, getId());
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
             item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(getStrTemplate(), useMax, 0), getEffectTemplate(getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
@@ -818,6 +821,7 @@ public class ObjectTemplate {
                 //Ajouter du Pets_data SQL et World
                 long time = System.currentTimeMillis();
                 World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
+                System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "with rarity " );
                 Database.getStatics().getPetData().add(id, time, this.getId());
             } else if(this.getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
                 item = new GameObject(id, this.getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(this.getStrTemplate(), useMax,0), getEffectTemplate(this.getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);

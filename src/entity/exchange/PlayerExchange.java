@@ -11,6 +11,7 @@ import kernel.Constant;
 import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 
@@ -135,6 +136,9 @@ public class PlayerExchange extends Exchange {
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player2, 'G', "", k
                     + "");
         }
+
+
+
     }
 
     public synchronized void cancel() {
@@ -447,6 +451,14 @@ public class PlayerExchange extends Exchange {
             putAllGiveItem();
         }
 
+       /* public synchronized void setNpcKamas( long k) {
+            ok1 = true;
+
+            if (k < 0)
+                return;
+            SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'G', "", String.valueOf(k));
+        }*/
+
         public synchronized void cancel() {
             if((this.player.getAccount() != null) && (this.player.getGameClient() != null))
                 SocketManager.GAME_SEND_EV_PACKET(this.player.getGameClient());
@@ -481,11 +493,47 @@ public class PlayerExchange extends Exchange {
                     World.world.addGameObject(obj1, true);
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "021;" + couple1.second + "~" + couple1.first);
             }
+
+
+
+
+                if(kamas2 > 0) {
+                    SocketManager.GAME_SEND_MESSAGE(this.player,"Tu as vendu pour " + (-kamas1 + kamas2) + " kamas d'objets !");
+                    //System.out.println("le joueurs :" +this.player.getName() + "recoit " +kamas2 );
+                    this.player.addKamas((-kamas1 + kamas2));
+                    SocketManager.GAME_SEND_Ow_PACKET(this.player);
+                    SocketManager.GAME_SEND_STATS_PACKET(this.player);
+                }
+
             this.player.setExchangeAction(null);
             SocketManager.GAME_SEND_EXCHANGE_VALID(this.player.getGameClient(), 'a');
             Database.getStatics().getPlayerData().update(this.player);
         }
 
+
+        public synchronized long getKamasSwitchItem(int obj, int qua) {
+            long kamastoadd = 0;
+            ObjectTemplate added = World.world.getGameObject(obj).getTemplate();
+            int type = added.getType();
+            int lvl = added.getLevel();
+            int rarity = World.world.getGameObject(obj).getRarity();
+
+            if(rarity ==0){
+                rarity =1;
+            }
+
+             if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type )){
+                kamastoadd =   3 * lvl * rarity *qua;
+             }
+             else if(ArrayUtils.contains( Constant.FILTER_NONEQUIPEMENT,type )){
+                 kamastoadd =   2 * lvl *qua;
+             }
+             else if ( ArrayUtils.contains( Constant.FILTER_RESSOURCES,type )){
+                 kamastoadd =  Math.round(lvl *qua);
+             }
+
+            return kamastoadd;
+        }
         public synchronized void addItem(int obj, int qua) {
             if(qua <= 0)return;
             if(World.world.getGameObject(obj) == null)return;

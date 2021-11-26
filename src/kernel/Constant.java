@@ -9,6 +9,7 @@ import entity.mount.Mount;
 import fight.spells.Spell.SortStats;
 import game.world.World;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 import util.RandomStats;
 
 import java.util.*;
@@ -80,6 +81,51 @@ public class Constant {
     public static final int[] ITEM_TYPE_OBJ_BLACK = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};
     public static final Integer[] ITEM_TYPE_OBJ_BLACK2 = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};// 1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81
     public static final int[] ITEM_TYPE_WITH_RARITY = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,23,81};
+    public static final int[] SUPERTYPE_NOT_EQUIPABLE = {9,14,15,16,17,18,6,19,21,20,8,22};
+
+
+
+    public static final int[]  ITEM_SUPERTYPE_AMU ={1};
+    public static final int[]  ITEM_SUPERTYPE_ARME ={2,3,4,5,6,7,8,19,20,21,22,102,114};
+    public static final int[]  ITEM_SUPERTYPE_ANNEAU ={9};
+    public static final int[]  ITEM_SUPERTYPE_CEINTURE ={10};
+    public static final int[]  ITEM_SUPERTYPE_BOTTE ={11};
+    public static final int[]  ITEM_SUPERTYPE_LAUNCHABLE ={12,13,14,25,33,42,43,44,45,49,69,70,72,73,74,75,76,77,79,80,85,86,87,88,89,93,94,97,100,112,115,116};
+    public static final int[]  ITEM_SUPERTYPE_BOUCLIER = {82};
+    public static final int[]  ITEM_SUPERTYPE_CAPTURE = {83,99};
+    public static final int[]  ITEM_SUPERTYPE_RESSOURCES ={15,26,34,35,36,37,38,39,40,41,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,68,71,78,84,90,95,96,98,103,104,105,106,107,108,109,110,111};
+    public static final int[]  ITEM_SUPERTYPE_COIFFE ={16};
+    public static final int[]  ITEM_SUPERTYPE_CAPE ={17,81};
+    public static final int[]  ITEM_SUPERTYPE_FAMI ={18};
+    public static final int[]  ITEM_SUPERTYPE_DOFUS ={23};
+    public static final int[]  ITEM_SUPERTYPE_QUEST ={24};
+    public static final int[]  ITEM_SUPERTYPE_MUTATION ={27};
+    public static final int[]  ITEM_SUPERTYPE_BOOSTFOOD ={28};
+    public static final int[]  ITEM_SUPERTYPE_BENE ={29};
+    public static final int[]  ITEM_SUPERTYPE_MALE ={30};
+    public static final int[]  ITEM_SUPERTYPE_RPBUFF ={31};
+    public static final int[]  ITEM_SUPERTYPE_SUIVEUR ={32};
+    public static final int[]  ITEM_SUPERTYPE_MONTURE = {91,92};
+    public static final int[]  ITEM_SUPERTYPE_OBVJ = {113};
+
+    public static final int[] FILTER_EQUIPEMENT_1 = ArrayUtils.addAll(ITEM_SUPERTYPE_AMU,ITEM_SUPERTYPE_ARME);
+    public static final int[] FILTER_EQUIPEMENT_2 = ArrayUtils.addAll(ITEM_SUPERTYPE_ANNEAU,ITEM_SUPERTYPE_CEINTURE);
+    public static final int[] FILTER_EQUIPEMENT_3 = ArrayUtils.addAll(ITEM_SUPERTYPE_BOTTE,ITEM_SUPERTYPE_BOUCLIER);
+    public static final int[] FILTER_EQUIPEMENT_4 = ArrayUtils.addAll(ITEM_SUPERTYPE_CAPTURE,ITEM_SUPERTYPE_COIFFE);
+    public static final int[] FILTER_EQUIPEMENT_5 = ArrayUtils.addAll(ITEM_SUPERTYPE_CAPE,ITEM_SUPERTYPE_FAMI);
+    public static final int[] FILTER_EQUIPEMENT_6 = ArrayUtils.addAll(ITEM_SUPERTYPE_AMU,ITEM_SUPERTYPE_ARME);
+    public static final int[] FILTER_EQUIPEMENT_1_1 = ArrayUtils.addAll(FILTER_EQUIPEMENT_1,FILTER_EQUIPEMENT_2);
+    public static final int[] FILTER_EQUIPEMENT_1_2 = ArrayUtils.addAll(FILTER_EQUIPEMENT_3,FILTER_EQUIPEMENT_4);
+    public static final int[] FILTER_EQUIPEMENT_1_3 = ArrayUtils.addAll(FILTER_EQUIPEMENT_5,FILTER_EQUIPEMENT_6);
+    public static final int[] FILTER_EQUIPEMENT_2_4 = ArrayUtils.addAll(FILTER_EQUIPEMENT_1_1,FILTER_EQUIPEMENT_1_2);
+    public static final int[] FILTER_EQUIPEMENT_2_5 = ArrayUtils.addAll(FILTER_EQUIPEMENT_1_3,ITEM_SUPERTYPE_DOFUS);
+
+
+    public static final int[] FILTER_EQUIPEMENT = ArrayUtils.addAll(FILTER_EQUIPEMENT_2_4,FILTER_EQUIPEMENT_2_5);
+    public static final int[] FILTER_NONEQUIPEMENT = ITEM_SUPERTYPE_LAUNCHABLE;
+    public static final int[] FILTER_RESSOURCES = ITEM_SUPERTYPE_RESSOURCES;
+    public static final int[] FILTER_QUEST = ITEM_SUPERTYPE_QUEST;
+
     public static final int ITEM_TYPE_AMULETTE = 1;
     public static final int ITEM_TYPE_ARC = 2;
     public static final int ITEM_TYPE_BAGUETTE = 3;

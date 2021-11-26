@@ -17,6 +17,7 @@ import game.action.ExchangeAction;
 import game.world.World;
 import guild.Guild;
 import job.JobStat;
+import kernel.Config;
 import kernel.Constant;
 import object.entity.Fragment;
 import object.entity.SoulStone;
@@ -144,13 +145,13 @@ public class ObjectAction {
                                     sureIsOk = true;
                                     break;
                                 case 605://Exp�rience.
-                                    player.addXp(val);
+                                    player.addXp((long) (val * Config.INSTANCE.getRATE_XP()));
                                     SocketManager.GAME_SEND_STATS_PACKET(player);
                                     SocketManager.GAME_SEND_Im_PACKET(player, "08;" + val);
                                     break;
                                 case 614://Exp�rience m�tier.
                                     JobStat job = player.getMetierByID(Integer.parseInt(arg0.split(";")[1]));
-                                    val = 50000;
+                                    val = val* Config.INSTANCE.getRATE_JOB() ;
                                     if (job == null) {
                                         isOk1 = false;
                                         isOk2 = false;
@@ -734,6 +735,7 @@ public class ObjectAction {
                         GameObject object1 = World.world.getObjTemplate(4).createNewItem(1, false,0);
                         if (player.addObjet(object1, true))
                             World.world.addGameObject(object1, true);
+
                         SocketManager.GAME_SEND_Ow_PACKET(player);
                         SocketManager.send(player, "XM");
                         break;

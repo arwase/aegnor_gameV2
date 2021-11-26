@@ -9,6 +9,7 @@ public class HdvLine {
     private int templateId;
     private ArrayList<ArrayList<HdvEntry>> entries = new ArrayList<ArrayList<HdvEntry>>(3);    //La premi�re ArrayList est un tableau de 3 (0=1 1=10 2=100 de quantit�)
     private String strStats;
+    private int rarity;
 
     public HdvLine(int lineId, HdvEntry toAdd) {
         this.lineId = lineId;
@@ -17,6 +18,7 @@ public class HdvLine {
         for (int i = 0; i < 3; i++)
             //Boucle 3 fois pour ajouter 3 List vide dans la SuperList
             this.getEntries().add(new ArrayList<HdvEntry>());
+        this.rarity = toAdd.getGameObject().getRarity();
         addEntry(toAdd);
     }
 
@@ -112,10 +114,32 @@ public class HdvLine {
         return true;
     }
 
-    public String parseToEHl() {
+    public String parseToEHlold() {
         StringBuilder toReturn = new StringBuilder();
         int[] price = getFirsts();
         toReturn.append(this.getLineId()).append(";").append(this.getStrStats()).append(";").append((price[0] == 0 ? "" : price[0])).append(";").append((price[1] == 0 ? "" : price[1])).append(";").append((price[2] == 0 ? "" : price[2]));
+
+        return toReturn.toString();
+    }
+
+    public String parseToEHl() {
+        StringBuilder toReturn = new StringBuilder();
+        int[] price = getFirsts();
+        toReturn.append(this.getLineId()).append(";").append(this.getStrStats()).append(";").append((price[0] == 0 ? "" : price[0])).append(";").append((price[1] == 0 ? "" : price[1])).append(";").append((price[2] == 0 ? "" : price[2])).append(";").append(this.getRarity());
+
+        return toReturn.toString();
+    }
+
+    private int getRarity() {
+        return rarity;
+    }
+
+
+    public String parseToEHmold() {
+        StringBuilder toReturn = new StringBuilder();
+
+        int[] prix = getFirsts();
+        toReturn.append(this.getLineId()).append("|").append(this.getTemplateId()).append("|").append(this.getStrStats()).append("|").append((prix[0] == 0 ? "" : prix[0])).append("|").append((prix[1] == 0 ? "" : prix[1])).append("|").append((prix[2] == 0 ? "" : prix[2]));
 
         return toReturn.toString();
     }
@@ -124,8 +148,9 @@ public class HdvLine {
         StringBuilder toReturn = new StringBuilder();
 
         int[] prix = getFirsts();
-        toReturn.append(this.getLineId()).append("|").append(this.getTemplateId()).append("|").append(this.getStrStats()).append("|").append((prix[0] == 0 ? "" : prix[0])).append("|").append((prix[1] == 0 ? "" : prix[1])).append("|").append((prix[2] == 0 ? "" : prix[2]));
+        toReturn.append(this.getLineId()).append("|").append(this.getTemplateId()).append("|").append(this.getStrStats()).append("|").append((prix[0] == 0 ? "" : prix[0])).append("|").append((prix[1] == 0 ? "" : prix[1])).append("|").append((prix[2] == 0 ? "" : prix[2])).append("|").append(this.getRarity());
 
         return toReturn.toString();
     }
+
 }

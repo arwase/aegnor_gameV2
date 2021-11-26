@@ -351,6 +351,11 @@ public class SocketManager {
     public static void GAME_SEND_ADD_PLAYER_TO_MAP(GameMap map, Player perso) {
         String packet = "GM|+" + perso.parseToGM();
         for (Player z : map.getPlayers()) {
+
+            if(z==null){
+              continue;
+            }
+
             if (perso.get_size() > 0)
                 send(z, packet);
             else if (z.getGroupe() != null)

@@ -70,7 +70,10 @@ public class PetData extends AbstractDAO<PetEntry> {
             p.setInt(6, 0);
             p.setInt(7, 0);
             execute(p);
+
+            //System.out.println("On a soit disant reussi " + id + " "+ template+ " "+ lastEatDate +" " + p);
         } catch (SQLException e) {
+            System.out.println("Execution: " + e);
             super.sendError("PetData add", e);
         } finally {
             close(p);

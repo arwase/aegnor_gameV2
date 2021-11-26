@@ -24,9 +24,10 @@ public class FormuleOfficiel {
                 if (lvlWinners <= 0)
                     return 0;
 
-                double sagesse = fighter.getLvl() * 0.5 + fighter.getPlayer().getTotalStats()
-                        .getEffect(Constant.STATS_ADD_SAGE), nvGrpMonster = ((double) lvlMax / (double) lvlMin),
-                        bonus = 1.0, rapport = ((double) lvlLoosers / (double) lvlWinners);
+                double sagesse = fighter.getLvl() * 0.5 + fighter.getPlayer().getTotalStats().getEffect(Constant.STATS_ADD_SAGE),
+                        nvGrpMonster = ((double) lvlMax / (double) lvlMin),
+                        bonus = 1.0,
+                        rapport = ((double) lvlLoosers / (double) lvlWinners);
 
                 if (winners.size() == 1)
                     rapport = 0.6;
@@ -56,10 +57,10 @@ public class FormuleOfficiel {
                     nbonus = 8;
                 switch (nbonus) {
                     case 0:
-                        bonus = 0.5;
+                        bonus = 1;
                         break;
                     case 1:
-                        bonus = 0.5;
+                        bonus = 1;
                         break;
                     case 2:
                         bonus = 2.1;
@@ -97,8 +98,10 @@ public class FormuleOfficiel {
 
                 long total = (long) (((1 + (sagesse / 100)) * (1 + (challenge / 100)) * (1 + (star / 100))
                         * (bonus + rapport) * (nvGrpMonster) * (groupXp / sizeGroupe))
-                        * Config.INSTANCE.getRATE_XP() * World.world.getConquestBonus(fighter.getPlayer()));
+                        * Config.INSTANCE.getRATE_XP() * World.world.getConquestBonusNew(fighter.getPlayer()));
 
+                //System.out.println("Bonus xp = " + total);
+                //System.out.println((1 + (sagesse / 100)) + " * " + (1 + (challenge / 100)) + " * " + (1 + (star / 100)) + " * " + (bonus + rapport) + " * " + (nvGrpMonster) + " * " + (groupXp / sizeGroupe) + " * " + Config.INSTANCE.getRATE_XP() + " * " + World.world.getConquestBonusNew(fighter.getPlayer()) );
                 return total;
             }
         } else if (object instanceof Collector) {
@@ -183,6 +186,88 @@ public class FormuleOfficiel {
 
             return (long) (((1 + ((sagesse + star + challenge) / 100))
                     * (bonus + rapport) * (nvGrpMonster) * (groupXp / sizeGroupe)) * Config.INSTANCE.getRATE_XP());
+        }
+        return 0;
+    }
+
+    public static long getXp2(Object object, ArrayList<Fighter> winners,
+                             long groupXp, double nbonus, int star, int challenge, int lvlMax,
+                             int lvlMin, int lvlLoosers, int lvlWinners,double bonusip, double bonusclasse) {
+        if (lvlMin <= 0 || object == null)
+            return 0;
+        if (object instanceof Fighter) {
+            Fighter fighter = (Fighter) object;
+            Player player = fighter.getPlayer();
+
+            double bonusVip = 1;
+            if(player.getAccount().getVip() == 1 ){
+                bonusVip = 1.15;
+            }
+
+
+            if (winners.contains(fighter)) {
+                if (lvlWinners <= 0)
+                    return 0;
+
+
+                double sagesse = fighter.getLvl() * 0.5 + (fighter.getPlayer().getTotalStats()
+                        .getEffect(Constant.STATS_ADD_SAGE) / 2) , nvGrpMonster = ((double) lvlMax / (double) lvlMin),rapport = ((double) lvlLoosers / (double) lvlWinners),
+                        bonus = 1.0;
+
+                if (winners.size() == 1)
+                    rapport = 0.6;
+                else if (rapport == 0)
+                    return 0;
+                else if (rapport <= 1.1 && rapport >= 0.9)
+                    rapport = 1;
+                else {
+                    if (rapport > 1)
+                        rapport = 1 / rapport;
+                    if (rapport < 0.01)
+                        rapport = 0.01;
+                }
+
+                nbonus = nbonus + rapport;
+
+                if(sagesse < 100){
+                    sagesse = 100;
+                }
+
+                int sizeGroupe = 0;
+                for (Fighter f : winners) {
+                    if (f.getPlayer() != null && !f.isInvocation()
+                            && !f.isMob() && !f.isCollector() && !f.isDouble())
+                        sizeGroupe++;
+                }
+                if (sizeGroupe < 1)
+                    return 0;
+                if (sizeGroupe > 8)
+                    sizeGroupe = 8;
+
+                if (nvGrpMonster == 0)
+                    return 0;
+                else if (nvGrpMonster < 3.0)
+                    nvGrpMonster = 1;
+                else
+                    nvGrpMonster = 1 / nvGrpMonster;
+
+                if (nvGrpMonster < 0)
+                    nvGrpMonster = 0;
+                else if (nvGrpMonster > 1)
+                    nvGrpMonster = 1;
+
+
+                double bonusChallenge = 1.0  + ((double)challenge / 100);
+                double bonusStar = 1.0 + ((double)star / 100);
+
+                long total = (long) (((1 + (sagesse / 100)) * bonusChallenge * bonusStar
+                        * (nbonus) * (nvGrpMonster) * (groupXp) * bonusVip)
+                        * Config.INSTANCE.getRATE_XP() * World.world.getConquestBonusNew(fighter.getPlayer()) * bonusip * bonusclasse );
+
+                //System.out.println("Bonus xp2 = " + total);
+                //System.out.println((1 + (sagesse / 100)) + " * " + ( bonusChallenge ) + " * " + ( bonusStar) + " * " + (nbonus) + " * " + (nvGrpMonster) + " * " + (groupXp) + " * " + Config.INSTANCE.getRATE_XP() + " * " + World.world.getConquestBonusNew(fighter.getPlayer())  + " * " + bonusip  + " * " + bonusclasse + " * " + bonusVip);
+                return total;
+            }
         }
         return 0;
     }

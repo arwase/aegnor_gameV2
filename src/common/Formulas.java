@@ -436,9 +436,14 @@ public class Formulas {
         int multiplier = 0;
         if (!isHeal) {
             domC = caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA);
+            //System.out.println(caster.getId() + " Dommages ? " + domC  );
             domC +=	caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA2);
+            //System.out.println(caster.getId() + " Dommages 2 ? " + domC  );
+
             perdomC = caster.getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
+            System.out.println(caster.getId() + " % dom ? " + perdomC  );
             multiplier = caster.getTotalStats().getEffect(Constant.STATS_MULTIPLY_DOMMAGE);
+            System.out.println(caster.getId() + " multiplier ? " + multiplier  );
             if (caster.hasBuff(114))
                 mulT = caster.getBuffValue(114);
         } else {
@@ -581,7 +586,7 @@ public class Formulas {
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
-                    return (int) num;
+                    //return (int) num;
 
                 case 71:
                 case 196:
@@ -598,7 +603,7 @@ public class Formulas {
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
-                    return (int) num;
+                    //return (int) num;
 
                 case 181:
                 case 200:
@@ -614,7 +619,7 @@ public class Formulas {
                         int value = (int) num - target.getBuff(184).getValue();
                         return value > 0 ? value : 0 ;
                     }
-                    return (int) num;
+                    //return (int) num;
             }
         }
         //Renvoie

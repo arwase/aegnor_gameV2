@@ -63,7 +63,7 @@ public class Trunk {
         Trunk t = (Trunk) P.getExchangeAction().getValue();
         if (t == null)
             return;
-        if (packet.compareTo(t.getKey()) == 0 || isTrunk)//Si c'est chez lui ou que le mot de passe est bon
+        if (packet.compareTo(t.getKey()) == 0 || isTrunk )//Si c'est chez lui ou que le mot de passe est bon
         {
             t.player = P;
             SocketManager.GAME_SEND_ECK_PACKET(P.getGameClient(), 5, "");
@@ -181,7 +181,7 @@ public class Trunk {
 
         if(house.getOwnerId() == player.getAccID() && this.getOwnerId() != player.getAccID())
             this.setOwnerId(player.getAccID());
-        if (this.getOwnerId() == player.getAccID() || (player.getGuild() != null && player.getGuild().getId() == house.getGuildId() && house.canDo(Constant.C_GNOCODE))) {
+        if (this.getOwnerId() == player.getAccID() || (player.getGuild() != null && player.getGuild().getId() == house.getGuildId() && house.canDo(Constant.C_GNOCODE)) || player.getGroupe().getId() > 0) {
             player.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_TRUNK, this));
             open(player, "-", true);
         } else if (player.getGuild() == null && house.canDo(Constant.C_OCANTOPEN))

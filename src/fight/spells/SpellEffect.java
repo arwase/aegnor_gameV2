@@ -875,7 +875,13 @@ public class SpellEffect {
 			invocacion.getPlayer().addCompagnon(acaster.getPlayer());
 			invocacion.setTeam(caster.getTeam());
 			invocacion.setControllable(true);
-			invocacion.setInvocator(acaster);
+			Player invocateur = acaster.getPlayer();
+			if(invocateur != null && invocateur.getSlaveLeader() != null){
+				invocacion.setInvocator(invocateur.getFight().getFighterByPerso(invocateur.getSlaveLeader()));
+			}
+			else {
+				invocacion.setInvocator(acaster);
+			}
 			//invocacion.setPdvMax(mob.getPdvMax());
 			invocacion.fullPdv();
 		} catch (Exception e) {
@@ -4164,7 +4170,7 @@ public class SpellEffect {
 
 		Fighter F;
 		if(caster.getPlayer() != null) {
-			if (caster.getPlayer().controleinvo) {
+			if (caster.getPlayer().controleinvo &&  id != 285) {
 				Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
 				F = new Fighter(fight, mobControlable);
 				F.setControllable(true);

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+
 public class Pet {
 
     private int templateId;
@@ -21,13 +22,15 @@ public class Pet {
     private Map<Integer, ArrayList<Integer>> categ = new HashMap<>();    // si type 3 StatID|categID#categID;StatID2| ...
     private Map<Integer, ArrayList<Integer>> template = new HashMap<>();    // si type 2 StatID|templateId#templateId#;StatID2| ...
     private Map<Integer, ArrayList<Map<Integer, Integer>>> monster = new HashMap<>();    // si type 1 StatID|monsterID,qua#monsterID,qua;StatID2|monsterID,qua#monsterID,qua ...
-    private String jet;
+    private String statsMax,jet;
 
     public Pet(int Tid, int type, String gap, String statsUp, int max, int gain, int Dtemplate, int epo, String jet) {
+
         this.templateId = Tid;
         this.type = type;
         this.gap = gap;
         this.statsUp = statsUp;
+        this.statsMax = statsMax;
         decompileStatsUpItem();
         this.max = max;
         this.gain = gain;
@@ -72,6 +75,13 @@ public class Pet {
         return this.monster;
     }
 
+    public String getStatsMax() {
+        return statsMax;
+    }
+
+    public void setStatsMax() {
+        this.jet =	this.statsMax;
+    }
     public int getNumbMonster(int StatID, int monsterID) {
         for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet()) {
             if (ID.getKey() == StatID) {

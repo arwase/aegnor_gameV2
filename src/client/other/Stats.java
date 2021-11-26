@@ -20,9 +20,9 @@ public class Stats {
     public Stats(boolean addBases, Player player) {
         if (addBases) {
             this.effects.put(Constant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
-            this.effects.put(Constant.STATS_ADD_PM, 3);
+            this.effects.put(Constant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
             this.effects.put(Constant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
-            this.effects.put(Constant.STATS_ADD_PODS, 1000);
+            this.effects.put(Constant.STATS_ADD_PODS, 5000);
             this.effects.put(Constant.STATS_CREATURE, 1);
             this.effects.put(Constant.STATS_ADD_INIT, 1);
         }
@@ -32,9 +32,9 @@ public class Stats {
         this.effects = stats;
         if (addBases) {
             this.effects.put(Constant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
-            this.effects.put(Constant.STATS_ADD_PM, 3);
+            this.effects.put(Constant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
             this.effects.put(Constant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
-            this.effects.put(Constant.STATS_ADD_PODS, 1000);
+            this.effects.put(Constant.STATS_ADD_PODS, 5000);
             this.effects.put(Constant.STATS_CREATURE, 1);
             this.effects.put(Constant.STATS_ADD_INIT, 1);
         }
@@ -172,6 +172,7 @@ public class Stats {
     }
 
     public int getEffect(int id) {
+
         int val;
         if (this.effects.get(id) == null)
             val = 0;
@@ -243,7 +244,8 @@ public class Stats {
                     val -= this.effects.get(Constant.STATS_REM_DOMA);
                 break;
             case Constant.STATS_ADD_DOMA2:
-                val = Constant.STATS_ADD_DOMA2;
+                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
                 break;
             case Constant.STATS_ADD_PODS:
                 if (this.effects.get(Constant.STATS_REM_PODS) != null)
