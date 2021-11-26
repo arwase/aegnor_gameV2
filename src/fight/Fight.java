@@ -4,7 +4,6 @@ import area.SubArea;
 import area.map.GameCase;
 import area.map.GameMap;
 import area.map.labyrinth.Minotoror;
-import client.Classe;
 import client.Player;
 import client.other.Party;
 import client.other.Stalk;
@@ -35,10 +34,8 @@ import game.world.World;
 import game.world.World.Couple;
 import game.world.World.Drop;
 import guild.Guild;
-import job.JobConstant;
 import kernel.Config;
 import kernel.Constant;
-import kernel.Main;
 import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.SoulStone;
@@ -1701,8 +1698,10 @@ public class Fight {
         if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
             if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
                 if (current.isControllable()) {
-
                     master.getPlayer().setCurrentCompagnon(current);
+                    if (current.getPlayer().getCurrentCompagnon() != null) {
+                        current.getPlayer().deleteCurrentCompagnon();
+                    }
                     if (current.isInvocation()) {
                         SocketManager.send(master.getPlayer(), "SC");
                         SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
@@ -2814,6 +2813,7 @@ public class Fight {
         if (current == null)
             return false;
 
+
         String path = GA.args;
         if (path.equals(""))
             return false;
@@ -2969,23 +2969,33 @@ public class Fight {
 
         if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector() || (getType() == Constant.FIGHT_TYPE_DOPEUL) && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector())
             this.getAllChallenges().values().stream().filter(c -> c != null).forEach(c -> c.onPlayerMove(fighter));
+
+        // Si c'est une invocation controllé
         if(fighter.getInvocator() != null)
         {
-            Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
-            if(Leader != null){
-                if(Leader.controleinvo){
-                    Leader.getGameClient().addAction(GA);
-                }
-                else{
-                    fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
-                }
-            }
+        //   System.out.println("alors que la Action id" +  GA.id);
+            //fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+           //Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
 
-            SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(this, fighter);
-        }
-        else {
+            //if(Leader != null){
+               // if(Leader.oneWindows){
+                //    Leader.getGameClient().addAction(GA);
+                //}
+               // else{
+                    //System.out.println("Action id" +  GA.id);
+                    fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
+                //}
+           // }
+            //else{
+             //   fighter.getPlayer().getGameClient().addAction(GA);
+            //}
+        // SocketManager.GAME_SEND_GM_REFRESH_FIGHTER_IN_FIGHT(this, fighter);
+         }
+         else { // Si c'est un perso controllé
+             //Player Leader = fighter.getPlayer().getSlaveLeader();
             fighter.getPlayer().getGameClient().addAction(GA);
-        }
+
+         }
         return true;
     }
 
