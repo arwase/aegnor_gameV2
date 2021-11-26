@@ -1694,17 +1694,15 @@ public class Fight {
 
 
 
-        // Controle d'invocation, pas utile pour le moment
+        // Controle d'invocation
         if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
-            if (master.getPlayer().controleinvo || current.getPlayer().controleinvo ) {
-
+            if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
                 if (current.isControllable()) {
+                    master.getPlayer().setCurrentCompagnon(current);
                     if (current.getPlayer().getCurrentCompagnon() != null) {
                         current.getPlayer().deleteCurrentCompagnon();
                     }
                     if (current.isInvocation()) {
-
-                        master.getPlayer().setCurrentCompagnon(current);
                         SocketManager.send(master.getPlayer(), "SC");
                         SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
                         SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
@@ -1712,30 +1710,6 @@ public class Fight {
                         SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
 
                     }
-
-                } else {
-                    if (current.getPlayer() != null) {
-                        if (current.getPlayer().getCurrentCompagnon() != null) {
-                            current.getPlayer().deleteCurrentCompagnon();
-
-                        }
-                        SocketManager.send(current.getPlayer(), "SC");
-                        SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
-                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                        SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-                        SocketManager.GAME_SEND_SL_LISTE(current);
-                    }
-                }
-            }
-
-            if( !(current.isInvocation()) ) {
-                if (master != current) {
-                    master.getPlayer().setCurrentCompagnon(current);
-                    SocketManager.send(master.getPlayer(), "SC");
-                    SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
-                    SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
-                    SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master.getPlayer());
-                    SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
                 } else {
                     if (current.getPlayer() != null) {
                         if (current.getPlayer().getCurrentCompagnon() != null) {
