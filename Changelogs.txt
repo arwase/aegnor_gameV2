@@ -184,3 +184,12 @@ Version 2.7 (31/10/2021) :
 Version 2.8 (01/11/2021):
 
 - Fix Familiers (Stats)
+
+Version 2.9 (28/11/2021):
+
+- Fix des boutons Suivant/Précédent sur un Mode Marchand
+- Fix IA Croca
+- Fix des effets visuel des raretés
+- Ajout d'un tour supplémentaire pour le gain de PA pour le rasboul
+- Fix des crafts on peut désormais craft plusieurs items sans quitter l'interface
+- Fix du craft a répétition (Quantité de craft)

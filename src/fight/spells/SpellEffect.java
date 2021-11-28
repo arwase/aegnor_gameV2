@@ -1368,6 +1368,13 @@ public class SpellEffect {
 			target.addBuff(Constant.STATS_REM_PA, val, turns == 0 ? 1 : turns, 1, true, spell, args, caster, true);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, Constant.STATS_REM_PA, caster.getId() + "", target.getId() + ",-" + val + "," + turns, this.effectID);
 			num += val;
+			if (target.getMob() != null) {
+				if (target.getMob().getTemplate().getId() == 1071)// si Rasboul
+				{
+					target.addBuff(111, val, turns, 2, true, spell, args, target, true);
+					SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 111, target.getId() + "", target.getId() + ",+" + value, this.effectID);
+				}
+			}
 		}
 		if (num != 0) {
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, Constant.STATS_ADD_PA, caster.getId() + "", caster.getId() + "," + num + "," + turns, this.effectID);
@@ -2997,7 +3004,7 @@ public class SpellEffect {
 				if (target.getMob() != null) {
 					if (target.getMob().getTemplate().getId() == 1071)// si Rasboul
 					{
-						target.addBuff(111, value, turns, 1, true, spell, args, target, true);
+						target.addBuff(111, value, turns, 2, true, spell, args, target, true);
 						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 111, target.getId()
 								+ "", target.getId() + ",+" + value, this.effectID);
 					}
@@ -3055,7 +3062,7 @@ public class SpellEffect {
 					if (target.getMob() != null) {
 						if (target.getMob().getTemplate().getId() == 1071)// si Rasboul
 						{
-							target.addBuff(111, value, turns, 1, true, spell, args, target, true);
+							target.addBuff(111, value, turns, 2, true, spell, args, target, true);
 							SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 111, target.getId() + "", target.getId() + ",+" + value, this.effectID);
 						}
 					}
