@@ -487,6 +487,9 @@ public class GameClient {
             case 'e':// Quand on clique sur un monstre
                 showMonsterLoc(packet.substring(2));
                 break;
+            case 'M':
+                showMerchant(packet.substring(2));
+                break;
             case 'N': // Quand on ouvre le bestiaire monstre sur la map
                 bestiaireUse();
                 break;
@@ -511,6 +514,46 @@ public class GameClient {
                 setTitre(packet.substring(2));
                 break;
         }
+    }
+
+    private void showMerchant(String packet) {
+        String[] packetSplit = packet.split(";");
+        String nomVendeur = packetSplit[0];
+        boolean arriere = Boolean.parseBoolean(packetSplit[1]);
+        Player vendeur = World.world.getPlayerByName(nomVendeur);
+        GameMap actualMap = this.player.getCurMap();
+        List<Integer> idVendeur = (List<Integer>) World.world.getSeller(actualMap.getId());
+        int actualIndex = 0;
+        for(int i = 0; i < idVendeur.size(); i++)
+        {
+            if(idVendeur.get(i)== vendeur.getId())
+            {
+                actualIndex = i;
+            }
+        }
+        if(arriere)
+        {
+            if(actualIndex == 0)
+            {
+                actualIndex = idVendeur.size() - 1;
+            }
+            else {
+                actualIndex -= 1;
+            }
+        }
+        else
+        {
+            if(actualIndex == idVendeur.size() - 1)
+            {
+                actualIndex = 0;
+            }
+            else {
+                actualIndex += 1;
+            }
+        }
+        Player seller = World.world.getPlayer(idVendeur.get(actualIndex));
+        SocketManager.GAME_SEND_ECK_PACKET(this.player, 4, String.valueOf(seller.getId()));
+        SocketManager.GAME_SEND_ITEM_LIST_PACKET_SELLER(seller, this.player);
     }
 
     private void setTitre(String Titre) {
@@ -5192,8 +5235,10 @@ public class GameClient {
         try {
             if(packet.contains("undefined")) return;
             final int cell = Integer.parseInt(packet.substring(5));
+            Fighter currentFighter = this.player.getFight().getFighterByOrdreJeu();
             if (this.player.getFight() != null && this.player.getFight().getCurAction().isEmpty())
-                this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCaC(this.player, cell));
+                this.player.getFight().cast(currentFighter, () -> this.player.getFight().tryCaC(currentFighter.getPlayer(), cell));
+                //this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCaC(this.player, cell));
         } catch (Exception e) {
             e.printStackTrace();
         }

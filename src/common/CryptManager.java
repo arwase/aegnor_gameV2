@@ -28,6 +28,12 @@ public class CryptManager {
         return HASH[char1] + "" + HASH[char2];
     }
 
+    public static String cellID_To_Code2(int cellID) {
+
+        int char1 = cellID / 64, char2 = cellID % 64;
+        return HASH[char1] + "" + HASH[char2];
+    }
+
     public int cellCode_To_ID(String cellCode) {
 
         char char1 = cellCode.charAt(0), char2 = cellCode.charAt(1);

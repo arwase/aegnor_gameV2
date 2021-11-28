@@ -1692,8 +1692,6 @@ public class Fight {
             }
         }
 
-
-
         // Controle d'invocation
         if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
             if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
@@ -1721,6 +1719,34 @@ public class Fight {
                         SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
                         SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
                         SocketManager.GAME_SEND_SL_LISTE(current);
+                    }
+                }
+            }
+            if(!current.isInvocation()) {
+                if (master != current) {
+                    master.getPlayer().setCurrentCompagnon(current);
+                    SocketManager.send(master.getPlayer(), "SC");
+                    SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(current.getPlayer(), master.getPlayer());
+                    SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
+                    SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
+                    SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master.getPlayer());
+                    SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                    //SocketManager.GAME_SEND_ASK_TO_LEADER(current.getPlayer(), master.getPlayer());
+                    SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), master.getPlayer());
+                } else {
+                    if (current.getPlayer() != null) {
+                        if (current.getPlayer().getCurrentCompagnon() != null) {
+                            current.getPlayer().deleteCurrentCompagnon();
+
+                        }
+                        SocketManager.send(current.getPlayer(), "SC");
+                        SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(current.getPlayer(), current.getPlayer());
+                        SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                        SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
+                        SocketManager.GAME_SEND_SL_LISTE(current);
+                        //SocketManager.GAME_SEND_ASK_TO_LEADER(current.getPlayer(), current.getPlayer());
+                        SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), current.getPlayer());
                     }
                 }
             }

@@ -33,7 +33,7 @@ public class JobCraft {
                 System.out.println(e.getMessage());
             }
             try { Thread.sleep(1200); } catch(Exception ignored) { }
-            if (!itsOk) repeat(time, time, player);
+            if (!itsOk) repeat(time+1, time, player);
         });
         this.thread.start();
     }

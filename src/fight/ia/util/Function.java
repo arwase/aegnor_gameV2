@@ -2,6 +2,7 @@ package fight.ia.util;
 
 import area.map.GameCase;
 import area.map.GameMap;
+import common.CryptManager;
 import common.Formulas;
 import common.PathFinding;
 import common.SocketManager;
@@ -107,6 +108,43 @@ public class Function {
         if (attack != 0)
             return attack;
         return 0;
+    }
+
+    public int attackIfPossibleCroca(Fight fight, Fighter fighter, Fighter target) // 0 = Rien; -1 = fight ou fighter null; 555 = Sort null; 666 = target null
+    {
+        if(fight == null || fighter == null)
+            return -1;
+        SortStats SS = null;
+        for(Map.Entry<Integer, SortStats> entry : fighter.getMob().getSpells().entrySet())
+        {
+            SortStats a = entry.getValue();
+            if(a.getSpellID() == 971)
+            {
+                SS = a;
+            }
+        }
+        if(SS == null)
+        {
+            return 555;
+        }
+        if(target == null)
+        {
+            return 666;
+        }
+        char dir = PathFinding.getDirBetweenTwoCase(fighter.getCell().getId(), target.getCell().getId(), fight.getMap(), true);
+        if(PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), target.getCell().getId(), dir, SS.getMaxPO()))
+        {
+            if(PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell()) <= SS.getMaxPO())
+            {
+                int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
+                if(attack != 0)
+                {
+                    return attack;
+                }
+                return 0;
+            }
+        }
+        return 777;
     }
 
     public boolean tryTurtleInvocation(Fight fight, Fighter fighter) {
@@ -2016,6 +2054,7 @@ public class Function {
         }
         return count;
     }
+
 
     public int moveenfaceIfPossible(Fight fight, Fighter F, Fighter T, int dist)
     {

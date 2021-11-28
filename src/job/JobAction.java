@@ -18,11 +18,8 @@ import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 @SuppressWarnings("unused")
 public class JobAction {
@@ -41,6 +38,7 @@ public class JobAction {
     private int chan = 100;
     private int time = 0;
     private int xpWin = 0;
+    private ArrayList<Integer> lastCaftID = new ArrayList<Integer>();
     private JobStat SM;
     private JobCraft jobCraft;
     public JobCraft oldJobCraft;
@@ -53,6 +51,7 @@ public class JobAction {
         this.xpWin = 0;
         this.ingredients = new TreeMap<Integer, Integer>();
         this.lastCraft = new TreeMap<Integer, Integer>();
+        this.lastCaftID = new ArrayList<Integer>();
         this.data = "";
         this.broke = false;
         this.broken = false;
@@ -229,21 +228,19 @@ public class JobAction {
             return;
         }
         System.out.println(this.id);
-        this.ingredients.putAll(this.lastCraft);
+        if(isRepeat) {
+            this.ingredients.putAll(this.lastCraft);
+        }
 
         Map<Integer, Integer> items = new HashMap<>();
         //on ajoutes les ingrédient a une liste
         for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-            if (!this.player.hasItemGuid(e.getKey())) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                return;
-            }
-
-            GameObject obj = World.world.getGameObject(e.getKey());
-
-
-
-            items.put(obj.getTemplate().getId(), e.getValue());
+                if (!this.player.hasItemGuid(e.getKey())) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    return;
+                }
+                    GameObject obj = World.world.getGameObject(e.getKey());
+                    items.put(obj.getTemplate().getId(), e.getValue());
         }
 
         boolean signed = false;
@@ -262,6 +259,7 @@ public class JobAction {
             int templateId = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
             //Recette non existante ou pas adaptï¿½ au mï¿½tier
             if (templateId == -1 || !SM.getTemplate().canCraft(this.id, templateId)) {
+                this.lastCaftID.add(templateId);
                 SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
                 SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
                 this.ingredients.clear();
@@ -613,9 +611,9 @@ public class JobAction {
         q += qua;
         if (q > 0) {
             this.ingredients.put(guid, q);
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", String.valueOf(guid) + "|" + q);
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", guid + "|" + q);
         } else {
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", new StringBuilder(String.valueOf(guid)).toString());
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", String.valueOf(guid));
         }
     }
     public int lastDigit(int number) { return Math.abs(number) % 10; }
