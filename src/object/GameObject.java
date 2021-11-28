@@ -7,15 +7,12 @@ import client.other.Stats;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
-import database.dynamics.data.PetTemplateData;
-import entity.Collector;
 import entity.mount.Mount;
 import entity.pet.Pet;
 import entity.pet.PetEntry;
 import fight.spells.SpellEffect;
 import game.world.World;
 import game.world.World.Couple;
-import hdv.Hdv;
 import hdv.HdvEntry;
 import job.JobAction;
 import kernel.Constant;
@@ -330,6 +327,10 @@ public class GameObject {
                             if (statMax < Integer.parseInt(stats[1], 16) && this.getTemplate().getId() != 6894) {
                                 //System.out.println(this.getTemplate().getName() + " " +statMax + " plus petit que " + Integer.parseInt(stats[1], 16));
                                 System.out.println("["+ this.getGuid() +"]"+ "!! Familier illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " alors que max " + statMax);
+                                txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [faille]");
+                                //Stats.addOneStat(id, statMax);
+                            }
+                            else{
                                 Stats.addOneStat(id, statMax);
                             }
 
@@ -369,7 +370,9 @@ public class GameObject {
                         }
                     }
                     else {
-                        Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                        if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER) {
+                            Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
