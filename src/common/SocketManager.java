@@ -197,6 +197,26 @@ public class SocketManager {
             send(out, packet.toString());
         } catch(Exception e) { e.printStackTrace(); System.out.println("Error occured : " + e.getMessage());}
     }
+    public static void GAME_SEND_AB_TO_LEADER(Player perso, Player leader) {
+        try {
+            StringBuilder packet = new StringBuilder();
+            int color1 = perso.getColor1(), color2 = perso.getColor2(), color3 = perso.getColor3();
+            if (perso.getObjetByPos(Constant.ITEM_POS_MALEDICTION) != null) {
+                if (perso.getObjetByPos(Constant.ITEM_POS_MALEDICTION).getTemplate().getId() == 10838) {
+                    color1 = 16342021;
+                    color2 = 16342021;
+                    color3 = 16342021;
+                }
+            }
+            packet.append("AB|").append(perso.getId()).append("|").append(perso.getName()).append("|");
+            packet.append(perso.getLevel()).append("|").append(perso.getMorphMode() ? -1 : perso.getClasse()).append("|").append(perso.getSexe());
+            packet.append("|").append(perso.getGfxId()).append("|").append((color1 == -1 ? "-1" : Integer.toHexString(color1)));
+            packet.append("|").append((color2 == -1 ? "-1" : Integer.toHexString(color2))).append("|");
+            packet.append((color3 == -1 ? "-1" : Integer.toHexString(color3))).append("|");
+            packet.append(perso.parseItemToASK());
+            send(leader, packet.toString());
+        } catch(Exception e) { e.printStackTrace(); System.out.println("Error occured : " + e.getMessage());}
+    }
 
     public static void GAME_SEND_ALIGNEMENT(GameClient out, int alliID) {
         String packet = "ZS" + alliID;
@@ -2856,6 +2876,30 @@ public class SocketManager {
 
     public static void GAME_SEND_Aa_TURN_LIDER(Player leader, Player player) {
         String packet = "Aa" + player.getId();
+        send(leader, packet);
+    }
+    public static void ENVIAR_AB_PERSONAJE_A_LIDER(Player player, Player leader) {
+        String packet = "AB" + player.getId() + "|" + player.getName() + "|" + player.getLevel() + "|"
+                + player.getClasse() + "|" + player.getSexe() + "|" + player.getGfxId() + "|";
+        if (player.getColor1() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor1()) + "|";
+        }
+        if (player.getColor2() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor2()) + "|";
+        }
+        if (player.getColor3() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor3()) + "|";
+        }
+        packet += player.parseItemToASK();
         send(leader, packet);
     }
 }

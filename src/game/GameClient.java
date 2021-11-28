@@ -5235,8 +5235,10 @@ public class GameClient {
         try {
             if(packet.contains("undefined")) return;
             final int cell = Integer.parseInt(packet.substring(5));
+            Fighter currentFighter = this.player.getFight().getFighterByOrdreJeu();
             if (this.player.getFight() != null && this.player.getFight().getCurAction().isEmpty())
-                this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCaC(this.player, cell));
+                this.player.getFight().cast(currentFighter, () -> this.player.getFight().tryCaC(currentFighter.getPlayer(), cell));
+                //this.player.getFight().cast(this.player.getFight().getFighterByPerso(this.player), () -> this.player.getFight().tryCaC(this.player, cell));
         } catch (Exception e) {
             e.printStackTrace();
         }
