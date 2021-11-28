@@ -31,6 +31,7 @@ import quest.Quest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
 
 public class SocketManager {
@@ -2901,5 +2902,27 @@ public class SocketManager {
         }
         packet += player.parseItemToASK();
         send(leader, packet);
+    }
+
+    public static void GAME_SEND_ITEM_CLASSE_ON_LEADER(Player player, Player leader) {
+        List<GameObject> equipedObject = player.getEquippedObjects();
+        for(GameObject item : equipedObject)
+        {
+            int panoId = item.getTemplate().getPanoId();
+            ObjectTemplate template = item.getTemplate();
+            int position = item.getPosition();
+            if(panoId >= 81 && panoId <= 92 && position != Constant.ITEM_POS_NO_EQUIPED) {
+                String[] stats = template.getStrTemplate().split(",");
+
+                for (String stat : stats) {
+                    String[] split = stat.split("#");
+                    int effect = Integer.parseInt(split[0], 16), spell = Integer.parseInt(split[1], 16);
+                    int value = Integer.parseInt(split[3], 16);
+                    if (effect == 289 || effect == 282 || effect == 288)
+                        value = 1;
+                    SEND_SB_SPELL_BOOST(leader, effect + ";" + spell + ";" + value);
+                }
+            }
+        }
     }
 }

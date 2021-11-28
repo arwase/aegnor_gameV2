@@ -1731,8 +1731,8 @@ public class Fight {
                     SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
                     SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master.getPlayer());
                     SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                    //SocketManager.GAME_SEND_ASK_TO_LEADER(current.getPlayer(), master.getPlayer());
                     SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), master.getPlayer());
+                    SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), master.getPlayer());
                 } else {
                     if (current.getPlayer() != null) {
                         if (current.getPlayer().getCurrentCompagnon() != null) {
@@ -1747,6 +1747,7 @@ public class Fight {
                         SocketManager.GAME_SEND_SL_LISTE(current);
                         //SocketManager.GAME_SEND_ASK_TO_LEADER(current.getPlayer(), current.getPlayer());
                         SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), current.getPlayer());
+                        SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), current.getPlayer());
                     }
                 }
             }
@@ -3906,9 +3907,13 @@ public class Fight {
                     player.deleteCurrentCompagnon();
                     SocketManager.ENVIAR_AI_CAMBIAR_ID(player, player.getId());
                 }
+                SocketManager.send(player, "SC");
+                SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(player, player);
                 SocketManager.GAME_SEND_STATS_PACKET(player);
-               // SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, fighter);
+                SocketManager.ENVIAR_AI_CAMBIAR_ID(player, player.getId());
                 SocketManager.GAME_SEND_SL_LISTE_SORTS(player);
+                SocketManager.GAME_SEND_Aa_TURN_LIDER(player, player);
+                SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(player, player);
 
                 if (!player.getCurCell().isWalkable(true))
                     player.teleport(player.getCurMap(), player.getCurMap().getRandomFreeCellId());
