@@ -11,6 +11,7 @@ import fight.traps.Trap;
 import game.GameServer;
 import game.world.World;
 import kernel.Constant;
+import kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.DeclaredMemberIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -662,6 +663,49 @@ public class PathFinding {
             }
         }
         return 0;
+    }
+
+    public static ArrayList<GameCase> getAvailableCellNearPlayer(Fight fight, int cellId)
+    {
+        ArrayList<GameCase> cellAroundPlayer = new ArrayList<GameCase>();
+        int cellHaut = cellId -19;
+        int cellBas = cellId + 19;
+        int cellDroite = cellHaut + 1;
+        int cellGauche = cellBas - 1;
+        GameMap map = fight.getMap();
+        GameCase cellDuHaut = map.getCase(cellHaut);
+        GameCase cellDuBas = map.getCase(cellBas);
+        GameCase cellDuDroite = map.getCase(cellDroite);
+        GameCase cellDuGauche = map.getCase(cellGauche);
+        if(cellDuHaut != null)
+        {
+            if(cellDuHaut.isWalkable(false) & cellDuHaut.getFirstFighter() == null)
+            {
+                cellAroundPlayer.add(cellDuHaut);
+            }
+        }
+        if(cellDuBas != null)
+        {
+            if(cellDuBas.isWalkable(false) & cellDuBas.getFirstFighter() == null)
+            {
+                cellAroundPlayer.add(cellDuBas);
+            }
+        }
+        if(cellDuDroite != null)
+        {
+            if(cellDuDroite.isWalkable(false) & cellDuDroite.getFirstFighter() == null)
+            {
+                cellAroundPlayer.add(cellDuDroite);
+            }
+        }
+        if(cellDuGauche != null)
+        {
+            if(cellDuGauche.isWalkable(false) & cellDuGauche.getFirstFighter() == null)
+            {
+                cellAroundPlayer.add(cellDuGauche);
+            }
+        }
+        return cellAroundPlayer;
     }
 
     public static int getNearestligneGA(Fight fight, int startCell,
