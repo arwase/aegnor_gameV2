@@ -202,3 +202,4 @@ Version 3.0 (29/11/2021):
 - Fix du bug de transpo du Kralamour
 - Fix de l'invocation des tentacules du Kralamour
 - Fix d'une exception du contrôle d'invocation
+- Fix du Sort Poisse et Brokle

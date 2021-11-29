@@ -207,7 +207,7 @@ public class SpellEffect {
 						break;
 					case 606://Chatiment (ancien)
 						int stat = buff.getValue();
-						int jet = Formulas.getRandomJet(buff.getJet());
+						int jet = Formulas.getRandomJet(buff.getJet(), caster, target);
 						target.addBuff(stat, jet, -1, -1, false, buff.getSpell(), buff.getArgs(), caster, true);
 						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, stat, caster.getId() + "", target.getId() + "," + jet + "," + -1, elementId);
 						break;
@@ -216,7 +216,7 @@ public class SpellEffect {
 					case 609:
 					case 611:
 						stat = buff.getValue();
-						jet = Formulas.getRandomJet(buff.getJet());
+						jet = Formulas.getRandomJet(buff.getJet(), caster, target);
 						target.addBuff(stat, jet, -1, -1, false, buff.getSpell(), buff.getArgs(), caster, true);
 						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, stat, caster.getId() + "", target.getId() + "," + jet + "," + -1, elementId);
 						break;
@@ -629,6 +629,7 @@ public class SpellEffect {
 				applyEffect_180(fight);
 				break;
 			case 181://Invoque une créature
+			case 200: //Contrôle Invocation
 				applyEffect_181(fight);
 				break;
 			case 182://+ Crea Invoc
@@ -646,10 +647,7 @@ public class SpellEffect {
 			case 186://Diminue les dommages %
 				applyEffect_186(fight, cibles);
 				break;
-			case 200: //Contrôle Invocation
-				applyEffect_181(fight);
-				//applyEffect_200(fight, caster, cell);
-				break;
+			//applyEffect_200(fight, caster, cell);
 			case 202://Perception
 				applyEffect_202(fight, cibles);
 				break;
@@ -987,7 +985,7 @@ public class SpellEffect {
 				if (newCellId == 0)
 					return;
 				if (newCellId < 0) {
-					int a = -newCellId, factor = Formulas.getRandomJet("8d1+8"); // 2 à 9
+					int a = -newCellId, factor = Formulas.getRandomJet("8d1+8", caster, target); // 2 à 9
 					double b = (caster.isInvocation() ? caster.getInvocator().getLvl() : caster.getLvl()) / 50;
 					if (b < 0.1) b = 0.1;
 
@@ -1247,12 +1245,12 @@ public class SpellEffect {
 
 	private void applyEffect_78(ArrayList<Fighter> cibles, Fight fight)//Bonus PA
 	{
-		int val = Formulas.getRandomJet(jet);
-		if (val == -1) {
-			GameServer.a();
-			return;
-		}
 		for (Fighter target : cibles) {
+			int val = Formulas.getRandomJet(jet, caster, target);
+			if (val == -1) {
+				GameServer.a();
+				return;
+			}
 			target.addBuff(effectID, val, turns, 1, true, spell, args, caster, true);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, caster.getId()
 					+ "", target.getId() + "," + val + "," + turns, this.effectID);
@@ -1276,7 +1274,7 @@ public class SpellEffect {
 			if (jet.length < 6) {
 				heal = 1;
 			} else {
-				heal = Formulas.getRandomJet(jet[5]);
+				heal = Formulas.getRandomJet(jet[5], caster);
 			}
 			int heal2 = heal;
 			for (Fighter cible : cibles) {
@@ -1317,7 +1315,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				//si la cible a le buff renvoie de sort et que le sort peut etre renvoyer
 				if (target.hasBuff(106) && target.getBuffValue(106) >= spellLvl && spell != 0) {
 					SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 106, target.getId() + "", target.getId() + ",1", this.effectID);
@@ -1417,7 +1415,7 @@ public class SpellEffect {
 					resP += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_EAU);
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_EAU);
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);//%age de pdv inflig�
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);//%age de pdv inflig�
 				int val = caster.getPdv() / 100 * dmg;//Valeur des d�gats
 				//retrait de la r�sist fixe
 				val -= resF;
@@ -1484,7 +1482,7 @@ public class SpellEffect {
 					resP += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_TER);
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_TER);
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);//%age de pdv inflig�
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);//%age de pdv inflig�
 				int val = caster.getPdv() / 100 * dmg;//Valeur des d�gats
 				//retrait de la r�sist fixe
 				val -= resF;
@@ -1555,7 +1553,7 @@ public class SpellEffect {
 					resP += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_AIR);
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_AIR);
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);//%age de pdv inflig�
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);//%age de pdv inflig�
 				int val = caster.getPdv() / 100 * dmg;//Valeur des d�gats
 				//retrait de la r�sist fixe
 				val -= resF;
@@ -1621,7 +1619,7 @@ public class SpellEffect {
 					resP += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_FEU);
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_FEU);
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);//%age de pdv inflig�
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);//%age de pdv inflig�
 				int val = caster.getPdv() / 100 * dmg;//Valeur des d�gats
 				//retrait de la r�sist fixe
 				val -= resF;
@@ -1688,7 +1686,7 @@ public class SpellEffect {
 					resP += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_NEU);
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_NEU);
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);//%age de pdv inflig�
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);//%age de pdv inflig�
 				int val = caster.getPdv() / 100 * dmg;//Valeur des d�gats
 				//retrait de la r�sist fixe
 				val -= resF;
@@ -1746,7 +1744,7 @@ public class SpellEffect {
 	private void applyEffect_90(ArrayList<Fighter> cibles, Fight fight) {
 		if (turns <= 0)//Si Direct
 		{
-			int pAge = Formulas.getRandomJet(args.split(";")[5]);
+			int pAge = Formulas.getRandomJet(args.split(";")[5], caster);
 			int val = pAge * (caster.getPdv() / 100);
 			//Calcul des Doms recus par le lanceur
 			int finalDommage = applyOnHitBuffs(val, caster, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
@@ -1789,7 +1787,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_EAU, dmg, false, true, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_EAU);//S'il y a des buffs sp�ciaux
@@ -1837,7 +1835,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_EAU, dmg, false, false, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_EAU);//S'il y a des buffs sp�ciaux
@@ -1886,7 +1884,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_TERRE, dmg, false, true, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_TERRE);//S'il y a des buffs sp�ciaux
@@ -1931,7 +1929,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_TERRE, dmg, false, false, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_TERRE);//S'il y a des buffs sp�ciaux
@@ -1980,7 +1978,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_AIR, dmg, false, true, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_AIR);//S'il y a des buffs sp�ciaux
@@ -2025,7 +2023,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_AIR, dmg, false, false, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_AIR);//S'il y a des buffs sp�ciaux
@@ -2075,7 +2073,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_FEU, dmg, false, true, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_FEU);//S'il y a des buffs sp�ciaux
@@ -2121,7 +2119,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_FEU, dmg, false, false, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_FEU);//S'il y a des buffs sp�ciaux
@@ -2170,7 +2168,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_NEUTRE, dmg, false, true, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_NEUTRE);//S'il y a des buffs sp�ciaux
@@ -2217,7 +2215,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_NEUTRE, dmg, false, false, spell);
 
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_NEUTRE);//S'il y a des buffs sp�ciaux
@@ -2271,7 +2269,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2339,7 +2337,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2411,7 +2409,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2480,7 +2478,7 @@ public class SpellEffect {
 					target = caster;
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				if (caster.hasBuff(293) || caster.haveState(300)) {
@@ -2565,7 +2563,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2636,7 +2634,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2711,7 +2709,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2781,7 +2779,7 @@ public class SpellEffect {
 					//le lanceur devient donc la cible
 					target = caster;
 				}
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2854,7 +2852,7 @@ public class SpellEffect {
 					}
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -2926,7 +2924,7 @@ public class SpellEffect {
 					target.addBuff(950, 1, 1, 1, false, spell, args, target, true);
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
 
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
@@ -3080,7 +3078,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_105(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3124,7 +3122,7 @@ public class SpellEffect {
 			if (jet.length < 6) {
 				heal = 1;
 			} else {
-				heal = Formulas.getRandomJet(jet[5]);
+				heal = Formulas.getRandomJet(jet[5], caster);
 			}
 			int heal2 = heal;
 			for (Fighter cible : cibles) {
@@ -3153,7 +3151,7 @@ public class SpellEffect {
 	private void applyEffect_109(Fight fight)//Dommage pour le lanceur (fixes)
 	{
 		if (turns <= 0) {
-			int dmg = Formulas.getRandomJet(args.split(";")[5]);
+			int dmg = Formulas.getRandomJet(args.split(";")[5], caster);
 			int finalDommage = Formulas.calculFinalDommage(fight, caster, caster, Constant.ELEMENT_NULL, dmg, false, false, spell);
 
 			finalDommage = applyOnHitBuffs(finalDommage, caster, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
@@ -3174,7 +3172,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_110(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3187,7 +3185,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_111(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3203,7 +3201,7 @@ public class SpellEffect {
 			}
 			if (spell == 115) {// odorat
 				if (!repetibles) {
-					lostPA = Formulas.getRandomJet(jet);
+					lostPA = Formulas.getRandomJet(jet, caster, target);
 					if (lostPA == -1)
 						continue;
 					value = lostPA;
@@ -3232,7 +3230,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_112(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3253,7 +3251,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_114(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3289,7 +3287,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_115(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3303,7 +3301,7 @@ public class SpellEffect {
 
 	private void applyEffect_116(ArrayList<Fighter> cibles, Fight fight)//Malus PO
 	{
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3317,7 +3315,7 @@ public class SpellEffect {
 
 	private void applyEffect_117(ArrayList<Fighter> cibles, Fight fight)//Bonus PO
 	{
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3334,7 +3332,7 @@ public class SpellEffect {
 
 	private void applyEffect_118(ArrayList<Fighter> cibles, Fight fight)//Bonus Force
 	{
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3350,7 +3348,7 @@ public class SpellEffect {
 
 	private void applyEffect_119(ArrayList<Fighter> cibles, Fight fight)//Bonus Agilit�
 	{
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3364,7 +3362,7 @@ public class SpellEffect {
 
 	private void applyEffect_120(ArrayList<Fighter> cibles, Fight fight)//Bonus PA
 	{
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3376,7 +3374,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_121(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3389,7 +3387,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_122(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3402,7 +3400,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_123(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3415,7 +3413,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_124(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3428,7 +3426,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_125(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) return;
 
 
@@ -3441,7 +3439,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_126(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3512,7 +3510,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_128(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3522,7 +3520,7 @@ public class SpellEffect {
 		for (Fighter target : cibles) {
 			if (spell == 115) {// odorat
 				if (!repetibles) {
-					lostPM = Formulas.getRandomJet(jet);
+					lostPM = Formulas.getRandomJet(jet, caster, target);
 					if (lostPM == -1)
 						continue;
 					value = lostPM;
@@ -3550,7 +3548,7 @@ public class SpellEffect {
 	private void applyEffect_130(Fight fight, ArrayList<Fighter> cibles) {
 		if (turns <= 0) {
 			for (Fighter target : cibles) {
-				int kamas = Formulas.getRandomJet(args.split(";")[5]);
+				int kamas = Formulas.getRandomJet(args.split(";")[5], caster, target);
 				if (caster.getPlayer() == null) break;
 				if (target.getPlayer() != null) {
 					target.getPlayer().addKamas(-kamas);
@@ -3593,7 +3591,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_138(ArrayList<Fighter> cibles, Fight fight) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3626,7 +3624,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_142(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3645,7 +3643,7 @@ public class SpellEffect {
 			if (jet.length < 6) {
 				heal = 1;
 			} else {
-				heal = Formulas.getRandomJet(jet[5]);
+				heal = Formulas.getRandomJet(jet[5], caster);
 			}
 			int dmg2 = heal;
 			for (Fighter cible : cibles) {
@@ -3675,7 +3673,7 @@ public class SpellEffect {
 			if (jet.length < 6) {
 				heal = 1;
 			} else {
-				heal = Formulas.getRandomJet(jet[5]);
+				heal = Formulas.getRandomJet(jet[5], caster);
 			}
 			int dmg2 = heal;
 			for (Fighter cible : cibles) {
@@ -3705,7 +3703,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_144(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1)
 			return;
 		int val2 = val;
@@ -3719,7 +3717,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_145(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3778,7 +3776,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_152(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1)
 			return;
 		int val2 = val;
@@ -3792,7 +3790,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_153(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) return;
 
 		int val2 = val;
@@ -3806,7 +3804,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_154(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) return;
 
 		int val2 = val;
@@ -3820,7 +3818,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_155(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3834,7 +3832,7 @@ public class SpellEffect {
 
 
 	private void applyEffect_156(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) return;
 
 		int val2 = val;
@@ -3848,7 +3846,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_157(Fight pelea, ArrayList<Fighter> objetivos) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) return;
 
 		int val2 = val;
@@ -3862,7 +3860,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_160(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3875,7 +3873,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_161(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3888,7 +3886,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_162(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3901,7 +3899,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_163(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -3965,7 +3963,7 @@ public class SpellEffect {
 					cible.addBuff(effectID, value, turns, turns, true, spell, args, caster, true);
 				} else if (spell == 115) {// Odorat
 					if (!repetibles) {
-						lostPA = Formulas.getRandomJet(jet);
+						lostPA = Formulas.getRandomJet(jet, caster);
 						if (lostPA == -1)
 							continue;
 						value = lostPA;
@@ -4017,7 +4015,7 @@ public class SpellEffect {
 					cible.addBuff(effectID, value, turns, 0, true, spell, args, caster, true);
 				} else if (spell == 115) {// odorat
 					if (!repetibles) {
-						lostPM = Formulas.getRandomJet(jet);
+						lostPM = Formulas.getRandomJet(jet, caster);
 						if (lostPM == -1)
 							continue;
 						value = lostPM;
@@ -4040,7 +4038,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_171(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4052,7 +4050,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_176(ArrayList<Fighter> objetivos, Fight pelea) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			return;
 		}
@@ -4064,7 +4062,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_177(ArrayList<Fighter> objetivos, Fight pelea) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			return;
 		}
@@ -4076,7 +4074,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_178(ArrayList<Fighter> objetivos, Fight pelea) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			return;
 		}
@@ -4091,7 +4089,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_179(ArrayList<Fighter> objetivos, Fight pelea) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			return;
 		}
@@ -4219,7 +4217,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_182(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4232,7 +4230,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_183(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4245,7 +4243,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_184(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4295,7 +4293,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_186(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4347,7 +4345,7 @@ public class SpellEffect {
 					+ "", caster.getId() + "," + pa + "," + -1, this.effectID);
 			return;
 		}
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4362,7 +4360,7 @@ public class SpellEffect {
 	private void applyEffect_211(Fight fight, ArrayList<Fighter> cibles) {
 		if (spell == 686 && caster.haveState(1))//anti bug saoul
 			return;
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4377,7 +4375,7 @@ public class SpellEffect {
 	private void applyEffect_212(Fight fight, ArrayList<Fighter> cibles) {
 		if (spell == 686 && caster.haveState(1))//anti bug saoul
 			return;
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4392,7 +4390,7 @@ public class SpellEffect {
 	private void applyEffect_213(Fight fight, ArrayList<Fighter> cibles) {
 		if (spell == 686 && caster.haveState(1))//anti bug saoul
 			return;
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4407,7 +4405,7 @@ public class SpellEffect {
 	private void applyEffect_214(Fight fight, ArrayList<Fighter> cibles) {
 		if (spell == 686 && caster.haveState(1))//anti bug saoul
 			return;
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4421,7 +4419,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_215(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4434,7 +4432,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_216(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4447,7 +4445,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_217(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4460,7 +4458,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_218(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4473,7 +4471,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_219(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4495,7 +4493,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_265(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			GameServer.a();
 			return;
@@ -4508,7 +4506,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_266(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_CHAN, val, turns, 1, true, spell, args, caster, true);
@@ -4525,7 +4523,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_267(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_VITA, val, turns, 1, true, spell, args, caster, true);
@@ -4542,7 +4540,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_268(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_AGIL, val, turns, 1, true, spell, args, caster, true);
@@ -4559,7 +4557,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_269(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_INTE, val, turns, 1, true, spell, args, caster, true);
@@ -4576,7 +4574,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_270(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_SAGE, val, turns, 1, true, spell, args, caster, true);
@@ -4593,7 +4591,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_271(Fight fight, ArrayList<Fighter> cibles) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		int vol = 0;
 		for (Fighter target : cibles) {
 			target.addBuff(Constant.STATS_REM_FORC, val, turns, 1, true, spell, args, caster, true);
@@ -4730,7 +4728,7 @@ public class SpellEffect {
 					resF += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_NEU);
 				}
 
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);// % de pdv
+				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);// % de pdv
 				dmg = getMaxMinSpell(target, dmg);
 				int val = caster.getPdv() / 100 * dmg;// Valor de da�os
 				val -= resF;
@@ -4765,7 +4763,7 @@ public class SpellEffect {
 	private void applyEffect_672(ArrayList<Fighter> cibles, Fight fight) {
 		//Punition
 		//Formule de barge ? :/ Clair que ca punie ceux qui veulent l'utiliser x_x
-		double val = ((double) Formulas.getRandomJet(jet) / (double) 100);
+		double val = ((double) Formulas.getRandomJet(jet, caster) / (double) 100);
 		int pdvMax = caster.getPdvMaxOutFight();
 		double pVie = (double) caster.getPdv() / (double) caster.getPdvMax();
 		double rad = (double) 2 * Math.PI * (double) (pVie - 0.5);
@@ -4841,7 +4839,7 @@ public class SpellEffect {
 	}
 
 	private void applyEffect_776(ArrayList<Fighter> objetivos, Fight pelea) {
-		int val = Formulas.getRandomJet(jet);
+		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
 			return;
 		}
@@ -4885,13 +4883,13 @@ public class SpellEffect {
 
 	private void applyEffect_781(ArrayList<Fighter> cibles, Fight fight) {
 		for (Fighter target : cibles) {
-			target.addBuff(effectID, value, turns, 1, debuffable, spell, args, caster, true);
+			target.addBuff(effectID, value, 2, 2, debuffable, spell, args, caster, true);
 		}
 	}
 
 	private void applyEffect_782(ArrayList<Fighter> cibles, Fight fight) {
 		for (Fighter target : cibles) {
-			target.addBuff(effectID, value, turns, 1, debuffable, spell, args, caster, true);
+			target.addBuff(effectID, value, 2, 2, debuffable, spell, args, caster, true);
 		}
 	}
 

@@ -123,12 +123,79 @@ public class Formulas {
         }
     }
 
+    public static int getRandomJet(String jet, Fighter caster, Fighter target)//1d5+6
+    {
+        if(target != null & target.hasBuff(782))
+        {
+            return Formulas.getMaxJet(jet);
+        }
+        else if(caster != null & caster.hasBuff(781))
+        {
+            return Formulas.getMinJet(jet);
+        }
+        else {
+            try {
+                int num = 0;
+                int splited = jet.split("d").length;
+                if (jet.split("d").length > 1) {
+                    int des = Integer.parseInt(jet.split("d")[0]);
+                    int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
+                    int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
+                    if (faces == 0 && add == 0) {
+                        num = getRandomValue(0, des);
+                    } else {
+                        for (int a = 0; a < des; a++) {
+                            num += getRandomValue(1, faces);
+                        }
+                    }
+                    num += add;
+                    return num;
+                }
+                return Integer.parseInt(jet);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+    }
+    public static int getRandomJet(String jet, Fighter caster)//1d5+6
+    {
+        assert caster != null;
+        if(caster.hasBuff(781))
+        {
+            return Formulas.getMinJet(jet);
+        }
+        else {
+            try {
+                int num = 0;
+                int splited = jet.split("d").length;
+                if (jet.split("d").length > 1) {
+                    int des = Integer.parseInt(jet.split("d")[0]);
+                    int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
+                    int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
+                    if (faces == 0 && add == 0) {
+                        num = getRandomValue(0, des);
+                    } else {
+                        for (int a = 0; a < des; a++) {
+                            num += getRandomValue(1, faces);
+                        }
+                    }
+                    num += add;
+                    return num;
+                }
+                return Integer.parseInt(jet);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        }
+    }
     public static int getRandomJet(String jet)//1d5+6
     {
         try {
             int num = 0;
             int splited = jet.split("d").length;
-            if(jet.split("d").length > 1) {
+            if (jet.split("d").length > 1) {
                 int des = Integer.parseInt(jet.split("d")[0]);
                 int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
                 int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
@@ -149,7 +216,7 @@ public class Formulas {
         }
     }
 
-    public static int getRandomJet(String jet, Fighter target, Fighter caster)//1d5+6
+    /*public static int getRandomJet(String jet, Fighter target, Fighter caster)//1d5+6
     {
         try {
             if(target != null)
@@ -177,7 +244,7 @@ public class Formulas {
             e.printStackTrace();
             return -1;
         }
-    }
+    }*/
 
     public static int getMiddleJet(String jet)//1d5+6
     {
