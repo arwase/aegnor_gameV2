@@ -1245,12 +1245,12 @@ public class SpellEffect {
 
 	private void applyEffect_78(ArrayList<Fighter> cibles, Fight fight)//Bonus PA
 	{
+		int val = Formulas.getRandomJet(jet, caster);
+		if (val == -1) {
+			GameServer.a();
+			return;
+		}
 		for (Fighter target : cibles) {
-			int val = Formulas.getRandomJet(jet, caster, target);
-			if (val == -1) {
-				GameServer.a();
-				return;
-			}
 			target.addBuff(effectID, val, turns, 1, true, spell, args, caster, true);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, caster.getId()
 					+ "", target.getId() + "," + val + "," + turns, this.effectID);
