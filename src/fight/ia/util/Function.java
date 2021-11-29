@@ -388,9 +388,7 @@ public class Function {
         if (fighter.nbInvocation() >= 4)
             return false;
         Fighter nearest = getNearestEnnemy(fight, fighter);
-        if (nearest == null)
-            return false;
-        int nearestCell = fighter.getCell().getId();
+        ArrayList<GameCase> nearestCell = new ArrayList<GameCase>();
         int limit = 2000;
         int _loc0_ = 0;
         SortStats spell = null;
@@ -414,18 +412,32 @@ public class Function {
             spell = World.world.getSort(1107).getStatsByLevel(5);
             fighter.setState(35, 0);
         }
-        for (Fighter target : fight.getFighters(3)) {
-            if (target.getTeam() == fighter.getTeam()) continue;
-            List<Integer> cells = new ArrayList<>();
-            nearestCell = PathFinding.getAvailableCellArround(fight, target.getCell().getId(), cells);
-
-            if (nearestCell == 0)
-                break;
-            if (fight.canCastSpell1(fighter, spell, fight.getMap().getCase(nearestCell), -1)) {
-                fight.tryCastSpell(fighter, spell, nearestCell);
-                return true;
-            } else {
-                cells.add(nearestCell);
+        if(nearest == null) {
+            for (Fighter target : fight.getFighters(fighter.getOtherTeam())) {
+                if (target.getTeam() == fighter.getTeam()) {
+                    continue;
+                }
+                nearestCell = PathFinding.getAvailableCellNearPlayer(fight, target.getCell().getId());
+                if (nearestCell.isEmpty()) {
+                    break;
+                }
+                for (GameCase cell : nearestCell) {
+                    if (fight.canCastSpell1(fighter, spell, cell, -1)) {
+                        fight.tryCastSpell(fighter, spell, cell.getId());
+                        return true;
+                    }
+                }
+            }
+        }
+        else{
+            nearestCell = PathFinding.getAvailableCellNearPlayer(fight, nearest.getCell().getId());
+            if (nearestCell.isEmpty()) {
+            }
+            for (GameCase cell : nearestCell) {
+                if (fight.canCastSpell1(fighter, spell, cell, -1)) {
+                    fight.tryCastSpell(fighter, spell, cell.getId());
+                    return true;
+                }
             }
         }
        /* while (_loc0_++ < limit)

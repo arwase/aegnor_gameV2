@@ -194,3 +194,11 @@ Version 2.9 (28/11/2021):
 - Fix des crafts on peut désormais craft plusieurs items sans quitter l'interface
 - Fix du craft a répétition (Quantité de craft)
 - Fix du OneWindows (Bug cac)
+- Fix des effets d'item de classe sur OneWindow
+- Fix des stats du Leader à la fin du fight
+
+Version 3.0 (29/11/2021):
+
+- Fix du bug de transpo du Kralamour
+- Fix de l'invocation des tentacules du Kralamour
+- Fix d'une exception du contrôle d'invocation

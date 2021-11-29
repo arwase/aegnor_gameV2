@@ -1105,6 +1105,13 @@ public class SpellEffect {
 			return;//ne devrait pas arriver
 		if (target.haveState(6))
 			return;//Stabilisation
+		if (target.isMob())
+		{
+			if(target.getMob().getTemplate().getId() == 423)
+			{
+				return; // Kralamour
+			}
+		}
 		switch (spell) {
 			case 438://Transpo
 				//si les 2 joueurs ne sont pas dans la meme team, on ignore
