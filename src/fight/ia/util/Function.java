@@ -432,6 +432,7 @@ public class Function {
         else{
             nearestCell = PathFinding.getAvailableCellNearPlayer(fight, nearest.getCell().getId());
             if (nearestCell.isEmpty()) {
+                return false;
             }
             for (GameCase cell : nearestCell) {
                 if (fight.canCastSpell1(fighter, spell, cell, -1)) {
