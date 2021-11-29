@@ -327,11 +327,11 @@ public class GameObject {
                             if (statMax < Integer.parseInt(stats[1], 16) && this.getTemplate().getId() != 6894) {
                                 //System.out.println(this.getTemplate().getName() + " " +statMax + " plus petit que " + Integer.parseInt(stats[1], 16));
                                 System.out.println("["+ this.getGuid() +"]"+ "!! Familier illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " alors que max " + statMax);
-                                txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [faille]");
-                                //Stats.addOneStat(id, statMax);
+                                txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [corrigé]");
+                                Stats.addOneStat(id, statMax);
                             }
                             else{
-                                Stats.addOneStat(id, statMax);
+                                Stats.addOneStat(id, Integer.parseInt(stats[1], 16) );
                             }
 
                     }
@@ -1718,7 +1718,43 @@ public class GameObject {
         }
         return rarity;
     }
-    public static int getAleaRarity(int chanceimpact) {
+
+    public static int getRarityAlea(int difficulty) {
+        int rarity = 1;
+        switch (difficulty){
+            case 0 :
+                break;
+            case 1:
+                rarity = 2;
+                break;
+            case 2 :
+                rarity = 3;
+                break;
+            default:
+                rarity = 1;
+                break;
+        }
+
+        int seuil = 50;
+        int chance = 0;
+
+        for (int i = 0; i <= 4-difficulty; i++) {
+            chance = Formulas.getRandomValue(0, 100);
+            if(chance>seuil) {
+                rarity++;
+            }
+            else {
+                break;
+            }
+        }
+
+        if(rarity>5){
+            rarity = 5;
+        }
+        return rarity;
+    }
+
+    public static int getAleaRarity(long chanceimpact) {
         int rarity = 1;
         int seuil = 50;
         int chance = 0;

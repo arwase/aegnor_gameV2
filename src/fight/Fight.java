@@ -99,6 +99,7 @@ public class Fight {
     private int turnTotal;
     private int sigIDFighter;
     private int ultimaInvoID;
+    private int fightdifficulty;
 
     public Fight(int type, int id, GameMap map, Player perso, Player init2) {
         launchTime = System.currentTimeMillis();
@@ -300,19 +301,21 @@ public class Fight {
         this.setState(2);
     }
 
-    public Fight(int id, GameMap map, Player perso, Monster.MobGroup group) {
+    public Fight(int id, GameMap map, Player perso, int difficulty, Monster.MobGroup group) {
         launchTime = System.currentTimeMillis();
         setCheckTimer(true);
         setMobGroup(group);
         demorph(perso);
         setType(Constant.FIGHT_TYPE_PVM); // (0: D�fie) 4: Pvm (1:PVP) (5:Perco)
         setId(id);
+        setDifficulty(difficulty);
         setMap(map.getMapCopy());
         setMapOld(map);
         setInit0(new Fighter(this, perso));
         getTeam0().put(perso.getId(), getInit0());
         for (Entry<Integer, Monster.MobGrade> entry : group.getMobs().entrySet()) {
             entry.getValue().setInFightID(entry.getKey());
+            entry.getValue().modifStatByFightDifficulty(fightdifficulty);
             Fighter mob = new Fighter(this, entry.getValue());
             getTeam1().put(entry.getKey(), mob);
             if (entry.getValue().getTemplate().getId() == 832) // D�minoboule
@@ -373,6 +376,8 @@ public class Fight {
         SocketManager.GAME_SEND_MAP_FIGHT_GMS_PACKETS_TO_FIGHT(this, 7, getMap());
         setState(Constant.FIGHT_STATE_PLACE);
     }
+
+    private void setDifficulty(int difficulty) { this.fightdifficulty = difficulty; }
 
     public Fight(int id, GameMap map, Player perso, Monster.MobGroup group, int type) {
         launchTime = System.currentTimeMillis();
@@ -555,7 +560,6 @@ public class Fight {
             }
         }
     }
-
 
     public Fight(int id, GameMap Map, Player perso, Prism Prisme) {
         launchTime = System.currentTimeMillis();
@@ -1217,6 +1221,19 @@ public class Fight {
                             if (PathFinding.getDistanceBetween(this.getMap(), fighter2.getCell().getId(), fighter.getCell().getId()) >= 5)
                                 hasArround = true;
 
+
+                            System.out.println("On est la " + this.fightdifficulty);
+                        switch (this.fightdifficulty) {
+                            case 0:// Tofu all
+                                break;
+                            case 1:
+                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*2);
+                            case 2:
+                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*4);
+                            case 3:
+                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*8);
+                                break;
+                        }
                     }
                 }
             }
@@ -1250,6 +1267,8 @@ public class Fight {
                                 hasArround = false;
                                 break;
                         }
+
+
                     }
                 }
             }
@@ -4867,8 +4886,8 @@ public class Fight {
                     if (player != null) {
                         xpPlayer = FormuleOfficiel.getXp(i, winners, totalXP, nbbonus, (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners);
                         xpPlayer2 = FormuleOfficiel.getXp2(i, winners, totalXP,BonuslvlMoyen , (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners,BonusPerdiffip,BonusPerdiffclasse);
-                        player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
-                        player.sendMessage("contre " + xpPlayer2+ " XP gagné");
+                        //player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
+                        //player.sendMessage("contre " + xpPlayer2+ " XP gagné");
                         XP.set(xpPlayer2);
 
                         if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
@@ -4917,7 +4936,7 @@ public class Fight {
                                         new Drop(objectTemplate.getId(), 0.025, 0)).collect(Collectors.toList()));
 
                                 for (Fighter entry : loosers) {
-                                    temporary3.add( World.world.getPotentialRuneReini( entry.getLvl()) );
+                                    temporary3.add( World.world.getPotentialRuneReini( entry.getLvl() , this.fightdifficulty ));
                                 }
 
 
@@ -5178,7 +5197,7 @@ public class Fight {
                                 player.setMascotte(entry.getKey());
                             } else {
 
-                                    GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplication(target.getItems().values(), entry.getValue(), false);
+                                    GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplicationAndRarityBoost(target.getItems().values(), entry.getValue(), false,fightdifficulty);
                                     if (newObj != null) {
                                         int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
@@ -5910,5 +5929,9 @@ public class Fight {
             }
         }
         return list;
+    }
+
+    public int getdifficulty() {
+        return this.fightdifficulty;
     }
 }

@@ -2230,25 +2230,38 @@ public class World {
         return array;
     }
 
-    public Drop getPotentialRuneReini(int level) {
-
+    public Drop getPotentialRuneReini(int level, int fightdifficulty) {
+        int boostdiff = 1;
+        switch (fightdifficulty){
+            case 0 :
+                break;
+            case 1:
+                boostdiff = 5;
+                break;
+            case 2 :
+                boostdiff = 10;
+                break;
+            default:
+                boostdiff = 1;
+                break;
+        }
         Drop runesfinal;
         if(1 <= level && level <= 100 ){
-            runesfinal = new Drop(17197, 0.1, 0);
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0);
         }
         else if(100 < level && level <= 150 ){
 
-            runesfinal = new Drop(17198, 0.075, 0);
+            runesfinal = new Drop(17198, 0.075*boostdiff, 0);
         }
         else if(150 < level && level <= 180 ){
 
-            runesfinal = new Drop(17199, 0.05, 0);
+            runesfinal = new Drop(17199, 0.05*boostdiff, 0);
         }
         else if(180 < level){
-            runesfinal = new Drop(17200, 0.025, 0);
+            runesfinal = new Drop(17200, 0.025*boostdiff, 0);
         }
         else{
-            runesfinal = new Drop(17197, 0.1, 0);
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0);
         }
 
         return runesfinal;

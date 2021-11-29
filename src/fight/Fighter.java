@@ -50,6 +50,7 @@ public class Fighter implements Comparable<Fighter> {
     private Fighter holdedBy;
     private Fighter oldCible = null;
     private Fighter invocator;
+    private int difficultyBuff;
     private boolean levelUp = false;
     private boolean isDeconnected = false;
     private int turnRemaining = 0;
@@ -68,7 +69,7 @@ public class Fighter implements Comparable<Fighter> {
         this.type = 2;
         this.mob = mob;
         setId(mob.getInFightID());
-        this.pdvMax = mob.getPdvMax();
+        this.pdvMax = mob.getPdvMax() * f.getdifficulty() ;
         this.pdv = mob.getPdv();
         this.gfxId = getDefaultGfx();
         logger = LoggerFactory.getLogger("FighterMob."+mob.getInFightID());

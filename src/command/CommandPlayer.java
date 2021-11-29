@@ -25,12 +25,11 @@ import kernel.Logging;
 import object.GameObject;
 import util.lang.Lang;
 
-import javax.xml.crypto.Data;
+import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import javax.swing.Timer;
 
 public class CommandPlayer {
 
@@ -178,7 +177,38 @@ public class CommandPlayer {
                     player.sendMessage(Lang.get(player, 4));
                 }
                 return true;
-            } else if (command(msg, "staff")) {
+            }
+            else if (command(msg, "normal")) {
+                if (player.difficulty != 0) {
+                    player.difficulty = 0;
+                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Normale");
+                } else {
+
+                    player.sendMessage("Déjà en difficulté normale");
+                }
+                return true;
+            }
+            else if (command(msg, "hard")) {
+                if (player.difficulty != 1) {
+                    player.difficulty = 1;
+                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Difficile");
+                } else {
+
+                    player.sendMessage("Déjà en difficulté difficile");
+                }
+                return true;
+            }
+            else if (command(msg, "impossible")) {
+                if (player.difficulty != 2) {
+                    player.difficulty = 2;
+                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Monstreuse");
+                } else {
+
+                    player.sendMessage("Déjà en difficulté monstreuse");
+                }
+                return true;
+            }
+            else if (command(msg, "staff")) {
                 String message = Lang.get(player, 5);
                 boolean vide = true;
                 for (Player target : World.world.getOnlinePlayers()) {

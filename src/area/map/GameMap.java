@@ -4,10 +4,10 @@ import area.SubArea;
 import area.map.entity.InteractiveDoor;
 import area.map.entity.MountPark;
 import client.Player;
-import client.other.Party;
-import common.*;
+import common.Formulas;
+import common.PathFinding;
+import common.SocketManager;
 import database.Database;
-import database.dynamics.data.MapData;
 import entity.Collector;
 import entity.Prism;
 import entity.monster.Monster;
@@ -21,10 +21,8 @@ import fight.arena.DeathMatch;
 import fight.arena.TeamMatch;
 import game.scheduler.Updatable;
 import game.world.World;
-import job.Job;
 import kernel.*;
 import object.GameObject;
-import org.nfunk.jep.function.Str;
 import other.Action;
 import util.TimerWaiter;
 
@@ -681,7 +679,9 @@ public class GameMap {
             this.fights = new ArrayList<>();
         if (!this.fights.isEmpty())
             id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
+
         Fight f = new Fight(type, id, this, init1, init2);
+
         this.fights.add(f);
         SocketManager.GAME_SEND_MAP_FIGHT_COUNT_TO_MAP(this);
         return f;
@@ -1650,7 +1650,7 @@ public class GameMap {
         if (!this.fights.isEmpty())
             id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
         this.mobGroups.remove(group.getId());
-        this.fights.add(new Fight(id, this, player, group));
+        this.fights.add(new Fight(id, this, player, player.difficulty, group));
         SocketManager.GAME_SEND_MAP_FIGHT_COUNT_TO_MAP(this);
 
         Fight fight = null;
