@@ -1326,12 +1326,42 @@ public class Function {
         while ((spell = getInvocSpellDopeul(fight, fighter, nearestCell, Spelllist)) == null
                 && _loc0_++ < limit)
         {
-            nearestCell = PathFinding.getCaseBetweenEnemy(fighter.getCell().getId(), fight.getMap(), fight);
+            int caseId = PathFinding.getCaseBetweenEnemy(fighter.getCell().getId(), fight.getMap(), fight, fighter);
+            if(caseId != fighter.getCell().getId()) {
+                nearestCell = caseId;
+            }
         }
         if (nearestCell == -1)
             return false;
         if (spell == null)
             return false;
+        if(nearestCell == fighter.getCell().getId())
+        {
+            char dir = PathFinding.getDirBetweenTwoCase(fighter.getCell().getId(), nearest.getCell().getId(), fight.getMap(), true);
+            boolean finish = false;
+            int po = spell.getMaxPO();
+            while(!finish) {
+                nearestCell = PathFinding.getCaseIdWithPo(fighter.getCell().getId(), dir, po);
+                if(fight.getMap().getCase(nearestCell) != null) {
+                    if (fight.getMap().getCase(nearestCell).isWalkable(false, true, -1)) {
+                        finish = true;
+                    } else {
+                        if(po > 1) {
+                            po -= 1;
+                        }else{
+                            finish = true;
+                        }
+                    }
+                }
+                else{
+                    if(po > 1) {
+                        po -= 1;
+                    }else{
+                        finish = true;
+                    }
+                }
+            }
+        }
         int invoc = fight.tryCastSpell(fighter, spell, nearestCell);
         if (invoc != 0)
             return false;
@@ -2082,6 +2112,155 @@ public class Function {
             }
         }
         return count;
+    }
+
+    public boolean moveEnFaceIfPossible(Fight fight, Fighter caster, Fighter target, int dist)
+    {
+        if(fight == null | caster == null | target == null)
+        {
+            return false;
+        }
+        GameCase casterCell = caster.getCell();
+        GameCase targetCell = target.getCell();
+        GameMap map = fight.getMap();
+        ArrayList<GameCase> forbiddens = new ArrayList<>();
+        forbiddens.add(casterCell);
+        forbiddens.add(targetCell);
+        for (Fighter fighter : fight.getFighters(caster.getTeam()))
+        {
+            if(fighter != caster)
+            {
+                forbiddens.add(fighter.getCell());
+            }
+        }
+        for(Fighter fighter : fight.getFighters(target.getTeam()))
+        {
+            if(fighter != target)
+            {
+                forbiddens.add(fighter.getCell());
+            }
+        }
+        char dir = PathFinding.getDirBetweenTwoCase(casterCell.getId(), targetCell.getId(), fight.getMap(), true);
+        int caseToBeInFront = PathFinding.getNearestligneGA(fight, casterCell.getId(), targetCell.getId(), forbiddens, dist);
+        if(map.getCase(caseToBeInFront) != null & PathFinding.checkLoS(map, caseToBeInFront, targetCell.getId()) & PathFinding.casesAreInSameLine(map, caseToBeInFront, targetCell.getId(), 'z', 70))
+        {
+            ArrayList<GameCase> path = new AstarPathfinding(fight.getMap(), fight, casterCell.getId(), caseToBeInFront).getShortestPath(0);//0pour en ligne
+            if(path.size() > caster.getCurPm(fight))
+            {
+                return false;
+            }
+            String pathFinal = "";
+            char newdir = PathFinding.getDirBetweenTwoCase(casterCell.getId(), caseToBeInFront, map, true);
+            for(GameCase cases : path)
+            {
+                if (path.indexOf(cases) != 0) {
+                    pathFinal += World.world.getCryptManager().cellID_To_Code(cases.getId());
+                }
+                pathFinal += newdir;
+            }
+            //Cr�ation d'une GameAction
+            GameAction GA = new GameAction(0, 1, "");
+            GA.args = pathFinal;
+            if(!fight.onFighterDeplace(caster, GA)) {
+                return false;
+            }else{
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int moveenfaceIfPossible2(Fight fight, Fighter F, Fighter T, int dist)
+    {
+        if (fight == null)
+            return 0;
+        if (F == null)
+            return 0;
+        if (T == null)
+            return 0;
+        if (F.getCurPm(fight) <= 0)
+            return 0;
+        GameMap map = fight.getMap();
+        if (map == null)
+            return 0;
+        GameCase cell = F.getCell();
+        if (cell == null)
+            return 0;
+        GameCase cell2 = T.getCell();
+        if (cell2 == null)
+            return 0;
+        if (PathFinding.isNextTo(map, cell.getId(), cell2.getId()))
+            return 0;
+        int nbrcase = 0;
+
+        int cellID = PathFinding.getNearestligneGA(fight, cell2.getId(), cell.getId(), null, dist);
+        //On demande le chemin plus court
+        //Mais le chemin le plus court ne prend pas en compte les bords de map.
+        if (cellID == -1)
+        {
+            Map<Integer, Fighter> ennemys = getLowHpEnnemyList(fight, F);
+            for (Map.Entry<Integer, Fighter> target : ennemys.entrySet())
+            {
+                int cellID2 = PathFinding.getNearestligneGA(fight, target.getValue().getCell().getId(), cell.getId(), null, dist);
+                if (cellID2 != -1)
+                {
+                    cellID = cellID2;
+                    break;
+                }
+            }
+        }
+        ArrayList<GameCase> path = new AstarPathfinding(fight.getMapOld(), fight, cell.getId(), cellID).getShortestPath(0);//0pour en ligne
+        if (path == null || path.isEmpty())
+            return 0;
+
+        ArrayList<GameCase> finalPath = new ArrayList<GameCase>();
+        boolean ligneok = false;
+        for (int a = 0; a < F.getCurPm(fight); a++)
+        {
+            if (path.size() == a)
+                break;
+            if(ligneok == true)
+                break;
+            if(PathFinding.casesAreInSameLine(fight.getMap(), path.get(a).getId(), T.getCell().getId(), 'z', 70))
+                ligneok = true;
+            finalPath.add(path.get(a));
+        }
+        String pathstr = "";
+        try
+        {
+            int curCaseID = cell.getId();
+            int curDir = 0;
+            for (GameCase c : finalPath)
+            {
+                char d = PathFinding.getDirBetweenTwoCase(curCaseID, c.getId(), map, true);
+                if (d == 0)
+                    return 0;//Ne devrait pas arriver :O
+                if (curDir != d)
+                {
+                    if (finalPath.indexOf(c) != 0)
+                        pathstr += World.world.getCryptManager().cellID_To_Code(curCaseID);
+                    pathstr += d;
+                }
+                curCaseID = c.getId();
+
+                nbrcase = nbrcase + 1;
+            }
+            if (curCaseID != cell.getId())
+                pathstr += World.world.getCryptManager().cellID_To_Code(curCaseID);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        if (nbrcase == 1)
+            return 1;
+        //Création d'une GameAction
+        GameAction GA = new GameAction(0, 1, "");
+        GA.args = pathstr;
+        if(!fight.onFighterDeplace(F, GA))
+            return 0;
+
+        return nbrcase * 500;
     }
 
 

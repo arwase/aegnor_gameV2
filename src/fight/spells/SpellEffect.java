@@ -4132,9 +4132,29 @@ public class SpellEffect {
 
 	private void applyEffect_181(Fight fight)//invocation
 	{
+		Fighter current = this.caster;
 		int cell = this.cell.getId();
-
-		if (!this.cell.getFighters().isEmpty())
+		if(cell == current.getCell().getId())
+		{
+				int cellToCheck1 = PathFinding.getCaseIdWithPo(cell, 'b', 1);
+				int cellToCheck2 = PathFinding.getCaseIdWithPo(cell, 'd', 1);
+				int cellToCheck3 = PathFinding.getCaseIdWithPo(cell, 'f', 1);
+				int cellToCheck4 = PathFinding.getCaseIdWithPo(cell, 'h', 1);
+				if(fight.getMap().getCase(cellToCheck1) != null & fight.getMap().getCase(cellToCheck1).getFighters().isEmpty() & fight.getMap().getCase(cellToCheck1).isWalkable(false, true, -1))
+				{
+					cell = cellToCheck1;
+				}else if(fight.getMap().getCase(cellToCheck2) != null & fight.getMap().getCase(cellToCheck2).getFighters().isEmpty() & fight.getMap().getCase(cellToCheck2).isWalkable(false, true, -1))
+				{
+					cell = cellToCheck2;
+				} else if(fight.getMap().getCase(cellToCheck3) != null & fight.getMap().getCase(cellToCheck3).getFighters().isEmpty() & fight.getMap().getCase(cellToCheck3).isWalkable(false, true, -1))
+				{
+					cell = cellToCheck3;
+				} else if(fight.getMap().getCase(cellToCheck4) != null & fight.getMap().getCase(cellToCheck4).getFighters().isEmpty() & fight.getMap().getCase(cellToCheck4).isWalkable(false, true, -1))
+				{
+					cell = cellToCheck4;
+				}
+		}
+		if (!fight.getMap().getCase(cell).getFighters().isEmpty())
 			return;
 
 		int id = -1, level = -1;

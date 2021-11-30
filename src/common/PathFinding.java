@@ -12,9 +12,11 @@ import game.GameServer;
 import game.world.World;
 import kernel.Constant;
 import kotlin.reflect.jvm.internal.impl.load.java.lazy.descriptors.DeclaredMemberIndex;
+import org.jetbrains.annotations.Range;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PathFinding {
@@ -98,7 +100,31 @@ public class PathFinding {
     public static int getCaseIdWithPo(int cellIdFighter, char dir, int dist)
     {
         int result = cellIdFighter;
-        switch (dir)
+        char dire = 'z';
+        if(dir == 'z')
+        {
+            Random random = new Random();
+            int rand = random.nextInt(4 - 1 + 1);
+            switch (rand)
+            {
+                case 1 :
+                    dire = 'b';
+                    break;
+                case 2 :
+                    dire = 'd';
+                    break;
+                case 3 :
+                    dire = 'f';
+                    break;
+                case 4 :
+                    dire = 'h';
+                    break;
+            }
+        }
+        else{
+            dire = dir;
+        }
+        switch (dire)
         {
             case 'b' :
                 for(int i = 0; i < dist; i++)
@@ -691,6 +717,23 @@ public class PathFinding {
             Fighter f = cell.getFirstFighter();
 
             if (f == null && cell.isWalkable(false))
+                return cell.getId();
+        }
+        return 0;
+    }
+    public static int getCaseBetweenEnemy(int cellId, GameMap map, Fight fight, Fighter caster)
+    {
+        if(map == null) return 0;
+        char[] dirs = {'f', 'd', 'b', 'h'};
+        for (char dir : dirs)
+        {
+            int id = GetCaseIDFromDirrection(cellId, dir, map, false);
+            GameCase cell = map.getCase(id);
+            if (cell == null)
+                continue;
+            Fighter f = cell.getFirstFighter();
+
+            if (f == null && caster.getCell() != cell && cell.isWalkable(false))
                 return cell.getId();
         }
         return 0;
@@ -1450,6 +1493,73 @@ public class PathFinding {
         }
         return false;
     }
+    public static ArrayList<GameCase> getAllCasesFromDir(Fight fight, Fighter caster, char dir)
+    {
+        ArrayList<GameCase> cases = new ArrayList<>();
+        if(fight == null | caster == null)
+        {
+            return null;
+        }
+        GameMap map = fight.getMap();
+        boolean finish = false;
+        int cellId = caster.getCell().getId();
+        switch(dir)
+        {
+            case 'b':
+                while(!finish)
+                {
+                    cellId += 15;
+                    if(map.getCase(cellId) != null & map.getCase(cellId).isWalkable(false))
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case 'd':
+                while(!finish)
+                {
+                    cellId += 14;
+                    if(map.getCase(cellId) != null & map.getCase(cellId).isWalkable(false))
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case'f':
+                while(!finish)
+                {
+                    cellId -= 15;
+                    if(map.getCase(cellId) != null & map.getCase(cellId).isWalkable(false))
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case'h':
+                while(!finish)
+                {
+                    cellId -= 14;
+                    if(map.getCase(cellId) != null & map.getCase(cellId).isWalkable(false))
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+        }
+        return cases;
+    }
 
     public static ArrayList<Fighter> getCiblesByZoneByWeapon(Fight fight,
                                                              int type, GameCase cell, int castCellID) {
@@ -1712,7 +1822,6 @@ public class PathFinding {
         GameCase curCase = map.getCase(start);
         int stepNum = 0;
         boolean stop = false;
-
 
 
         while (!stop && stepNum++ <= limit) {
