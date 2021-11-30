@@ -51,6 +51,40 @@ public class Function {
         return 0;
     }
 
+    public boolean attackIfPossibleTot(Fight fight, Fighter caster, Fighter target)
+    {
+        int pa = caster.getCurPa(fight);
+        Map<Integer, SortStats> totSpells = caster.getMob().getSpells();
+        SortStats Mythos = null;
+        SortStats Destinos = null;
+        for(Integer spellid : totSpells.keySet())
+        {
+            if(spellid == 812)
+            {
+                Destinos = totSpells.get(spellid);
+            }
+            if(spellid == 813)
+            {
+                Mythos = totSpells.get(spellid);
+            }
+        }
+        for(int i = 0; i < 2; i++)
+        {
+            if(fight.canCastSpell1(caster, Mythos, target.getCell(), -1)) {
+                fight.tryCastSpell(caster, Mythos, target.getCell().getId());
+            }
+        }
+        ArrayList<Fighter> ennemies = fight.getEnnemiesAroundPlayerCac(caster);
+        if(!ennemies.isEmpty())
+        {
+            if(fight.canCastSpell1(caster, Destinos, caster.getCell(), -1))
+            {
+                fight.tryCastSpell(caster, Destinos, caster.getCell().getId());
+            }
+        }
+        return true;
+    }
+
     public boolean TPIfPossiblesphinctercell(Fight fight, Fighter fighter, Fighter target)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null || target == null)

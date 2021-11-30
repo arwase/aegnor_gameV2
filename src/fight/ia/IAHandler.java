@@ -242,6 +242,9 @@ public class IAHandler {
                     case 74: //IA Bouftou
                         ia = new IA74(fight, fighter, (byte) 4);
                         break;
+                    case 75: //IA Minotot
+                        ia = new IA75(fight, fighter, (byte) 4);
+                        break;
 
 
                 }
