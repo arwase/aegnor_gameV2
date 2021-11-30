@@ -203,3 +203,7 @@ Version 3.0 (29/11/2021):
 - Fix de l'invocation des tentacules du Kralamour
 - Fix d'une exception du contrôle d'invocation
 - Fix du Sort Poisse et Brokle
+
+Version 3.1 (30/11/2021):
+
+- Fix IA CM

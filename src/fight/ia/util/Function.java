@@ -132,16 +132,32 @@ public class Function {
             return 666;
         }
         char dir = PathFinding.getDirBetweenTwoCase(fighter.getCell().getId(), target.getCell().getId(), fight.getMap(), true);
-        if(PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), target.getCell().getId(), dir, SS.getMaxPO()))
+        if(PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), target.getCell().getId(), dir, 21))
         {
-            if(PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell()) <= SS.getMaxPO())
+            if(PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell()) <= 21)
             {
-                int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
-                if(attack != 0)
+                int dist = PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell());
+                if(dist > 10)
                 {
-                    return attack;
+                    int caseToTarget = PathFinding.getCaseIdWithPo(fighter.getCell().getId(), dir, dist);
+                    if(fight.getMap().getCase(caseToTarget) != null)
+                    {
+                        int attack = fight.tryCastSpell(fighter, SS, caseToTarget);
+                        if(attack != 0)
+                        {
+                            return attack;
+                        }else {
+                            return 0;
+                        }
+                    }
+                }else {
+                    int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
+                    if (attack != 0) {
+                        return attack;
+                    }else {
+                        return 0;
+                    }
                 }
-                return 0;
             }
         }
         return 777;
@@ -2823,6 +2839,98 @@ public class Function {
         return 0;
     }
 
+    public int attackIfPossibleCMAttirance(Fight fight, Fighter fighter, int curPa)
+    {
+        if(curPa == 0)
+        {
+            return -1;
+        }
+        GameCase fighterCell = fighter.getCell();
+        ArrayList<Fighter> fighters = fight.getFighters(fighter.getOtherTeam());
+        ArrayList<Fighter> fighters_sameLine = new ArrayList<>();
+        SortStats AttiranceSylvestre = null;
+        for(SortStats spell : fighter.getMob().getSpells().values())
+        {
+            if(spell.getSpellID() == 977) {
+                AttiranceSylvestre = fighter.getMob().getSpells().get(977);
+            }
+        }
+        if(!fighters.isEmpty()) {
+            for (Fighter fighter1 : fighters) {
+                if(PathFinding.casesAreInSameLine(fight.getMap(), fighterCell.getId(), fighter1.getCell().getId(), 'z', 12))
+                {
+                    fighters_sameLine.add(fighter1);
+                }
+            }
+            if(!fighters_sameLine.isEmpty())
+            {
+                if(fight.canCastSpell1(fighter, AttiranceSylvestre, fighterCell, -1))
+                {
+                    fight.tryCastSpell(fighter, AttiranceSylvestre, fighterCell.getId());
+                    return 0;
+                }
+            }
+            else{
+                return -1;
+            }
+        }
+        else{
+            return -1;
+        }
+        return -1;
+    }
+    public boolean attackCacIfPossibleCM(Fight fight, Fighter fighter, int CurPa)
+    {
+        boolean result = false;
+        if(CurPa < 1)
+        {
+            result = false;
+        }
+        int pa = CurPa;
+        SortStats TornaBranches = null;
+        SortStats Enracinement = null;
+        for(SortStats spell : fighter.getMob().getSpells().values())
+        {
+            if(spell.getSpellID() == 484)
+            {
+                TornaBranches = spell;
+            }
+            else if(spell.getSpellID() == 1021)
+            {
+                Enracinement = spell;
+            }
+        }
+        if(TornaBranches == null | Enracinement == null)
+        {
+            result = false;
+        }
+        ArrayList<Fighter> ennemies = new ArrayList<>();
+        for(Fighter ennemie : fight.getFighters(fighter.getOtherTeam()))
+        {
+            if(PathFinding.isCacTo(fight.getMap(), fighter.getCell().getId(), ennemie.getCell().getId()))
+            {
+                ennemies.add(ennemie);
+            }
+        }
+        if(!ennemies.isEmpty())
+        {
+            if(fight.canCastSpell1(fighter, Enracinement, fighter.getCell(), -1))
+            {
+                fight.tryCastSpell(fighter, Enracinement, fighter.getCell().getId());
+                pa -= Enracinement.getPACost();
+                result = true;
+            }
+            if(pa >= TornaBranches.getPACost())
+            {
+                if(fight.canCastSpell1(fighter, TornaBranches, fighter.getCell(), -1))
+                {
+                    fight.tryCastSpell(fighter, TornaBranches, fighter.getCell().getId());
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
     public int attackIfPossibleCM1(Fight fight, Fighter fighter,List<SortStats> Spell)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null)

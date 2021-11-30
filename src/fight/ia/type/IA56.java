@@ -33,6 +33,21 @@ public class IA56 extends AbstractNeedSpell  {
             if(C != null && C.isHide()) C = null;
             if(L != null && L.isHide()) L = null;
 
+            if(this.fighter.getCurPa(this.fight) > 0)
+            {
+                int value = Function.getInstance().attackIfPossibleCMAttirance(this.fight, this.fighter, this.fighter.getCurPa(this.fight));
+                if(value != 0) {
+                    time = value;
+                    action = true;
+                }
+                else{
+                    if(!Function.getInstance().attackCacIfPossibleCM(this.fight, this.fighter, this.fighter.getCurPa(this.fight)))
+                    {
+                        time = 1000;
+                        action = true;
+                    }
+                }
+            }
             if(this.fighter.getCurPm(this.fight) > 0 && L == null && C == null) {
                 int value = Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, maxPo + 1 + this.fighter.getBuffValue(117));
                 if(value != 0) {
@@ -44,34 +59,56 @@ public class IA56 extends AbstractNeedSpell  {
                         L = null;
                 }
             }
-            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+            if(this.fighter.getCurPa(this.fight) > 0) {
                 if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
                     time = 1000;
                     action = true;
                 }
             }
-            if(this.fighter.getCurPa(this.fight) > 0 && L != null && C == null && !action) {
+            if(this.fighter.getCurPm(this.fight) > 0) {
+                if(Function.getInstance().moveNearIfPossible(fight, this.fighter, ennemy))
+                {
+                    time = 1000;
+                    action = true;
+                }
+            }
+            if(this.fighter.getCurPa(this.fight) > 0)
+            {
+                int value = Function.getInstance().attackIfPossibleCMAttirance(this.fight, this.fighter, this.fighter.getCurPa(this.fight));
+                if(value != 0) {
+                    time = value;
+                    action = true;
+                }
+                else{
+                    if(!Function.getInstance().attackCacIfPossibleCM(this.fight, this.fighter, this.fighter.getCurPa(this.fight)))
+                    {
+                        time = 1000;
+                        action = true;
+                    }
+                }
+            }
+            if(this.fighter.getCurPa(this.fight) > 0 && L != null && C == null) {
                 int value = Function.getInstance().attackIfPossibleCM1(this.fight, this.fighter, this.cacs);
                 if(value != 0) {
                     time = value;
                     action = true;
                 }
             }
-            if(this.fighter.getCurPa(this.fight) > 0 && C != null && !action) {
+            if(this.fighter.getCurPa(this.fight) > 0 && C != null) {
                 int value = Function.getInstance().attackIfPossibleCM1(this.fight, this.fighter, this.cacs);
                 if(value != 0) {
                     time = value;
                     action = true;
                 }
             }
-            if(this.fighter.getCurPa(this.fight) > 0 && L != null && C == null && !action) {
+            if(this.fighter.getCurPa(this.fight) > 0 && L != null && C == null) {
                 int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
                 if(value != 0) {
                     time = value;
                     action = true;
                 }
             }
-            if(this.fighter.getCurPm(this.fight) > 0 && !action) {
+            if(this.fighter.getCurPm(this.fight) > 0) {
                 int value = Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, maxPo + 1 + this.fighter.getBuffValue(117));
                 if(value != 0) time = value;
             }

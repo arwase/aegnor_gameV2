@@ -95,6 +95,39 @@ public class PathFinding {
         return false;
     }
 
+    public static int getCaseIdWithPo(int cellIdFighter, char dir, int dist)
+    {
+        int result = cellIdFighter;
+        switch (dir)
+        {
+            case 'b' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result += 15;
+                }
+                break;
+            case 'd' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result += 14;
+                }
+                break;
+            case 'f' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result -= 15;
+                }
+                break;
+            case 'h' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result -= 14;
+                }
+                break;
+        }
+        return result;
+    }
+
     public static boolean isCACwithEnnemy(Fighter fighter,
                                           ArrayList<Fighter> Ennemys) {
         for (Fighter f : Ennemys)
@@ -124,6 +157,24 @@ public class PathFinding {
             return null;
 
         return enemy;
+    }
+
+    public static boolean isCacTo(GameMap map, int cellLanceur, int cellTarget)
+    {
+        boolean result = false;
+        int caseHaut = cellLanceur - 15;
+        int caseDroite = caseHaut + 1;
+        int caseBas = cellLanceur + 15;
+        int caseGauche = caseBas - 1;
+        int[] casesID = new int[] {caseBas, caseGauche, caseDroite, caseHaut};
+        for(int caseId : casesID)
+        {
+            if(caseId == cellTarget & map.getCase(cellTarget) != null)
+            {
+                result = true;
+            }
+        }
+        return  result;
     }
 
     public static boolean isNextTo(GameMap map, int cell1, int cell2) {
@@ -2095,13 +2146,13 @@ public class PathFinding {
                                               GameMap map) {
         switch (Direccion) {// mag.get_w() = te da el ancho del mapa
             case 'b':
-                return CaseID + map.getW(); // diagonal derecha abajo
+                return CaseID + map.getW(); // diagonale droite vers le bas
             case 'd':
-                return CaseID + (map.getW() - 1); // diagonal izquierda abajo
+                return CaseID + (map.getW() - 1); // diagonale gauche vers le bas
             case 'f':
-                return CaseID - map.getW(); // diagonal izquierda arriba
+                return CaseID - map.getW(); // diagonale gauche vers le haut
             case 'h':
-                return CaseID - map.getW() + 1;// diagonal derecha arriba
+                return CaseID - map.getW() + 1;// diagonale droite vers le haut
         }
         return -1;
     }

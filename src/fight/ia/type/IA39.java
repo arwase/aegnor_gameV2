@@ -34,13 +34,19 @@ public class IA39 extends AbstractNeedSpell  {
             Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter);
             if(this.fighter.getCurPm(this.fight) > 0)
             {
-                Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, 0);
+                Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, maxPo + 1 + this.fighter.getBuffValue(117));
+                    if(this.fighter.getCurPa(this.fight) > 0) {
+                        Function.getInstance().attackIfPossibleCroca(this.fight, this.fighter, ennemy);
+                    }
             }
             if (this.fighter.getCurPa(this.fight) > 0) {
                 Function.getInstance().attackIfPossibleCroca(this.fight, this.fighter, ennemy);
             }
             if (this.fighter.getCurPm(this.fight) > 0) {
                 Function.getInstance().moveNearIfPossible(this.fight, this.fighter, ennemy);
+                if(this.fighter.getCurPa(this.fight) > 0) {
+                    Function.getInstance().attackIfPossibleCroca(this.fight, this.fighter, ennemy);
+                }
             }
             if (this.fighter.getCurPa(this.fight) > 0) {
                 Function.getInstance().attackIfPossibleCroca(this.fight, this.fighter, ennemy);
