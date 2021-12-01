@@ -2848,6 +2848,20 @@ public class Fight {
         return !(numLunchT - LaunchedSpell.getNbLaunchTarget(caster, t, spell.getSpellID()) <= 0 && numLunchT > 0);
     }
 
+    public ArrayList<Fighter> getEnnemiesAroundPlayerCac(Fighter fighter)
+    {
+        ArrayList<Fighter> ennemiesAround = new ArrayList<Fighter>();
+        Map<Integer, Fighter> ennemies = this.getTeam(fighter.getOtherTeam());
+        for(Fighter ennemie : ennemies.values())
+        {
+            if(PathFinding.isCacTo(this.getMap(), fighter.getCell().getId(), ennemie.getCell().getId()))
+            {
+                ennemiesAround.add(ennemie);
+            }
+        }
+        return ennemiesAround;
+    }
+
     public boolean onFighterDeplace(Fighter fighter, GameAction GA) {
         final Fighter current = this.getFighterByOrdreJeu();
         if (current == null)

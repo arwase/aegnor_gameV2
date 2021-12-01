@@ -751,7 +751,7 @@ public class Challenge {
 
             case 2: // Statue
                 if (fighter.getPlayer() != null)
-                    if (fighter.getCell().getId() != Arg)
+                    if (fighter.getCell().getId() != Arg & !fighter.getPlayer().passturn)
                         challengeLoose(fighter);
                 break;
 

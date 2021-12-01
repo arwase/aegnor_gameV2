@@ -51,6 +51,40 @@ public class Function {
         return 0;
     }
 
+    public boolean attackIfPossibleTot(Fight fight, Fighter caster, Fighter target)
+    {
+        int pa = caster.getCurPa(fight);
+        Map<Integer, SortStats> totSpells = caster.getMob().getSpells();
+        SortStats Mythos = null;
+        SortStats Destinos = null;
+        for(Integer spellid : totSpells.keySet())
+        {
+            if(spellid == 812)
+            {
+                Destinos = totSpells.get(spellid);
+            }
+            if(spellid == 813)
+            {
+                Mythos = totSpells.get(spellid);
+            }
+        }
+        for(int i = 0; i < 2; i++)
+        {
+            if(fight.canCastSpell1(caster, Mythos, target.getCell(), -1)) {
+                fight.tryCastSpell(caster, Mythos, target.getCell().getId());
+            }
+        }
+        ArrayList<Fighter> ennemies = fight.getEnnemiesAroundPlayerCac(caster);
+        if(!ennemies.isEmpty())
+        {
+            if(fight.canCastSpell1(caster, Destinos, caster.getCell(), -1))
+            {
+                fight.tryCastSpell(caster, Destinos, caster.getCell().getId());
+            }
+        }
+        return true;
+    }
+
     public boolean TPIfPossiblesphinctercell(Fight fight, Fighter fighter, Fighter target)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null || target == null)
@@ -132,16 +166,32 @@ public class Function {
             return 666;
         }
         char dir = PathFinding.getDirBetweenTwoCase(fighter.getCell().getId(), target.getCell().getId(), fight.getMap(), true);
-        if(PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), target.getCell().getId(), dir, SS.getMaxPO()))
+        if(PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), target.getCell().getId(), dir, 21))
         {
-            if(PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell()) <= SS.getMaxPO())
+            if(PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell()) <= 21)
             {
-                int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
-                if(attack != 0)
+                int dist = PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell());
+                if(dist > 10)
                 {
-                    return attack;
+                    int caseToTarget = PathFinding.getCaseIdWithPo(fighter.getCell().getId(), dir, dist);
+                    if(fight.getMap().getCase(caseToTarget) != null)
+                    {
+                        int attack = fight.tryCastSpell(fighter, SS, caseToTarget);
+                        if(attack != 0)
+                        {
+                            return attack;
+                        }else {
+                            return 0;
+                        }
+                    }
+                }else {
+                    int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
+                    if (attack != 0) {
+                        return attack;
+                    }else {
+                        return 0;
+                    }
                 }
-                return 0;
             }
         }
         return 777;
@@ -432,6 +482,7 @@ public class Function {
         else{
             nearestCell = PathFinding.getAvailableCellNearPlayer(fight, nearest.getCell().getId());
             if (nearestCell.isEmpty()) {
+                return false;
             }
             for (GameCase cell : nearestCell) {
                 if (fight.canCastSpell1(fighter, spell, cell, -1)) {
@@ -1309,12 +1360,42 @@ public class Function {
         while ((spell = getInvocSpellDopeul(fight, fighter, nearestCell, Spelllist)) == null
                 && _loc0_++ < limit)
         {
-            nearestCell = PathFinding.getCaseBetweenEnemy(fighter.getCell().getId(), fight.getMap(), fight);
+            int caseId = PathFinding.getCaseBetweenEnemy(fighter.getCell().getId(), fight.getMap(), fight, fighter);
+            if(caseId != fighter.getCell().getId()) {
+                nearestCell = caseId;
+            }
         }
         if (nearestCell == -1)
             return false;
         if (spell == null)
             return false;
+        if(nearestCell == fighter.getCell().getId())
+        {
+            char dir = PathFinding.getDirBetweenTwoCase(fighter.getCell().getId(), nearest.getCell().getId(), fight.getMap(), true);
+            boolean finish = false;
+            int po = spell.getMaxPO();
+            while(!finish) {
+                nearestCell = PathFinding.getCaseIdWithPo(fighter.getCell().getId(), dir, po);
+                if(fight.getMap().getCase(nearestCell) != null) {
+                    if (fight.getMap().getCase(nearestCell).isWalkable(false, true, -1)) {
+                        finish = true;
+                    } else {
+                        if(po > 1) {
+                            po -= 1;
+                        }else{
+                            finish = true;
+                        }
+                    }
+                }
+                else{
+                    if(po > 1) {
+                        po -= 1;
+                    }else{
+                        finish = true;
+                    }
+                }
+            }
+        }
         int invoc = fight.tryCastSpell(fighter, spell, nearestCell);
         if (invoc != 0)
             return false;
@@ -2065,6 +2146,155 @@ public class Function {
             }
         }
         return count;
+    }
+
+    public boolean moveEnFaceIfPossible(Fight fight, Fighter caster, Fighter target, int dist)
+    {
+        if(fight == null | caster == null | target == null)
+        {
+            return false;
+        }
+        GameCase casterCell = caster.getCell();
+        GameCase targetCell = target.getCell();
+        GameMap map = fight.getMap();
+        ArrayList<GameCase> forbiddens = new ArrayList<>();
+        forbiddens.add(casterCell);
+        forbiddens.add(targetCell);
+        for (Fighter fighter : fight.getFighters(caster.getTeam()))
+        {
+            if(fighter != caster)
+            {
+                forbiddens.add(fighter.getCell());
+            }
+        }
+        for(Fighter fighter : fight.getFighters(target.getTeam()))
+        {
+            if(fighter != target)
+            {
+                forbiddens.add(fighter.getCell());
+            }
+        }
+        char dir = PathFinding.getDirBetweenTwoCase(casterCell.getId(), targetCell.getId(), fight.getMap(), true);
+        int caseToBeInFront = PathFinding.getNearestligneGA(fight, casterCell.getId(), targetCell.getId(), forbiddens, dist);
+        if(map.getCase(caseToBeInFront) != null & PathFinding.checkLoS(map, caseToBeInFront, targetCell.getId()) & PathFinding.casesAreInSameLine(map, caseToBeInFront, targetCell.getId(), 'z', 70))
+        {
+            ArrayList<GameCase> path = new AstarPathfinding(fight.getMap(), fight, casterCell.getId(), caseToBeInFront).getShortestPath(0);//0pour en ligne
+            if(path.size() > caster.getCurPm(fight))
+            {
+                return false;
+            }
+            String pathFinal = "";
+            char newdir = PathFinding.getDirBetweenTwoCase(casterCell.getId(), caseToBeInFront, map, true);
+            for(GameCase cases : path)
+            {
+                if (path.indexOf(cases) != 0) {
+                    pathFinal += World.world.getCryptManager().cellID_To_Code(cases.getId());
+                }
+                pathFinal += newdir;
+            }
+            //Cr�ation d'une GameAction
+            GameAction GA = new GameAction(0, 1, "");
+            GA.args = pathFinal;
+            if(!fight.onFighterDeplace(caster, GA)) {
+                return false;
+            }else{
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int moveenfaceIfPossible2(Fight fight, Fighter F, Fighter T, int dist)
+    {
+        if (fight == null)
+            return 0;
+        if (F == null)
+            return 0;
+        if (T == null)
+            return 0;
+        if (F.getCurPm(fight) <= 0)
+            return 0;
+        GameMap map = fight.getMap();
+        if (map == null)
+            return 0;
+        GameCase cell = F.getCell();
+        if (cell == null)
+            return 0;
+        GameCase cell2 = T.getCell();
+        if (cell2 == null)
+            return 0;
+        if (PathFinding.isNextTo(map, cell.getId(), cell2.getId()))
+            return 0;
+        int nbrcase = 0;
+
+        int cellID = PathFinding.getNearestligneGA(fight, cell2.getId(), cell.getId(), null, dist);
+        //On demande le chemin plus court
+        //Mais le chemin le plus court ne prend pas en compte les bords de map.
+        if (cellID == -1)
+        {
+            Map<Integer, Fighter> ennemys = getLowHpEnnemyList(fight, F);
+            for (Map.Entry<Integer, Fighter> target : ennemys.entrySet())
+            {
+                int cellID2 = PathFinding.getNearestligneGA(fight, target.getValue().getCell().getId(), cell.getId(), null, dist);
+                if (cellID2 != -1)
+                {
+                    cellID = cellID2;
+                    break;
+                }
+            }
+        }
+        ArrayList<GameCase> path = new AstarPathfinding(fight.getMapOld(), fight, cell.getId(), cellID).getShortestPath(0);//0pour en ligne
+        if (path == null || path.isEmpty())
+            return 0;
+
+        ArrayList<GameCase> finalPath = new ArrayList<GameCase>();
+        boolean ligneok = false;
+        for (int a = 0; a < F.getCurPm(fight); a++)
+        {
+            if (path.size() == a)
+                break;
+            if(ligneok == true)
+                break;
+            if(PathFinding.casesAreInSameLine(fight.getMap(), path.get(a).getId(), T.getCell().getId(), 'z', 70))
+                ligneok = true;
+            finalPath.add(path.get(a));
+        }
+        String pathstr = "";
+        try
+        {
+            int curCaseID = cell.getId();
+            int curDir = 0;
+            for (GameCase c : finalPath)
+            {
+                char d = PathFinding.getDirBetweenTwoCase(curCaseID, c.getId(), map, true);
+                if (d == 0)
+                    return 0;//Ne devrait pas arriver :O
+                if (curDir != d)
+                {
+                    if (finalPath.indexOf(c) != 0)
+                        pathstr += World.world.getCryptManager().cellID_To_Code(curCaseID);
+                    pathstr += d;
+                }
+                curCaseID = c.getId();
+
+                nbrcase = nbrcase + 1;
+            }
+            if (curCaseID != cell.getId())
+                pathstr += World.world.getCryptManager().cellID_To_Code(curCaseID);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        if (nbrcase == 1)
+            return 1;
+        //Création d'une GameAction
+        GameAction GA = new GameAction(0, 1, "");
+        GA.args = pathstr;
+        if(!fight.onFighterDeplace(F, GA))
+            return 0;
+
+        return nbrcase * 500;
     }
 
 
@@ -2822,6 +3052,98 @@ public class Function {
         return 0;
     }
 
+    public int attackIfPossibleCMAttirance(Fight fight, Fighter fighter, int curPa)
+    {
+        if(curPa == 0)
+        {
+            return -1;
+        }
+        GameCase fighterCell = fighter.getCell();
+        ArrayList<Fighter> fighters = fight.getFighters(fighter.getOtherTeam());
+        ArrayList<Fighter> fighters_sameLine = new ArrayList<>();
+        SortStats AttiranceSylvestre = null;
+        for(SortStats spell : fighter.getMob().getSpells().values())
+        {
+            if(spell.getSpellID() == 977) {
+                AttiranceSylvestre = fighter.getMob().getSpells().get(977);
+            }
+        }
+        if(!fighters.isEmpty()) {
+            for (Fighter fighter1 : fighters) {
+                if(PathFinding.casesAreInSameLine(fight.getMap(), fighterCell.getId(), fighter1.getCell().getId(), 'z', 12))
+                {
+                    fighters_sameLine.add(fighter1);
+                }
+            }
+            if(!fighters_sameLine.isEmpty())
+            {
+                if(fight.canCastSpell1(fighter, AttiranceSylvestre, fighterCell, -1))
+                {
+                    fight.tryCastSpell(fighter, AttiranceSylvestre, fighterCell.getId());
+                    return 0;
+                }
+            }
+            else{
+                return -1;
+            }
+        }
+        else{
+            return -1;
+        }
+        return -1;
+    }
+    public boolean attackCacIfPossibleCM(Fight fight, Fighter fighter, int CurPa)
+    {
+        boolean result = false;
+        if(CurPa < 1)
+        {
+            result = false;
+        }
+        int pa = CurPa;
+        SortStats TornaBranches = null;
+        SortStats Enracinement = null;
+        for(SortStats spell : fighter.getMob().getSpells().values())
+        {
+            if(spell.getSpellID() == 484)
+            {
+                TornaBranches = spell;
+            }
+            else if(spell.getSpellID() == 1021)
+            {
+                Enracinement = spell;
+            }
+        }
+        if(TornaBranches == null | Enracinement == null)
+        {
+            result = false;
+        }
+        ArrayList<Fighter> ennemies = new ArrayList<>();
+        for(Fighter ennemie : fight.getFighters(fighter.getOtherTeam()))
+        {
+            if(PathFinding.isCacTo(fight.getMap(), fighter.getCell().getId(), ennemie.getCell().getId()))
+            {
+                ennemies.add(ennemie);
+            }
+        }
+        if(!ennemies.isEmpty())
+        {
+            if(fight.canCastSpell1(fighter, Enracinement, fighter.getCell(), -1))
+            {
+                fight.tryCastSpell(fighter, Enracinement, fighter.getCell().getId());
+                pa -= Enracinement.getPACost();
+                result = true;
+            }
+            if(pa >= TornaBranches.getPACost())
+            {
+                if(fight.canCastSpell1(fighter, TornaBranches, fighter.getCell(), -1))
+                {
+                    fight.tryCastSpell(fighter, TornaBranches, fighter.getCell().getId());
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
     public int attackIfPossibleCM1(Fight fight, Fighter fighter,List<SortStats> Spell)// 0 = Rien, 5 = EC, 666 = NULL, 10 = SpellNull ou ActionEnCour ou Can'tCastSpell, 0 = AttaqueOK
     {
         if (fight == null || fighter == null)

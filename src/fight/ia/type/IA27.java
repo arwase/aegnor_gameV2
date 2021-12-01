@@ -42,6 +42,10 @@ public class IA27 extends AbstractNeedSpell  {
                     secondEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);
                     if(maxPo == 1) firstEnnemy = null;
                 }
+            }else if (this.fighter.getCurPm(this.fight) > 0 & E != null)
+            {
+                int num = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, E);
+                if(num != 0) time = num;
             }
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
