@@ -99,7 +99,7 @@ public class Fight {
     private int turnTotal;
     private int sigIDFighter;
     private int ultimaInvoID;
-    private int fightdifficulty;
+    private int fightdifficulty=0;
 
     public Fight(int type, int id, GameMap map, Player perso, Player init2) {
         launchTime = System.currentTimeMillis();
@@ -315,7 +315,12 @@ public class Fight {
         getTeam0().put(perso.getId(), getInit0());
         for (Entry<Integer, Monster.MobGrade> entry : group.getMobs().entrySet()) {
             entry.getValue().setInFightID(entry.getKey());
-            entry.getValue().modifStatByFightDifficulty(fightdifficulty);
+
+            System.out.println("On passe la "+ fightdifficulty);
+            if(fightdifficulty > 0) {
+                entry.getValue().modifStatByFightDifficulty(fightdifficulty);
+            }
+
             Fighter mob = new Fighter(this, entry.getValue());
             getTeam1().put(entry.getKey(), mob);
             if (entry.getValue().getTemplate().getId() == 832) // D�minoboule
@@ -1221,19 +1226,6 @@ public class Fight {
                             if (PathFinding.getDistanceBetween(this.getMap(), fighter2.getCell().getId(), fighter.getCell().getId()) >= 5)
                                 hasArround = true;
 
-
-                            System.out.println("On est la " + this.fightdifficulty);
-                        switch (this.fightdifficulty) {
-                            case 0:// Tofu all
-                                break;
-                            case 1:
-                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*2);
-                            case 2:
-                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*4);
-                            case 3:
-                                fighter.getMob().setPdv(fighter.getMob().getPdvMax()*8);
-                                break;
-                        }
                     }
                 }
             }

@@ -1285,9 +1285,10 @@ public class Monster {
         }
 
         public void modifStatByFightDifficulty(int Difficulty) {
-            int taux = 1+Difficulty;
-           /* switch (Difficulty){
+            int taux = 1 ;
+            switch (Difficulty){
                 case 0 :
+                    taux = 1;
                     break;
                 case 1 :
                     taux = 2;
@@ -1298,11 +1299,16 @@ public class Monster {
                 default:
                     taux = 1;
                     break;
-            }*/
+            }
 
-            int life = Math.round(this.pdvMax * taux);
+            int life = this.pdvMax;
+            if(taux > 1){
+                life = this.pdvMax * taux;
+            }
+
             this.pdv = life;
             this.pdvMax = this.pdv;
+
             int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
             int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
             int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
