@@ -18,6 +18,8 @@ import job.JobAction;
 import kernel.Constant;
 import object.entity.Fragment;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -1779,5 +1781,60 @@ public class GameObject {
 
     public ArrayList<String> getSpellStats() {
         return SortStats;
+    }
+
+    public boolean isSameStats(GameObject other) {
+
+        if(this.getEffects().size() == 0 && other.getEffects().size() == 0)
+        {
+            //System.out.println("Bizarrement ici");
+            return true;
+        }
+        else {
+
+            System.out.println(other.getGuid());
+
+            System.out.println(this.getGuid());
+
+            boolean test = false;
+            for(SpellEffect effect : this.getEffects()){
+                //System.out.println("Item testé Degat "+ effect.getEffectID() + " Degat " + effect.getValue()  );
+
+
+                for(SpellEffect effect2 : other.getEffects()){
+                    //System.out.println("Item comparaison Degat "+ effect2.getEffectID() + " Degat "+ effect2.getArgs()  );
+                   // System.out.println("Item de comparaison Degat "+ effect2.getEffectID() + " Degat " + effect2.getJet());
+                    if(effect.getEffectID() == effect2.getEffectID() ){
+                        //System.out.println("On est la 1 "+ effect2.getEffectID());
+                        //System.out.println("On est la 2 "+ effect.getEffectID());
+                        if(effect.getArgs().equals(effect2.getArgs())){
+                            //System.out.println("On est la 3 "+ effect.getJet());
+                            //System.out.println("On est la 4 "+ effect2.getJet());
+                            test = true;
+                        }
+                    }
+                }
+                if(!test){
+                    return test;
+                }
+            }
+
+            test = false;
+            for(SpellEffect effect : other.getEffects()){
+                for(SpellEffect effect2 : this.getEffects()){
+                    if(effect.getEffectID() == effect2.getEffectID() ){
+                        if(effect.getArgs().equals(effect2.getArgs())){
+                            test = true;
+                        }
+                    }
+                }
+                if(!test){
+                    return false;
+                }
+            }
+            //System.out.println("On est la "+ test);
+            return test;
+        }
+
     }
 }

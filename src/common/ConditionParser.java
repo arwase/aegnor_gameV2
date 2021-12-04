@@ -1,22 +1,21 @@
 package common;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.Node;
-import org.nfunk.jep.ParseException;
 import area.map.GameMap;
 import client.Player;
 import game.world.World.Couple;
 import job.JobStat;
 import kernel.Constant;
 import object.GameObject;
+import org.apache.commons.lang3.ArrayUtils;
+import org.nfunk.jep.JEP;
+import org.nfunk.jep.Node;
+import org.nfunk.jep.ParseException;
 import other.Action;
 import quest.Quest;
 import quest.QuestPlayer;
 import quest.QuestStep;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Map.Entry;
 
 public class ConditionParser {
@@ -562,6 +561,7 @@ public class ConditionParser {
         if( ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, newObj.getTemplate().getType() ) ) {
             return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar
                     && obj.getStats().isSameStats(newObj.getStats())
+                    && obj.isSameStats(newObj)
                     && (obj.getRarity() == newObj.getRarity())
                     && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
@@ -575,6 +575,7 @@ public class ConditionParser {
         }
         return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar
                 && obj.getStats().isSameStats(newObj.getStats())
+                && obj.isSameStats(newObj)
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
@@ -598,6 +599,7 @@ public class ConditionParser {
         if(obj.getTemplate().getId() == newObj.getTemplate().getId()
                 && stackIfSimilar
                 && obj.getStats().isSameStats(newObj.getStats())
+                && obj.isSameStats(newObj)
                 && obj.getRarity() == newObj.getRarity()
                 && stats1.equals(stats2)
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())

@@ -2219,12 +2219,26 @@ public class World {
                 0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
     }
 
-    public ArrayList<ObjectTemplate> getPotentialBlackItem(int level) {
+    public ArrayList<ObjectTemplate> getPotentialBlackItem(int level,int fightdifficulty) {
         ArrayList<ObjectTemplate> array = new ArrayList<>();
+        int boostdiff = 0;
+        switch (fightdifficulty){
+            case 0 :
+                break;
+            case 1:
+                boostdiff = 5;
+                break;
+            case 2 :
+                boostdiff = 10;
+                break;
+            default:
+                boostdiff = 0;
+                break;
+        }
         if(level>=175){
             level=175;
         }
-        final int levelMin = (level - 5 <= 1 ? 2 : level - 5), levelMax = level + 5;
+        final int levelMin = (level - 5 <= 1 ? 2 : level - 5), levelMax = level + 5+boostdiff;
         getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && !objectTemplate.getName().contains("Polyk")
                 && (levelMin <= objectTemplate.getLevel() && objectTemplate.getLevel() <= levelMax) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  ).forEach(array::add);
         return array;

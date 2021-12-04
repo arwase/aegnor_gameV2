@@ -14,12 +14,14 @@ import game.world.World;
 import game.world.World.Couple;
 import kernel.Config;
 import kernel.Constant;
-import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 @SuppressWarnings("unused")
 public class JobAction {
@@ -415,7 +417,7 @@ public class JobAction {
         for (Entry<Integer, GameObject> entry : player.getItems().entrySet()) {
             GameObject obj = entry.getValue();
             if (obj.getTemplate().getId() == newObj.getTemplate().getId() && obj.getTxtStat().equals(newObj.getTxtStat())
-                    && obj.getStats().isSameStats(newObj.getStats()) && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED) {
+                    && obj.getStats().isSameStats(newObj.getStats()) && obj.isSameStats(newObj) && obj.getRarity() == newObj.getRarity() && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED) {
                 obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantitï¿½ de l'objet existant
                 SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, obj);
                 return obj.getGuid();
@@ -640,7 +642,7 @@ public class JobAction {
                 return; // ECHEC car pas d'ingrédient ou inexistant
             }
             int templateID = ing.getTemplate().getId(); // On récupÃ¨re le template de la rune
-            if (ing.getTemplate().getType() == 78)	// Si le type d'obj est une rune on le place dans une Var
+            if (ing.getTemplate().getType() == 78 || ing.getTemplate().getType() == 26 )	// Si le type d'obj est une rune on le place dans une Var
                 idRune = idIngredient;
             switch (templateID) { 	// Longue serie de Switch Case pour déterminé si c'est la rune on récupÃ¨re ces infos SI c'est l'object c'est le cas par défault
                 // ca c'est poure reformer un item
@@ -1149,12 +1151,14 @@ public class JobAction {
                             this.player.removeItem(idIngredient);
                             SocketManager.GAME_SEND_DELETE_STATS_ITEM_FM(this.player, idIngredient);
                         }
+                        //System.out.println("Old " + objectFm.getGuid() );
+                        //System.out.println("New " + newObj.getGuid() );
                         objectFm = newObj; // Tout neuf avec un nouveau identifiant
                         break;
                     }
             }
         }
-        // System.out.println("La :" + objectFm.getTemplate().getId() + " " + runeOrPotion + " " + SM );
+         //System.out.println("La :" + objectFm.getTemplate().getId() + " " + runeOrPotion + " " + SM );
         if( objectFm.getTemplate() == null || runeOrPotion == null ) { // pas de runes
             this.player.sendMessage("Aucune rune détecté");
             if (objectFm != null) {
@@ -1303,7 +1307,7 @@ public class JobAction {
             int rarity = objectFm.getRarity();
             ObjectTemplate objTemplate = objectFm.getTemplate();
             int lastDigit = lastDigit(runeOrPotion.getTemplate().getId());
-            System.out.println("lastDigit" + lastDigit);
+            //System.out.println("lastDigit" + lastDigit);
 
             if(lastDigit <= rarity){
 
@@ -1741,6 +1745,7 @@ public class JobAction {
                     objectFm.addTxtStat(985, this.player.getName());
                 }
                 if (lvlElementRune > 0 && lvlQuaStatsRune == 0) {
+                    //System.out.println("On est la ");
                     for (SpellEffect effect : objectFm.getEffects()) {
                         if (effect.getEffectID() != 100)
                             continue;
@@ -1757,12 +1762,14 @@ public class JobAction {
                             String newArgs = Integer.toHexString(newMin) + ";"
                                     + Integer.toHexString(newMax) + ";-1;-1;0;"
                                     + newRange;
+                            //System.out.println(objectFm.getGuid() );
                             effect.setArgs(newArgs);
                             effect.setEffectID(statsID);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
+                    //System.out.println("CAC Fm");
                 } else if (lvlQuaStatsRune > 0 && lvlElementRune == 0) {
                     objectFm.setNewStats(statsObjectFm,statsAdd);
                     objectFm.setModification();
@@ -1781,6 +1788,7 @@ public class JobAction {
                     }
                 }
                 if (runeOrPotion != null) {
+                    //System.out.println(runeOrPotion + " quantité " + runeOrPotion.getQuantity() );
                     int newQua = runeOrPotion.getQuantity() - 1;
                     if (newQua <= 0) {
                         this.player.removeItem(runeOrPotion.getGuid());
@@ -1790,6 +1798,7 @@ public class JobAction {
                         runeOrPotion.setQuantity(newQua);
                         SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
                     }
+                    //System.out.println("tj la  ? " + runeOrPotion.getQuantity() );
                 }
                 World.world.addGameObject(objectFm, true);
                 this.player.addObjet(objectFm);
@@ -1920,14 +1929,17 @@ public class JobAction {
         this.lastCraft.putAll(this.ingredients);
         this.lastCraft.put(objectFm.getGuid(), 1);
         int nbRunes = 0;
+        //System.out.println("On est la " + idRune );
         if (!this.ingredients.isEmpty() && this.ingredients.get(idRune) != null) {
+            //System.out.println("On est la +"+ this.ingredients.get(idRune) );
             if (this.isRepeat) {
                 nbRunes = this.ingredients.get(idRune) - 1;
+                //System.out.println("On est la +"+ this.ingredients);
             } else {
                 nbRunes = this.ingredients.get(idRune) - 1;
             }
         }
-
+        //System.out.println("On est la +"+ nbRunes);
         this.ingredients.clear(); // ON RAFRAICHIT LES INGREDIENTS (enleve)
 
         if (nbRunes > 0) // On remet la rune

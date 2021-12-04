@@ -5477,4 +5477,5 @@ public class SpellEffect {
 			TimerWaiter.addNext(() -> recursiveCheckTrap(traps, i + 1, size, fight, fighter, nbr), time, TimerWaiter.DataType.FIGHT);
 		}*/
 	}
+
 }

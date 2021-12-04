@@ -485,7 +485,7 @@ public class ObjectTemplate {
             }
 
             for(GameObject object : objects)
-                if(World.world.getConditionManager().stackIfSimilar(object, item, true))
+                if(World.world.getConditionManager().stackIfSimilar2(object, item, true))
                     return object;
 
         }

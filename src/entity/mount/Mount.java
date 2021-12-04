@@ -1082,7 +1082,7 @@ public class Mount {
 	private GameObject getSimilarObject(GameObject obj) {
 		for(GameObject gameObject : this.objects.values())
 			if(gameObject.getTemplate().getType() != 85)
-				if(gameObject.getTemplate().getId() == obj.getTemplate().getId() && gameObject.getStats().isSameStats(obj.getStats()))
+				if(gameObject.getTemplate().getId() == obj.getTemplate().getId() && gameObject.getStats().isSameStats(obj.getStats()) && gameObject.isSameStats(obj) && gameObject.getRarity() == obj.getRarity() )
 					return gameObject;
 		return null;
 	}

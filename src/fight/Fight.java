@@ -4940,7 +4940,7 @@ public class Fight {
 
                         try {
                             if (this.getType() == Constant.FIGHT_TYPE_PVM && win == 1) {
-                                temporary3.addAll(World.world.getPotentialBlackItem(Maxlvlgroupe).stream().map(objectTemplate ->
+                                temporary3.addAll(World.world.getPotentialBlackItem(Maxlvlgroupe,this.fightdifficulty).stream().map(objectTemplate ->
                                         new Drop(objectTemplate.getId(), 0.025, 0)).collect(Collectors.toList()));
 
                                 for (Fighter entry : loosers) {
@@ -5206,6 +5206,7 @@ public class Fight {
                             } else {
 
                                     GameObject newObj = World.world.getObjTemplate(objectTemplate.getId()).createNewItemWithoutDuplicationAndRarityBoost(target.getItems().values(), entry.getValue(), false,fightdifficulty);
+
                                     if (newObj != null) {
                                         int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
@@ -5221,7 +5222,7 @@ public class Fight {
                                             Collection<GameObject> playerObjects = target.getItems().values();
                                             for(GameObject object : playerObjects)
                                             {
-                                                if(object.getTemplate() == newObj.getTemplate())
+                                                if(object.getTemplate() == newObj.getTemplate() && object.getRarity() == newObj.getRarity() )
                                                 {
                                                     object.setQuantity(newQuantity);
                                                     SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, object);
@@ -5718,7 +5719,18 @@ public class Fight {
                             collector.getOjects().put(guid, newObj);
                             World.world.addGameObject(newObj, true);
                         } else {
-                            newObj.setQuantity(newObj.getQuantity() + entry.getValue());
+                            int newQuantity = newObj.getQuantity() + entry.getValue();
+                            Collection<GameObject> collectorObjects = collector.getOjects().values();
+                            for(GameObject object : collectorObjects)
+                            {
+                                if(object.getTemplate() == newObj.getTemplate() && object.getRarity() == newObj.getRarity() )
+                                {
+                                    object.setQuantity(newQuantity);
+                                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(target, object);
+                                }
+                            }
+
+                            //newObj.setQuantity(newObj.getQuantity() + entry.getValue());
                         }
                     }
                 }

@@ -2947,6 +2947,7 @@ public class Player {
             String stats2 = gameObject.parseStatsString();
             if (gameObject.getTemplate().getId() == exGameObject.getTemplate().getId()
                     && gameObject.getStats().isSameStats(exGameObject.getStats())
+                    && gameObject.isSameStats(exGameObject)
                     && gameObject.getRarity() == exGameObject.getRarity()
                     && gameObject.getGuid() != exGameObject.getGuid()
                     && stats1.equals(stats2)
@@ -5609,6 +5610,7 @@ public class Player {
     }
 
     public boolean addObjetSimiler(GameObject objet, boolean hasSimiler, int oldID) {
+        System.out.println("Obj simi ?");
         ObjectTemplate objModelo = objet.getTemplate();
         if (objModelo.getType() == 85 || objModelo.getType() == 18)
             return false;
