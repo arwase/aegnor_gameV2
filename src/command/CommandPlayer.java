@@ -178,7 +178,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if (command(msg, "normal")) {
+            else if (command(msg, "difficulty0")) {
                 if (player.difficulty != 0) {
                     player.difficulty = 0;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Normale");
@@ -188,7 +188,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if (command(msg, "hard")) {
+            else if (command(msg, "difficulty1")) {
 
                 if (player.difficulty != 1) {
                     player.difficulty = 1;
@@ -199,16 +199,26 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if (command(msg, "impossible")) {
+            else if (command(msg, "difficulty2")) {
                   if (player.difficulty != 2) {
                     player.difficulty = 2;
-                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Monstreuse");
+                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Très difficile");
                 } else {
 
                     player.sendMessage("Déjà en difficulté monstreuse");
                 }
                 return true;
             }
+            /*else if (command(msg, "difficulty3")) {
+                if (player.difficulty != 3) {
+                    player.difficulty = 3;
+                    player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Monstreuse");
+                } else {
+
+                    player.sendMessage("Déjà en difficulté monstreuse");
+                }
+                return true;
+            }*/
             else if (command(msg, "staff")) {
                 String message = Lang.get(player, 5);
                 boolean vide = true;

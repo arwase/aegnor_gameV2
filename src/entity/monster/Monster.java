@@ -6,6 +6,7 @@ import client.other.Stats;
 import common.Formulas;
 import database.Database;
 import entity.monster.boss.MaitreCorbac;
+import fight.Fight;
 import fight.Fighter;
 import fight.spells.Spell;
 import fight.spells.Spell.SortStats;
@@ -1283,7 +1284,7 @@ public class Monster {
             this.stats.put(Constant.STATS_ADD_SAGE, sages);
             this.stats.put(Constant.STATS_ADD_CHAN, chanc);
         }
-        public void modifStatByFightDifficulty(int Difficulty) {
+        public void modifStatByFightDifficulty(int Difficulty,Fight fight) {
             int taux = 1 ;
             switch (Difficulty){
                 case 0 :
@@ -1293,6 +1294,7 @@ public class Monster {
                     taux = 2;
                     break;
                 case 2 :
+                case 3 :
                     taux = 4;
                     break;
                 default:
@@ -1300,74 +1302,279 @@ public class Monster {
                     break;
             }
 
-            int life = this.pdvMax;
+            if(Difficulty < 3) {
+                int life = this.pdvMax;
 
-            if(taux > 1){
-                life = this.pdvMax * taux;
-            }
+                if (taux > 1) {
+                    life = this.pdvMax * taux;
+                }
 
-            this.pdv = life;
-            this.pdvMax = this.pdv;
+                this.pdv = life;
+                this.pdvMax = this.pdv;
 
-            int feu = 1000 + (500 * this.getLevel());
-            int intel = 1000 + (500 * this.getLevel());
-            int agi = 1000 + (500 * this.getLevel());
-            int sagesse = 1000 + (500 * this.getLevel());
-            int chance = 1000 + (500 * this.getLevel());
-            int resistance = 9 * this.getLevel();
+                int feu = 1000 + (500 * this.getLevel());
+                int intel = 1000 + (500 * this.getLevel());
+                int agi = 1000 + (500 * this.getLevel());
+                int sagesse = 1000 + (500 * this.getLevel());
+                int chance = 1000 + (500 * this.getLevel());
+                int resistance = 9 * this.getLevel();
 
-            int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
-            //int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
-            int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
-            int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
-            int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+                int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
+                //int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
+                int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
+                int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
+                int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
 
-            //this.stats.clear();
-            this.stats.put(Constant.STATS_ADD_FORC ,this.stats.get(Constant.STATS_ADD_FORC) * taux);
-            this.stats.put(Constant.STATS_ADD_INTE, this.stats.get(Constant.STATS_ADD_INTE) * taux);
-            this.stats.put(Constant.STATS_ADD_AGIL, this.stats.get(Constant.STATS_ADD_AGIL) * taux);
-            this.stats.put(Constant.STATS_ADD_SAGE, this.stats.get(Constant.STATS_ADD_SAGE) * taux);
-            this.stats.put(Constant.STATS_ADD_CHAN, this.stats.get(Constant.STATS_ADD_CHAN) * taux);
-            if(this.getStats().getEffect(Constant.STATS_ADD_DOMA) == 0 ){
-                this.stats.put(Constant.STATS_ADD_DOMA, (taux*taux));
-            }
-            else {
-                this.stats.put(Constant.STATS_ADD_DOMA, this.stats.get(Constant.STATS_ADD_DOMA) * taux);
-            }
-            if(this.getStats().getEffect(Constant.STATS_ADD_DOMA2) == 0 ){
-                this.stats.put(Constant.STATS_ADD_DOMA2, (taux*taux));
-            }
-            else {
-                this.stats.put(Constant.STATS_ADD_DOMA2, this.stats.get(Constant.STATS_ADD_DOMA2) * taux);
-            }
-            if(this.getStats().getEffect(Constant.STATS_ADD_SOIN) == 0 ){
-                this.stats.put(Constant.STATS_ADD_SOIN, (taux*taux));
-            }
-            else {
-                this.stats.put(Constant.STATS_ADD_SOIN, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
-            }
-            if(this.getStats().getEffect(Constant.STATS_ADD_INIT) == 0 ){
-                this.stats.put(Constant.STATS_ADD_INIT, (taux*taux));
-            }
-            else {
-                this.stats.put(Constant.STATS_ADD_INIT, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
-            }
+                //this.stats.clear();
+                this.stats.put(Constant.STATS_ADD_FORC, this.stats.get(Constant.STATS_ADD_FORC) * taux);
+                this.stats.put(Constant.STATS_ADD_INTE, this.stats.get(Constant.STATS_ADD_INTE) * taux);
+                this.stats.put(Constant.STATS_ADD_AGIL, this.stats.get(Constant.STATS_ADD_AGIL) * taux);
+                this.stats.put(Constant.STATS_ADD_SAGE, this.stats.get(Constant.STATS_ADD_SAGE) * taux);
+                this.stats.put(Constant.STATS_ADD_CHAN, this.stats.get(Constant.STATS_ADD_CHAN) * taux);
+                if (this.getStats().getEffect(Constant.STATS_ADD_DOMA) == 0) {
+                    this.stats.put(Constant.STATS_ADD_DOMA, (taux * taux));
+                } else {
+                    this.stats.put(Constant.STATS_ADD_DOMA, this.stats.get(Constant.STATS_ADD_DOMA) * taux);
+                }
+                if (this.getStats().getEffect(Constant.STATS_ADD_DOMA2) == 0) {
+                    this.stats.put(Constant.STATS_ADD_DOMA2, (taux * taux));
+                } else {
+                    this.stats.put(Constant.STATS_ADD_DOMA2, this.stats.get(Constant.STATS_ADD_DOMA2) * taux);
+                }
+                if (this.getStats().getEffect(Constant.STATS_ADD_SOIN) == 0) {
+                    this.stats.put(Constant.STATS_ADD_SOIN, (taux * taux));
+                } else {
+                    this.stats.put(Constant.STATS_ADD_SOIN, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+                }
+                if (this.getStats().getEffect(Constant.STATS_ADD_INIT) == 0) {
+                    this.stats.put(Constant.STATS_ADD_INIT, (taux * taux));
+                } else {
+                    this.stats.put(Constant.STATS_ADD_INIT, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+                }
 
-            this.stats.put(Constant.STATS_ADD_RP_NEU, this.stats.get(Constant.STATS_ADD_RP_NEU) + (taux*taux));
-            this.stats.put(Constant.STATS_ADD_RP_FEU, this.stats.get(Constant.STATS_ADD_RP_FEU) + (taux*taux));
-            this.stats.put(Constant.STATS_ADD_RP_EAU, this.stats.get(Constant.STATS_ADD_RP_EAU) + (taux*taux));
-            this.stats.put(Constant.STATS_ADD_RP_AIR, this.stats.get(Constant.STATS_ADD_RP_AIR) + (taux*taux));
-            this.stats.put(Constant.STATS_ADD_RP_TER, this.stats.get(Constant.STATS_ADD_RP_TER) + (taux*taux));
-            this.pa = this.pa + taux;
-            this.pm = this.pm + taux;
+                this.stats.put(Constant.STATS_ADD_RP_NEU, this.stats.get(Constant.STATS_ADD_RP_NEU) + (taux * taux));
+                this.stats.put(Constant.STATS_ADD_RP_FEU, this.stats.get(Constant.STATS_ADD_RP_FEU) + (taux * taux));
+                this.stats.put(Constant.STATS_ADD_RP_EAU, this.stats.get(Constant.STATS_ADD_RP_EAU) + (taux * taux));
+                this.stats.put(Constant.STATS_ADD_RP_AIR, this.stats.get(Constant.STATS_ADD_RP_AIR) + (taux * taux));
+                this.stats.put(Constant.STATS_ADD_RP_TER, this.stats.get(Constant.STATS_ADD_RP_TER) + (taux * taux));
+                this.pa = this.pa + taux;
+                this.pm = this.pm + taux;
 
-            this.stats.put(Constant.STATS_ADD_PO, taux);
-            this.stats.put(Constant.STATS_CREATURE, this.stats.get(Constant.STATS_CREATURE) + taux);
+                this.stats.put(Constant.STATS_ADD_PO, taux);
+                this.stats.put(Constant.STATS_CREATURE, this.stats.get(Constant.STATS_CREATURE) + taux);
+            }
+            else{
+               Map<Integer, Fighter> Joueurs = fight.getTeam0();
+               Map<Integer, Fighter> Monstres = fight.getTeam1();
+               ArrayList<Fighter> Joueurs2 = new ArrayList<>(), Monstres2 = new ArrayList<>();
 
+                Joueurs2.addAll(Joueurs.values());
+                Monstres2.addAll(Monstres.values());
+                int levelMaxMonstre = fight.LvlMaxJoueurs(Monstres2);
+                int levelMoyenJoueurs = fight.LvlMoyenJoueurs(Joueurs2);
+                int leveldepartMonstre = this.level;
+                int levelarrivemonstre = leveldepartMonstre;
+
+                if(levelMaxMonstre < levelMoyenJoueurs) {
+
+                    int life = this.pdvMax;
+                    int lifeperlevel = life/leveldepartMonstre;
+
+
+                    if (lifeperlevel > 30) {
+                        lifeperlevel = 30;
+                    }
+
+
+                    // On fait un ratio des stats par level
+                    double ratioForce = getRatioStatifExist(Constant.STATS_ADD_FORC, taux);
+                    double ratioIntel = getRatioStatifExist(Constant.STATS_ADD_INTE, taux);
+                    double ratioChance = getRatioStatifExist(Constant.STATS_ADD_CHAN, taux);
+                    double ratioAgil = getRatioStatifExist(Constant.STATS_ADD_AGIL, taux);
+                    double ratioSages = getRatioStatifExist(Constant.STATS_ADD_SAGE, taux);
+                    double ratioDomma = getRatioPoidifExist(Constant.STATS_ADD_DOMA, 0.5);
+                    double ratioSoin = getRatioPoidifExist(Constant.STATS_ADD_SOIN, 0.25);
+                    double ratioResNeu = getRatioPoidifExist(Constant.STATS_ADD_RP_NEU, taux);
+                    if(ratioResNeu>0.25)
+                        ratioResNeu = 0.25;
+                    double ratioResTer = getRatioPoidifExist(Constant.STATS_ADD_RP_TER, taux);
+                    if(ratioResTer>0.25)
+                        ratioResTer = 0.25;
+                    double ratioResFeu = getRatioPoidifExist(Constant.STATS_ADD_RP_FEU, taux);
+                    if(ratioResFeu>0.25)
+                        ratioResFeu = 0.25;
+                    double ratioResEau = getRatioPoidifExist(Constant.STATS_ADD_RP_EAU, taux);
+                    if(ratioResEau>0.25)
+                        ratioResEau = 0.25;
+                    double ratioResAgi = getRatioPoidifExist(Constant.STATS_ADD_RP_AIR, taux);
+                    if(ratioResAgi>0.25)
+                        ratioResAgi = 0.25;
+                    double ratioPO = getRatioPoidifExist(Constant.STATS_ADD_PO, 0.05);
+                    double ratioCrea = getRatioPoidifExist(Constant.STATS_CREATURE, 0.1);
+
+                    //double[] x = new double[]{ratioForce,ratioIntel,ratioChance,ratioAgil,ratioSages,ratioDomma,ratioSoin,ratioIni,ratioResNeu,ratioResTer,ratioResFeu,ratioResEau,ratioResAgi};
+
+                    if (levelMaxMonstre == leveldepartMonstre) {
+                        this.level = levelMoyenJoueurs;
+                        levelarrivemonstre = levelMoyenJoueurs;
+                    } else {
+                        levelarrivemonstre = levelMoyenJoueurs - leveldepartMonstre;
+                        this.level = levelMoyenJoueurs - leveldepartMonstre;
+                    }
+
+                    int diff = levelarrivemonstre - leveldepartMonstre;
+                    System.out.println(diff +" lvl de diff");
+
+                    this.stats.put(Constant.STATS_ADD_FORC, (int) Math.round(this.level * ratioForce));
+                    this.stats.put(Constant.STATS_ADD_INTE, (int) Math.round(this.level * ratioIntel));
+                    this.stats.put(Constant.STATS_ADD_CHAN, (int) Math.round(this.level * ratioChance));
+                    this.stats.put(Constant.STATS_ADD_AGIL, (int) Math.round(this.level * ratioAgil));
+                    this.stats.put(Constant.STATS_ADD_SAGE, (int) Math.round(this.level * ratioSages));
+                    this.stats.put(Constant.STATS_ADD_DOMA, (int) Math.round(this.level * ratioDomma));
+                    this.stats.put(Constant.STATS_ADD_SOIN, (int) Math.round(this.level * ratioSoin));
+                    this.stats.put(Constant.STATS_ADD_RP_NEU, (int) Math.round(this.stats.get(Constant.STATS_ADD_RP_NEU) + Math.abs(diff*ratioResNeu)));
+                    this.stats.put(Constant.STATS_ADD_RP_TER, (int) Math.round(this.stats.get(Constant.STATS_ADD_RP_TER) + Math.abs(diff*ratioResTer)));
+                    this.stats.put(Constant.STATS_ADD_RP_FEU, (int) Math.round(this.stats.get(Constant.STATS_ADD_RP_FEU) + Math.abs(diff*ratioResFeu)));
+                    this.stats.put(Constant.STATS_ADD_RP_EAU, (int) Math.round(this.stats.get(Constant.STATS_ADD_RP_EAU) + Math.abs(diff*ratioResEau)));
+                    this.stats.put(Constant.STATS_ADD_RP_AIR, (int) Math.round(this.stats.get(Constant.STATS_ADD_RP_AIR) + Math.abs(diff*ratioResAgi)));
+                    this.stats.put(Constant.STATS_ADD_PO, (int) Math.round(this.level * ratioPO));
+                    this.stats.put(Constant.STATS_CREATURE, (int) Math.round(this.level * ratioCrea));
+
+                    this.pdv = lifeperlevel * this.level;
+                    this.pdvMax = this.pdv;
+
+
+                    System.out.println(this.stats.get(Constant.STATS_ADD_FORC) +" force");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_INTE)+" intel");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_CHAN)+" cha");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_AGIL)+" agi");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_SAGE)+" sagesse");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_DOMA)+" dommage");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_SOIN)+" soin");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_RP_NEU)+" Re neu");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_RP_TER)+" Re ter");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_RP_FEU)+" Re feu");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_RP_EAU)+" Re eau");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_RP_AIR)+" Re air");
+                    System.out.println(this.stats.get(Constant.STATS_ADD_PO)+" PO");
+                    System.out.println(this.stats.get(Constant.STATS_CREATURE)+" Crea");
+
+
+                    //int ratioForce = Math.round(this.stats.get(Constant.STATS_ADD_FORC) / this.getLevel()) ;
+                    int pas = this.pa;
+                    int pms = this.pm;
+
+                    int maxPatoAdd = pas / 2;
+                    int maxPmtoAdd = pms / 2;
+
+                    float tranche = 200 / maxPatoAdd;
+                    float tranche2 = 200 / maxPmtoAdd;
+                    float tranche3 = 200 / maxPmtoAdd;
+                    float tranche4 = 200 / maxPmtoAdd;
+
+                    int nombrePA = Math.round(diff / tranche);
+                    if (nombrePA < 1) {
+                        nombrePA = 1;
+                    }
+                    int nombrePM = Math.round(diff / tranche2);
+                    if (nombrePA < 1) {
+                        nombrePM = 1;
+                    }
+
+                    this.pa = pas + nombrePA;
+                    this.pm = pms + nombrePM;
+                    System.out.println(this.pa+ " PA");
+                    System.out.println(this.pm+ " PM");
+                }
+                else{
+                    int life = this.pdvMax;
+
+                    if (taux > 1) {
+                        life = this.pdvMax * taux;
+                    }
+
+                    this.pdv = life;
+                    this.pdvMax = this.pdv;
+
+                    int feu = 1000 + (500 * this.getLevel());
+                    int intel = 1000 + (500 * this.getLevel());
+                    int agi = 1000 + (500 * this.getLevel());
+                    int sagesse = 1000 + (500 * this.getLevel());
+                    int chance = 1000 + (500 * this.getLevel());
+                    int resistance = 9 * this.getLevel();
+
+                    int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
+                    //int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
+                    int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
+                    int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
+                    int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+
+                    //this.stats.clear();
+                    this.stats.put(Constant.STATS_ADD_FORC, this.stats.get(Constant.STATS_ADD_FORC) * taux);
+                    this.stats.put(Constant.STATS_ADD_INTE, this.stats.get(Constant.STATS_ADD_INTE) * taux);
+                    this.stats.put(Constant.STATS_ADD_AGIL, this.stats.get(Constant.STATS_ADD_AGIL) * taux);
+                    this.stats.put(Constant.STATS_ADD_SAGE, this.stats.get(Constant.STATS_ADD_SAGE) * taux);
+                    this.stats.put(Constant.STATS_ADD_CHAN, this.stats.get(Constant.STATS_ADD_CHAN) * taux);
+                    if (this.getStats().getEffect(Constant.STATS_ADD_DOMA) == 0) {
+                        this.stats.put(Constant.STATS_ADD_DOMA, (taux * taux));
+                    } else {
+                        this.stats.put(Constant.STATS_ADD_DOMA, this.stats.get(Constant.STATS_ADD_DOMA) * taux);
+                    }
+                    if (this.getStats().getEffect(Constant.STATS_ADD_DOMA2) == 0) {
+                        this.stats.put(Constant.STATS_ADD_DOMA2, (taux * taux));
+                    } else {
+                        this.stats.put(Constant.STATS_ADD_DOMA2, this.stats.get(Constant.STATS_ADD_DOMA2) * taux);
+                    }
+                    if (this.getStats().getEffect(Constant.STATS_ADD_SOIN) == 0) {
+                        this.stats.put(Constant.STATS_ADD_SOIN, (taux * taux));
+                    } else {
+                        this.stats.put(Constant.STATS_ADD_SOIN, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+                    }
+                    if (this.getStats().getEffect(Constant.STATS_ADD_INIT) == 0) {
+                        this.stats.put(Constant.STATS_ADD_INIT, (taux * taux));
+                    } else {
+                        this.stats.put(Constant.STATS_ADD_INIT, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+                    }
+
+                    this.stats.put(Constant.STATS_ADD_RP_NEU, this.stats.get(Constant.STATS_ADD_RP_NEU) + (taux * taux));
+                    this.stats.put(Constant.STATS_ADD_RP_FEU, this.stats.get(Constant.STATS_ADD_RP_FEU) + (taux * taux));
+                    this.stats.put(Constant.STATS_ADD_RP_EAU, this.stats.get(Constant.STATS_ADD_RP_EAU) + (taux * taux));
+                    this.stats.put(Constant.STATS_ADD_RP_AIR, this.stats.get(Constant.STATS_ADD_RP_AIR) + (taux * taux));
+                    this.stats.put(Constant.STATS_ADD_RP_TER, this.stats.get(Constant.STATS_ADD_RP_TER) + (taux * taux));
+                    this.pa = this.pa + taux;
+                    this.pm = this.pm + taux;
+
+                    this.stats.put(Constant.STATS_ADD_PO, taux);
+                    this.stats.put(Constant.STATS_CREATURE, this.stats.get(Constant.STATS_CREATURE) + taux);
+
+                }
+            }
             //Stats stats3 = new Stats(stats2);
             //this.stats = stats3;
             //System.out.println( "Stats : " +  this.getPa() + " PA " + this.getPm() + " PM");
 
+        }
+
+        public int getRatioStatifExist(int stat,int taux){
+            int ratio = 0;
+            if(this.getStats().getEffect(stat) != 0) {
+                ratio = Math.round(this.stats.get(stat) / this.getLevel());
+            }
+            else{
+                ratio = taux;
+            }
+            return ratio;
+        }
+
+        public double getRatioPoidifExist(int stat,double ratio2){
+            double ratio = 0;
+            if(this.getStats().getEffect(stat) != 0) {
+                 ratio = Math.round(this.stats.get(stat) / this.getLevel());
+            }
+            else{
+                 ratio = ratio2;
+            }
+            return ratio;
         }
 
         public void changeStats(String statInfos) {

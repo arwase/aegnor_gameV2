@@ -316,11 +316,9 @@ public class Fight {
         for (Entry<Integer, Monster.MobGrade> entry : group.getMobs().entrySet()) {
             Monster.MobGrade MG = entry.getValue().getCopy();
             MG.setInFightID(entry.getKey());
-
             if(fightdifficulty > 0) {
-                MG.modifStatByFightDifficulty(fightdifficulty);
+                MG.modifStatByFightDifficulty(fightdifficulty,this);
             }
-
             Fighter mob = new Fighter(this, MG);
 
             //mob.modifStatByFightDifficulty(fightdifficulty);
@@ -1224,6 +1222,8 @@ public class Fight {
                     if (fighter.getMob().getTemplate() != null) {
                         if (boss.contains(String.valueOf(fighter.getMob().getTemplate().getId())))
                             hasBoss = fighter.getMob().getTemplate().getId();
+
+
                         for (Fighter fighter2 : getTeam0().values())
                             if (PathFinding.getDistanceBetween(this.getMap(), fighter2.getCell().getId(), fighter.getCell().getId()) >= 5)
                                 hasArround = true;
@@ -4249,6 +4249,28 @@ public class Fight {
         }
 
         this.setCurAction("");
+    }
+
+    public int LvlMoyenJoueurs(ArrayList<Fighter> team){
+        int levelMoyen=0;
+
+        for (Fighter fighter : team) {
+            levelMoyen = levelMoyen + fighter.getLvl();
+        }
+        levelMoyen = Math.round(levelMoyen/team.size());
+
+        return levelMoyen;
+    }
+
+    public int LvlMaxJoueurs(ArrayList<Fighter> team){
+        int maxLvl=1;
+
+        for (Fighter fighter : team) {
+            if (fighter.getLvl() > maxLvl)
+                maxLvl = fighter.getLvl();
+        }
+
+        return maxLvl;
     }
 
     public String getGE(int win) {
