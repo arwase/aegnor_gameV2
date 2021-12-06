@@ -1044,7 +1044,7 @@ public class Monster {
         private int baseXp = 10;
         private GameCase fightCell;
         private ArrayList<SpellEffect> fightBuffs = new ArrayList<SpellEffect>();
-        private Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
+        public Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
         private Map<Integer, SortStats> spells = new HashMap<Integer, SortStats>();
         private ArrayList<Integer> statsInfos = new ArrayList<Integer>();
 
@@ -1283,7 +1283,6 @@ public class Monster {
             this.stats.put(Constant.STATS_ADD_SAGE, sages);
             this.stats.put(Constant.STATS_ADD_CHAN, chanc);
         }
-
         public void modifStatByFightDifficulty(int Difficulty) {
             int taux = 1 ;
             switch (Difficulty){
@@ -1294,7 +1293,7 @@ public class Monster {
                     taux = 2;
                     break;
                 case 2 :
-                    taux = 3;
+                    taux = 4;
                     break;
                 default:
                     taux = 1;
@@ -1302,6 +1301,7 @@ public class Monster {
             }
 
             int life = this.pdvMax;
+
             if(taux > 1){
                 life = this.pdvMax * taux;
             }
@@ -1309,18 +1309,65 @@ public class Monster {
             this.pdv = life;
             this.pdvMax = this.pdv;
 
+            int feu = 1000 + (500 * this.getLevel());
+            int intel = 1000 + (500 * this.getLevel());
+            int agi = 1000 + (500 * this.getLevel());
+            int sagesse = 1000 + (500 * this.getLevel());
+            int chance = 1000 + (500 * this.getLevel());
+            int resistance = 9 * this.getLevel();
+
             int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
-            int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
+            //int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
             int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
             int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
             int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+
+            //this.stats.clear();
+            this.stats.put(Constant.STATS_ADD_FORC ,this.stats.get(Constant.STATS_ADD_FORC) * taux);
+            this.stats.put(Constant.STATS_ADD_INTE, this.stats.get(Constant.STATS_ADD_INTE) * taux);
+            this.stats.put(Constant.STATS_ADD_AGIL, this.stats.get(Constant.STATS_ADD_AGIL) * taux);
+            this.stats.put(Constant.STATS_ADD_SAGE, this.stats.get(Constant.STATS_ADD_SAGE) * taux);
+            this.stats.put(Constant.STATS_ADD_CHAN, this.stats.get(Constant.STATS_ADD_CHAN) * taux);
+            if(this.getStats().getEffect(Constant.STATS_ADD_DOMA) == 0 ){
+                this.stats.put(Constant.STATS_ADD_DOMA, (taux*taux));
+            }
+            else {
+                this.stats.put(Constant.STATS_ADD_DOMA, this.stats.get(Constant.STATS_ADD_DOMA) * taux);
+            }
+            if(this.getStats().getEffect(Constant.STATS_ADD_DOMA2) == 0 ){
+                this.stats.put(Constant.STATS_ADD_DOMA2, (taux*taux));
+            }
+            else {
+                this.stats.put(Constant.STATS_ADD_DOMA2, this.stats.get(Constant.STATS_ADD_DOMA2) * taux);
+            }
+            if(this.getStats().getEffect(Constant.STATS_ADD_SOIN) == 0 ){
+                this.stats.put(Constant.STATS_ADD_SOIN, (taux*taux));
+            }
+            else {
+                this.stats.put(Constant.STATS_ADD_SOIN, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+            }
+            if(this.getStats().getEffect(Constant.STATS_ADD_INIT) == 0 ){
+                this.stats.put(Constant.STATS_ADD_INIT, (taux*taux));
+            }
+            else {
+                this.stats.put(Constant.STATS_ADD_INIT, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
+            }
+
+            this.stats.put(Constant.STATS_ADD_RP_NEU, this.stats.get(Constant.STATS_ADD_RP_NEU) + (taux*taux));
+            this.stats.put(Constant.STATS_ADD_RP_FEU, this.stats.get(Constant.STATS_ADD_RP_FEU) + (taux*taux));
+            this.stats.put(Constant.STATS_ADD_RP_EAU, this.stats.get(Constant.STATS_ADD_RP_EAU) + (taux*taux));
+            this.stats.put(Constant.STATS_ADD_RP_AIR, this.stats.get(Constant.STATS_ADD_RP_AIR) + (taux*taux));
+            this.stats.put(Constant.STATS_ADD_RP_TER, this.stats.get(Constant.STATS_ADD_RP_TER) + (taux*taux));
             this.pa = this.pa + taux;
             this.pm = this.pm + taux;
-            this.stats.put(Constant.STATS_ADD_FORC, force);
-            this.stats.put(Constant.STATS_ADD_INTE, intel);
-            this.stats.put(Constant.STATS_ADD_AGIL, agili);
-            this.stats.put(Constant.STATS_ADD_SAGE, sages);
-            this.stats.put(Constant.STATS_ADD_CHAN, chanc);
+
+            this.stats.put(Constant.STATS_ADD_PO, taux);
+            this.stats.put(Constant.STATS_CREATURE, this.stats.get(Constant.STATS_CREATURE) + taux);
+
+            //Stats stats3 = new Stats(stats2);
+            //this.stats = stats3;
+            //System.out.println( "Stats : " +  this.getPa() + " PA " + this.getPm() + " PM");
+
         }
 
         public void changeStats(String statInfos) {
@@ -1364,5 +1411,7 @@ public class Monster {
             Resi = this.stats.get(Constant.STATS_ADD_RP_NEU) + "," + this.stats.get(Constant.STATS_ADD_RP_TER) + "," + this.stats.get(Constant.STATS_ADD_RP_FEU) + "," + this.stats.get(Constant.STATS_ADD_RP_EAU) + "," +this.stats.get(Constant.STATS_ADD_RP_AIR);
             return Resi;
         }
+
+
     }
 }
