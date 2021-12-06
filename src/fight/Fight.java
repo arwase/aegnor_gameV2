@@ -314,14 +314,16 @@ public class Fight {
         setInit0(new Fighter(this, perso));
         getTeam0().put(perso.getId(), getInit0());
         for (Entry<Integer, Monster.MobGrade> entry : group.getMobs().entrySet()) {
-            entry.getValue().setInFightID(entry.getKey());
+            Monster.MobGrade MG = entry.getValue().getCopy();
+            MG.setInFightID(entry.getKey());
 
-            System.out.println("On passe la "+ fightdifficulty);
             if(fightdifficulty > 0) {
-                entry.getValue().modifStatByFightDifficulty(fightdifficulty);
+                MG.modifStatByFightDifficulty(fightdifficulty);
             }
 
-            Fighter mob = new Fighter(this, entry.getValue());
+            Fighter mob = new Fighter(this, MG);
+
+            //mob.modifStatByFightDifficulty(fightdifficulty);
             getTeam1().put(entry.getKey(), mob);
             if (entry.getValue().getTemplate().getId() == 832) // D�minoboule
                 Minotoror.demi();
@@ -1707,11 +1709,12 @@ public class Fight {
         if (master != null & master.getPlayer() != null & current.getPlayer() != null) {
             if (master.getPlayer().controleinvo || current.getPlayer().controleinvo) {
                 if (current.isControllable()) {
-                    master.getPlayer().setCurrentCompagnon(current);
+
                     if (current.getPlayer().getCurrentCompagnon() != null) {
                         current.getPlayer().deleteCurrentCompagnon();
                     }
                     if (current.isInvocation()) {
+                        master.getPlayer().setCurrentCompagnon(current);
                         SocketManager.send(master.getPlayer(), "SC");
                         SocketManager.ENVIAR_AI_CAMBIAR_ID(master.getPlayer(), current.getId());
                         SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master.getPlayer());
@@ -4853,7 +4856,7 @@ public class Fight {
                 BonuslvlMoyen =  (lvlMoyenPlayer/Maxlvlmob) ;
             }
 
-            System.out.println(BonuslvlMoyen + "car : " + lvlMoyenPlayer + " / " + Maxlvlmob);
+            //System.out.println(BonuslvlMoyen + "car : " + lvlMoyenPlayer + " / " + Maxlvlmob);
 
             double BonusPerdiffclasse = 1 +  ( playersclass.size() / winners.size() )*0.8;
             double BonusPerdiffip = 1 +  ( playersip.size() / winners.size() )*0.8 ;

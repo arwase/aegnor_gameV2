@@ -189,6 +189,7 @@ public class CommandPlayer {
                 return true;
             }
             else if (command(msg, "hard")) {
+
                 if (player.difficulty != 1) {
                     player.difficulty = 1;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Difficile");
@@ -199,7 +200,7 @@ public class CommandPlayer {
                 return true;
             }
             else if (command(msg, "impossible")) {
-                if (player.difficulty != 2) {
+                  if (player.difficulty != 2) {
                     player.difficulty = 2;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Monstreuse");
                 } else {

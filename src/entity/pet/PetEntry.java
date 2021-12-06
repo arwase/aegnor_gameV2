@@ -175,7 +175,7 @@ public class PetEntry {
     }
 
     public void eat(Player p, int min, int max, int statsID, GameObject feed) {
-        System.out.println("On passe la ?");
+        //System.out.println("On passe la ?");
         GameObject obj = World.world.getGameObject(this.objectId);
         if (obj == null)
             return;

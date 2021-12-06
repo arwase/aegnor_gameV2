@@ -444,8 +444,11 @@ public class Fighter implements Comparable<Fighter> {
         if (this.type == 1)
             stats = this.perso.getTotalStats();
         if (this.type == 2)
-            if(this.stats == null)
+            if (this.stats == null) {
                 this.stats = this.mob.getStats();
+                stats = this.mob.getStats();
+            }
+
         if (this.type == 5)
             stats = new Stats(World.world.getGuild(getCollector().getGuildId()));
         if (this.type == 7)
@@ -679,8 +682,9 @@ public class Fighter implements Comparable<Fighter> {
         Stats stats = new Stats(new HashMap<>());
         if (this.type == 1)
             stats = this.perso.getTotalStats();
-        if (this.type == 2)
+        if (this.type == 2) {
             stats = this.mob.getStats();
+        }
         if (this.type == 5)
             stats = new Stats(World.world.getGuild(getCollector().getGuildId()));
         if (this.type == 7)
@@ -1046,4 +1050,5 @@ public class Fighter implements Comparable<Fighter> {
     public ArrayList<LaunchedSpell> getLaunchedSpell() {
         return this.launchedSpell;
     }
+
 }

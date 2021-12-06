@@ -107,31 +107,6 @@ public class Stats {
     }
     public boolean isSameStats(Stats other) { //Compare uniquement les stats de l'item sans les degat de l'arme
 
-
-        //String stats = this.parseToItemSetStats();
-        //String stats2 = other.parseToItemSetStats();
-
-        //System.out.println("stats" + stats);
-        //System.out.println("stats2" + stats2);
-        /* Map<Integer, Integer> stats1 = this.getEffects();
-        Map<Integer, Integer> stats3 = this.getEffects();
-
-        for (Entry<Integer, Integer> entry : stats1.entrySet()) {
-            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
-        }
-
-        for (Entry<Integer, Integer> entry : stats3.entrySet()) {
-            System.out.println("Key : " + entry.getKey() + " Value : " + entry.getValue());
-        }*/
-
-/*
-        if(!stats.equals(stats2)){
-            return false;
-        }
-        else{
-            return true;
-        }*/
-
         if(this.effects.size() == 0 && other.getEffects().size() == 0)
         {
             return true;

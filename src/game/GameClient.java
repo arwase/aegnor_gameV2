@@ -1,9 +1,5 @@
 package game;
 
-import entity.monster.Monster;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.mina.core.session.IoSession;
-import org.slf4j.LoggerFactory;
 import area.map.GameCase;
 import area.map.GameMap;
 import area.map.entity.*;
@@ -22,6 +18,7 @@ import entity.Prism;
 import entity.exchange.CraftSecure;
 import entity.exchange.Exchange;
 import entity.exchange.PlayerExchange;
+import entity.monster.Monster;
 import entity.mount.Mount;
 import entity.npc.Npc;
 import entity.npc.NpcAnswer;
@@ -57,6 +54,8 @@ import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.Fragment;
 import object.entity.SoulStone;
+import org.apache.mina.core.session.IoSession;
+import org.slf4j.LoggerFactory;
 import other.Action;
 import other.Dopeul;
 import other.Titre;
@@ -73,7 +72,6 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 
 public class GameClient {
 
@@ -5202,7 +5200,6 @@ public class GameClient {
             final Fight fight = this.player.getFight();
 
             if(this.player.getCurrentCompagnon() == null) {
-                System.out.println("On passe la");
                 if (fight != null) {
                     Spell.SortStats SS = this.player.getSortStatBySortIfHas(id);
 

@@ -508,9 +508,9 @@ public class Formulas {
             //System.out.println(caster.getId() + " Dommages 2 ? " + domC  );
 
             perdomC = caster.getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
-            System.out.println(caster.getId() + " % dom ? " + perdomC  );
+            //System.out.println(caster.getId() + " % dom ? " + perdomC  );
             multiplier = caster.getTotalStats().getEffect(Constant.STATS_MULTIPLY_DOMMAGE);
-            System.out.println(caster.getId() + " multiplier ? " + multiplier  );
+            //System.out.println(caster.getId() + " multiplier ? " + multiplier  );
             if (caster.hasBuff(114))
                 mulT = caster.getBuffValue(114);
         } else {
