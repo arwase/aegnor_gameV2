@@ -209,3 +209,8 @@ Version 3.1 (30/11/2021):
 - Fix IA CM
 - Fix bug des IA qui invoque sur elles-mêmes
 - Fix IA Minotot
+
+Version 3.2 (06/12/2021):
+
+- Isolement du Contrôle d'invocation et du OneWindow
+- Fix des exceptions en liaison avec le OneWindow et Contrôle d'Invocation

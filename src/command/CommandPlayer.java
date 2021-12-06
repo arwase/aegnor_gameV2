@@ -398,10 +398,18 @@ public class CommandPlayer {
             }else if(command(msg, "oneWindows")){
                  if (!player.PlayerList1.isEmpty()) {
                      if(player.oneWindows){
+                         for (Player slave : player.PlayerList1)
+                         {
+                             slave.oneWindows = false;
+                         }
                          player.oneWindows = false;
                          SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez désactivé le mode one windows");
                      }
                      else{
+                         for (Player slave : player.PlayerList1)
+                         {
+                             slave.oneWindows = true;
+                         }
                          player.oneWindows = true;
                          SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez activé le mode one windows");
                      }
