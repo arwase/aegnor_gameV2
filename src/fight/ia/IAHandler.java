@@ -25,7 +25,7 @@ public class IAHandler {
                 if (fighter.isDouble())
                     ia = new IA5(fight, fighter, (byte) 5);
                 else if (fighter.isCollector())
-                    ia = new IA30(fight, fighter, (byte) 5);
+                    ia = new IA76(fight, fighter, (byte) 5);
 
                 final IA finalIA = ia;
                 ia.addNext(finalIA::endTurn, 2000);
@@ -245,6 +245,8 @@ public class IAHandler {
                     case 75: //IA Minotot
                         ia = new IA75(fight, fighter, (byte) 4);
                         break;
+                    case 76 : //IA Percepteur
+                        ia = new IA76(fight, fighter, (byte) 5);
 
 
                 }
