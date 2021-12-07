@@ -5018,10 +5018,10 @@ public class GameClient {
                 if (Main.INSTANCE.getFightAsBlocked())
                     return;
                 long calcul = System.currentTimeMillis() - Config.INSTANCE.getStartTime();
-                if(calcul < 600000) {
+                /*if(calcul < 600000) {
                     this.player.sendMessage("Vous devez attendre encore " + ((600000 - calcul) / 60000) + " minute(s).");
                     return;
-                }
+                }*/
                 gameCollector(packet);
                 break;
 

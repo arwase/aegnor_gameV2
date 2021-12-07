@@ -214,3 +214,7 @@ Version 3.2 (06/12/2021):
 
 - Isolement du Contrôle d'invocation et du OneWindow
 - Fix des exceptions en liaison avec le OneWindow et Contrôle d'Invocation
+
+Version 3.3 (07/12/2021):
+
+- Fix des Percepteurs (Attaque/Déplacement/Debuff/Soins/Malus)

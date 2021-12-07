@@ -1783,9 +1783,6 @@ public class Fight {
             return;
         }
 
-
-
-
         // reset des Max des Chatis
         current.getChatiValue().clear();
 

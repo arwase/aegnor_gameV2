@@ -101,7 +101,13 @@ public class CommandPlayer {
                             public void actionPerformed(ActionEvent e) {
 
                                 if ( monstrequijoue == playerFight.getFighterByOrdreJeu() ) {
-                                    player.sendMessage("Le monstre "+ playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() +" passe son tour");
+                                    if(playerFight.getFighterByOrdreJeu().getMob() != null) {
+                                        player.sendMessage("Le monstre " + playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() + " passe son tour");
+                                    }
+                                    else if(playerFight.getFighterByOrdreJeu().getCollector() != null)
+                                    {
+                                        player.sendMessage("Le Percepteur " + playerFight.getFighterByOrdreJeu().getCollector().getFullName() + " passe son tour");
+                                    }
                                     playerFight.getStartTurn();
                                 } else {
                                     player.sendMessage("Le monstre ne joue plus, le combat n'était pas bloqué");

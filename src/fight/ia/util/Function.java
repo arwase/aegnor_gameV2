@@ -15,6 +15,7 @@ import fight.spells.SpellEffect;
 import fight.traps.Glyph;
 import game.action.GameAction;
 import game.world.World;
+import guild.Guild;
 import kernel.Constant;
 
 import java.util.*;
@@ -141,6 +142,46 @@ public class Function {
         int attack = fight.tryCastSpell(fighter, SS, target.getCell().getId());
         if (attack != 0)
             return attack;
+        return 0;
+    }
+
+    public int attackIfPossiblePerco(Fight fight, Fighter fighter, Fighter target, List<SortStats> spells) // 0 = Rien
+    {
+        if(fight == null || fighter == null || target == null)
+        {
+            return -1;
+        }
+        ArrayList<SortStats> SpellAttack = new ArrayList<>();
+        ArrayList<SortStats> SpellMalus = new ArrayList<>();
+        for(SortStats spell : spells)
+        {
+            if(spell.getSpellID() == 455 | spell.getSpellID() == 456 | spell.getSpellID() == 457 |spell.getSpellID() == 458)
+            {
+                SpellAttack.add(spell);
+            }
+            else if(spell.getSpellID() == 462)
+            {
+                SpellMalus.add(spell);
+            }
+        }
+        int dist = PathFinding.getDistanceBetweenTwoCase(fight.getMap(), fighter.getCell(), target.getCell());
+        int CurPa = fighter.getCurPa(fight);
+        for(SortStats spell : SpellMalus)
+        {
+            if(fight.canCastSpell1(fighter, spell, target.getCell(), -1) & CurPa >= spell.getPACost())
+            {
+                fight.tryCastSpell(fighter, spell, target.getCell().getId());
+                CurPa -= spell.getPACost();
+            }
+        }
+        for(SortStats spell : SpellAttack)
+        {
+            if(fight.canCastSpell1(fighter, spell, target.getCell(), -1) & CurPa >= spell.getPACost())
+            {
+                fight.tryCastSpell(fighter, spell, target.getCell().getId());
+                CurPa -= spell.getPACost();
+            }
+        }
         return 0;
     }
 
@@ -1698,6 +1739,31 @@ public class Function {
             return false;
         int buff = fight.tryCastSpell(fighter, SS, target.getCell().getId());
         if (buff != 0)
+            return false;
+        return true;
+    }
+
+    public boolean debuffIfPossiblePerco(Fight fight, Fighter fighter, Fighter target)
+    {
+        if (fight == null || fighter == null)
+            return false;
+        if (target == null)
+            return false;
+        SortStats SS = null;
+        if(target.getFightBuff().isEmpty())
+        {
+            return false;
+        }
+        Guild guild = World.world.getGuild(fighter.getCollector().getGuildId());
+        Map<Integer, SortStats> guildSpells = guild.getSpells();
+        if(guildSpells.get(460) != null)
+        {
+            SS = guildSpells.get(460);
+        }
+        if (SS == null)
+            return false;
+        int debuff = fight.tryCastSpell(fighter, SS, target.getCell().getId());
+        if (debuff != 0)
             return false;
         return true;
     }
@@ -3554,23 +3620,48 @@ public class Function {
         ArrayList<SortStats> sorts = new ArrayList<SortStats>();
         if (fighter.getMob() == null)
             return null;
-        for (Map.Entry<Integer, SortStats> S : fighter.getMob().getSpells().entrySet())
+        if(fighter.getCollector() != null)
         {
-            if (S.getValue().getSpellID() == 479)
-                continue;
-            if (S.getValue().getPACost() > fighter.getCurPa(fight))//si PA insuffisant
-                continue;
-            //if(S.getValue().getMaxPO() + fighter.getCurPM(fight) < distMin && S.getValue().getMaxPO() != 0)// si po max trop petite
-            //continue;
-            if (!LaunchedSpell.cooldownGood(fighter, S.getValue().getSpellID()))// si cooldown ok
-                continue;
-            if (S.getValue().getMaxLaunchbyTurn()
-                    - LaunchedSpell.getNbLaunch(fighter, S.getValue().getSpellID()) <= 0
-                    && S.getValue().getMaxLaunchbyTurn() > 0)// si nb tours ok
-                continue;
-            if (S.getValue().getSpell().getType() != 0)// si sort pas d'attaque
-                continue;
-            sorts.add(S.getValue());
+            for (Map.Entry<Integer, SortStats> S : World.world.getGuild(fighter.getCollector().getGuildId()).getSpells().entrySet())
+            {
+                if(S == null)
+                    continue;
+                if (S.getValue().getSpellID() == 479)
+                    continue;
+                if (S.getValue().getPACost() > fighter.getCurPa(fight))//si PA insuffisant
+                    continue;
+                //if(S.getValue().getMaxPO() + fighter.getCurPM(fight) < distMin && S.getValue().getMaxPO() != 0)// si po max trop petite
+                //continue;
+                if (!LaunchedSpell.cooldownGood(fighter, S.getValue().getSpellID()))// si cooldown ok
+                    continue;
+                if (S.getValue().getMaxLaunchbyTurn()
+                        - LaunchedSpell.getNbLaunch(fighter, S.getValue().getSpellID()) <= 0
+                        && S.getValue().getMaxLaunchbyTurn() > 0)// si nb tours ok
+                    continue;
+                if (S.getValue().getSpell().getType() != 0)// si sort pas d'attaque
+                    continue;
+                sorts.add(S.getValue());
+            }
+        }
+        else{
+            for (Map.Entry<Integer, SortStats> S : fighter.getMob().getSpells().entrySet())
+            {
+                if (S.getValue().getSpellID() == 479)
+                    continue;
+                if (S.getValue().getPACost() > fighter.getCurPa(fight))//si PA insuffisant
+                    continue;
+                //if(S.getValue().getMaxPO() + fighter.getCurPM(fight) < distMin && S.getValue().getMaxPO() != 0)// si po max trop petite
+                //continue;
+                if (!LaunchedSpell.cooldownGood(fighter, S.getValue().getSpellID()))// si cooldown ok
+                    continue;
+                if (S.getValue().getMaxLaunchbyTurn()
+                        - LaunchedSpell.getNbLaunch(fighter, S.getValue().getSpellID()) <= 0
+                        && S.getValue().getMaxLaunchbyTurn() > 0)// si nb tours ok
+                    continue;
+                if (S.getValue().getSpell().getType() != 0)// si sort pas d'attaque
+                    continue;
+                sorts.add(S.getValue());
+            }
         }
         ArrayList<SortStats> finalS = TriInfluenceSorts(fighter, sorts, fight);
 
@@ -4101,4 +4192,26 @@ public class Function {
         return infTot;
     }
 
+    public Fighter getEnnemyWithBuff(Fight fight, Fighter fighter) {
+        Map<Integer, Fighter> ennemies = fight.getTeam(fighter.getOtherTeam());
+        Map<Integer, Fighter> buffNumber = new HashMap<>();
+        int nbBuffMax = 0;
+        Fighter ennemieWithMaxBuff = null;
+        for (Fighter ennemie : ennemies.values())
+        {
+            if(ennemie.getFightBuff().size() > 0)
+            {
+                buffNumber.put(ennemie.getFightBuff().size(), ennemie);
+            }
+        }
+        for (Integer nbBuff : buffNumber.keySet())
+        {
+            if(nbBuffMax < nbBuff)
+            {
+                nbBuffMax = nbBuff;
+            }
+        }
+        ennemieWithMaxBuff = buffNumber.get(nbBuffMax);
+        return ennemieWithMaxBuff;
+    }
 }
