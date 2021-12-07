@@ -218,3 +218,4 @@ Version 3.2 (06/12/2021):
 Version 3.3 (07/12/2021):
 
 - Fix des Percepteurs (Attaque/Déplacement/Debuff/Soins/Malus)
+- Fix du Problème du nombre d'invocation en OneWindows

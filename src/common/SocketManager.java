@@ -2925,4 +2925,18 @@ public class SocketManager {
             }
         }
     }
+
+    public static void GAME_SEND_XC_PACKET(Fighter current, Player master) {
+        int nbInvoc = current.nbrInvoc;
+        int nbInvocMax = current.getPlayer().getTotalStats().getEffect(Constant.STATS_CREATURE);
+        String packet = "XC" + nbInvoc + "," + nbInvocMax + "|";
+        for(Fighter invoc : current.getFight().getFighters(current.getTeam()))
+        {
+            if((invoc.isMob() || invoc.isControllable()) &  invoc.getInvocator() == current)
+            {
+                packet += invoc.getId() + ";";
+            }
+        }
+        send(master, packet);
+    }
 }

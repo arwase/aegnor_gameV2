@@ -1672,6 +1672,7 @@ public class Fight {
             SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), master);
             SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master);
             SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), master);
+            SocketManager.GAME_SEND_XC_PACKET(current, master);
         }
         else {
             if (current.getPlayer().getCurrentCompagnon() != null) {
@@ -1685,6 +1686,7 @@ public class Fight {
             SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
             SocketManager.GAME_SEND_SL_LISTE(current);
             SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), current.getPlayer());
+            SocketManager.GAME_SEND_XC_PACKET(current, current.getPlayer());
         }
     }
 
