@@ -4956,7 +4956,7 @@ public class Player {
             if (O == null)
                 continue;
             //O.getPoidOfBaseItem(O.getPlayerId());
-            list.append(O.getGuid()).append(";").append(O.getQuantity()).append(";").append(O.getTemplate().getId()).append(";").append(O.parseStatsString()).append(";").append(obj.getValue()).append("|");
+            list.append(O.getGuid()).append(";").append(O.getQuantity()).append(";").append(O.getTemplate().getId()).append(";").append(O.parseStatsString()).append(";").append(obj.getValue()).append(";").append(O.getRarity()).append("|");
         }
 
         return (list.length() > 0 ? list.toString().substring(0, list.length() - 1) : list.toString());
