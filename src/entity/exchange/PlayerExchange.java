@@ -298,7 +298,7 @@ public class PlayerExchange extends Exchange {
         }
 
         String add = "|" + obj.getTemplate().getId() + "|"
-                + obj.parseStatsString();
+                + obj.parseStatsString() + "|" + obj.getRarity();
         SocketManager.GAME_SEND_EXCHANGE_OK(this.player1.getGameClient(), ok1, this.player1.getId());
         SocketManager.GAME_SEND_EXCHANGE_OK(this.player2.getGameClient(), ok1, this.player1.getId());
         SocketManager.GAME_SEND_EXCHANGE_OK(this.player1.getGameClient(), ok2, this.player2.getId());
@@ -308,12 +308,12 @@ public class PlayerExchange extends Exchange {
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player1, 'O', "+", ""
-                        + guid + "|" + couple.second);
+                        + guid + "|" + couple.second + "|" + obj.getRarity());
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player2.getGameClient(), 'O', "+", ""
                         + guid + "|" + couple.second + add);
                 return;
             }
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player1, 'O', "+", str);
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player1, 'O', "+", str + "|" + obj.getRarity());
             SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player2.getGameClient(), 'O', "+", str
                     + add);
             items1.add(new Couple<>(guid, qua));
@@ -322,12 +322,12 @@ public class PlayerExchange extends Exchange {
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player2, 'O', "+", ""
-                        + guid + "|" + couple.second);
+                        + guid + "|" + couple.second + "|" + obj.getRarity());
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player1.getGameClient(), 'O', "+", ""
                         + guid + "|" + couple.second + add);
                 return;
             }
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player2, 'O', "+", str);
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player2, 'O', "+", str + "|" + obj.getRarity());
             SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player1.getGameClient(), 'O', "+", str
                     + add);
             items2.add(new Couple<>(guid, qua));

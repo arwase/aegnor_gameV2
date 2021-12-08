@@ -224,3 +224,5 @@ Version 3.4 (08/12/2021):
 
 - Fix de l'exception d'echange PNJ on peut désormais échanger à nouveaux avec les PNJ contre des items
 - Fix de la prise en compte des stats des deux équipements maudit (Epée / Faux)
+- Ajout de la rareté quand on FM un objet (interface de FM)
+- Ajout de la rareté quand on fait un echange avec un joueur

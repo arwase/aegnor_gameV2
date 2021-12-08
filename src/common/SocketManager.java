@@ -1463,6 +1463,7 @@ public class SocketManager {
                                                   String signe, String s1) {
         String packet = "EMK" + type + signe;
         if (!s1.equals(""))
+
             packet += s1;
         send(out, packet);
 

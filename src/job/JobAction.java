@@ -549,7 +549,13 @@ public class JobAction {
 
         if (oldQuantity > 0) {
             this.ingredients.put(id, oldQuantity);
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(player, 'O', "+", id + "|" + oldQuantity);
+            int rarity = 0;
+            if(World.world.getGameObject(id) != null)
+            {
+                GameObject object = World.world.getGameObject(id);
+                rarity = object.getRarity();
+            }
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(player, 'O', "+", id + "|" + oldQuantity + "|" + rarity);
         } else {
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(player, 'O', "-", id + "");
         }
@@ -601,8 +607,14 @@ public class JobAction {
         q += qua;
         if (q > 0) {
             this.ingredients.put(guid, q);
+            int rarity = 0;
+            if(World.world.getGameObject(guid) != null)
+            {
+                GameObject object = World.world.getGameObject(guid);
+                rarity = object.getRarity();
+            }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", guid + "|"
-                    + q);
+                    + q + "|" + rarity);
         } else
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", guid + "");
     }
@@ -613,7 +625,13 @@ public class JobAction {
         q += qua;
         if (q > 0) {
             this.ingredients.put(guid, q);
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", guid + "|" + q);
+            int rarity = 0;
+            if(World.world.getGameObject(guid) != null)
+            {
+                GameObject object = World.world.getGameObject(guid);
+                rarity = object.getRarity();
+            }
+            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "+", guid + "|" + q + "|" + rarity);
         } else {
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", String.valueOf(guid));
         }
