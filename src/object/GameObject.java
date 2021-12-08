@@ -802,7 +802,7 @@ public class GameObject {
 
                 int statID = entry.getKey();
                 if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
-                        || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212)) {
+                        || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212) || getTemplate().getId() == 8992 || getTemplate().getId() == 8993) {
                     String[] modificable = template.getStrTemplate().split(",");
                     int cantMod = modificable.length;
                     for (int j = 0; j < cantMod; j++) {

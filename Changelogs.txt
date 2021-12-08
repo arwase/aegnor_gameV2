@@ -219,3 +219,8 @@ Version 3.3 (07/12/2021):
 
 - Fix des Percepteurs (Attaque/Déplacement/Debuff/Soins/Malus)
 - Fix du Problème du nombre d'invocation en OneWindows
+
+Version 3.4 (08/12/2021):
+
+- Fix de l'exception d'echange PNJ on peut désormais échanger à nouveaux avec les PNJ contre des items
+- Fix de la prise en compte des stats des deux équipements maudit (Epée / Faux)
