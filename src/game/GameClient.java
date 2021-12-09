@@ -2579,10 +2579,10 @@ public class GameClient {
 
         if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_EXCHANGE && value instanceof PlayerExchange.NpcExchange)
             ((PlayerExchange.NpcExchange) value).toogleOK(false);
-
-        if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_EXCHANGE && ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(true)!=0 )
-            ((PlayerExchange.NpcExchange) value).toogleOK(true);
-
+        if(this.player.getExchangeAction() != null) {
+            if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_EXCHANGE && ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getKamas(true) != 0)
+                ((PlayerExchange.NpcExchange) value).toogleOK(true);
+        }
 
         if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_NPC_PETS && value instanceof PlayerExchange.NpcExchangePets)
             ((PlayerExchange.NpcExchangePets) value).toogleOK(false);
@@ -6965,7 +6965,7 @@ public class GameClient {
                 ObjectTemplate template = object.getTemplate();
                 int set = template.getPanoId();
 
-                if (set >= 81 && set <= 92 && position != Constant.ITEM_POS_NO_EQUIPED) {
+                if (set >= 81 && set <= 92 && position == Constant.ITEM_POS_NO_EQUIPED) {
                     String[] stats = template.getStrTemplate().split(",");
 
                     for (String stat : stats) {
@@ -6978,6 +6978,19 @@ public class GameClient {
                         this.player.addObjectClassSpell(spell, effect, value);
                     }
                     this.player.addObjectClass(template.getId());
+                }
+                if((template.getId() == 8992 | template.getId() == 8993) && position != Constant.ITEM_POS_NO_EQUIPED) {
+                    String[] stats = template.getStrTemplate().split(",");
+
+                    for (String stat : stats) {
+                        String[] split = stat.split("#");
+                        int effect = Integer.parseInt(split[0], 16), spell = Integer.parseInt(split[1], 16);
+                        int value = Integer.parseInt(split[3], 16);
+                        if (effect == 285) {
+                            SocketManager.SEND_SB_SPELL_BOOST(this.player, effect + ";" + spell + ";" + value);
+                            this.player.addObjectClassSpell(spell, effect, value);
+                        }
+                    }
                 }
                 if (set >= 81 && set <= 92 && position == Constant.ITEM_POS_NO_EQUIPED) {
                     String[] stats = template.getStrTemplate().split(",");
