@@ -69,6 +69,67 @@ public class Constant {
     public static final int ITEM_POS_DOFUS6 = 14;
     public static final int ITEM_POS_BOUCLIER = 15;
     public static final int ITEM_POS_DRAGODINDE = 16;
+
+    public static String GetNameByPos(int pos) {
+        String equipement="";
+        switch(pos){
+            case ITEM_POS_NO_EQUIPED:
+                equipement = "Pas équipé";
+                break;
+            case ITEM_POS_AMULETTE:
+                equipement = "Amulette";
+                break;
+            case ITEM_POS_ARME:
+                equipement = "Arme";
+                break;
+            case ITEM_POS_ANNEAU1:
+                equipement = "Anneau 1";
+                break;
+            case ITEM_POS_CEINTURE:
+                equipement = "Ceinture";
+                break;
+            case ITEM_POS_ANNEAU2:
+                equipement = "Anneau 2";
+                break;
+            case ITEM_POS_BOTTES:
+                equipement = "Botte";
+                break;
+            case ITEM_POS_COIFFE:
+                equipement = "Coiffe";
+                break;
+            case ITEM_POS_CAPE:
+                equipement = "Cape";
+                break;
+            case ITEM_POS_FAMILIER:
+                equipement = "Familier";
+                break;
+            case ITEM_POS_DOFUS1:
+                equipement = "Dofus 1";
+                break;
+            case ITEM_POS_DOFUS2:
+                equipement = "Dofus 2";
+                break;
+            case ITEM_POS_DOFUS3:
+                equipement = "Dofus 3";
+                break;
+            case ITEM_POS_DOFUS4:
+                equipement = "Dofus 4";
+                break;
+            case ITEM_POS_DOFUS5:
+                equipement = "Dofus 5";
+                break;
+            case ITEM_POS_DOFUS6:
+                equipement = "Dofus 6";
+                break;
+            case ITEM_POS_BOUCLIER:
+                equipement = "Bouclier";
+                break;
+            case ITEM_POS_DRAGODINDE:
+                equipement = "Dragodinde";
+                break;
+        }
+        return equipement;
+    }
     //Objets dons, mutations, mal�diction, ..
     public static final int ITEM_POS_MUTATION = 20;
     public static final int ITEM_POS_ROLEPLAY_BUFF = 21;
@@ -240,6 +301,113 @@ public class Constant {
     public static final int ITEM_TYPE_ARME_MAGIQUE = 114;
     public static final int ITEM_TYPE_FRAGM_AME_SHUSHU = 115;
     public static final int ITEM_TYPE_POTION_FAMILIER = 116;
+
+    //Monstre
+    public static final int[] MONSTRE_TYPE_DIVERS = {-1,29,32,18,28,27,0,1,68,50,79};
+    public static final int[] MONSTRE_TYPE_CHAMPS = {11,47,9,10,45,46};
+    public static final int[] MONSTRE_TYPE_MONTAGNE = {16,12,52,6,13,5};
+    public static final int[] MONSTRE_TYPE_FORET = {38,37,49,39,4,22,7};
+    public static final int[] MONSTRE_TYPE_PLAINE = {24,23,51,21,2};
+    public static final int[] MONSTRE_TYPE_LANDES = {25};
+    public static final int[] MONSTRE_TYPE_ILE_MOON = {43,42,41,20,40};
+    public static final int[] MONSTRE_TYPE_ILE_WABBIT = {3};
+    public static final int[] MONSTRE_TYPE_PANDALA = {36,35,34,57,56,55,59};
+    public static final int[] MONSTRE_TYPE_HUMAIN = {26,30,19};
+    public static final int[] MONSTRE_TYPE_NUIT = {8,53,54,17};
+    public static final int[] MONSTRE_TYPE_MARECAGE = {48,44};
+    public static final int[] MONSTRE_TYPE_VILLE = {33,31};
+    public static final int[] MONSTRE_TYPE_VILLAGE_ELEVEUR = {60,61};
+    public static final int[] MONSTRE_TYPE_RESSOURCE_PROTECTEUR = {62,63,64,65,66};
+    public static final int[] MONSTRE_TYPE_ILE_MINO = {67};
+    public static final int[] MONSTRE_TYPE_PLAGES = {69};
+    public static final int[] MONSTRE_TYPE_INCARNAM ={70};
+    public static final int[] MONSTRE_TYPE_ILE_OTO = {71,72,73,74,75,76,77};
+    public static final int[] MONSTRE_TYPE_ARCHI = {78};
+
+    public static final int[] FILTER_MONSTRE_SPE1 = ArrayUtils.addAll(MONSTRE_TYPE_DIVERS,MONSTRE_TYPE_ARCHI);
+    public static final int[] FILTER_MONSTRE_SPE2 = ArrayUtils.addAll(FILTER_MONSTRE_SPE1,MONSTRE_TYPE_HUMAIN);
+    public static final int[] FILTER_MONSTRE_SPE = ArrayUtils.addAll(FILTER_MONSTRE_SPE2,MONSTRE_TYPE_RESSOURCE_PROTECTEUR);
+
+    public static final int MONSTRES_NON_CLASSE = -1;
+    public static final int MONSTRES_INVOCATIONS_DE_CLASSE = 0;
+    public static final int MONSTRES_BOSS = 1;
+    public static final int MONSTRES_BANDITS = 2;
+    public static final int MONSTRES_WABBITS = 3;
+    public static final int MONSTRES_DRAGOEUFS = 4;
+    public static final int MONSTRES_BWORKS = 5;
+    public static final int MONSTRES_GOBELINS = 6;
+    public static final int MONSTRES_GELEES = 7;
+    public static final int MONSTRES_DE_LA_NUIT = 8;
+    public static final int MONSTRES_BOUFTOUS = 9;
+    public static final int MONSTRES_PLANTES_DES_CHAMPS = 10;
+    public static final int MONSTRES_LARVES = 11;
+    public static final int MONSTRES_KWAKS = 12;
+    public static final int MONSTRES_CRAQUELEURS = 13;
+    public static final int MONSTRES_COCHONS = 16;
+    public static final int MONSTRES_CHAFERS = 17;
+    public static final int MONSTRES_DOPEULS_TEMPLE = 18;
+    public static final int MONSTRES_PNJS = 19;
+    public static final int MONSTRES_KANNIBOULS_DE_ILE_DE_MOON = 20;
+    public static final int MONSTRES_DRAGODINDE = 21;
+    public static final int MONSTRES_ABRAKNYDIEN = 22;
+    public static final int MONSTRES_BLOP = 23;
+    public static final int MONSTRES_DES_PLAINES_DE_CANIA = 24;
+    public static final int MONSTRES_DES_LANDES = 25;
+    public static final int MONSTRES_GARDES = 26;
+    public static final int MONSTRES_DES_CONQUETES_DE_TERRITOIRES = 27;
+    public static final int MONSTRES_DU_VILLAGE_DES_DOPEULS = 28;
+    public static final int MONSTRES_TUTORIAL = 29;
+    public static final int MONSTRES_BRIGANDINS = 30;
+    public static final int MONSTRE_DES_EGOUTS = 31;
+    public static final int MONSTRES_AVIS_DE_RECHERCHE = 32;
+    public static final int MONSTRES_PIOUS = 33;
+    public static final int MONSTRES_DU_VILLAGE_DE_PANDALA = 34;
+    public static final int MONSTRES_DE_PANDALA = 35;
+    public static final int MONSTRES_FANTOME_DE_PANDALA = 36;
+    public static final int MONSTRES_SCARAFEUILLE = 37;
+    public static final int MONSTRES_ARAKNE = 38;
+    public static final int MONSTRES_MULOU = 39;
+    public static final int MONSTRES_TORTUES_DE_MOON = 40;
+    public static final int MONSTRES_PIRATES_DE_MOON = 41;
+    public static final int MONSTRES_PLANTES_DE_MOON = 42;
+    public static final int MONSTRES_DE_MOON = 43;
+    public static final int MONSTRES_CROCODAILLES = 44;
+    public static final int MONSTRES_CHAMPIGNONS = 45;
+    public static final int MONSTRES_TOFUS = 46;
+    public static final int MONSTRES_MOSKITOS = 47;
+    public static final int MONSTRES_DES_MARECAGES = 48;
+    public static final int MONSTRES_ANIMAUX_DE_LA_FORET = 49;
+    public static final int MONSTRES_DE_QUETE = 50;
+    public static final int MONSTRES_CORBACS = 51;
+    public static final int MONSTRES_GARDIENS_DES_VILLAGES_DE_KWAKS = 52;
+    public static final int MONSTRES_FANTOMES = 53;
+    public static final int MONSTRES_FAMILIERS_FANTOMES = 54;
+    public static final int MONSTRES_PLANTES_DE_PANDALA = 55;
+    public static final int MONSTRES_KITSOUS = 56;
+    public static final int MONSTRES_PANDAWAS = 57;
+    public static final int MONSTRES_FIREFOUX = 59;
+    public static final int MONSTRES_KOALAKS = 60;
+    public static final int MONSTRES_DES_CAVERNES = 61;
+    public static final int MONSTRES_PROTECTEURS_DES_CEREALES = 62;
+    public static final int MONSTRES_PROTECTEURS_DES_MINERAIS = 63;
+    public static final int MONSTRES_PROTECTEURS_DES_ARBRES = 64;
+    public static final int MONSTRES_PROTECTEURS_DES_POISSONS = 65;
+    public static final int MONSTRES_PROTECTEURS_DES_PLANTES = 66;
+    public static final int MONSTRES_MINOS = 67;
+    public static final int MONSTRES_DE_NOWEL = 68;
+    public static final int MONSTRES_DES_PLAGES = 69;
+    public static final int MONSTRES_DE_LA_ZONE_DES_DEBUTANTS = 70;
+    public static final int MONSTRES_DES_PLAINES_HERBEUSES = 71;
+    public static final int MONSTRES_DE_LA_PLAGE_DE_CORAIL = 72;
+    public static final int MONSTRES_DE_LA_TOURBIERE_SANS_FOND = 73;
+    public static final int MONSTRES_DE_LA_JUNGLE_SOMBRE = 74;
+    public static final int MONSTRES_DE_ARBRE_HAKAM = 75;
+    public static final int MONSTRES_DE_ARCHE_DOTOMAI = 76;
+    public static final int MONSTRES_DE_LA_CANOPEE_EMBRUMEE = 77;
+    public static final int MONSTRES_LES_ARCHIMONSTRES = 78;
+    public static final int MONSTRES_TO_VERIF = 79;
+
+
     //Alignement
     public static final int ALIGNEMENT_NEUTRE = -1;
     public static final int ALIGNEMENT_BONTARIEN = 1;
@@ -1327,7 +1495,7 @@ public class Constant {
         return start;
     }
 
-    public static int getReqPtsToBoostStatsByClass(int classID, int statID,
+    public static int getReqPtsToBoostStatsByClassold(int classID, int statID,
                                                    int val) {
         switch (statID) {
             case 11://Vita
@@ -1820,6 +1988,24 @@ public class Constant {
         return 5;
     }
 
+    public static int getReqPtsToBoostStatsByClass(int classID, int statID,
+                                                      int val) {
+        switch (statID) {
+            case 11://Vita
+                return 1;
+            case 12://Sage
+                return 1;
+            case 10://Force
+                return 1;
+            case 13://Chance
+                return 1;
+            case 14://Agilit�
+                return 1;
+            case 15://Intelligence
+                return 1;
+        }
+        return 5;
+    }
 
     public static Monster.TipoGrupo getTipoGrupoMob(int id) {
         switch (id) {
@@ -2356,6 +2542,10 @@ public class Constant {
     }
 
     public static Stats getMountStats(int color, int lvl) {
+        double ratiobaseStats = 1.25;
+        double ratiobaseVita = 2;
+        double ratiobaseInit = 10;
+
         Stats stats = new Stats();
         switch (color) {
             //Amande sauvage
@@ -3251,7 +3441,6 @@ public class Constant {
         return a;
     }
 
-
     public static String getStringColorDragodinde(int color) {
         switch (color) {
             case 1: // Dragodinde Amande Sauvage
@@ -3696,7 +3885,7 @@ public class Constant {
                 random.add(pct, Integer.parseInt(str));
             }
             C = random.get();
-            player.sendMessage("Merci de crier auprès du staff que C = 0, A = " + A + ", et B = " + B + ". Valeur finale : " + C + ". Message bien évidement sérieux.");
+            //player.sendMessage("Merci de crier auprès du staff que C = 0, A = " + A + ", et B = " + B + ". Valeur finale : " + C + ". Message bien évidement sérieux.");
 
             return C;
         }

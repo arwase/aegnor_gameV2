@@ -3,8 +3,6 @@ package job;
 import client.Player;
 import common.SocketManager;
 
-import java.util.logging.Logger;
-
 public class JobCraft {
 
     public Player player;
@@ -18,7 +16,7 @@ public class JobCraft {
         this.player = player;
 
         this.thread = new Thread(() -> {
-            try { Thread.sleep(1200); } catch(Exception ignored) {
+            try { Thread.sleep(150); } catch(Exception ignored) {
                 ignored.printStackTrace();
             }
             try {
@@ -32,7 +30,7 @@ public class JobCraft {
                 e.printStackTrace();
                 System.out.println(e.getMessage());
             }
-            try { Thread.sleep(1200); } catch(Exception ignored) { }
+            try { Thread.sleep(150); } catch(Exception ignored) { }
             if (!itsOk) repeat(time+1, time, player);
         });
         this.thread.start();
@@ -45,9 +43,11 @@ public class JobCraft {
     }
 
     public void repeat(final int time1, final int time2, final Player player) {
+        this.player.sendMessage("La création est instantannée, cela peut créer un leger freeze de l'interface");
         final int j = time1 - time2;
         this.jobAction.player = player;
         this.jobAction.isRepeat = true;
+        boolean isOneShotCraft = false;
         if (this.jobAction.broke || this.jobAction.broken || player.getExchangeAction() == null || !player.isOnline()) {
             if (player.getExchangeAction() == null)
                 this.jobAction.broken = true;
@@ -56,13 +56,15 @@ public class JobCraft {
             this.end();
             return;
         } else {
-            SocketManager.GAME_SEND_EA_PACKET(this.jobAction.player, time2 + "");
-            this.jobAction.craft(this.jobAction.isRepeat, j);
+                SocketManager.GAME_SEND_EA_PACKET(this.jobAction.player, 0 + "");
+                this.jobAction.craft(this.jobAction.isRepeat, time1-1);
+                isOneShotCraft = true;
+
         }
 
-        if (time2 <= 0) this.end();
+        if (time2 <= 0 || isOneShotCraft) this.end();
         else {
-            try { Thread.sleep(1200); } catch(Exception ignored) { }
+            try { Thread.sleep(150); } catch(Exception ignored) { }
             this.repeat(time1, (time2 - 1), player);
         }
     }

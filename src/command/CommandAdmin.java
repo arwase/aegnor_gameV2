@@ -12,7 +12,6 @@ import command.administration.Group;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
-import database.dynamics.data.MapData;
 import entity.Collector;
 import entity.monster.Monster;
 import entity.monster.Monster.MobGrade;
@@ -42,12 +41,11 @@ import quest.QuestPlayer;
 import quest.QuestStep;
 import util.lang.Lang;
 
-import javax.swing.text.StyledEditorKit;
-import javax.xml.crypto.Data;
-import java.io.Console;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
+import java.util.Set;
 
 public class CommandAdmin extends AdminUser {
 
@@ -2172,7 +2170,7 @@ public class CommandAdmin extends AdminUser {
             {
                 this.sendMessage("Un reboot est déjà programmé.");
             } else if (OffOn == 1 && !this.isTimerStart()) {
-                if (time <= 15) {
+                if (time <= 5) {
                     for(Player player : World.world.getOnlinePlayers()) {
                         player.sendServerMessage(Lang.get(player, 14));
                         player.send("M13");
@@ -2192,7 +2190,7 @@ public class CommandAdmin extends AdminUser {
                 this.setTimerStart(false);
                 for(Player player : World.world.getOnlinePlayers())
                     player.sendServerMessage(Lang.get(player, 15));
-                Main.INSTANCE.setFightAsBlocked(true);
+                Main.INSTANCE.setFightAsBlocked(false);
                 this.sendMessage("Reboot arrêté.");
             } else if (OffOn == 0 && !this.isTimerStart()) {
                 this.sendMessage("Aucun reboot n'est lancé.");
@@ -3876,7 +3874,7 @@ public class CommandAdmin extends AdminUser {
                     SocketManager.GAME_SEND_BN(getPlayer());
                     return;
                 }
-                SocketManager.ENVIAR_ÑJ_STATS_DEFECTO_MOB(getPlayer(), mobModelo.strStatsTodosMobs());
+                SocketManager.ENVIAR_NJ_STATS_DEFECTO_MOB(getPlayer(), mobModelo.strStatsTodosMobs());
             } catch (Exception e) {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est survenue");
         } else if(command.equalsIgnoreCase("DEL_FIGHT_POS"))

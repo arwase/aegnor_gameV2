@@ -21,16 +21,18 @@ public class House {
     private String key;
     private int houseMapId;
     private int houseCellId;
+    private long saleBase;
     private ArrayList<Short> houseMaps = new ArrayList<Short>();
     //Droits de chaques maisons
     private Map<Integer, Boolean> haveRight = new TreeMap<>();
 
-    public House(int id, short mapId, int cellId, int houseMapId, int houseCellId, String houseMaps) {
+    public House(int id, short mapId, int cellId, int houseMapId, int houseCellId, String houseMaps,long saleBase) {
         this.id = id;
         this.mapId = mapId;
         this.cellId = cellId;
         this.houseMapId = houseMapId;
         this.houseCellId = houseCellId;
+        this.saleBase = saleBase;
         for (String str : houseMaps.split(";")) {
             try {
                 this.houseMaps.add(Short.parseShort(str));
@@ -127,6 +129,10 @@ public class House {
         return this.houseMapId;
     }
 
+    public long getSaleBase() {
+        return this.saleBase;
+    }
+
     public int getHouseCellId() {
         return this.houseCellId;
     }
@@ -206,4 +212,6 @@ public class House {
             }
         }
     }
+
+
 }

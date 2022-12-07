@@ -73,7 +73,7 @@ public class SocketManager {
     public static void GAME_SEND_OCK_ACTUALISED_OBJECT(Player player, GameObject obj){
         if (obj == null)
             return;
-        String packet = "OCK" + obj.stringObjetoConGuiño();
+        String packet = "OCK" + obj.stringObjetoConGuino();
         send(player, packet);
     }
 
@@ -135,6 +135,15 @@ public class SocketManager {
         SocketManager.GAME_SEND_Ow_PACKET(perso);
         send(perso, packet);
 
+    }
+
+    public static void GAME_SEND_SETS_PACKET(Player perso) {
+        //String packet = perso.getAsPacket();
+        String packet = perso.SetsPacket();
+        if(packet.contains("|")) {
+            System.out.println(packet);
+            send(perso, packet);
+        }
     }
 
     public static void GAME_SEND_STATS_PACKET_TO_LEADER(Player perso, Player leader) {
@@ -274,7 +283,6 @@ public class SocketManager {
                                          String key) {
         String packet = "GDM|" + id + "|" + date + "|" + key;
         send(out, packet);
-
     }
 
     public static void GAME_SEND_MAPDATA_COMPLETE(Player player)
@@ -286,7 +294,7 @@ public class SocketManager {
                 .append(map.getMusicID()).append('|').append(map.getAmbianceID()).append('|').append(map.getOutDoor()).append('|')
                 .append(map.getCapabilities()).append('|').append(map.getMapData()).append('|').append('1');
         send(player, packet.toString());
-
+        //System.out.println(packet.toString());
     }
 
     public static void GAME_SEND_GDK_PACKET(GameClient out) {
@@ -920,6 +928,7 @@ public class SocketManager {
             if (f.getPlayer() == null || !f.getPlayer().isOnline())
                 continue;
             send(f.getPlayer(), packet);
+            //System.out.println(packet);
         }
 
     }
@@ -1017,9 +1026,9 @@ public class SocketManager {
                 continue;
             send(f.getPlayer(), packet);
         }
-
+        System.out.println(packet);
     }
-    public static void ENVIAR_ÑJ_STATS_DEFECTO_MOB(Player perso, String str) {
+    public static void ENVIAR_NJ_STATS_DEFECTO_MOB(Player perso, String str) {
         String packet = "ÑJ" + str;
         send(perso, packet);
     }
@@ -1286,6 +1295,7 @@ public class SocketManager {
         send(out, packet);
 
     }
+
 
     public static void GAME_SEND_ECK_PACKET(GameClient out, int type, String str) {
         String packet = "ECK" + type;
@@ -1735,10 +1745,10 @@ public class SocketManager {
     public static void GAME_SEND_JX_PACKET(Player perso, ArrayList<JobStat> SMs) {
         StringBuilder packet = new StringBuilder();
         packet.append("JX");
+
         for (JobStat sm : SMs)
             packet.append("|").append(sm.getTemplate().getId()).append(";").append(sm.get_lvl()).append(";").append(sm.getXpString(";")).append(";");
         send(perso, packet.toString());
-
     }
 
     public static void GAME_SEND_JO_PACKET(Player perso,
@@ -1753,6 +1763,7 @@ public class SocketManager {
     public static void GAME_SEND_JO_PACKET(Player perso, JobStat SM) {
         String packet = "JO" + SM.getPosition() + "|" + SM.getOptBinValue()
                 + "|" + SM.getSlotsPublic();
+
         send(perso, packet);
     }
 

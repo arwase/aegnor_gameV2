@@ -3,8 +3,9 @@ package database.statics.data;
 import com.zaxxer.hikari.HikariDataSource;
 import database.statics.AbstractDAO;
 import entity.pet.PetEntry;
-import exchange.transfer.DataType;
+import exchange.transfer.DataQueue;
 import game.world.World;
+import kernel.Main;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -73,7 +74,7 @@ public class PetData extends AbstractDAO<PetEntry> {
 
             //System.out.println("On a soit disant reussi " + id + " "+ template+ " "+ lastEatDate +" " + p);
         } catch (SQLException e) {
-            System.out.println("Execution: " + e);
+            //System.out.println("Execution: " + e);
             super.sendError("PetData add", e);
         } finally {
             close(p);
@@ -94,8 +95,17 @@ public class PetData extends AbstractDAO<PetEntry> {
     }
 
     public int getNextId() {
-        //return Database.getStatics().getWorldEntityData().getNextPetId();
-        final DataType<Integer> queue = new DataType<>((byte) 5);
+        final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 5);
+        try {
+            synchronized(queue) {
+                long count = DataQueue.count();
+                DataQueue.queues.put(count, queue);
+                Main.exchangeClient.send("DI" + queue.getType() + count);
+                queue.wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return queue.getValue();
     }
 }

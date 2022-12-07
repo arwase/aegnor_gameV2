@@ -16,10 +16,9 @@ import game.world.World.Couple;
 import hdv.HdvEntry;
 import job.JobAction;
 import kernel.Constant;
+import kernel.Logging;
 import object.entity.Fragment;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -144,7 +143,7 @@ public class GameObject {
         if(this.modification == -1)
             this.modification = 1;
     }
-    public String stringObjetoConGuiño() {
+    public String stringObjetoConGuino() {
         StringBuilder str = new StringBuilder();
         try {
             str.append(Integer.toHexString(guid)).append("~")
@@ -160,7 +159,7 @@ public class GameObject {
                     str.append("~").append(parseStatsString()).append("~").append(getTemplate().getPrice() / 10);
             str.append(";");
         } catch (Exception e) {
-            System.out.println("OBJETO BUG stringObjetoConGuiño " + guid + " Exception: " + e.toString());
+            //System.out.println("OBJETO BUG stringObjetoConGuiño " + guid + " Exception: " + e.toString());
         }
         return str.toString();
     }
@@ -328,7 +327,7 @@ public class GameObject {
                             statMax = pets.getMax();
                             if (statMax < Integer.parseInt(stats[1], 16) && this.getTemplate().getId() != 6894) {
                                 //System.out.println(this.getTemplate().getName() + " " +statMax + " plus petit que " + Integer.parseInt(stats[1], 16));
-                                System.out.println("["+ this.getGuid() +"]"+ "!! Familier illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " alors que max " + statMax);
+                                //System.out.println("["+ this.getGuid() +"]"+ "!! Familier illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " alors que max " + statMax);
                                 txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [corrigé]");
                                 Stats.addOneStat(id, statMax);
                             }
@@ -366,7 +365,7 @@ public class GameObject {
                                 Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
                             }
                             else {
-                                System.out.println("["+ this.getGuid() +"]"+ "!! Item illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " Donc ligne a " + poidligne + " alors que max " + statMax);
+                                //System.out.println("["+ this.getGuid() +"]"+ "!! Item illégal :"+  this.template.getName() + " On ignore la stat "+ id + " Car valeur " + Integer.parseInt(stats[1], 16) + " Donc ligne a " + poidligne + " alors que max " + statMax);
                                 txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [Use-faille]");
                             }
                         }
@@ -487,7 +486,7 @@ public class GameObject {
                 objCOll.add(object);
             }
             else{
-                System.out.println( object.getGuid() +" - " +lol);
+                //System.out.println( object.getGuid() +" - " +lol);
             }
         }
 
@@ -533,7 +532,9 @@ public class GameObject {
         }
         if (quantity >= 100000)
         {
-            quantity = 1;
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("Object", "Faille : Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
+            quantity = 99999;
         }
         this.quantity = quantity;
         this.setModification();
@@ -652,7 +653,7 @@ public class GameObject {
                 isFirst = false;
             }
         }*/
-
+        if(Effects != null) {
             for (SpellEffect SE : Effects) {
                 if (!isFirst)
                     stats.append(",");
@@ -674,7 +675,8 @@ public class GameObject {
                 }
                 isFirst = false;
             }
-
+        }
+        if(txtStats != null) {
             for (Entry<Integer, String> entry : txtStats.entrySet()) {
                 if (!isFirst)
                     stats.append(",");
@@ -707,22 +709,18 @@ public class GameObject {
                             stats.append(Integer.toHexString(entry.getKey())).append(entry.getValue());
                         else {
                             stats.append(Integer.toHexString(entry.getKey())).append(Formulas.convertToDate(Long.parseLong(entry.getValue())));
-                            System.out.println("date " + Formulas.convertToDate(Long.parseLong(entry.getValue())) + " " + Integer.toHexString(entry.getKey()));
+                            // System.out.println("date " + Formulas.convertToDate(Long.parseLong(entry.getValue())) + " " + Integer.toHexString(entry.getKey()));
                         }
                     }
-                } else if(entry.getKey() == Constant.APPARAT_ITEM) {
+                } else if (entry.getKey() == Constant.APPARAT_ITEM) {
                     stats.append(Integer.toHexString(entry.getKey())).append("#0#0#").append(Integer.toHexString(Integer.parseInt(entry.getValue())));
-                }
-                else if ((entry.getKey() == 970) || (entry.getKey() == 971) || (entry.getKey() == 972) || (entry.getKey() == 973) || (entry.getKey() == 974))
-                {
+                } else if ((entry.getKey() == 970) || (entry.getKey() == 971) || (entry.getKey() == 972) || (entry.getKey() == 973) || (entry.getKey() == 974)) {
                     int value = Integer.parseInt(entry.getValue());
                     int value2 = Integer.parseInt(entry.getValue(), 16);
                     int statid = entry.getKey();
-                    if(statid == 970)
-                    {
+                    if (statid == 970) {
                         stats.append(Integer.toHexString(statid)).append("#0#0#").append(Integer.toHexString(Integer.parseInt(entry.getValue())));
-                    }
-                    else {
+                    } else {
                         stats.append(Integer.toHexString(statid)).append("#0#0#").append(value);
                     }
                     if (statid == 973) setObvijevanPos(value2);
@@ -787,7 +785,9 @@ public class GameObject {
                 }
                 isFirst = false;
             }
+        }
 
+        if(txtStats != null) {
             for (Entry<Integer, Integer> entry : SoulStats.entrySet()) {
                 if (!isFirst)
                     stats.append(",");
@@ -798,6 +798,9 @@ public class GameObject {
                     stats.append(Integer.toHexString(Constant.STATS_NIVEAU)).append("#").append(Integer.toHexString(entry.getKey())).append("#").append("0").append("#").append(Integer.toHexString(entry.getValue()));
                 isFirst = false;
             }
+        }
+
+        if(txtStats != null) {
             for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
 
                 int statID = entry.getKey();
@@ -811,11 +814,8 @@ public class GameObject {
                             String jet = "0d0+" + Integer.parseInt(mod[1], 16);
                             if (!isFirst) {
                                 stats.append(",");
-                            }
-                            else
-                            {
-                                if(stats.length() > 0)
-                                {
+                            } else {
+                                if (stats.length() > 0) {
                                     stats = new StringBuilder();
                                 }
                             }
@@ -832,31 +832,31 @@ public class GameObject {
                     } else if ((statID == 970) || (statID == 971) || (statID == 972)
                             || (statID == 973) || (statID == 974)) {
                         int jet = entry.getValue();
-                        if(statID == 970)
-                        {
+                        if (statID == 970) {
                             stats.append(Integer.toHexString(statID)).append("#0#0#").append(Integer.toHexString(jet));
-                        }
-                        else {
+                        } else {
                             stats.append(Integer.toHexString(statID)).append("#0#0#").append(jet);
                         }
                         if (statID == 973)
                             setObvijevanPos(Integer.parseInt(String.valueOf(jet), 16));
                         if (statID == 972)
                             setObvijevanLook(jet);
-                        if(statID == 970)
+                        if (statID == 970)
                             setObvijevanId(jet);
-                    } else  if (statID == Constant.STATS_TURN) {
+                    } else if (statID == Constant.STATS_TURN) {
                         String jet = "0d0+" + entry.getValue();
                         stats.append(Integer.toHexString(statID)).append("#");
                         stats.append("0#0#").append(Integer.toHexString(entry.getValue())).append("#").append(jet);
                     } else {
-                            String jet = "0d0+" + entry.getValue();
-                            stats.append(Integer.toHexString(statID)).append("#");
-                            stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
-                            isFirst = false;
+                        String jet = "0d0+" + entry.getValue();
+                        stats.append(Integer.toHexString(statID)).append("#");
+                        stats.append(Integer.toHexString(entry.getValue())).append("#0#0#").append(jet);
+                        isFirst = false;
                     }
                 }
             }
+        }
+
         return stats.toString();
     }
 
@@ -1787,15 +1787,9 @@ public class GameObject {
 
         if(this.getEffects().size() == 0 && other.getEffects().size() == 0)
         {
-            //System.out.println("Bizarrement ici");
             return true;
         }
         else {
-
-            System.out.println(other.getGuid());
-
-            System.out.println(this.getGuid());
-
             boolean test = false;
             for(SpellEffect effect : this.getEffects()){
                 //System.out.println("Item testé Degat "+ effect.getEffectID() + " Degat " + effect.getValue()  );

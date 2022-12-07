@@ -76,16 +76,28 @@ public class HouseData extends AbstractDAO<House> {
                 if (house == null)
                     continue;
                 if (owner != 0 && World.world.getAccount(owner) == null) {
-                    (new Exception("La maison " + id
-                            + " a un propriétaire inexistant.")).printStackTrace();
+
+                    //(new Exception("La maison " + id
+                    //        + " a un propriétaire inexistant.")).printStackTrace();
+                    removeHouse(owner,id);
+                    int pricebase = (int) World.world.getHouse(id).getSaleBase();
+                    System.out.println("La maison "+ id +" a été remise sur le marché car propriétaire inexistant a une valeur de " + pricebase);
+
+                    house.setOwnerId(0);
+                    house.setSale(pricebase);
+                    house.setGuildId(0);
+                    house.setAccess(0);
+                    house.setKey("-");
+                    house.setGuildRightsWithParse(0);                }
+                else{
+                    house.setOwnerId(owner);
+                    house.setSale(sale);
+                    house.setGuildId(guild);
+                    house.setAccess(access);
+                    house.setKey(key);
+                    house.setGuildRightsWithParse(guildRights);
+                    nbr++;
                 }
-                house.setOwnerId(owner);
-                house.setSale(sale);
-                house.setGuildId(guild);
-                house.setAccess(access);
-                house.setKey(key);
-                house.setGuildRightsWithParse(guildRights);
-                nbr++;
             }
         } catch (SQLException e) {
             super.sendError("HouseData load", e);
@@ -172,6 +184,22 @@ public class HouseData extends AbstractDAO<House> {
         try {
             p = getPreparedStatement("UPDATE `houses` SET `guild_rights`='0', `guild_id`='0' WHERE `guild_id`=?");
             p.setInt(1, GuildID);
+            execute(p);
+        } catch (SQLException e) {
+            super.sendError("HouseData removeGuild", e);
+        } finally {
+            close(p);
+        }
+    }
+
+    public void removeHouse(int OwnerID,int houseId) {
+        Long pricebase = World.world.getHouse(houseId).getSaleBase();
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE `houses` SET `owner_id`='0',`guild_rights`='0', `sale`=?, `key`='-', `guild_id`='0' WHERE `owner_id`=? and `houseId`=?");
+            p.setLong(1, pricebase);
+            p.setInt(2, OwnerID);
+            p.setInt(3, houseId);
             execute(p);
         } catch (SQLException e) {
             super.sendError("HouseData removeGuild", e);

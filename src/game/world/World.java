@@ -1,22 +1,20 @@
 package game.world;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import client.Classe;
-import common.*;
-import kernel.Boutique;
-import org.apache.commons.lang3.ArrayUtils;
-import org.slf4j.LoggerFactory;
 import area.Area;
 import area.SubArea;
 import area.map.GameMap;
 import area.map.entity.*;
 import area.map.entity.InteractiveObject.InteractiveObjectTemplate;
+import area.map.labyrinth.Hotomani;
 import area.map.labyrinth.Minotoror;
 import area.map.labyrinth.PigDragon;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import client.Account;
+import client.Classe;
 import client.Player;
 import client.other.Stats;
+import common.*;
 import database.Database;
 import entity.Collector;
 import entity.Prism;
@@ -34,6 +32,8 @@ import guild.Guild;
 import hdv.Hdv;
 import hdv.HdvEntry;
 import job.Job;
+import command.AzuriomCommands;
+import kernel.Boutique;
 import kernel.Config;
 import kernel.Constant;
 import object.GameObject;
@@ -41,6 +41,11 @@ import object.ObjectSet;
 import object.ObjectTemplate;
 import object.entity.Fragment;
 import object.entity.SoulStone;
+import org.apache.commons.lang3.ArrayUtils;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
+import org.slf4j.LoggerFactory;
+import other.Sets;
 import other.Titre;
 import util.TimerWaiter;
 
@@ -57,6 +62,7 @@ public class World {
     public final static World world = new World();
 
     public Logger logger = (Logger) LoggerFactory.getLogger(World.class);
+
 
     private Map<Integer, Account>    accounts    = new HashMap<>();
     private Map<Integer, Player>     players     = new HashMap<>();
@@ -78,6 +84,7 @@ public class World {
     private Map<Integer, ArrayList<Couple<Integer, Integer>>> Crafts = new HashMap<>();
     private Map<Integer, ObjectSet> ItemSets = new HashMap<>();
     private Map<Integer, Titre> titres = new HashMap<>();
+    private Map<Integer, Sets> Sets = new HashMap<>();
     private Map<Integer, Guild> Guildes = new HashMap<>();
     private Map<Integer, Hdv> Hdvs = new HashMap<>();
     private Map<Integer, Map<Integer, ArrayList<HdvEntry>>> hdvsItems = new HashMap<>();
@@ -198,6 +205,27 @@ public class World {
         return titres;
     }
 
+    public Map<Integer, Sets> getSets() {
+        return Sets;
+    }
+
+    public Sets getSetsById(int id) {
+        return Sets.get(id);
+    }
+
+    public Sets getSetByPersoIDandNB(int persoid, int nb) {
+        for (Sets set : Sets.values()) {
+            if(set.getNb() == nb && set.getPlayerId() == persoid){
+                return set;
+            }
+        }
+        return null;
+    }
+
+    public List<Sets> getSetsByPlayer(int persoid) {
+        return Sets.values().stream().filter(set -> set.getPlayerId() == persoid).collect(Collectors.toList());
+    }
+
     public Titre getTitreById(int id) {
         return titres.get(id);
     }
@@ -231,6 +259,8 @@ public class World {
     public CopyOnWriteArrayList<GameObject> getGameObjects() {
         return new CopyOnWriteArrayList<>(objects.values());
     }
+
+
 
     public void addGameObject(GameObject gameObject, boolean saveSQL) {
         if (gameObject != null) {
@@ -433,12 +463,17 @@ public class World {
         Database.getDynamics().getGuildMemberData().load();
         logger.debug("The guilds and guild members were loaded successfully.");
 
+        clearInactiveGuilds();
+        logger.debug("Nettoyage des guildes vides ou inactives terminé.");
+
         Database.getStatics().getPetData().load();
         logger.debug("The pets were loaded successfully.");
 
         Database.getStatics().getTitleData().load();
         logger.debug("The titles were loaded successfully.");
 
+        Database.getStatics().getSetsData().load();
+        logger.debug("The sets were loaded successfully.");
 
         Database.getDynamics().getTutorialData().load();
         logger.debug("The tutorials were loaded successfully.");
@@ -495,6 +530,8 @@ public class World {
         PigDragon.initialize();
         logger.debug("Initialization of the dungeon : Labyrinth of the Minotoror.");
         Minotoror.initialize();
+        logger.debug("Initialization of the dungeon : Hotomani.");
+        Hotomani.initialize();
         logger.debug("Initialisation de la boutique IG.");
         Boutique.initPacket();
 
@@ -504,6 +541,10 @@ public class World {
                 + new SimpleDateFormat("mm", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " min "
                 + new SimpleDateFormat("ss", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " s.");
         logger.setLevel(Level.ALL);
+
+        logger.debug("Initialisation Connection with Azuriom.");
+        new AzuriomCommands(2333).start();
+
     }
 
     public void addExtraMonster(int idMob, String superArea,
@@ -597,7 +638,6 @@ public class World {
                     else
                         throw new Exception("a empty mobs group or invalid monster.");
                 }
-
                 mapPossible.clear();
             } catch(Exception e) {
                 e.printStackTrace();
@@ -665,6 +705,10 @@ public class World {
 
     public void addNpcAnswer(NpcAnswer rep) {
         answers.put(rep.getId(), rep);
+    }
+
+    public void delNpcAnswer(NpcAnswer rep) {
+        answers.remove(rep.getId(), rep);
     }
 
     public NpcAnswer getNpcAnswer(int guid) {
@@ -761,8 +805,6 @@ public class World {
     public void addNpcTemplate(NpcTemplate temp) {
         npcsTemplate.put(temp.getId(), temp);
     }
-
-
 
     public void removePlayer(Player player) {
         if (player.getGuild() != null) {
@@ -1346,6 +1388,41 @@ public class World {
         return i;
     }
 
+    public void clearInactiveGuilds() {
+        int i = 0;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate firstDate = now.toLocalDate();
+        LocalDate UnUsedDate = firstDate.plusMonths(-6);
+        Map<Integer, Guild> Test = Guildes;
+        ArrayList<Integer> ids = new ArrayList<>();
+
+        for (Entry<Integer, Guild> guild : Test.entrySet()){
+            Boolean isInactifGuild = true;
+            List<Player> Members = guild.getValue().getPlayers();
+            for (Player player : Members) {
+                String dateactuelle = guild.getValue().getMember(player.getId()).getLastCo();
+                String[] table =   dateactuelle.split("~");
+                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
+
+                if(lastConnection.isAfter(UnUsedDate) ){
+                    isInactifGuild = false;
+                    break ;
+                }
+            }
+
+            if(isInactifGuild){
+                System.out.println("La guilde " + guild.getValue().getName() +" est inactive, on supprime");
+                ids.add(guild.getValue().getId());
+            }
+        }
+
+        for (Integer id : ids) {
+            World.world.removeGuild(id);
+        }
+
+
+    }
+
     public void addChallenge(String chal) {
         if (!Challenges.toString().isEmpty())
             Challenges.append(";");
@@ -1728,7 +1805,151 @@ public class World {
     }
 
     public void reloadDrops() {
-        Database.getDynamics().getDropData().reload();
+        try{
+            Database.getDynamics().getDropData().reload();
+        }
+       catch (Exception e){
+            System.out.println("IciBase" + e);
+       }
+    }
+
+    public void loadDropsBlackItem() {
+        //Database.getDynamics().getDropData().reload();
+        ArrayList<Double> percents = new ArrayList<>();
+        percents.add(0.1);
+        percents.add(0.12);
+        percents.add(0.14);
+        percents.add(0.16);
+        percents.add(0.18);
+
+        for(int i =10 ; i<=180 ; i+=10){
+            int finalI = i;
+            ArrayList<ObjectTemplate> arrayBlackItem = new ArrayList<>();
+            ArrayList<Monster> arrayMonstre = new ArrayList<>();
+            try {
+            getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && (!objectTemplate.getStrTemplate().isBlank()) && !objectTemplate.getName().contains("Polyk")
+                    && (objectTemplate.getLevel() >= finalI && objectTemplate.getLevel()<= finalI+9) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  && !isDropable(objectTemplate.getId()) ).forEach(arrayBlackItem::add);
+            }
+            catch (Exception e){
+                System.out.println("ici item" + e);
+            }
+
+            try {
+               getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+                       && (getLvlMoyenMonstre(monster) >= finalI && getLvlMoyenMonstre(monster) <= finalI + 9)).forEach(arrayMonstre::add);
+           }
+           catch (Exception e){
+                System.out.println("ici monstre" + e);
+           }
+
+            if(arrayMonstre.size() == 0){
+                int k=1;
+                do {
+                    int finalK = k;
+                    getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+                            && (getLvlMoyenMonstre(monster) >= finalI && getLvlMoyenMonstre(monster) <= finalI + 9+ finalK)).forEach(arrayMonstre::add);
+                    k++;
+                }
+                while(arrayMonstre.size()<1);
+            }
+            //int rapport =  (int)Math.ceil((float)arrayBlackItem.size()/(float) arrayMonstre.size());
+            int l=0;
+            boolean hasreset=false;
+            for(ObjectTemplate item : arrayBlackItem){
+                Monster Mob = arrayMonstre.get(l);
+                int action = -1;
+                String condition = "";
+                if(item.getLevel() > 175 && item.getLevel() <=180){
+                     action = 10;
+                     condition = "1";
+                }
+                else if(item.getLevel() > 180){
+                    action = 10;
+                    condition = "2";
+                }
+                World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false);
+                Mob.addDrop(drop);
+                l++;
+                if(l>=arrayMonstre.size()){
+                    l=0;
+                    hasreset =true;
+                }
+                //System.out.println("");
+            }
+
+            if(l<arrayMonstre.size() && !hasreset){
+                int p=0;
+                for(int x=l ;x < arrayMonstre.size();x++ ){
+                    Monster Mob = arrayMonstre.get(x);
+                    ObjectTemplate item = arrayBlackItem.get(p);
+
+                    int action = -1;
+                    String condition = "";
+                    if(item.getLevel() > 175 && item.getLevel() <=180){
+                        action = 10;
+                        condition = "1";
+                    }
+                    else if(item.getLevel() > 180){
+                        action = 10;
+                        condition = "2";
+                    }
+                    World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false);
+                    Mob.addDrop(drop);
+
+                    p++;
+                    if(p>=arrayBlackItem.size()){
+                        p=0;
+                    }
+                }
+            }
+
+
+
+        }
+
+
+
+        /*String filename= "MyFile.csv";
+        FileWriter fw = null;
+
+
+        try {
+            fw = new FileWriter(filename, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        fw.write(obj.getName()+";"+obj.getLevel()+"\n");//appends the string to the file
+        try {
+            fw.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+        //World.world.getMonstres().stream().filter(monster -> monster != null).forEach(monster -> monster.addDrop(drop));
+    }
+
+    public boolean isDropable(int id) {
+        boolean isdropable=false;
+        getMonstres();
+        for(Monster monstre : getMonstres()){
+            ArrayList<Drop> drops = monstre.getDrops();
+            for(Drop drop : drops){
+                if(id == drop.getObjectId())
+                    return true;
+            }
+        }
+
+        return isdropable;
+    }
+
+    public int getLvlMoyenMonstre(Monster monstre){
+        int levelmoyen = monstre.getGrade(3).getLevel();
+        if(levelmoyen<5){
+            levelmoyen=5;
+        }
+        if(levelmoyen>180){
+            levelmoyen=180;
+        }
+        return levelmoyen;
     }
 
     public void reloadEndFightActions() {
@@ -2244,6 +2465,33 @@ public class World {
         return array;
     }
 
+    public Boolean isPotentielBlackItem(int level,int fightdifficulty,ObjectTemplate obj){
+        int boostdiff = 0;
+        switch (fightdifficulty){
+            case 0 :
+                break;
+            case 1:
+                boostdiff = 5;
+                break;
+            case 2 :
+                boostdiff = 10;
+                break;
+            default:
+                boostdiff = 0;
+                break;
+        }
+        if(level>=175){
+            level=175;
+        }
+        final int levelMin = (level - 5 <= 1 ? 2 : level - 5), levelMax = level + 5+boostdiff;
+        if(obj.getPanoId() == -1 && obj.getPanoId() == -1 && !obj.getStrTemplate().contains("32c#") && !obj.getName().contains("Polyk")
+                && (levelMin <= obj.getLevel() && obj.getLevel() <= levelMax) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, obj.getType() ) ){
+            return true;
+        }
+
+        return false;
+    }
+
     public Drop getPotentialRuneReini(int level, int fightdifficulty) {
         int boostdiff = 1;
         switch (fightdifficulty){
@@ -2297,19 +2545,28 @@ public class World {
         titres.put(titre.getId(), titre);
     }
 
+    public void addSets(Sets set) {
+        Sets.put(set.getId(), set);
+    }
+
+
+
+
     public static class Drop {
         private int objectId, ceil, action, level;
         private String condition;
         private ArrayList<Double> percents;
         private double localPercent;
+        private boolean isOnAllMob=false;
 
-        public Drop(int objectId, ArrayList<Double> percents, int ceil, int action, int level, String condition) {
+        public Drop(int objectId, ArrayList<Double> percents, int ceil, int action, int level, String condition,boolean isOnAllMob) {
             this.objectId = objectId;
             this.percents = percents;
             this.ceil = ceil;
             this.action = action;
             this.level = level;
             this.condition = condition;
+            this.isOnAllMob=isOnAllMob;
         }
 
         public Drop(int objectId, double percent, int ceil) {
@@ -2319,9 +2576,14 @@ public class World {
             this.action = -1;
             this.level = -1;
             this.condition = "";
+            this.isOnAllMob=false;
         }
         public int getObjectId() {
             return objectId;
+        }
+
+        public boolean getisOnAllMob() {
+            return isOnAllMob;
         }
 
         public int getCeil() {
@@ -2349,7 +2611,7 @@ public class World {
         }
 
         public Drop copy(int grade) {
-            Drop drop = new Drop(this.objectId, null, this.ceil, this.action, this.level, this.condition);
+            Drop drop = new Drop(this.objectId, null, this.ceil, this.action, this.level, this.condition,this.isOnAllMob);
             if(this.percents == null) return null;
             if(this.percents.isEmpty()) return null;
             try {

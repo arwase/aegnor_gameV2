@@ -1,9 +1,9 @@
 package client;
 
-import client.other.BoostStat;
 import kernel.Constant;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Classe
@@ -45,6 +45,7 @@ public class Classe
             } catch (Exception ignored) {
             }
         }
+
         addBoostStat(boostVita, this._boostVita);
         addBoostStat(boostSagesse, this._boostSage);
         addBoostStat(boostForce, this._boostForce);

@@ -41,7 +41,7 @@ public class HouseData extends AbstractDAO<House>
 				if (map == null)
 					continue;
 
-				World.world.addHouse(new House(RS.getInt("id"), RS.getShort("map_id"), RS.getInt("cell_id"), RS.getInt("mapid"), RS.getInt("caseid"), RS.getString("houseMaps")));
+				World.world.addHouse(new House(RS.getInt("id"), RS.getShort("map_id"), RS.getInt("cell_id"), RS.getInt("mapid"), RS.getInt("caseid"), RS.getString("houseMaps") , RS.getLong("saleBase")));
 				/*long saleBase = RS.getLong("saleBase");
 				Database.getDynamics().getHouseData().update(RS.getInt("id"), saleBase);*/
 				nbr++;

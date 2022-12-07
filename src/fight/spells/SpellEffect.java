@@ -800,7 +800,7 @@ public class SpellEffect {
 		//System.out.println("effet" + effectID);
 
 		if (effectID == 405) { // On tue pour invoqué
-			System.out.println("On tue pour invo");
+			//System.out.println("On tue pour invo");
 			if (CaseObjectif.getFirstFighter() != null) {
 				fight.onFighterDie(CaseObjectif.getFirstFighter(), acaster);
 			}
@@ -808,7 +808,7 @@ public class SpellEffect {
 
 		// Si la case n'est pas marchable
 		if (!CaseObjectif.isWalkable(true)) {
-			System.out.println("Case non marchable");
+			//System.out.println("Case non marchable");
 			SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(fight, 7, "1CELDA_NO_CAMINABLE");
 			SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
 
@@ -817,7 +817,7 @@ public class SpellEffect {
 
 		// Si Il n'y a pas d'invocateur
 		if (CaseObjectif.getFirstFighter() != null) {
-			System.out.println("Pas d'invocateur");
+			//System.out.println("Pas d'invocateur");
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 151, acaster.getId() + "", spell + "");
 			SocketManager.ENVIAR_Gf_MOSTRAR_CELDA_EN_PELEA(fight, 7, acaster.getId(), CaseObjectif.getId());
 			return;
@@ -829,9 +829,6 @@ public class SpellEffect {
 			mobID = Integer.parseInt(args.split(";")[0]);
 			mobNivel = Integer.parseInt(args.split(";")[1]);
 		} catch (Exception ignored) {
-
-
-
 
 		}
 
@@ -3128,10 +3125,10 @@ public class SpellEffect {
 			for (Fighter cible : cibles) {
 				if (cible.isDead())
 					continue;
-				if (caster.hasBuff(178))
-					heal += caster.getBuffValue(178);
-				if (caster.hasBuff(179))
-					heal = heal - caster.getBuffValue(179);
+				//if (caster.hasBuff(178))   Je vois pas pourquoi ca proc sur le jet
+				//	heal += caster.getBuffValue(178);
+				//if (caster.hasBuff(179))
+				//	heal = heal - caster.getBuffValue(179);
 				heal = getMaxMinSpell(cible, heal);
 				int pdvMax = cible.getPdvMax();
 				int healFinal = Formulas.calculFinalHealCac(caster, heal, isCaC);
@@ -4197,12 +4194,14 @@ public class SpellEffect {
 			return;
 
 		MG.setInFightID(fight.getNextLowerFighterGuid());
-		if (caster.getPlayer() != null)
+		if (caster.getPlayer() != null && !caster.getPlayer().controleinvo) {
 			MG.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
-
+			//System.out.println("On passe la");
+		}
 		Fighter F;
 		if(caster.getPlayer() != null) {
 			if (caster.getPlayer().controleinvo &&  id != 285) {
+				//System.out.println("Ou on passe ici");
 				Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
 				F = new Fighter(fight, mobControlable);
 				F.setControllable(true);

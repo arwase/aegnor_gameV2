@@ -352,7 +352,7 @@ public class PetEntry {
             }
         } catch(Exception e) {
             e.printStackTrace();
-            System.out.println("Error : " + e.getMessage());
+            //System.out.println("Error : " + e.getMessage());
         }
         SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(p, obj);
         Database.getStatics().getObjectData().update(obj);

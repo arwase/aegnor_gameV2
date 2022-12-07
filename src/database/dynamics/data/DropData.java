@@ -1,6 +1,5 @@
 package database.dynamics.data;
 
-import area.map.GameMap;
 import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.AbstractDAO;
 import entity.monster.Monster;
@@ -48,7 +47,7 @@ public class DropData extends AbstractDAO<World.Drop> {
                     percents.add(RS.getDouble("percentGrade4"));
                     percents.add(RS.getDouble("percentGrade5"));
 
-                    MT.addDrop(new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition));
+                    MT.addDrop(new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,false));
                 } else {
                     if(MT == null && RS.getInt("monsterId") == 0) {
                         String action = RS.getString("action");
@@ -65,11 +64,12 @@ public class DropData extends AbstractDAO<World.Drop> {
                         percents.add(RS.getDouble("percentGrade3"));
                         percents.add(RS.getDouble("percentGrade4"));
                         percents.add(RS.getDouble("percentGrade5"));
-                        World.Drop drop = new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition);
+                        World.Drop drop = new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,true);
                         World.world.getMonstres().stream().filter(monster -> monster != null).forEach(monster -> monster.addDrop(drop));
                     }
                 }
             }
+            World.world.loadDropsBlackItem();
         } catch (SQLException e) {
             super.sendError("DropData load", e);
         } finally {
@@ -131,5 +131,7 @@ public class DropData extends AbstractDAO<World.Drop> {
     public void reload() {
         World.world.getMonstres().stream().filter(m -> m != null).filter(m -> m.getDrops() != null).forEach(m -> m.getDrops().clear());
         load();
+
+        //World.world.loadDropsBlackItem();
     }
 }

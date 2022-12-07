@@ -2,7 +2,6 @@ package common
 
 import area.map.GameCase
 import area.map.GameMap
-import kernel.Constant
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.ArrayList
@@ -188,6 +187,8 @@ class Encryptador {
             e.printStackTrace()
         }
     }
+
+
     fun getNumeroPorValorHash(c: Char): Byte {
         for (a in HASH.indices) {
             if (HASH[a].equals(c)) {

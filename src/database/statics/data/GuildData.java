@@ -2,9 +2,10 @@ package database.statics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.AbstractDAO;
-import exchange.transfer.DataType;
+import exchange.transfer.DataQueue;
 import game.world.World;
 import guild.Guild;
+import kernel.Main;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -87,8 +88,17 @@ public class GuildData extends AbstractDAO<Guild> {
     }
 
     public int getNextId() {
-        //return Database.getStatics().getWorldEntityData().getNextGuildId();
-        final DataType<Integer> queue = new DataType<>((byte) 4);
+        final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 4);
+        try {
+            synchronized(queue) {
+                long count = DataQueue.count();
+                DataQueue.queues.put(count, queue);
+                Main.exchangeClient.send("DI" + queue.getType() + count);
+                queue.wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return queue.getValue();
     }
 }

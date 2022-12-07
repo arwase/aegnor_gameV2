@@ -6,7 +6,6 @@ import ch.qos.logback.classic.Logger;
 import database.dynamics.AbstractDAO;
 import org.slf4j.LoggerFactory;
 
-import java.io.Console;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -139,7 +138,10 @@ public class CryptManager {
     }
 
     public String decryptMessage(String message, String key) {
-        int c = Integer.parseInt(Character.toString(message.charAt(1)), 16) * 2;
+
+         //System.out.println(message);
+         int  c = Integer.parseInt(Character.toString(message.charAt(1)), 16) * 2;
+
         StringBuilder str = new StringBuilder();
         int j = 0, keyLength = key.length();
 

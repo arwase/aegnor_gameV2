@@ -3,7 +3,7 @@ package entity.mount;
 public class Generation {
 		
 	public static int getPods(int generation, int level) {
-		return (100 + 50 * generation - 1) + (5 + 5 * (generation / 2)) * level;
+		return (100 + 50 * generation - 1) + (5 + 5 * (generation / 2)) * level * 15;
 	}
 	
 	public static int getEnergy(int generation) {

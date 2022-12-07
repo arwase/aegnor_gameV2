@@ -342,6 +342,7 @@ public class ObjectTemplate {
         return item;
     }
     private final Integer[] ItemsRarityAllowed = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,20,21,22,23,81,82};
+
     public GameObject createNewItem(int qua, boolean useMax, int rarity) {
         int id = Database.getStatics().getObjectData().getNextId();
         GameObject item;
@@ -361,7 +362,7 @@ public class ObjectTemplate {
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
-            System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "sans duppli verif " );
+            //System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "sans duppli verif " );
             Database.getStatics().getPetData().add(id, time, getId());
 
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
@@ -417,8 +418,10 @@ public class ObjectTemplate {
                 item.getSpellStats().addAll(this.getSpellStatsTemplate());
             }
         }
+        //Database.getStatics().getPetData().add(id, time, getId());
         return item;
     }
+
     public GameObject createNewItemWithoutDuplicationForJobs(Collection<GameObject> objects, int qua, boolean useMax,int chanceimpact) {
 
         int id = -1;
@@ -903,7 +906,7 @@ public class ObjectTemplate {
                 //Ajouter du Pets_data SQL et World
                 long time = System.currentTimeMillis();
                 World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
-                System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "with rarity " );
+                //System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "with rarity " );
                 Database.getStatics().getPetData().add(id, time, this.getId());
             } else if(this.getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
                 item = new GameObject(id, this.getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(this.getStrTemplate(), useMax,0), getEffectTemplate(this.getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
@@ -964,4 +967,5 @@ public class ObjectTemplate {
     public int getBoutique() {
         return boutique;
     }
+
 }

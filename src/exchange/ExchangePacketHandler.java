@@ -3,7 +3,8 @@ package exchange;
 import client.Account;
 import command.CommandPlayer;
 import database.Database;
-import exchange.transfer.DataType;
+import exchange.transfer.DataQueue;
+import exchange.transfer.DataQueue.Queue;
 import game.GameServer;
 import game.world.World;
 import kernel.Config;
@@ -62,7 +63,8 @@ public class ExchangePacketHandler {
                     case 'W': //Waiting
                         switch (packet.charAt(1)) {
                             case 'A': //Add
-                                int id = Integer.parseInt(packet.substring(2));
+                                String[] packetSplit = packet.split(";");
+                                int id = Integer.parseInt(packetSplit[0].substring(2));
                                 Account account = World.world.getAccount(id);
 
                                 if (account == null) {
@@ -109,7 +111,7 @@ public class ExchangePacketHandler {
                                     {
                                         count = Long.parseLong(split[0].substring(0,1));
                                     }
-                                    DataType<?> queue = World.world.getDataQueue().getQueue().get(count);
+                                    Queue<?> queue = DataQueue.queues.get(count);
 
                                     switch (Byte.parseByte(String.valueOf(data.charAt(0)))) {
                                         case 1: // Mount
@@ -118,7 +120,7 @@ public class ExchangePacketHandler {
                                         case 4: // Guild
                                         case 5: // Pet
                                             if (split.length > 1)
-                                                ((DataType<Integer>) queue).setValue(Integer.parseInt(split[1]));
+                                                ((Queue<Integer>) queue).setValue(Integer.parseInt(split[1]));
                                             break;
                                     }
                                 }

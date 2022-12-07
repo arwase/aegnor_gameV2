@@ -285,10 +285,10 @@ public class Formulas {
         int heals = healer.getTotalStats().getEffect(178);
         if (intel < 0)
             intel = 0;
-        float adic = 100;
+        float adic = 90; // petit bonus 100 normalement
         if (isCac)
-            adic = 105;
-        return (int) (rank * ((100.00 + intel) / adic) + heals / 2);
+            adic = 100;
+        return (int) (rank * ((100.00 + intel) / adic) + heals);
     }
 
     public static int calculXpWinCraft(int lvl, int numCase) {

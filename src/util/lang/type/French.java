@@ -81,15 +81,13 @@ public class French extends AbstractLang {
                 + "<b>.all</b> - Permet d'envoyer un message à tous les joueurs.\n"
                 + "<b>.noall</b> - Permet de ne plus recevoir les messages globaux.\n"
                 + "<b>.banque</b> - Ouvre votre banque.(payant si non VIP)\n"
-                + "<b>.restat</b> - Permet de vous restat.\n"
-                + "<b>.notiems</b> - Permet d'empecher le drop d'objets.\n"
-                + "<b>.spellforget</b> - Permet d'oublier un sort.\n"
-                + "<b>.hdv</b> - Permet d'afficher un hdv global.\n"
+                + "<b>.noitems</b> - Permet d'empecher le drop d'objets.\n"
+                + "<b>.noblackitems</b> - Permet d'empecher le drop d'objets aléatoire.\n"
                 + "<b>.boutique</b> - Permet d'afficher les objets boutiques.\n"
-                + "<b>.points</b> - Permet d'afficher tes points boutiques.\n"
-                + "<b>.sellitem</b> - Vend tout votre inventaire excepté les dofus, items équipés et objet de quête."); index++;
+                + "<b>.points</b> - Permet d'afficher tes points boutiques.\n"); index++;
         //18
         this.sentences.add(index,"<b>***COMMANDES MAITRE***</b> disponibles sont :\n"
+                + "<b>.multi</b> - Permet de grouper/Maitre/Tp/OneWindows l'ensemble de tes persos.\n"
                 + "<b>.groupe</b> - Permet de grouper l'ensemble de tes persos.\n"
                 + "<b>.tp</b> - Permet de téléporter tes persos sur ta map.\n"
                 + "<b>.maitre</b> - Permet de faire suivre tes esclaves (combat,map,pret).\n"

@@ -38,7 +38,6 @@ import guild.Guild;
 import guild.GuildMember;
 import job.Job;
 import job.JobAction;
-import job.JobConstant;
 import job.JobStat;
 import kernel.Config;
 import kernel.Constant;
@@ -50,11 +49,11 @@ import object.ObjectTemplate;
 import org.apache.commons.lang3.ArrayUtils;
 import other.Action;
 import other.Dopeul;
+import other.Sets;
 import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
 import util.TimerWaiter;
-import util.lang.Lang;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -64,8 +63,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class Player {
-
-
     /** special fight **/
     public TeamMatch kolizeum;
     public DeathMatch deathMatch;
@@ -75,6 +72,7 @@ public class Player {
     public Stats stats;
     public boolean isNew = false;
     public boolean controleinvo = false;
+    public boolean noxp=false;
     //Job
     private JobAction _curJobAction;
     //Disponibilit�
@@ -217,7 +215,7 @@ public class Player {
     private int action = -1;
     //Regen hp
     private boolean sitted;
-    private int regenRate = 2000;
+    private int regenRate = 500;
     private long regenTime = -1;                                                //-1 veut dire que la personne ne c'est jamais connecte
     private boolean isInPrivateArea = false;
     public Start start;
@@ -227,13 +225,14 @@ public class Player {
     private Map<Integer, QuestPlayer> questList = new HashMap<>();
     private boolean changeName;
     public boolean afterFight = false;
-    public int isParcho = 0;
 
+    public int isParcho = 0;
     private boolean maitre;
     public boolean ipdrop = false;
     public boolean oneWindows = false;
     public int difficulty = 0;
     public boolean noitems = false;
+    public boolean noblackitems = false;
     public boolean passturn = false;
     public boolean boutique =  false;
     public boolean isInvocControlable = false;
@@ -462,21 +461,40 @@ public class Player {
             if (this.curPdv <= 0)
                 this.curPdv = 1;
             parseSpells(spells);
-            //Chargement des m�tiers
+
+            String jobs2 = "2,0;24,0;28,0;25,0;36,0;58,0;41,0;56,0;26,0;15,0;16,0;27,0;11,0;14,0;17,0;20,0;31,0;13,0;18,0;19,0;60,0;65,0;62,0;63,0;64,0;43,0;44,0;45,0;46,0;47,0;48,0;49,0;50,0";
+            //Chargement de tous les métier
+            for (String aJobData : jobs2.split(";")) {
+                String[] infos = aJobData.split(",");
+                try {
+                    int jobID = Integer.parseInt(infos[0]);
+                    long xp = Long.parseLong(infos[1]);
+                    Job m = World.world.getMetier(jobID);
+                    JobStat SM = _metiers.get(learnJob(m));
+                    //System.out.println(m.getId());
+                    SM.addXp(this, xp);
+                } catch (Exception e) {
+
+                    e.printStackTrace();
+                }
+            }
+
+            //Chargement des métiers du joueurs
             if (!jobs.equals("")) {
                 for (String aJobData : jobs.split(";")) {
                     String[] infos = aJobData.split(",");
                     try {
                         int jobID = Integer.parseInt(infos[0]);
                         long xp = Long.parseLong(infos[1]);
-                        Job m = World.world.getMetier(jobID);
-                        JobStat SM = _metiers.get(learnJob(m));
+                        JobStat SM = _metiers.get(getPosByJob(jobID));
                         SM.addXp(this, xp);
                     } catch (Exception e) {
+
                         e.printStackTrace();
                     }
                 }
             }
+
             if (this.energy == 0)
                 setGhost();
             else if (this.energy == -1)
@@ -550,14 +568,16 @@ public class Player {
                 //224,
                 "", "", 100, "", (startMap != 0 ? (short) startMap : Constant.getStartMap(classe))
                 + ","
-                + (startCell != 0 ? (short) startCell : Constant.getStartCell(classe)), "", 0, -1, 0, 0, 0, z, (byte) 0, 0, "0;0", "", Config.INSTANCE.getALL_EMOTE() ? "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21" : "0", 0, true, "118,0;119,0;123,0;124,0;125,0;126,0", 0, false, "0,0,0,0", (byte) 0, 0, 0);
+                + (startCell != 0 ? (short) startCell : Constant.getStartCell(classe)), "2,0;24,0;28,0;25,0;36,0;58,0;41,0;56,0;26,0;15,0;16,0;27,0;11,0;14,0;17,0;20,0;31,0;13,0;18,0;19,0;60,0;65,0;62,0;63,0;64,0;43,0;44,0;45,0;46,0;47,0;48,0;49,0;50,0", 0, -1, 0, 0, 0, z, (byte) 0, 0, "0;0", "", Config.INSTANCE.getALL_EMOTE() ? "0;1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21" : "0", 0, true, "118,0;119,0;123,0;124,0;125,0;126,0", 0, false, "0,0,0,0", (byte) 0, 0, 0);
         perso.emotes.add(1);
+
         perso._sorts = Constant.getStartSorts(classe);
         for (int a = 1; a <= perso.getLevel(); a++)
             Constant.onLevelUpSpells(perso, a);
         perso._sortsPlaces = Constant.getStartSortsPlaces(classe);
 
         SocketManager.GAME_SEND_WELCOME(perso);
+
 
         if (!Database.getStatics().getPlayerData().add(perso))
             return null;
@@ -1105,6 +1125,11 @@ public class Player {
         return _allTitle;
     }
 
+    public List<Sets> getAllSets(Player player) {
+        World.world.getSetsByPlayer(player.getId());
+        return World.world.getSetsByPlayer(player.getId());
+    }
+
     public boolean haveTitrebyID(int Id){
         Map<Integer, Titre> titres = World.world.getTitres();
         String titlepossess = this.getAllTitle();
@@ -1449,7 +1474,7 @@ public class Player {
         }
         this.sitted = sitted;
         refreshLife(false);
-        regenRate = (sitted ? 1000 : 2000);
+        regenRate = (sitted ? 250 : 500);
         SocketManager.send(this, "ILS" + regenRate);
     }
 
@@ -1483,6 +1508,8 @@ public class Player {
 
     public boolean learnSpell(int spellID, int level, boolean save,
                               boolean send, boolean learn) {
+
+        //System.out.println(spellID);
         if (World.world.getSort(spellID).getStatsByLevel(level) == null) {
             GameServer.a();
             return false;
@@ -1876,6 +1903,7 @@ public class Player {
         SocketManager.GAME_SEND_Ow_PACKET(this);
         SocketManager.GAME_SEND_SEE_FRIEND_CONNEXION(client, _showFriendConnection);
         SocketManager.GAME_SEND_SPELL_LIST(this);
+
         this.account.sendOnline();
 
         //Messages de bienvenue
@@ -1955,7 +1983,7 @@ public class Player {
             this.sendMessage("(<b>Infos</b>) : L'événement '" + manager.getCurrentEvent().getName() + "' a démarrer, incrivez-vous à l'aide de <b>.event</b>.");
 
         this.checkVote();
-
+        SocketManager.GAME_SEND_SETS_PACKET(this);
         World.world.logger.info("The player " + this.getName() + " come to connect.");
 
         if (this.getCurMap().getSubArea() != null) {
@@ -1982,7 +2010,7 @@ public class Player {
             }
         }
 
-        if (vote) this.send("Im116;<b>Server</b>~" + Lang.get(this, 13));
+       // if (vote) this.send("Im116;<b>Server</b>~" + Lang.get(this, 13));
     }
 
     public void SetSeeFriendOnline(boolean bool) {
@@ -2478,11 +2506,11 @@ public class Player {
         total = Stats.cumulStat(total, this.getStuffStats());
         total = Stats.cumulStat(total, this.getDonsStats());
         int pods = total.getEffect(Constant.STATS_ADD_PODS);
-        pods += total.getEffect(Constant.STATS_ADD_FORC) * 5;
+        pods += total.getEffect(Constant.STATS_ADD_FORC) * 25;
         for (JobStat SM : _metiers.values()) {
             pods += SM.get_lvl() * 5 * Config.INSTANCE.getRATE_JOB();
             if (SM.get_lvl() == 100)
-                pods += 1000;
+                pods += 5000;
         }
         if (pods < 1000)
             pods = 1000;
@@ -2506,7 +2534,7 @@ public class Player {
         }
 
         int diff = (int) time / regenRate;
-        if (diff >= 10 && this.curPdv < this.maxPdv && regenRate == 2000)
+        if (diff >= 10 && this.curPdv < this.maxPdv && regenRate == 500)
             SocketManager.send(this, "ILF" + diff);
 
         setPdv(this.curPdv + diff);
@@ -2773,6 +2801,17 @@ public class Player {
         return null;
     }
 
+    public GameObject getObjetByPos3(int pos,List<GameObject> test) {
+        if (pos == Constant.ITEM_POS_NO_EQUIPED)
+            return null;
+
+        for (GameObject entry : test) {
+            if (entry.getPosition() == pos)
+                return entry;
+        }
+        return null;
+    }
+
     public void refreshStats() {
         double actPdvPer = (100 * (double) this.curPdv) / (double) this.maxPdv;
         if (!useStats)
@@ -2973,24 +3012,109 @@ public class Player {
             if (entry.getValue().getTemplate().getId() == m.getId())//Si le joueur a d�j� le m�tier
                 return -1;
         }
-        int Msize = _metiers.size();
-        if (Msize == 6)//Si le joueur a d�j� 6 m�tiers
-            return -1;
         int pos = 0;
-        if (JobConstant.isMageJob(m.getId())) {
-            if (_metiers.get(5) == null)
-                pos = 5;
-            if (_metiers.get(4) == null)
-                pos = 4;
-            if (_metiers.get(3) == null)
-                pos = 3;
-        } else {
-            if (_metiers.get(2) == null)
-                pos = 2;
-            if (_metiers.get(1) == null)
-                pos = 1;
-            if (_metiers.get(0) == null)
+
+        //Position en fonction du métier
+        switch(m.getId()){
+            case 2:
                 pos = 0;
+                break;
+            case 24:
+                pos = 2;
+                break;
+            case 28:
+                pos = 3;
+                break;
+            case 25:
+                pos = 4;
+                break;
+            case 36:
+                pos = 5;
+                break;
+            case 58:
+                pos = 6;
+                break;
+            case 41:
+                pos = 7;
+                break;
+            case 56:
+                pos = 8;
+                break;
+            case 26:
+                pos = 9;
+                break;
+            case 15:
+                pos = 10;
+                break;
+            case 16:
+                pos = 11;
+                break;
+            case 27:
+                pos = 12;
+                break;
+            case 11:
+                pos = 13;
+                break;
+            case 14:
+                pos = 14;
+                break;
+            case 17:
+                pos = 15;
+                break;
+            case 20:
+                pos = 16;
+                break;
+            case 31:
+                pos = 17;
+                break;
+            case 13:
+                pos = 18;
+                break;
+            case 18:
+                pos = 19;
+                break;
+            case 19:
+                pos = 20;
+                break;
+            case 60:
+                pos = 21;
+                break;
+            case 65:
+                pos = 22;
+                break;
+            case 62:
+                pos = 23;
+                break;
+            case 63:
+                pos = 24;
+                break;
+            case 64:
+                pos = 25;
+                break;
+            case 43:
+                pos = 26;
+                break;
+            case 44:
+                pos = 27;
+                break;
+            case 45:
+                pos = 28;
+                break;
+            case 46:
+                pos = 29;
+                break;
+            case 47:
+                pos = 30;
+                break;
+            case 48:
+                pos = 31;
+                break;
+            case 49:
+                pos = 32;
+                break;
+            case 50:
+                pos = 33;
+                break;
         }
 
         JobStat sm = new JobStat(pos, m, 1, 0);
@@ -3008,10 +3132,116 @@ public class Player {
             //Packet JO (Job Option)
             SocketManager.GAME_SEND_JO_PACKET(this, list);
 
-            GameObject obj = getObjetByPos(Constant.ITEM_POS_ARME);
-            if (obj != null)
-                if (sm.getTemplate().isValidTool(obj.getTemplate().getId()))
+            //GameObject obj = getObjetByPos(Constant.ITEM_POS_ARME);
+            //if (obj != null)
+                //if (sm.getTemplate().isValidTool(obj.getTemplate().getId()))
                     SocketManager.GAME_SEND_OT_PACKET(account.getGameClient(), m.getId());
+        }
+        return pos;
+    }
+
+    public int getPosByJob(int jobID){
+        int pos =0;
+        switch(jobID){
+            case 2:
+                pos = 0;
+                break;
+            case 24:
+                pos = 2;
+                break;
+            case 28:
+                pos = 3;
+                break;
+            case 25:
+                pos = 4;
+                break;
+            case 36:
+                pos = 5;
+                break;
+            case 58:
+                pos = 6;
+                break;
+            case 41:
+                pos = 7;
+                break;
+            case 56:
+                pos = 8;
+                break;
+            case 26:
+                pos = 9;
+                break;
+            case 15:
+                pos = 10;
+                break;
+            case 16:
+                pos = 11;
+                break;
+            case 27:
+                pos = 12;
+                break;
+            case 11:
+                pos = 13;
+                break;
+            case 14:
+                pos = 14;
+                break;
+            case 17:
+                pos = 15;
+                break;
+            case 20:
+                pos = 16;
+                break;
+            case 31:
+                pos = 17;
+                break;
+            case 13:
+                pos = 18;
+                break;
+            case 18:
+                pos = 19;
+                break;
+            case 19:
+                pos = 20;
+                break;
+            case 60:
+                pos = 21;
+                break;
+            case 65:
+                pos = 22;
+                break;
+            case 62:
+                pos = 23;
+                break;
+            case 63:
+                pos = 24;
+                break;
+            case 64:
+                pos = 25;
+                break;
+            case 43:
+                pos = 26;
+                break;
+            case 44:
+                pos = 27;
+                break;
+            case 45:
+                pos = 28;
+                break;
+            case 46:
+                pos = 29;
+                break;
+            case 47:
+                pos = 30;
+                break;
+            case 48:
+                pos = 31;
+                break;
+            case 49:
+                pos = 32;
+                break;
+            case 50:
+                pos = 33;
+                break;
         }
         return pos;
     }
@@ -3243,11 +3473,14 @@ public class Player {
 
         if (this.curMap.getMountPark() != null
                 && this.curMap.getMountPark().getOwner() > 0
-                && this.curMap.getMountPark().getGuild().getId() != -1) {
-            if (World.world.getGuild(this.curMap.getMountPark().getGuild().getId()) == null) {// Ne devrait  pas  arriver
-                GameServer.a();
-                //FIXME : Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
-            }
+                && this.curMap.getMountPark().getGuild() == null) {
+
+            //if (World.world.getGuild( this.curMap.getMountPark().getGuild().getId() ) == null) {// Ne devrait  pas  arriver
+                //GameServer.a();
+                System.out.println("Mountpark sur la map " + this.curMap.getId() + " réinitialisée car Propriétaire ou Guilde plus existante " );
+                this.curMap.getMountPark().setData(0,-1,this.curMap.getMountPark().getPriceBase(),"","","","");
+                //Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
+            //}
         }
 
         // Verifier la validit� du Collector
@@ -3460,8 +3693,8 @@ public class Player {
     }
 
     public void refreshMapAfterFight() {
-        SocketManager.send(this, "ILS" + 2000);
-        this.regenRate = 2000;
+        SocketManager.send(this, "ILS" + 500);
+        this.regenRate = 500;
         this.curMap.addPlayer(this);
         if (this.account.getGameClient() != null)
             SocketManager.GAME_SEND_STATS_PACKET(this);
@@ -4769,6 +5002,32 @@ public class Player {
         return objects;
     }
 
+    public List<GameObject> getFragmentObject() {
+        List<GameObject> objects = new ArrayList<>();
+        this.objects.values().stream().filter(object -> object.getTemplate().getId() == 8378).forEach(objects::add);
+        return objects;
+    }
+
+    public String SetsPacket(){
+        String packetToSend = "Os";
+        int playerid = this.getId();
+        List<Sets> sets = World.world.getSetsByPlayer(playerid);
+        //int i =0;
+        if(sets != null) {
+            for (Sets set : sets) {
+                //if(i!=0){
+                //  packetToSend += "*";
+                //}
+                packetToSend += set.getNb() + "|" + set.getName() + "|" + set.getIcon() + "|" + set.getObjects() + "*";
+                //i++;
+            }
+        }
+        else{
+            return null;
+        }
+        return packetToSend;
+    }
+
     public void changeOrientation(int toOrientation) {
         if (this.get_orientation() == 0 || this.get_orientation() == 2
                 || this.get_orientation() == 4 || this.get_orientation() == 6) {
@@ -5610,7 +5869,6 @@ public class Player {
     }
 
     public boolean addObjetSimiler(GameObject objet, boolean hasSimiler, int oldID) {
-        System.out.println("Obj simi ?");
         ObjectTemplate objModelo = objet.getTemplate();
         if (objModelo.getType() == 85 || objModelo.getType() == 18)
             return false;
@@ -6062,11 +6320,13 @@ public class Player {
         }
         int valorStat = 0;
         Classe.BoostStat boost;
+
         boolean mod = false;
         while (true) {
             valorStat = this.stats.getEffect(statID);
             boost = classeinit.getBoostStat(statID, valorStat);
             usados += boost.cost;
+
             if (usados <= pointUsed) {
                 _capital -= boost.cost;
                 mod = true;
@@ -6402,5 +6662,12 @@ public class Player {
         }
         return nombre;
     }
+
+    public Guild get_guild() {
+        if (_guildMember == null)
+            return null;
+        return _guildMember.getGuild();
+    }
+
 
 }

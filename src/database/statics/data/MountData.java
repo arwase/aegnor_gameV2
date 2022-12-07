@@ -1,12 +1,13 @@
 package database.statics.data;
 
-import com.zaxxer.hikari.HikariDataSource;
 import client.Player;
+import com.zaxxer.hikari.HikariDataSource;
 import database.Database;
 import database.statics.AbstractDAO;
 import entity.mount.Mount;
-import exchange.transfer.DataType;
+import exchange.transfer.DataQueue;
 import game.world.World;
+import kernel.Main;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -136,8 +137,17 @@ public class MountData extends AbstractDAO<Mount> {
     }
 
     public int getNextId() {
-        //return Database.getStatics().getWorldEntityData().getNextMountId();
-        final DataType<Integer> queue = new DataType<>((byte) 1);
+        final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 1);
+        try {
+            synchronized(queue) {
+                long count = DataQueue.count();
+                DataQueue.queues.put(count, queue);
+                Main.exchangeClient.send("DI" + queue.getType() + count);
+                queue.wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return queue.getValue();
     }
 }

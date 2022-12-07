@@ -13,6 +13,8 @@ import game.scheduler.entity.WorldPub
 import game.scheduler.entity.WorldSave
 import game.world.World
 import org.slf4j.LoggerFactory
+
+
 import java.sql.SQLException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,17 +30,19 @@ object Main {
     private val logger = LoggerFactory.getLogger(Main::class.java) as Logger
     private val shutdownThread = Thread { closeServer() }
 
+    @JvmField
+    var exchangeClient: ExchangeClient? = null
     @Throws(SQLException::class)
     @JvmStatic fun main(args: Array<String>) {
         Runtime.getRuntime().addShutdownHook(shutdownThread)
-        Main.start()
+        start()
     }
 
     private fun start() {
-        Main.logger.info("You use ${System.getProperty("java.vendor")} with the version ${System.getProperty("java.version")}")
-        Main.logger.debug("Starting of the server : ${SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.FRANCE).format(Date())}")
-        Main.logger.debug("Current timestamp ms : ${System.currentTimeMillis()}")
-        Main.logger.debug("Current timestamp ns : ${System.nanoTime()}")
+        logger.info("You use ${System.getProperty("java.vendor")} with the version ${System.getProperty("java.version")}")
+        logger.debug("Starting of the server : ${SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.FRANCE).format(Date())}")
+        logger.debug("Current timestamp ms : ${System.currentTimeMillis()}")
+        logger.debug("Current timestamp ns : ${System.nanoTime()}")
 
         if (!Database.launchDatabase()) {
             logger.error("An error occurred when the server have try a connection on the Mysql server. Please verify your identification.")
@@ -57,7 +61,7 @@ object Main {
             return
         }
         GameServer.INSTANCE.setState(1)
-        Main.logger.info("Server is ready ! Waiting for connection..\n")
+        logger.info("Server is ready ! Waiting for connection..\n")
 
         while (Config.isRunning) {
             try {
@@ -69,12 +73,12 @@ object Main {
                 WorldPub.updatable.update()
                 EventManager.getInstance().update()
 
-                if (!Main.runnables.isEmpty()) {
-                    for (runnable in LinkedList(Main.runnables)) {
+                if (!runnables.isEmpty()) {
+                    for (runnable in LinkedList(runnables)) {
                         try {
                             if (runnable != null) {
                                 runnable.run()
-                                Main.runnables.remove(runnable)
+                                runnables.remove(runnable)
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
@@ -108,7 +112,7 @@ object Main {
             Database.getStatics().serverData.loggedZero()
         }
         GameServer.INSTANCE.stop()
-        Main.logger.info("The server is now closed.")
+        logger.info("The server is now closed.")
     }
 
     @JvmOverloads

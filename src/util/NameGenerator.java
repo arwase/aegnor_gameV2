@@ -54,7 +54,7 @@ public class NameGenerator {
     ArrayList<String> mid = new ArrayList<>();
     ArrayList<String> sur = new ArrayList<>();
 
-    final private static char[] Vowels = {'a', 'e', 'i', 'o', 'u', 'é', 'è', 'à', 'ù', 'y'};
+    final private static char[] Vowels = {'a', 'e', 'i', 'o', 'u' }; //'é', 'è', 'à', 'ù', 'y'
     final private static char[] consonants = {'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y'};
 
     private String fileName;

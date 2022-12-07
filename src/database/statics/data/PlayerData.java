@@ -1,8 +1,8 @@
 package database.statics.data;
 
-import com.zaxxer.hikari.HikariDataSource;
 import client.Account;
 import client.Player;
+import com.zaxxer.hikari.HikariDataSource;
 import command.administration.Group;
 import database.Database;
 import database.statics.AbstractDAO;
@@ -10,6 +10,8 @@ import game.world.World;
 import kernel.Config;
 import kernel.Constant;
 import kernel.Main;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -63,6 +65,20 @@ public class PlayerData extends AbstractDAO<Player> {
                 World.world.addPlayer(perso);
                 if (perso.isShowSeller())
                     World.world.addSeller(perso);
+
+                LocalDateTime now = LocalDateTime.now();
+                LocalDate firstDate = now.toLocalDate();
+                LocalDate UnUsedDate = firstDate.plusMonths(-6);
+
+                String dateactuelle = perso.getAccount().getLastConnectionDate();
+                String[] table =   dateactuelle.split("~");
+                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
+
+                if(lastConnection.isBefore(UnUsedDate) ){
+                    System.out.println( "Le perso " + RS.getString("name") + " doit être supprimé car le compte n'est plus utilisé depuis plus de 6 mois :" + lastConnection +" avant " + UnUsedDate);
+                    perso.getAccount().deletePlayer(perso.getId());
+                }
+                //
             }
         } catch (SQLException e) {
             super.sendError("PlayerData load", e);

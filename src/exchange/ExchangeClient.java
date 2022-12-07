@@ -1,17 +1,21 @@
 package exchange;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import kernel.Config;
+import kernel.Main;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoConnector;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+//import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import kernel.Config;
 
 import java.net.InetSocketAddress;
 
 public class ExchangeClient {
+
 
     public static Logger logger = (Logger) LoggerFactory.getLogger(ExchangeClient.class);
     public static ExchangeClient INSTANCE;
@@ -35,6 +39,8 @@ public class ExchangeClient {
     private void init(){
         ioConnector = new NioSocketConnector();
         ioConnector.setHandler(new ExchangeHandler());
+        Main.exchangeClient = this;
+        ExchangeClient.logger.setLevel(Level.ALL);
         ioConnector.setConnectTimeoutMillis(1000);
     }
 
@@ -43,7 +49,7 @@ public class ExchangeClient {
         try {
             connectFuture = ioConnector.connect(new InetSocketAddress(Config.INSTANCE.getExchangeIp(), Config.INSTANCE.getExchangePort()));
         } catch (Exception e) {
-            logger.error("Can't find login server : ", e);
+            //logger.error("Can't find login server : ", e);
             return false;
         }
 

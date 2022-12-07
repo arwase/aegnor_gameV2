@@ -37,7 +37,6 @@ public class NpcAnswerData extends AbstractDAO<Object> {
                 if (World.world.getNpcAnswer(id) == null)
                     World.world.addNpcAnswer(new NpcAnswer(id));
                 World.world.getNpcAnswer(id).addAction(new Action(type, args, "", null));
-
             }
         } catch (SQLException e) {
             super.sendError("Npc_reponses_actionData load", e);

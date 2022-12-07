@@ -2,7 +2,6 @@ package fight.ia.util;
 
 import area.map.GameCase;
 import area.map.GameMap;
-import common.CryptManager;
 import common.Formulas;
 import common.PathFinding;
 import common.SocketManager;
@@ -2416,6 +2415,7 @@ public class Function {
         boolean ligneok = false;
         for (int a = 0; a < F.getCurPm(fight); a++)
         {
+            //System.out.println(path.get(a).getId());
             boolean contains1AlliesinLine = false;
             if (path.size() == a)
                 break;
@@ -2423,17 +2423,27 @@ public class Function {
                 break;
             if(PathFinding.casesAreInSameLine(fight.getMap(), path.get(a).getId(), T.getCell().getId(), 'z', 70)) {
                 for (Fighter allie : allies.values()) {
-                    if (!PathFinding.casesAreInSameLine(fight.getMap(), T.getCell().getId(), allie.getCell().getId(), 'z', 70)) {
+                    if(allie.getTeam() != T.getTeam()) {
+                        System.out.println("Etrangement je suis dans la même teams " + path.get(a).getId());
+                        if (!PathFinding.casesAreInSameLine(fight.getMap(), T.getCell().getId(), allie.getCell().getId(), 'z', 70)) {
+                            //System.out.println("Bonne ligne" + path.get(a).getId());
+                            ligneok = true;
+                        } else {
+                            //System.out.println("Allié dedant + " + path.get(a).getId() + " Allié cell " + allie.getCell().getId());
+                            contains1AlliesinLine = true;
+                        }
+                    }
+                    else{
                         ligneok = true;
-                    } else {
-                        contains1AlliesinLine = true;
                     }
                 }
                 if(!contains1AlliesinLine) {
+                    //System.out.println("soit disant on devrait" + path.get(a).getId());
                     finalPath.add(path.get(a));
                 }
                 else
                 {
+                    //finalPath.add(path.get(a));
                     return 2;
                 }
             }

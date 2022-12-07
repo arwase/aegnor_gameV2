@@ -680,7 +680,6 @@ public class Action {
                     if( player.getCurMap().getMobGroups().size() == 0) {
 
                         player.sendMessage("la :" + player.getCurMap().getMobGroups().size() );
-
                         player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), groupData, condition);
                     }
                     else {
@@ -765,6 +764,54 @@ public class Action {
                                 //Le perso a l'item
                                 //Le perso est sur la bonne map
                                 //On t�l�porte, on supprime apr�s
+                                if (player.getSlaves() != null) {
+                                    if (player.getSlaves().size() > 0) {
+                                            boolean test;
+                                            test = true;
+                                            if (test) {
+                                                for (Player slave : player.PlayerList1) {
+                                                    //Si l'esclave est null
+                                                    if (slave == null) {
+                                                        continue;
+                                                    }
+                                                    //Si l'esclave n'est pas sur notre map
+                                                    if (slave.getCurMap() != player.getCurMap()) {
+                                                        continue;
+                                                    }
+                                                    if (slave.getCurMap().hasEndFightAction(0)) {
+                                                        continue;
+                                                    }
+                                                    //Si l'esclave est en combat
+                                                    if (slave.getFight() != null) {
+                                                        continue;
+                                                    }
+
+                                                    //Verification recursives
+                                                    if (slave.getAccount() != null) {
+                                                        if (slave.getAccount().getGameClient() != null) {
+                                                            //On duplique la game action du maitre pour les slaves
+                                                            if (slave.hasItemTemplate(ObjetNeed, 1) ) {
+                                                                slave.teleport(newMapID, newCellID);
+                                                                slave.removeByTemplateID(ObjetNeed, 1);
+                                                                SocketManager.GAME_SEND_Ow_PACKET(slave);
+                                                            }
+                                                            else if(player.hasItemTemplate(ObjetNeed, 2)){
+                                                                slave.teleport(newMapID, newCellID);
+                                                                player.removeByTemplateID(ObjetNeed, 1);
+                                                                SocketManager.GAME_SEND_Ow_PACKET(player);
+                                                                SocketManager.GAME_SEND_MESSAGE(player, "Vous avez payé la clef pour " + slave.getName() +".", "009900");
+                                                            }
+                                                            else{
+                                                                SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas assez de clefs nécessaire pour faire entrer " + slave.getName() +".", "009900");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                    }
+                                }
+
                                 player.teleport(newMapID, newCellID);
                                 player.removeByTemplateID(ObjetNeed, 1);
                                 SocketManager.GAME_SEND_Ow_PACKET(player);
@@ -1113,7 +1160,7 @@ public class Action {
                                     + price);
                         }
                         try {
-                            tuto.getStart().apply(player, null, -1, (short) -1);
+                            tuto.getStart().apply(player, player, -1, (short) -1);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -4286,7 +4333,183 @@ public class Action {
             case 1002 :
                 SocketManager.send(player, "XM");
                 break;
+            case 1003://T�l�portation hors dj
+                try {
+                    short newMapID = 0;
+                    int newCellID = 0;
+                    int ObjetNeed = 0;
+                    int MapNeed = 0;
 
+                    switch(player.getCurMap().getId()) {
+                        case 11969 :
+                            newMapID = 11975;
+                            newCellID = 396;
+                            ObjetNeed = -1;
+                            MapNeed = 11969;
+                            break;
+                        case 11970 :
+                            newMapID = 11976;
+                            newCellID = 450;
+                            ObjetNeed = -1 ;
+                            MapNeed = 11970;
+                            break;
+                        default :
+                            //System.out.println("On est la " + player.getCurMap().getId());
+                            return true;
+                    }
+
+                    if (player.getCurMap().getId() == MapNeed) {
+                        //Le perso a l'item
+                        //Le perso est sur la bonne map
+                        //On t�l�porte, on supprime apr�s
+                        player.teleport(newMapID, newCellID);
+                        player.removeByTemplateID(ObjetNeed, 1);
+                        SocketManager.GAME_SEND_Ow_PACKET(player);
+                    } else {
+                        //Le perso n'est pas sur la bonne map
+                        SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    GameServer.a();
+                }
+                break;
+            case 1004://T�l�portation hors dj
+                try {
+                    short newMapID = 0;
+                    int newCellID = 0;
+                    int ObjetNeed = 0;
+                    int MapNeed = 0;
+
+                    switch(player.getCurMap().getId()) {
+                        case 11969 :
+                             newMapID = 4919;
+                             newCellID = 336;
+                             ObjetNeed = -1;
+                             MapNeed = 11969;
+                            break;
+                        case  11970 :
+                             newMapID = 4383;
+                             newCellID = 368;
+                             ObjetNeed = -1 ;
+                             MapNeed = 11970;
+                            break;
+                        default :
+                            //System.out.println("On est la " + player.getCurMap().getId());
+                          return true;
+                    }
+
+                   if (player.getCurMap().getId() == MapNeed) {
+                                //Le perso a l'item
+                                //Le perso est sur la bonne map
+                                //On t�l�porte, on supprime apr�s
+                                player.teleport(newMapID, newCellID);
+                                player.removeByTemplateID(ObjetNeed, 1);
+                                SocketManager.GAME_SEND_Ow_PACKET(player);
+                   } else {
+                                //Le perso n'est pas sur la bonne map
+                                SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
+                   }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    GameServer.a();
+                }
+                break;
+            case 1005://T�l�portation donjon avec obj
+                try {
+                    short newMapID = 0;
+                    int newCellID = 0;
+                    int ObjetNeed = 0;
+                    int MapNeed = 0;
+
+                    switch(player.getCurMap().getId()) {
+                        case 11969 :
+                            newMapID = 11975;
+                            newCellID = 396;
+                            ObjetNeed = 11540;
+                            MapNeed = 11969;
+                            break;
+                        case  11970 :
+                            newMapID = 11976;
+                            newCellID = 450;
+                            ObjetNeed = 11541;
+                            MapNeed = 11970;
+                            break;
+                        default :
+                            //System.out.println("On est la " + player.getCurMap().getId());
+                            return true;
+                    }
+
+                        if (MapNeed == 0) {
+                            //T�l�portation sans map
+                            player.teleport(newMapID, newCellID);
+                        } else if (MapNeed > 0) {
+                            if (player.hasItemTemplate(ObjetNeed, 1)
+                                    && player.getCurMap().getId() == MapNeed) {
+                                //Le perso a l'item
+                                //Le perso est sur la bonne map
+                                //On t�l�porte, on supprime apr�s
+                                player.teleport(newMapID, newCellID);
+                                player.removeByTemplateID(ObjetNeed, 1);
+                                SocketManager.GAME_SEND_MESSAGE(player, "Avant d'entrer, vous consommez la potion et ressentez comme une chaleur enveloppant votre corps. Les effets de la salle ne vous affectent plus.", "009900");
+                                SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu 1 " +World.world.getObjectsTemplates().get(ObjetNeed).getName() +" .", "009900");
+                                SocketManager.GAME_SEND_Ow_PACKET(player);
+                            } else if (player.getCurMap().getId() != MapNeed) {
+
+                                //Le perso n'est pas sur la bonne map
+                                SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
+                            } else {
+                                //Le perso ne poss�de pas l'item
+                                SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas la " +World.world.getObjectsTemplates().get(ObjetNeed).getName() + " nécessaire.", "009900");
+                            }
+                        }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    GameServer.a();
+                }
+                break;
+            case 1006://Hotomani
+                try {
+                    short newMapID = 12010;
+                    int newCellID = 50;
+                    int MapNeed = 12007;
+                    int cout = Integer.parseInt(this.args);
+
+                      if ( player.getKamas() >= cout  && player.hasItemTemplate(30001, 1) && player.hasItemTemplate(30001, 1) && player.getCurMap().getId() == MapNeed) {
+                            //Le perso a l'item
+                            //Le perso est sur la bonne map
+                            //On t�l�porte, on supprime apr�s
+
+                            player.teleport(newMapID, newCellID);
+                            //player.removeByTemplateID(ObjetNeed, 1);
+                            SocketManager.GAME_SEND_MESSAGE(player, "'Je sais ca fait chère! Mais si vous venez à bout des monstres, vous pourrez peut-être en récupérer une partie' vous lance l'assistant avant de disparaitre dans les escaliers.", "009900");
+
+                            long actualkamas = player.getKamas();
+                            player.setKamas(actualkamas-cout);
+                            //SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu " +cout +" kamas pour pouvoir entrer dans l'antre .", "009900");
+                            SocketManager.GAME_SEND_MESSAGE(player, "Tu n'as rien perdu car le donjon est encore en béta .", "009900");
+                            //SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu 1 " +World.world.getObjectsTemplates().get(ObjetNeed).getName() +" .", "009900");
+                            //SocketManager.GAME_SEND_Ow_PACKET(player);
+                        } else if (player.getCurMap().getId() != MapNeed) {
+                            //Le perso n'est pas sur la bonne map
+                            SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
+                        } else if(player.getKamas() < cout) {
+                            //Le perso ne poss�de pas l'item
+                            SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas l'argent necessaire ("+cout+" kamas) pour affronter les monstres légendaires.", "009900");
+                        } else {
+                          //Le perso ne poss�de pas l'item
+                          SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas l'objet " +World.world.getObjectsTemplates().get(30001).getName() + " nécessaire pour prouver vos compétences.", "009900");
+                        }
+
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    GameServer.a();
+                }
+                break;
             default:
                 break;
         }

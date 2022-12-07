@@ -26,7 +26,7 @@ public class IA18 extends AbstractIA  {
 
             for(Fighter fighter : this.fight.getTeam1().values()) {
                 if(fighter.getMob() !=  null) {
-                    System.out.println(fighter.getMob().getTemplate().getId());
+                    //System.out.println(fighter.getMob().getTemplate().getId());
                     if(fighter.getMob().getTemplate().getId() == 1045) {
                         if(fighter.haveState(30)) {
                             fighter.setState(30, 0);
@@ -46,7 +46,7 @@ public class IA18 extends AbstractIA  {
             if(kimbo == null) {
                 for (Fighter fighter : this.fight.getTeam0().values()) {
                     if (fighter.getMob() != null) {
-                        System.out.println(fighter.getMob().getTemplate().getId());
+                        ///     System.out.println(fighter.getMob().getTemplate().getId());
                         if (fighter.getMob().getTemplate().getId() == 1045) {
                             if (fighter.haveState(30)) {
                                 fighter.setState(30, 0);

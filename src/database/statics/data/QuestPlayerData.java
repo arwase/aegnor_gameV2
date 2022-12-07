@@ -1,9 +1,10 @@
 package database.statics.data;
 
-import com.zaxxer.hikari.HikariDataSource;
 import client.Player;
+import com.zaxxer.hikari.HikariDataSource;
 import database.statics.AbstractDAO;
-import exchange.transfer.DataType;
+import exchange.transfer.DataQueue;
+import kernel.Main;
 import quest.QuestPlayer;
 
 import java.sql.PreparedStatement;
@@ -104,8 +105,17 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
     }
 
     public int getNextId() {
-        //return Database.getStatics().getWorldEntityData().getNextQuestPlayerId();
-        final DataType<Integer> queue = new DataType<>((byte) 3);
+        final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 3);
+        try {
+            synchronized(queue) {
+                long count = DataQueue.count();
+                DataQueue.queues.put(count, queue);
+                Main.exchangeClient.send("DI" + queue.getType() + count);
+                queue.wait();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return queue.getValue();
     }
 }

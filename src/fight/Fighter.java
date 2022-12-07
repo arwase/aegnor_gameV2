@@ -228,6 +228,26 @@ public class Fighter implements Comparable<Fighter> {
         return this.pdvMax + getBuffValue(Constant.STATS_ADD_VITA);
     }
 
+
+    public String getResiString() {
+        String Neutre = this.stats.get(Constant.STATS_ADD_RP_NEU)+"," ;
+        String Terre = this.stats.get(Constant.STATS_ADD_RP_TER)+",";
+        String Feu =this.stats.get(Constant.STATS_ADD_RP_FEU)+",";
+        String Eau =this.stats.get(Constant.STATS_ADD_RP_EAU)+",";
+        String Agi =this.stats.get(Constant.STATS_ADD_RP_AIR)+",";
+        String EsquiPA =this.stats.get(Constant.STATS_ADD_AFLEE)+",";
+        String EsquiPM =this.stats.get(Constant.STATS_ADD_MFLEE) +"";
+
+        return Neutre+Terre+Feu+Eau+Agi+EsquiPA+EsquiPM;
+    }
+
+
+
+    public String getEsquivePM() {
+        String Agi =0+"";
+        return Agi;
+    }
+
     public void removePdvMax(int pdv) {
         this.pdvMax = this.pdvMax - pdv;
         if (this.pdv > this.pdvMax)
@@ -492,7 +512,7 @@ public class Fighter implements Comparable<Fighter> {
 
         //Si c'est le jouer actif qui s'autoBuff, on ajoute 1 a la durée
         this.fightBuffs.add(new SpellEffect(id,val,(addingTurnIfCanPlay && this.canPlay?duration+1:duration),turns,debuff,caster,args,spellID));
-        logger.debug("Ajout du Buff "+id+" sur le personnage fighter ("+this.getId()+") val : "+val+" duration : "+duration+" turns : "+turns+" debuff : "+debuff+" spellid : "+spellID+" args : "+args+" !");
+        //logger.debug("Ajout du Buff "+id+" sur le personnage fighter ("+this.getId()+") val : "+val+" duration : "+duration+" turns : "+turns+" debuff : "+debuff+" spellid : "+spellID+" args : "+args+" !");
 
         switch(id) {
             case 6://Renvoie de sort
@@ -962,8 +982,8 @@ public class Fighter implements Comparable<Fighter> {
                 str.append(getTotalStats().getEffect(Constant.STATS_ADD_RP_FEU)).append(";");
                 str.append(getTotalStats().getEffect(Constant.STATS_ADD_RP_EAU)).append(";");
                 str.append(getTotalStats().getEffect(Constant.STATS_ADD_RP_AIR)).append(";");
-                str.append(getTotalStats().getEffect(Constant.STATS_ADD_AFLEE)).append(";");
-                str.append(getTotalStats().getEffect(Constant.STATS_ADD_MFLEE)).append(";");
+                str.append(getTotalStats().getEffect(Constant.STATS_ADD_AFLEE) ).append(";");
+                str.append(getTotalStats().getEffect(Constant.STATS_ADD_MFLEE) ).append(";");
                 str.append(this.team).append(";");
                 if (this.perso.isOnMount() && this.perso.getMount() != null)
                     str.append(this.perso.getMount().getStringColor(this.perso.parsecolortomount()));
@@ -978,6 +998,7 @@ public class Fighter implements Comparable<Fighter> {
                 str.append(this.getPdvMax()).append(";");
                 str.append(this.mob.getPa()).append(";");
                 str.append(this.mob.getPm()).append(";");
+                str.append(this.mob.getResiString()).append(";");
                 str.append(this.team);
                 break;
             case 5://Perco

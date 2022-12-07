@@ -4,11 +4,9 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell;
 import fight.spells.Spell.SortStats;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * Created by Locos on 04/10/2015.

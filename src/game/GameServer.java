@@ -1,23 +1,22 @@
 package game;
 
+import client.Account;
+import client.Player;
+import com.sun.istack.NotNull;
+import exchange.ExchangeClient;
+import game.world.World;
+import kernel.Config;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.textline.LineDelimiter;
 import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import client.Account;
-import client.Player;
-import exchange.ExchangeClient;
-import game.world.World;
-import kernel.Config;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -29,7 +28,8 @@ public class GameServer {
     public static short MAX_PLAYERS = 700;
     public static GameServer INSTANCE = new GameServer();
 
-    private final static @NotNull ArrayList<Account> waitingClients = new ArrayList<>();
+    private final static @NotNull
+    ArrayList<Account> waitingClients = new ArrayList<>();
     private final static @NotNull Logger log = LoggerFactory.getLogger(GameServer.class);
     private final @NotNull IoAcceptor acceptor;
 

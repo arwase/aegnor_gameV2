@@ -1,4 +1,4 @@
-package exchange.transfer;
+/*package exchange.transfer;
 
 import exchange.ExchangeClient;
 import game.world.World;
@@ -6,6 +6,7 @@ import game.world.World;
 /**
  * Created by Locos on 02/02/2017
  **/
+/*
 public class DataType<T> {
     private final byte type;
     private T value;
@@ -41,3 +42,4 @@ public class DataType<T> {
         return value;
     }
 }
+*/

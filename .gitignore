@@ -1,7 +1,7 @@
 # Project exclude paths
 /out/
-/.idea/
-.idea/
+/src/kernel/.idea/
+src/kernel/.idea/
 /.classpath/
 /classes/
 /recursos/

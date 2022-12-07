@@ -2,12 +2,12 @@ package database.statics;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import client.Player;
 import com.zaxxer.hikari.HikariDataSource;
-import org.slf4j.LoggerFactory;
 import database.DAO;
 import database.Database;
 import kernel.Main;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 
@@ -16,10 +16,23 @@ public abstract class AbstractDAO<T> implements DAO<T> {
     protected final Object locker = new Object();
     protected HikariDataSource dataSource;
     protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [S]");
+    protected Logger logger2 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.PoolBase");
+    protected Logger logger3 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.HikariPool");
+    protected Logger logger4 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariDataSource");
+    protected Logger logger5 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariConfig");
+    protected Logger logger6 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.util.DriverDataSource");
+    protected Logger logger7 = (Logger) LoggerFactory.getLogger(ProtocolCodecFilter.class);
 
     public AbstractDAO(HikariDataSource dataSource) {
         this.dataSource = dataSource;
         logger.setLevel(Level.OFF);
+        logger2.setLevel(Level.OFF);
+        logger3.setLevel(Level.OFF);
+        logger4.setLevel(Level.OFF);
+        logger5.setLevel(Level.OFF);
+        logger6.setLevel(Level.OFF);
+        logger7.setLevel(Level.OFF);
+
     }
 
     protected void execute(String query) {

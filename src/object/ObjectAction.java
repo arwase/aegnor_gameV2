@@ -713,7 +713,7 @@ public class ObjectAction {
 
                     case 35: // Mount cameleon
                         if(player.getMount() != null) {
-                            player.getMount().getCapacitys().add(9);
+                            player.getMount().setCapacitys(9);
                             if(player.isOnMount()) {
                                 SocketManager.GAME_SEND_ALTER_GM_PACKET(player.getCurMap(), player);
                             }

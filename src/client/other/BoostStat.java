@@ -1,7 +1,5 @@
 package client.other;
 
-import client.Classe;
-
 public final class BoostStat {
     private int inicio;
     private int cost;

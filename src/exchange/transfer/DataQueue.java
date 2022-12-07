@@ -8,19 +8,35 @@ import java.util.Map;
  */
 public class DataQueue {
 
-    private final Map<Long, DataType<?>> queue;
-    private long count;
+    private static long count = 0;
+    public final static Map<Long, Queue<?>> queues = new HashMap<>();
 
-    public DataQueue() {
-        this.queue = new HashMap<>();
-        this.count = 0;
-    }
-
-    public Map<Long, DataType<?>> getQueue() {
-        return queue;
-    }
-
-    public synchronized long count() {
+    public static synchronized long count() {
         return count++;
+    }
+
+    public static class Queue<T> {
+
+        private final byte type;
+        private T value;
+
+        public Queue(byte type) {
+            this.type = type;
+        }
+
+        public byte getType() {
+            return type;
+        }
+
+        public void setValue(T value) {
+            synchronized(this) {
+                this.value = value;
+                this.notify();
+            }
+        }
+
+        public T getValue() {
+            return value;
+        }
     }
 }

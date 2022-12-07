@@ -1,10 +1,8 @@
 package database.statics.data;
 
-import area.Area;
 import client.Classe;
 import com.zaxxer.hikari.HikariDataSource;
 import database.statics.AbstractDAO;
-import entity.Prism;
 import game.world.World;
 
 import java.sql.ResultSet;

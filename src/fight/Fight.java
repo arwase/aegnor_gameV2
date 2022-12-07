@@ -3,6 +3,7 @@ package fight;
 import area.SubArea;
 import area.map.GameCase;
 import area.map.GameMap;
+import area.map.labyrinth.Hotomani;
 import area.map.labyrinth.Minotoror;
 import client.Player;
 import client.other.Party;
@@ -165,7 +166,7 @@ public class Fight {
         SocketManager.GAME_SEND_ADD_IN_TEAM_PACKET_TO_MAP(getInit0().getPlayer().getCurMap(), getInit1().getId(), getInit1());
 
         SocketManager.GAME_SEND_MAP_FIGHT_GMS_PACKETS_TO_FIGHT(this, 7, getMap());
-
+       // System.out.println("GMS packet send");
         setState(Constant.FIGHT_STATE_PLACE);
     }
 
@@ -327,7 +328,21 @@ public class Fight {
                 Minotoror.demi();
             else if (entry.getValue().getTemplate().getId() == 831) // Mominotoror
                 Minotoror.momi();
+
         }
+
+        if (map.getId() == 12010) // Hotomani groups
+            Hotomani.spawnGroupe1();
+        else if (map.getId() == 12017 ) // Hotomani boss
+            Hotomani.spawnGroupe2();
+        else if (map.getId() == 12000 ) // Hotomani boss
+            Hotomani.spawnGroupe3();
+        else if (map.getId() == 12015 ) // Hotomani boss
+            Hotomani.spawnGroupe4();
+        else if (map.getId() == 12014 ) // Hotomani boss
+            Hotomani.spawnGroupe5();
+        else if (map.getId() == 12028 ) // Hotomani boss
+            Hotomani.spawnBoss();
 
         SocketManager.GAME_SEND_FIGHT_GJK_PACKET_TO_FIGHT(this, 1, 2, 0, 1, 0, 45000, getType());
         SocketManager.GAME_SEND_GDF_PACKET_TO_FIGHT(perso, this.getMap().getCases());
@@ -1161,6 +1176,7 @@ public class Fight {
         setCurPlayer(-1);
         SocketManager.GAME_SEND_GTL_PACKET_TO_FIGHT(this, 7);
         SocketManager.GAME_SEND_GTM_PACKET_TO_FIGHT(this, 7);
+       // SocketManager.GAME_SEND_GTU_PACKET_TO_FIGHT(this,7);
 
         /** Challenges **/
         if (getType() == Constant.FIGHT_TYPE_PVM
@@ -1332,6 +1348,7 @@ public class Fight {
                             endTurn(false, caster);
 
                         final Player player = caster.getPlayer();
+                        initOneWindow(false);
                         player.setDuelId(-1);
                         player.setReady(false);
                         player.setFight(null);
@@ -1740,7 +1757,7 @@ public class Fight {
 
         Fighter current = this.getFighterByOrdreJeu();
 
-        if(current.getPlayer() != null) {
+        if(current.getPlayer() != null && !(current.hasLeft() || current.isDead() || current.getPlayer().passturn ) ) {
             // Contrôle d'invocation
             if (current.isControllable()) {
                 initControlInvoc(false);
@@ -1748,11 +1765,24 @@ public class Fight {
                 initControlInvoc(true);
             }
             //OneWindow
-            if (current.getPlayer().oneWindows & current.getPlayer().getSlaveLeader() != null) {
-                initOneWindow(true);
-            } else if (current.getPlayer().oneWindows & current.getPlayer().getSlaveLeader() == null) {
+            if (current.getPlayer().getSlaveLeader() != null) {
+                if(current.getPlayer().getSlaveLeader().oneWindows) {
+                    if (isInFight(current.getPlayer().getSlaveLeader())) {
+                        initOneWindow(true);
+                    }
+                    else{
+                        initOneWindow(false);
+                    }
+                }
+                else{
+                    initOneWindow(false);
+                }
+            }
+            else{
                 initOneWindow(false);
             }
+
+
         }
 
         if(current == this.getOrderPlaying().get(0) && !current.isControllable() )
@@ -1862,6 +1892,20 @@ public class Fight {
         if (current != null)
             if (f == current)
                 this.endTurn(onAction);
+    }
+
+    public boolean isInFight(Player player) {
+
+        Map<Integer, Fighter> players = this.getTeam0();
+        for (Entry<Integer, Fighter> entry : players.entrySet()) {
+            //System.out.println(player.getName() +"  et ca "+ entry.getValue().getPlayer().getName());
+            if(player == entry.getValue().getPlayer()){
+                return true;
+            }
+
+        }
+
+        return false;
     }
 
     public synchronized void endTurn(final boolean onAction) {
@@ -1986,6 +2030,7 @@ public class Fight {
         }
 
         SocketManager.GAME_SEND_GTM_PACKET_TO_FIGHT(this, 7);
+        //SocketManager.GAME_SEND_GTU_PACKET_TO_FIGHT(this,7);
         SocketManager.GAME_SEND_GTR_PACKET_TO_FIGHT(this, 7, current.getId());
         // Timer d'une seconde � la fin du tour
         this.startTurn();
@@ -2582,7 +2627,7 @@ public class Fight {
     public synchronized int tryCastSpell(Fighter fighter, SortStats spell, int cell) {
         final Fighter current = this.getFighterByOrdreJeu();
 
-        if (current == null || spell == null || !this.getCurAction().isEmpty() || current != fighter)
+        if (current == null || spell == null  || current != fighter)
             return 10;
 
         Player player = fighter.getPlayer();
@@ -2645,7 +2690,7 @@ public class Fight {
                 fighter.addLaunchedSort(Cell.getFirstFighter(), spell, fighter);
 
             if ((isEc && spell.isEcEndTurn())) {
-                TimerWaiter.addNext(() -> this.setCurAction(""), 500, TimerWaiter.DataType.FIGHT);
+                TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimerWaiter.DataType.FIGHT);
 
                 if (fighter.getMob() != null || fighter.isInvocation()) {
                     return 5;
@@ -2655,7 +2700,7 @@ public class Fight {
                 }
             }
         } else if (fighter.getMob() != null || fighter.isInvocation()) {
-            TimerWaiter.addNext(() -> this.setCurAction(""), 600, TimerWaiter.DataType.FIGHT);
+            TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimerWaiter.DataType.FIGHT);
             return 10;
         }
 
@@ -4567,7 +4612,7 @@ public class Fight {
             Collection<GameObject> dropsCollector = null;
             Couple<Integer, Integer> kamas;
             List<Integer> levels = new ArrayList<Integer>() ;
-            levels.add(0);
+            levels.add(1);
 
             if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                 int kamasCollector = (int) Math.ceil(collector.getKamas() / winners.size());
@@ -4660,7 +4705,7 @@ public class Fight {
                         }
                     }
                     else{
-                        levels.add(0);
+                        //levels.add(1);
                     }
                 }
 
@@ -4877,17 +4922,20 @@ public class Fight {
                     player.calculTurnCandy();
                 if (getType() == Constant.FIGHT_TYPE_PVT || getType() == Constant.FIGHT_TYPE_PVM || getType() == Constant.FIGHT_TYPE_CHALLENGE || getType() == Constant.FIGHT_TYPE_DOPEUL) {
                     String drops = "";
-                    long xpPlayer = 0, xpGuild = 0, xpMount = 0, xpPlayer2 = 0 ;
+                    long xpPlayer = 0, xpGuild = 0, xpMount = 0, xpPlayer2 = 0 ,percentBonusFinal = 0;
                     int winKamas;
 
                     AtomicReference<Long> XP = new AtomicReference<>();
                     /** Xp,kamas **/
                     if (player != null) {
-                        xpPlayer = FormuleOfficiel.getXp(i, winners, totalXP, nbbonus, (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners);
+                        //xpPlayer = FormuleOfficiel.getXp(i, winners, totalXP, nbbonus, (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners);
                         xpPlayer2 = FormuleOfficiel.getXp2(i, winners, totalXP,BonuslvlMoyen , (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners,BonusPerdiffip,BonusPerdiffclasse);
                         //player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
                         //player.sendMessage("contre " + xpPlayer2+ " XP gagné");
                         XP.set(xpPlayer2);
+
+                        percentBonusFinal = ((int) Math.round((BonusPerdiffip*100)-100) + (int) Math.round((BonusPerdiffclasse*100)-100) +(int) Math.round((bonusVip*100)-100)   );
+
 
                         if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                             if (player != null && memberGuild != 0)
@@ -4901,6 +4949,11 @@ public class Fight {
                             player.getMount().addXp(xpMount);
                             SocketManager.GAME_SEND_Re_PACKET(player, "+", player.getMount());
                         }
+
+                        if(player.noxp) {
+                            XP.set(0L);
+                        }
+
                     }
 
 
@@ -4931,8 +4984,9 @@ public class Fight {
 
                         try {
                             if (this.getType() == Constant.FIGHT_TYPE_PVM && win == 1) {
-                                temporary3.addAll(World.world.getPotentialBlackItem(Maxlvlgroupe,this.fightdifficulty).stream().map(objectTemplate ->
-                                        new Drop(objectTemplate.getId(), 0.025, 0)).collect(Collectors.toList()));
+
+                               //temporary3.addAll(World.world.getPotentialBlackItem((int) Maxlvlmob, this.fightdifficulty).stream().map(objectTemplate ->
+                               //             new Drop(objectTemplate.getId(), 0.01, 0)).collect(Collectors.toList()));
 
                                 for (Fighter entry : loosers) {
                                     temporary3.add( World.world.getPotentialRuneReini( entry.getLvl() , this.fightdifficulty ));
@@ -4972,16 +5026,15 @@ public class Fight {
                                     continue;
 
                                 quantity = 1;
-                                if( (objectTemplate.getType() > 32 || objectTemplate.getType() == 15) && (( objectTemplate.getType() < 71 ) || ( objectTemplate.getType() > 94  ) || ( objectTemplate.getType() == 84 ) )
-                                        && ( objectTemplate.getType() != 97 )  && ( objectTemplate.getType() <= 111 ) ) {
-                                    quantity = Formulas.getRandomValue(1, Config.INSTANCE.getRATE_DROP());
+                                int maxQuantity = Config.INSTANCE.getRATE_DROP() * (fightdifficulty+1);
 
+                                if( ArrayUtils.contains( Constant.FILTER_RESSOURCES, objectTemplate.getType() ) && (objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS) ) {
+                                    quantity = Formulas.getRandomValue(1, maxQuantity);
                                 }
 
                                 if( quantity ==1 && drop.getLocalPercent() >= 100) {
                                     quantity = (int)Math.round(drop.getLocalPercent()/100) ;
                                 }
-
 
                                 boolean itsOk = false, unique = false;
                                 switch (drop.getAction()) {
@@ -5073,7 +5126,12 @@ public class Fight {
                                         if (player != null && Minotoror.isValidMap(player.getCurMap()))
                                             itsOk = true;
                                         break;
-
+                                    case 10:// Selon difficulté
+                                        if (player == null) break;
+                                        int diff = Integer.parseInt(drop.getCondition());
+                                        if (this.fightdifficulty  >= diff)
+                                            itsOk = true;
+                                        break;
                                     case 999:// Drop for collector
                                         itsOk = true;
                                         break;
@@ -5116,7 +5174,7 @@ public class Fight {
                             if (this.getTrainerWinner() != -1 && i.getId() == this.getTrainerWinner() && player.getMount() == null) {
                                 int color = Formulas.getCouleur(amande, rousse, doree);
 
-                                Mount mount = new Mount(color, i.getId(), true);
+                                Mount mount = new Mount(color, i.getId(), false);
                                 player.setMount(mount);
                                 SocketManager.GAME_SEND_Re_PACKET(player, "+", mount);
                                 SocketManager.GAME_SEND_Rx_PACKET(player);
@@ -5163,16 +5221,28 @@ public class Fight {
                                         //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
                                         continue;
                                     }
+                                }
 
+                                if(chief.noblackitems){
+                                    if( World.world.isPotentielBlackItem((int) Maxlvlmob, this.fightdifficulty, objectTemplate) ){
+                                        continue;
+                                    }
                                 }
                             }
 
-                            if( target.noitems){ // Si la cible a noitem
+                            if(target.noitems){ // Si la cible a noitem
                                 if(ArrayUtils.contains( Constant.ITEM_TYPE_WITH_RARITY, objectTemplate.getType() ) && objectTemplate.getType() != 23 ){
                                     //target.sendMessage("L'item " + objectTemplate.getName() + " a été ignoré du drop car " + target.getName() + " A lancé .noitems");
                                     continue;
                                 }
                             }
+                            if(target.noblackitems){
+                                if( World.world.isPotentielBlackItem((int) Maxlvlmob, this.fightdifficulty, objectTemplate) ){
+                                    continue;
+                                }
+                            }
+
+
                             if (drops.length() > 0) drops += ",";
                             drops += objectTemplate.getId() + "~" + entry.getValue();
                             //target.sendMessage(drops);
@@ -5363,7 +5433,8 @@ public class Fight {
                     p.append("2;");
                     p.append(i.getId()).append(";");
                     p.append(i.getPacketsName()).append(";");
-                    p.append(i.getLvl()).append(";0;");
+                    p.append(i.getLvl()).append(";");
+                    p.append(percentBonusFinal).append(";");
                     p.append((i.isDead() ? "1" : "0")).append(";");
                     p.append(i.xpString(";")).append(";");
                     p.append((xpPlayer == 0 ? "" : xpPlayer)).append(";");
@@ -5888,6 +5959,7 @@ public class Fight {
 
     public void cast(Fighter fighter, Runnable runnable) {
         if(this.turn != null && System.currentTimeMillis() - this.turn.getStartTime() >= 30000) return;
+
         SocketManager.GAME_SEND_GAS_PACKET_TO_FIGHT(this, 7, fighter.getId());
         try { runnable.run(); } catch(Exception e) { e.printStackTrace(); }
         SocketManager.GAME_SEND_GAF_PACKET_TO_FIGHT(this, 7, 0, fighter.getId());

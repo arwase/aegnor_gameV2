@@ -1,6 +1,5 @@
 package fight.ia.type;
 
-import common.PathFinding;
 import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;

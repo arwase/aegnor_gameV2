@@ -173,7 +173,8 @@ public class PlayerExchange extends Exchange {
                         + "@" + couple2.first + ";" + couple2.second + "]";
             }
             str += " avec " + kamas2 + " K.";
-            Logging.objects.debug("Exchange : " + str);
+            if (Logging.USE_LOG)
+            Logging.getInstance().write("Object", "Exchange : " + str);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -523,13 +524,13 @@ public class PlayerExchange extends Exchange {
             }
 
              if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type )){
-                kamastoadd =   3 * lvl * rarity *qua;
+                kamastoadd =   4 * lvl * rarity *qua;
              }
              else if(ArrayUtils.contains( Constant.FILTER_NONEQUIPEMENT,type )){
-                 kamastoadd =   2 * lvl *qua;
+                 kamastoadd =   2 * lvl * qua;
              }
              else if ( ArrayUtils.contains( Constant.FILTER_RESSOURCES,type )){
-                 kamastoadd =  Math.round(lvl *qua);
+                 kamastoadd =  Math.round(0.5 * lvl *qua);
              }
 
             return kamastoadd;

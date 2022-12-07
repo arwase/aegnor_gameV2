@@ -52,7 +52,7 @@ public class HdvObjectData extends AbstractDAO<Object> {
         PreparedStatement p = null;
         try {
             p = getPreparedStatement("INSERT INTO `hdvs_items` (`map`,`ownerGuid`,`price`,`count`,`itemID`) VALUES(?,?,?,?,?)");
-            p.setInt(1, toAdd.getHdvId());
+            p.setInt(1, -1);
             p.setInt(2, toAdd.getOwner());
             p.setInt(3, toAdd.getPrice());
             p.setInt(4, toAdd.getAmount(false));

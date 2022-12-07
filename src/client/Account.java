@@ -559,6 +559,11 @@ public class Account {
             player.getParty().leave(player);
         if (player.getMount() != null)
             Database.getStatics().getMountData().update(player.getMount());
+        if (player.getSlaveLeader() != null) {
+            player.getSlaveLeader().PlayerList1.remove(player);
+            player.setSlaveLeader(null);
+        }//TODO : Add Gestion esclave
+
         if (player.getFight() != null) {
             if (player.getFight().playerDisconnect(player, false)) {
                 Database.getStatics().getPlayerData().update(player);

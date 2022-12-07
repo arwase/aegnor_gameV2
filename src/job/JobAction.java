@@ -14,8 +14,10 @@ import game.world.World;
 import game.world.World.Couple;
 import kernel.Config;
 import kernel.Constant;
+import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -209,7 +211,7 @@ public class JobAction {
             SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
             SocketManager.GAME_SEND_Ow_PACKET(player);
 
-            if (player.getMetierBySkill(this.id).get_lvl() >= 30 && Formulas.getRandomValue(1, 40) > 39) {
+            if (player.getMetierBySkill(this.id).get_lvl() >= 30 && Formulas.getRandomValue(1, 15) > 14) {
                 for (int[] protector : JobConstant.JOB_PROTECTORS) {
                     if (tID == protector[1]) {
                         int monsterLvl = JobConstant.getProtectorLvl(player.getLevel());
@@ -225,11 +227,16 @@ public class JobAction {
     public synchronized void craft(boolean isRepeat, int repeat) {
         if (!this.isCraft) return;
 
+
         if (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169)) {
             this.craftMaging(isRepeat, repeat);
             return;
         }
-        System.out.println(this.id);
+        boolean isMassiveCraft = false;
+        if(repeat == -1){
+            repeat = 1 ;
+        }
+        //System.out.println(repeat);
         if(isRepeat) {
             this.ingredients.putAll(this.lastCraft);
         }
@@ -244,7 +251,6 @@ public class JobAction {
                     GameObject obj = World.world.getGameObject(e.getKey());
                     items.put(obj.getTemplate().getId(), e.getValue());
         }
-
         boolean signed = false;
 
         if (items.containsKey(7508)) {
@@ -262,37 +268,38 @@ public class JobAction {
             //Recette non existante ou pas adaptï¿½ au mï¿½tier
             if (templateId == -1 || !SM.getTemplate().canCraft(this.id, templateId)) {
                 this.lastCaftID.add(templateId);
+
                 SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
                 SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
                 this.ingredients.clear();
                 return;
             }
-
             // on les supprime que si c'est bon
             for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-                GameObject obj = World.world.getGameObject(e.getKey());
-                if (obj == null) {
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return;
-                }
-                if (obj.getQuantity() < e.getValue()) {
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return;
-                }
 
-                int newQua = obj.getQuantity() - e.getValue();
-                if (newQua < 0) return;
+                    GameObject obj = World.world.getGameObject(e.getKey());
+                    if (obj == null) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
+                    if (obj.getQuantity() < e.getValue()*repeat) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
 
-                if (newQua == 0) {
-                    this.player.removeItem(e.getKey());
-                    World.world.removeGameObject(e.getKey());
-                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
-                } else {
-                    obj.setQuantity(newQua);
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
-                }
+                    int newQua = obj.getQuantity() - e.getValue()*repeat;
+                    if (newQua < 0) return;
+
+                    if (newQua == 0) {
+                        this.player.removeItem(e.getKey());
+                        World.world.removeGameObject(e.getKey());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                    } else {
+                        obj.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                    }
+
             }
-
 
             int chan = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), this.ingredients.size());
             int chan2 = JobConstant.getChanceByNbrCaseByLvlnormal(SM.get_lvl(), this.ingredients.size());
@@ -305,17 +312,107 @@ public class JobAction {
                     break;
             }
 
-            //if (Logging.USE_LOG)
-                //Logging.getInstance().write("Craft", this.player.getName() + " à crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + templateId + " (" + World.world.getObjTemplate(templateId).getName() + ")");
-            if (!success) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
-                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + templateId);
-                SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
-            } else {
-                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplicationForJobs(this.player.getItems().values(), 1, false,chan2);
+
+                if(repeat > 1){
+                    isMassiveCraft = true;
+                }
+                if (Logging.USE_LOG)
+                    Logging.getInstance().write("Craft", this.player.getName() + " à crafter avec " + (success ? "SUCCES" : "ECHEC") + " l'item " + templateId + " (" + World.world.getObjTemplate(templateId).getName() + ") " + repeat + "fois");
+
+                for(int j=0;j<repeat;j++){
+                if (!success) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EF");
+                    SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-" + templateId);
+                    SocketManager.GAME_SEND_Im_PACKET(this.player, "0118");
+                } else {
+
+                    GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplicationForJobs(this.player.getItems().values(), 1, false, chan2);
+                    int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+                    if (guid == -1) { // Don't exist
+                        guid = newObj.setId();
+                        this.player.getItems().put(guid, newObj);
+                       SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
+                        World.world.addGameObject(newObj, true);
+                    } else {
+                        newObj.setQuantity(newObj.getQuantity() + 1);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+                    }
+                    SocketManager.GAME_SEND_Ow_PACKET(this.player);
+
+                    if (signed) newObj.addTxtStat(988, this.player.getName());
+
+
+                    SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
+
+                }
+
+
+                int winXP = 0;
+                if (success)
+                    winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
+                else if (!SM.getTemplate().isMaging())
+                    winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
+
+
+                    if (winXP > 0) {
+                        SM.addXp(this.player, winXP);
+                        ArrayList<JobStat> SMs = new ArrayList<>();
+                        SMs.add(SM);
+                        SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
+                    }
+                }
+
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
+
+        } else {
+
+
+
+            int templateId = World.world.getObjectByIngredientForJob(World.world.getMetier(this.id).getListBySkill(this.id), items);
+
+            if (templateId == -1 || !World.world.getMetier(this.id).canCraft(this.id, templateId)) {
+                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                    SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
+                    this.ingredients.clear();
+                    return;
+                }
+
+            if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT, World.world.getObjTemplate(templateId).getType() ) ) {
+                if(repeat > 1){
+                    isMassiveCraft = true;
+                }
+
+                for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                    GameObject obj = World.world.getGameObject(e.getKey());
+                    if (obj == null) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
+                    if (obj.getQuantity() < e.getValue()) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
+
+                    int newQua = obj.getQuantity() - e.getValue();
+                    if (newQua < 0) return;
+
+                    if (newQua == 0) {
+                        this.player.removeItem(e.getKey());
+                        World.world.removeGameObject(e.getKey());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                    } else {
+                        obj.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                    }
+                }
+
+
+                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
                 int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
-                if(guid == -1) { // Don't exist
+                if (guid == -1) { // Don't exist
                     guid = newObj.setId();
                     this.player.getItems().put(guid, newObj);
                     SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
@@ -324,90 +421,73 @@ public class JobAction {
                     newObj.setQuantity(newObj.getQuantity() + 1);
                     SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
                 }
-                SocketManager.GAME_SEND_Ow_PACKET(this.player);
 
                 if (signed) newObj.addTxtStat(988, this.player.getName());
 
-
+                SocketManager.GAME_SEND_Ow_PACKET(this.player);
                 SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
                 SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
                 SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
             }
-
-            int winXP = 0;
-            if (success)
-                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
-            else if (!SM.getTemplate().isMaging())
-                winXP = Formulas.calculXpWinCraft(SM.get_lvl(), this.ingredients.size()) * Config.INSTANCE.getRATE_JOB();
-
-            if (winXP > 0) {
-                SM.addXp(this.player, winXP);
-                ArrayList<JobStat> SMs = new ArrayList<>();
-                SMs.add(SM);
-                SocketManager.GAME_SEND_JX_PACKET(this.player, SMs);
-            }
-        } else {
-            int templateId = World.world.getObjectByIngredientForJob(World.world.getMetier(this.id).getListBySkill(this.id), items);
-
-
-
-            if (templateId == -1 || !World.world.getMetier(this.id).canCraft(this.id, templateId)) {
-                SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");
-                this.ingredients.clear();
-                return;
-            }
-
-            for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-                GameObject obj = World.world.getGameObject(e.getKey());
-                if (obj == null) {
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return;
-                }
-                if (obj.getQuantity() < e.getValue()) {
-                    SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
-                    return;
+            else{
+                if(repeat > 1){
+                    isMassiveCraft = true;
                 }
 
-                int newQua = obj.getQuantity() - e.getValue();
-                if (newQua < 0) return;
+                for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                    GameObject obj = World.world.getGameObject(e.getKey());
+                    if (obj == null) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
+                    if (obj.getQuantity() < e.getValue()*repeat) {
+                        SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
+                        return;
+                    }
 
-                if (newQua == 0) {
-                    this.player.removeItem(e.getKey());
-                    World.world.removeGameObject(e.getKey());
-                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                    int newQua = obj.getQuantity() - e.getValue()*repeat;
+                    if (newQua < 0) return;
+
+                    if (newQua == 0) {
+                        this.player.removeItem(e.getKey());
+                        World.world.removeGameObject(e.getKey());
+                        SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, e.getKey());
+                    } else {
+                        obj.setQuantity(newQua);
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                    }
+                }
+
+
+                GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), repeat, false);
+                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+
+                if (guid == -1) { // Don't exist
+                    guid = newObj.setId();
+                    this.player.getItems().put(guid, newObj);
+                    SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
+                    World.world.addGameObject(newObj, true);
                 } else {
-                    obj.setQuantity(newQua);
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
+                    newObj.setQuantity(newObj.getQuantity() + repeat);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
                 }
+
+                if (signed) newObj.addTxtStat(988, this.player.getName());
+
+                SocketManager.GAME_SEND_Ow_PACKET(this.player);
+                SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
+                SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
+                SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
+
             }
-
-
-            GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), 1, false);
-            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
-
-            if(guid == -1) { // Don't exist
-                guid = newObj.setId();
-                this.player.getItems().put(guid, newObj);
-                SocketManager.GAME_SEND_OAKO_PACKET(this.player, newObj);
-                World.world.addGameObject(newObj, true);
-            } else {
-                newObj.setQuantity(newObj.getQuantity() + 1);
-                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
-            }
-
-            if (signed) newObj.addTxtStat(988, this.player.getName());
-
-            SocketManager.GAME_SEND_Ow_PACKET(this.player);
-            SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
-            SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + templateId);
-            SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + templateId);
         }
+
+
         this.lastCraft.clear();
         this.lastCraft.putAll(this.ingredients);
         this.ingredients.clear();
 
-        if(!isRepeat) {
+        if(!isRepeat || isMassiveCraft) {
             this.oldJobCraft = this.jobCraft;
             this.jobCraft = null;
         }
@@ -640,7 +720,6 @@ public class JobAction {
 
     private synchronized void craftMaging(boolean isReapeat, int repeat) {
         // On commence le fm
-
         //Definition des variables
         int limitPerLigne = 151; // Max par ligne
         boolean isRestating = false;
@@ -877,7 +956,7 @@ public class JobAction {
                     runeOrPotion = ing;
                     statsObjectFm = "dc";
                     statsAdd = 1;
-                    poidRune = 2;
+                    poidRune = 5;
                     lvlQuaStatsRune = ing.getTemplate().getLevel();
                     break;
                 case 7438:
@@ -1194,7 +1273,6 @@ public class JobAction {
             return;
         } // Pas de rune
         if( runeOrPotion.getTemplate().getId() >= 17197 &&  runeOrPotion.getTemplate().getId() <= 17200 ){
-
             if (SM == null || objectFm == null) {
                 this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
                 if (objectFm != null) {
@@ -1228,12 +1306,12 @@ public class JobAction {
                     break;
             }
 
-
-
             int rarity = objectFm.getRarity();
+            int templateID = objectFm.getMimibiote();
+
             ObjectTemplate objTemplate = objectFm.getTemplate();
             if(objTemplate.getLevel() > maxLvlItem){
-                this.player.sendMessage("La rune de pouvoir utilisé ne convient pas pour un item de ce level, Level maximum : "+maxLvlItem);
+                this.player.sendMessage("La rune de réinitialisation utilisée ne convient pas pour un item de ce level, Level maximum : "+maxLvlItem);
                 if (objectFm != null) {
                     World.world.addGameObject(objectFm, true);
                     this.player.addObjet(objectFm);
@@ -1252,14 +1330,26 @@ public class JobAction {
             objectFm = newObj;
             int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
+
+
             if(guid == -1) { // Don't exist
-                guid = newObj.setId();
-                World.world.addGameObject(newObj, true);
-                this.player.addObjet(newObj);
+                    guid = newObj.setId();
+                    World.world.addGameObject(newObj, true);
+                    this.player.addObjet(newObj);
             } else {
-                newObj.setQuantity(newObj.getQuantity() + 1);
-                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
+                    newObj.setQuantity(newObj.getQuantity() + 1);
+                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, newObj);
             }
+
+
+            System.out.println(templateID);
+            if(templateID != -1) {
+                newObj.addTxtStat(Constant.APPARAT_ITEM, templateID + "");
+                newObj.setMimibiote(templateID);
+                newObj.setModification();
+                SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, newObj);
+            }
+
             SocketManager.GAME_SEND_Ow_PACKET(this.player);
 
             final String data = String.valueOf(newObj.getGuid()) + "|1|" + newObj.getTemplate().getId() + "|"
@@ -1281,11 +1371,7 @@ public class JobAction {
                     SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
                 }
             }
-            //World.world.addGameObject(objectFm, true);
-            //this.player.addObjet(objectFm);
-            //SocketManager.GAME_SEND_Ow_PACKET(this.player);
-            //final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
-            //		+ objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+
             if (!this.isRepeat) {
                 this.reConfigingRunes = -1;
             }
@@ -1293,16 +1379,10 @@ public class JobAction {
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
             }
 
-            //this.player.sendMessage(""+data);
-            //this.data = data;
             SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
             SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
 
-            //SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + objTemplate.getId() + "|" + newObj.parseStatsString().replace(";", "#"));
-            //SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplate.getId());
-            //SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "+" + objTemplate.getId());
-
-        } // Rune de réini
+        } // Rune de pouvoir
         else if(runeOrPotion.getTemplate().getId() == 17202 || runeOrPotion.getTemplate().getId() == 17203
                 || runeOrPotion.getTemplate().getId() == 17204 || runeOrPotion.getTemplate().getId() == 17205){
 
@@ -1426,7 +1506,7 @@ public class JobAction {
             //this.player.sendMessage("poid de la rune :"+poidRune);
 
             if (SM == null || objectFm == null || runeOrPotion == null) { // On check avant de commencer le traitement si tous les pré-requis et recupération ont fonctionné
-                this.player.sendMessage("Vous ne possedez pas Ou de metier approprié, Ou de rune, ou d'objet");
+                this.player.sendMessage("Vous ne possédez pas ou de metier approprié, ou de rune, ou d'objet");
 
                 //System.out.println("On rentre forcement la " );
                 if (objectFm != null) {
@@ -1506,7 +1586,7 @@ public class JobAction {
 
                 float coef = 1;
                 int statJetActuel = 0;
-                // Gestyion des dommages bizarres
+                // Gestion des dommages bizarres
                 if(statsObjectFm.equals("70") || statsObjectFm.equals("79") ) {
                     int statJetActuel1 = getActualJet(objectFm, "79");
                     int statJetActuel2 = getActualJet(objectFm, "70");// Jet actuel de l'item pour rendre plus compliqué si on approche du poid théorique ou de la stats max si ca dépasse le poid théorique
@@ -1699,7 +1779,7 @@ public class JobAction {
                 }
 
 
-                this.player.sendMessage("Loi appliquée " + loi);
+                //this.player.sendMessage("Loi appliquée " + loi);
 
                 if (canFM) {
                     chances = Formulas.chanceFM2(PoidMaxItem, PoidMiniItem, PoidTotItemActuel, PoidActuelStatAFm,PoidTotStatsExoItemActuel , poidRune, statMax, statMin, statJetActuel,statsAdd,poidUnitaire,statJetFutur, x , coef, this.player, objectFm.getPuit(), loi );
@@ -1735,7 +1815,7 @@ public class JobAction {
             int SN = chances.get(1);
             boolean successC = (aleatoryChance <= SC);
             boolean successN = (aleatoryChance <= (SC + SN));
-            this.player.sendMessage("Chances : [SC "+SC + "%| SN " + SN+ "%| EC " + (100 - (SC + SN)) + "%]");
+
             //this.player.sendMessage("le Jet :"+aleatoryChance);
             if (successC || successN) {
                 int winXP = Formulas.calculXpWinFm(objectFm.getTemplate().getLevel(), poidRune)
@@ -1748,9 +1828,10 @@ public class JobAction {
                 }
             }
 
+            String Result = "";
             if (successC) // SC
             {
-                this.player.sendMessage("Succes critique !");
+                Result= "Succes Critique";
                 int coef = 0;
                 pwrPerte = 0;
                 if (lvlElementRune == 1)
@@ -1835,7 +1916,7 @@ public class JobAction {
                 SocketManager.GAME_SEND_Ec_PACKET(this.player, "K;" + objTemplateID);
 
             } else if (successN) {
-                this.player.sendMessage("Succes Neutre");
+                Result= "Succes Neutre";
                 pwrPerte = 0;
                 if (isSigningRune) {
                     objectFm.addTxtStat(985, this.player.getName());
@@ -1887,7 +1968,7 @@ public class JobAction {
             } else
             // EC
             {
-                this.player.sendMessage("Echec !");
+                Result= "Echec";
                 pwrPerte = 0;
                 if (signingRune != null) { // On perd la rune signature
                     int newQua = signingRune.getQuantity() - 1;
@@ -1939,8 +2020,7 @@ public class JobAction {
                     SocketManager.GAME_SEND_Im_PACKET(this.player, "0183"); // Ca c'est perte ?
 
             }
-
-            this.player.sendMessage("Puit libre sur l'item :"+ objectFm.getPuit() );
+            this.player.sendMessage("Chances [SC "+SC + "%| SN " + SN+ "%| EC " + (100 - (SC + SN)) + "%] > " + Result +" | Puit:"+objectFm.getPuit());
         } //Rune de FM
 
         this.lastCraft.clear();
@@ -1967,11 +2047,10 @@ public class JobAction {
             this.player.getCurJobAction().modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l"item
         }
         catch(Exception e){
-            this.player.sendMessage("On est la  :"+ e );
+            //this.player.sendMessage("On est la  :"+ e );
 
             ((JobAction) this.player.getExchangeAction().getValue()).modifIngredient2(this.player, objectFm.getGuid(), 1); // On remet l'item dans la case de FM
         }
-
     }
 
     // NOUVELLE FONCTION DE GESTON PERTE + PUITS ENCORE A CORRIGER UN PEU
@@ -2084,9 +2163,6 @@ public class JobAction {
 
     }
 
-
-
-
     // FONCTION PAS UTILISE PEUT ETRE A RETIRER
     public static void setNewPuit(boolean success, String loi, Player player, GameObject objectFm, int poid, int pwrPerte) {        // La gestion du puit était codé avec le cu
 
@@ -2156,10 +2232,22 @@ public class JobAction {
             String[] stats = s.split("#");
             if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) > 0) {
             } else if (stats[0].toLowerCase().compareTo(statsModif.toLowerCase()) == 0) {
+                int max = 0;
+                try{
+                     max = Integer.parseInt(stats[2], 16);
+                }
+                catch(Exception e){
+                    System.out.println(e.toString() + objMod.getId() + " " + statsModif);
+                }
 
-                int max = Integer.parseInt(stats[2], 16);
-                if (max == 0)
-                    max = Integer.parseInt(stats[1], 16);
+                if (max == 0){
+                    try{
+                        max = Integer.parseInt(stats[1], 16);
+                    }
+                    catch(Exception e){
+                        System.out.println(e.toString() + objMod.getId() + " " + statsModif);
+                    }
+                }
 
                 max = (int) Math.floor(max + ((max)*0.5));
                 return max;
@@ -2465,7 +2553,9 @@ public class JobAction {
                 break;
             case Constant.STATS_ADD_DOMA:
             case Constant.STATS_ADD_DOMA2:
-                r = 20.0;
+            case Constant.STATS_RETDOM:
+            case Constant.STATS_ADD_SOIN:
+                r = 15.0;
                 break;
             case Constant.STATS_ADD_SAGE:
                 r = 3.0;
@@ -2481,9 +2571,6 @@ public class JobAction {
                 break;
             case Constant.STATS_ADD_PROS:
                 r = 3.0;
-                break;
-            case Constant.STATS_ADD_SOIN:
-                r = 20.0;
                 break;
             case Constant.STATS_ADD_RP_TER:
                 r = 6.0;
@@ -2589,6 +2676,7 @@ public class JobAction {
             case Constant.STATS_ADD_DOMA:
             case Constant.STATS_ADD_DOMA2:
             case Constant.STATS_ADD_SOIN:
+            case Constant.STATS_RETDOM:
                 r = 5.0;
                 break;
             case Constant.STATS_ADD_SAGE:

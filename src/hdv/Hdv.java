@@ -10,7 +10,6 @@ import kernel.Constant;
 import kernel.Logging;
 import object.ObjectTemplate;
 
-import java.io.Console;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,7 +157,7 @@ public class Hdv {
                 if(World.world.getAccount(toBuy.getOwner()) != null)
                     name = World.world.getAccount(toBuy.getOwner()).getName();
 
-                Logging.objects.debug("BuyHdv : "
+                Logging.getInstance().write("Object", "BuyHdv : "
                         + newOwner.getName() + " : achat de "
                         + toBuy.getGameObject().getTemplate().getName() + " x"
                         + toBuy.getGameObject().getQuantity() + " venant du compte "

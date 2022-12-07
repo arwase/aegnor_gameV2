@@ -247,7 +247,10 @@ public class IAHandler {
                         break;
                     case 76 : //IA Percepteur
                         ia = new IA76(fight, fighter, (byte) 5);
-
+                        break;
+                    case 77 : //Tentacul Primaire
+                        ia = new IA77(fight, fighter, (byte) 5);
+                        break;
 
                 }
                 //endregion
