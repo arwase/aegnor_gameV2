@@ -186,7 +186,7 @@ public class Challenge {
             case 44://Partage
             case 46://Chacun son monstre
                 for (Fighter fighter : fight.getFighters(1)) {
-                    if (!Args.contains(String.valueOf(fighter.getId()))) {
+                    if (!Args.contains(String.valueOf(fighter.getId())) && !(fighter.isInvocation()) ) {
                         challengeLoose(fighter);
                         return;
                     }
@@ -202,11 +202,11 @@ public class Challenge {
         switch (Type) {
             case 33: // survivant
             case 49: // Prot�gez vos mules
-                if (fighter.getPlayer() != null)
+                if (fighter.getPlayer() != null && !(fighter.isInvocation()))
                     challengeLoose(fight.getFighterByOrdreJeu());
                 break;
             case 44://Partage
-                if (fighter.getPlayer() != null)
+                if (fighter.getPlayer() != null && !(fighter.isInvocation()))
                     if (!Args.contains(String.valueOf(fighter.getId())))
                         challengeLoose(fighter);
                 break;
@@ -475,8 +475,11 @@ public class Challenge {
                 break;
             case 44: // Partage
             case 46: // Chacun son monstre
-                if (isKiller)
+                if (isKiller) {
+                    if(killer.isInvocation())
+                        killer = killer.getInvocator();
                     Args += (Args.isEmpty() ? killer.getId() : ";" + killer.getId());
+                }
                 break;
             case 30: // Les petits d'abord
             case 48: // Les mules d'abord

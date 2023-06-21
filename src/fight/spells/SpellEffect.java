@@ -33,6 +33,7 @@ public class SpellEffect {
 	private int chance = 100;
 	private String args;
 	private int value = 0;
+	private int fixvalue = 0;
 	private Fighter caster = null;
 	private int spell = 0;
 	private int spellLvl = 1;
@@ -48,6 +49,7 @@ public class SpellEffect {
 		durationFixed = 0;
 		try {
 			value = Integer.parseInt(args.split(";")[0]);
+			fixvalue = Integer.parseInt(args.split(";")[2]);
 			turns = Integer.parseInt(args.split(";")[3]);
 			chance = Integer.parseInt(args.split(";")[4]);
 			jet = args.split(";")[5];
@@ -66,6 +68,7 @@ public class SpellEffect {
 		args = args2;
 		spell = aspell;
 		try {
+			fixvalue = Integer.parseInt(args.split(";")[2]);
 			jet = args.split(";")[5];
 		} catch (Exception ignored) {
 		}
@@ -126,12 +129,12 @@ public class SpellEffect {
 						}
 						if (nbrCase == 0) continue;
 						int exCase = target.getCell().getId();
-						int newCellID = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), nbrCase, false);
+						int newCellID = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), nbrCase);
 						if (newCellID < 0)//S'il a été bloqué
 						{
 							int a = -newCellID;
 							a = nbrCase - a;
-							newCellID = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a, false);
+							newCellID = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a);
 							if (newCellID == 0)
 								continue;
 							if (fight.getMap().getCase(newCellID) == null)
@@ -142,13 +145,7 @@ public class SpellEffect {
 						target.getCell().addFighter(target);
 						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, target.getId() + "", target.getId() + "," + newCellID, elementId);
 
-						ArrayList<Trap> P = (new ArrayList<Trap>());
-						P.addAll(fight.getAllTraps());
-						for (Trap p : P) {
-							int dist = PathFinding.getDistanceBetween(fight.getMap(), p.getCell().getId(), target.getCell().getId());
-							//on active le piege
-							if (dist <= p.getSize()) p.onTraped(target);
-						}
+						Trap.doTraps(target.getFight(), target);
 						//si le joueur a bouger
 						if (exCase != newCellID)
 							finalDommage = 0;
@@ -286,6 +283,10 @@ public class SpellEffect {
 
 	public String getJet() {
 		return jet;
+	}
+
+	public int getFixValue() {
+		return fixvalue;
 	}
 
 	public int getValue() {
@@ -705,6 +706,18 @@ public class SpellEffect {
 			case 271://Vol force
 				applyEffect_271(fight, cibles);
 				break;
+			case 284://Augmente les soins de base du sort X de Y
+				applyEffect_290(fight, cibles);
+				break;
+			case 285://Reduit le cout en PA de base du sort X de Y
+				applyEffect_290(fight, cibles);
+				break;
+			case 287://Augmente les CC de base du sort X de Y
+				applyEffect_290(fight, cibles);
+				break;
+			case 290://Augmente le nombre de lancé de base du sort X de Y
+				applyEffect_290(fight, cibles);
+				break;
 			case 293://Augmente les dégâts de base du sort X de Y
 				applyEffect_293(fight);
 				break;
@@ -719,6 +732,9 @@ public class SpellEffect {
 				break;
 			case 402://Glyphe des Blop
 				applyEffect_402(fight);
+				break;
+			case 405://Père FWETAR, tue une invoque pour en ajouter une
+				applyEffect_405(cibles,fight);
 				break;
 			/*case 606://Ancien chati
 			case 607:
@@ -781,12 +797,12 @@ public class SpellEffect {
 				applyEffect_1002(fight, cibles);
 				break;
 			default:
-				GameServer.a();
+				GameServer.a("Pas d'effet de spell " + effectID + " Dev pour le spell " + spell);
 				break;
 		}
 	}
 
-	private void applyEffect_200(Fight fight, Fighter acaster, GameCase CaseObjectif) {
+	/*private void applyEffect_200(Fight fight, Fighter acaster, GameCase CaseObjectif) {
 
 		// On test si le joueur peut encore invoqué
 		if (acaster.nbrInvoc >= acaster.getTotalStats().getEffect(Constant.STATS_CREATURE)) {
@@ -856,11 +872,11 @@ public class SpellEffect {
 			return;
 		mob.setPdv( mob.getPdvMax() );
 		mob.setInFightID(fight.getNextLowerFighterGuid());
-
+		System.out.println("before "+mob.getStats().get(Constant.STATS_ADD_AGIL));
 		if (caster.getPlayer() != null) {
 			mob.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
 		}
-
+		System.out.println("after "+mob.getStats().get(Constant.STATS_ADD_AGIL));
 		Player mobControlable = Player.createInvoControlable(acaster.getFight().getSigIDFighter(), mob, acaster);
 		var invocacion = new Fighter(fight, mobControlable);
 
@@ -901,7 +917,7 @@ public class SpellEffect {
 		}, this.caster != null && this.caster.getMob() != null ? 1000 : 0, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
 
 
-			/*if (AtlantaMain.PARAM_MOSTRAR_STATS_INVOCACION) {
+			if (AtlantaMain.PARAM_MOSTRAR_STATS_INVOCACION) {
 				val str = StringBuilder()
 				str.append("<b>Stats de l'invocation[</b>")
 				str.append("<b>Force:</b> ")
@@ -915,13 +931,13 @@ public class SpellEffect {
 				str.append("<b>Agilité:</b> ")
 						.append(invocacion.totalStats.getTotalStatParaMostrar(Constantes.STAT_MAS_AGILIDAD)).append("<b>]</b>")
 				ENVIAR_cs_CHAT_MENSAJE_A_PELEA(pelea, str.toString(), Constantes.COLOR_NARANJA)
-			}*/
+			}
 		//checkTraps(fight, invocacion);
-	}
+	}*/
 
 	private void applyEffect_4(Fight fight, ArrayList<Fighter> cibles) {
-		if (turns > 1)
-			return;//Olol bondir 3 tours apres ?
+		/*if (turns > 1)
+			return;//Olol bondir 3 tours apres ?*/
 
 		if (cell.isWalkable(true) && !fight.isOccuped(cell.getId()))//Si la case est prise, on va �viter que les joueurs se montent dessus *-*
 		{
@@ -929,20 +945,13 @@ public class SpellEffect {
 			caster.setCell(cell);
 			caster.getCell().addFighter(caster);
 
-			ArrayList<Trap> P = (new ArrayList<Trap>());
-			P.addAll(fight.getAllTraps());
-			for (Trap p : P) {
-				int dist = PathFinding.getDistanceBetween(fight.getMap(), p.getCell().getId(), caster.getCell().getId());
-				//on active le piege
-				if (dist <= p.getSize())
-					p.onTraped(caster);
-			}
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 4, caster.getId()
 					+ "", caster.getId() + "," + cell.getId());
+
+			this.checkTraps(fight, caster, (short) 1200);
+
 		} else {
-			GameServer.a();
-			GameServer.a();
-			GameServer.a();
+			GameServer.a("Case déjà occupé");
 		}
 	}
 
@@ -956,7 +965,7 @@ public class SpellEffect {
 				case 73://Piége répulsif
 				case 418://Fléche de dispersion
 				case 151://Soufle
-				case 165://Flèche enflammé
+				case 165://FlÃ¨che enflammé
 					cibles = this.trierCibles(cibles, fight);
 					break;
 			}
@@ -977,12 +986,12 @@ public class SpellEffect {
 				if (target.getCell().getId() == this.cell.getId() || spell == 73)
 					cell = caster.getCell();
 
-				int newCellId = PathFinding.newCaseAfterPush(fight, cell, target.getCell(), value, spell == 73);
+				int newCellId = PathFinding.newCaseAfterPush(fight, cell, target.getCell(), value);
 
 				if (newCellId == 0)
 					return;
 				if (newCellId < 0) {
-					int a = -newCellId, factor = Formulas.getRandomJet("8d1+8", caster, target); // 2 à 9
+					int a = -newCellId, factor = Formulas.getRandomJet("1d8+1"); // 2 Ã  9
 					double b = (caster.isInvocation() ? caster.getInvocator().getLvl() : caster.getLvl()) / 50;
 					if (b < 0.1) b = 0.1;
 
@@ -1004,14 +1013,14 @@ public class SpellEffect {
 						target.removePdv(caster, finalDmg);
 						SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId() + "", target.getId() + ",-" + finalDmg);
 						if (target.getPdv() <= 0) {
-							fight.onFighterDie(target, target);//caster avant
+							fight.onFighterDie(target, caster);
 							if (target.canPlay() && target.getPlayer() != null) fight.endTurn(false);
 							else if (target.canPlay()) target.setCanPlay(false);
 							return;
 						}
 					}
 					a = value - a;
-					newCellId = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a, spell == 73);
+					newCellId = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a);
 
 					char dir = PathFinding.getDirBetweenTwoCase(cell.getId(), target.getCell().getId(), fight.getMap(), true);
 					GameCase nextCase = fight.getMap().getCase(PathFinding.GetCaseIDFromDirrection(target.getCell().getId(), dir, fight.getMap(), true));
@@ -1024,7 +1033,7 @@ public class SpellEffect {
 							wallTarget.removePdv(caster, finalDmg);
 							SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId() + "", wallTarget.getId() + ",-" + finalDmg);
 							if (wallTarget.getPdv() <= 0)
-								fight.onFighterDie(wallTarget, target);//caster avant
+								fight.onFighterDie(wallTarget, caster);
 						}
 					}
 
@@ -1039,7 +1048,8 @@ public class SpellEffect {
 				target.getCell().addFighter(target);
 
 				SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, caster.getId() + "", target.getId() + "," + newCellId);
-				TimerWaiter.addNext(() -> this.checkTraps(fight, target), 750, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+
+				Trap.doTraps(fight, target);
 			}
 		}
 	}
@@ -1080,14 +1090,7 @@ public class SpellEffect {
 				target.getCell().addFighter(target);
 				SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, caster.getId() + "", target.getId() + "," + newCellID);
 
-				ArrayList<Trap> P = (new ArrayList<Trap>());
-				P.addAll(fight.getAllTraps());
-				for (Trap p : P) {
-					int dist = PathFinding.getDistanceBetween(fight.getMap(), p.getCell().getId(), target.getCell().getId());
-					//on active le piege
-					if (dist <= p.getSize())
-						p.onTraped(target);
-				}
+				this.checkTraps(fight, target, (short) 1500);
 			}
 		}
 	}
@@ -1098,15 +1101,36 @@ public class SpellEffect {
 		Fighter target = cibles.get(0);
 		if (target == null)
 			return;//ne devrait pas arriver
-		if (target.haveState(6))
+		if (target.haveState(Constant.ETAT_ENRACINE))
 			return;//Stabilisation
-		if (target.isMob())
+		if (caster.haveState(Constant.ETAT_PESANTEUR))
+			return;//Pesanteur
+		if (target.haveState(Constant.ETAT_PESANTEUR))
+			return;//Pesanteur
+		if (target.haveState(Constant.ETAT_PORTE)) {
+			caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porté");
+			return;
+		}
+		if (target.haveState(Constant.ETAT_PORTEUR)) {
+			caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porteur");
+			return;
+		}
+		if (caster.haveState(Constant.ETAT_PORTE)){
+			caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porté");
+			return;
+		}
+		if (caster.haveState(Constant.ETAT_PORTEUR)){
+			caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porteur");
+			return;
+		}
+
+		/*if (target.isMob())
 		{
 			if(target.getMob().getTemplate().getId() == 423)
 			{
 				return; // Kralamour
 			}
-		}
+		}*/
 		switch (spell) {
 			case 438://Transpo
 				//si les 2 joueurs ne sont pas dans la meme team, on ignore
@@ -1119,8 +1143,8 @@ public class SpellEffect {
 				if (target.getTeam() == caster.getTeam())
 					return;
 				break;
-
 			case 449://D�tour
+				break;
 			default:
 				break;
 		}
@@ -1136,22 +1160,14 @@ public class SpellEffect {
 		//on ajoute les fighters aux cases
 		target.getCell().addFighter(target);
 		caster.getCell().addFighter(caster);
-		ArrayList<Trap> P = (new ArrayList<Trap>());
-		P.addAll(fight.getAllTraps());
-		for (Trap p : P) {
-			int dist = PathFinding.getDistanceBetween(fight.getMap(), p.getCell().getId(), target.getCell().getId());
-			int dist2 = PathFinding.getDistanceBetween(fight.getMap(), p.getCell().getId(), caster.getCell().getId());
-			//on active le piege
-			if (dist <= p.getSize())
-				p.onTraped(target);
-			else if (dist2 <= p.getSize())
-				p.onTraped(caster);
-		}
+
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 4, caster.getId()
 				+ "", target.getId() + "," + exCaster.getId());
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 4, caster.getId()
 				+ "", caster.getId() + "," + exTarget.getId());
 
+		this.checkTraps(fight, target, (short) 1500);
+		this.checkTraps(fight, caster, (short) 1500);
 	}
 
 	private void applyEffect_9(ArrayList<Fighter> cibles, Fight fight) {
@@ -1194,21 +1210,24 @@ public class SpellEffect {
 		if (!cell.isWalkable(true) || cell.getFighters().size() > 0) return;
 		Fighter target = caster.getIsHolding();
 		if (target == null) return;
-		//if(target.isState(6))return;//Stabilisation
-		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 51, caster.getId() + "", cell.getId() + "", this.effectID);
-		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, target.getId() + "", target.getId() + "," + Constant.ETAT_PORTE + ",0");
-		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, caster.getId() + "", caster.getId() + "," + Constant.ETAT_PORTEUR + ",0");
+
 		//on ajoute le porté a sa case
 		target.setCell(cell);
 		target.getCell().addFighter(target);
+
 		//on enleve les états
-		target.setState(Constant.ETAT_PORTE, 0);
-		caster.setState(Constant.ETAT_PORTEUR, 0);
+		target.setState(Constant.ETAT_PORTE,0,caster.getId()); //infinite duration
+		caster.setState(Constant.ETAT_PORTEUR,0,caster.getId()); //infinite duration
+
 		//on dé-lie les 2 Fighter
 		target.setHoldedBy(null);
 		caster.setIsHolding(null);
-		this.checkTraps(fight, target);
-		TimerWaiter.addNext(() -> fight.setCurAction(""), 3500, TimerWaiter.DataType.FIGHT);
+
+		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 51, caster.getId() + "", cell.getId() + "");
+		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, target.getId() + "", target.getId() + "," + Constant.ETAT_PORTE + ",0");
+		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, caster.getId() + "", caster.getId() + "," + Constant.ETAT_PORTEUR + ",0");
+
+		this.checkTraps(fight, target, (short) 1500);
 	}
 
 	private void applyEffect_77(ArrayList<Fighter> cibles, Fight fight) {
@@ -1244,7 +1263,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur de bonus PA negative " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -2481,6 +2500,7 @@ public class SpellEffect {
 				if (caster.hasBuff(293) || caster.haveState(300)) {
 					if (caster.haveState(300))
 						caster.setState(300, 0);
+
 					for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
 						if (SE == null)
 							continue;
@@ -2500,6 +2520,7 @@ public class SpellEffect {
 
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_TERRE, dmg, false, false, spell);
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_TERRE);//S'il y a des buffs sp�ciaux
+
 				if (finalDommage > target.getPdv())
 					finalDommage = target.getPdv();//Target va mourrir
 				target.removePdv(caster, finalDommage);
@@ -2561,7 +2582,6 @@ public class SpellEffect {
 				}
 
 				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
-
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
 					if (SE.getValue() == spell) {
@@ -2580,9 +2600,7 @@ public class SpellEffect {
 				// applyEffect_142
 
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_AIR, dmg, false, true, spell);
-
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_AIR);//S'il y a des buffs sp�ciaux
-
 				if (finalDommage > target.getPdv())
 					finalDommage = target.getPdv();//Target va mourrir
 				target.removePdv(caster, finalDommage);
@@ -2632,7 +2650,6 @@ public class SpellEffect {
 					target = caster;
 				}
 				int dmg = Formulas.getRandomJet(args.split(";")[5], caster, target);
-
 				//Si le sort est boost� par un buff sp�cifique
 				for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
 					if (SE.getValue() == spell) {
@@ -2649,9 +2666,7 @@ public class SpellEffect {
 				}
 
 				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constant.ELEMENT_AIR, dmg, false, false, spell);
-
 				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_AIR);//S'il y a des buffs sp�ciaux
-
 				if (finalDommage > target.getPdv())
 					finalDommage = target.getPdv();//Target va mourrir
 
@@ -3077,7 +3092,7 @@ public class SpellEffect {
 	private void applyEffect_105(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3132,6 +3147,15 @@ public class SpellEffect {
 				heal = getMaxMinSpell(cible, heal);
 				int pdvMax = cible.getPdvMax();
 				int healFinal = Formulas.calculFinalHealCac(caster, heal, isCaC);
+
+
+				if(caster.hasBuff(284)){
+					if(spell == caster.getBuff(284).getValue()) {
+						int value = caster.getBuff(284).getFixValue();
+						healFinal += value;
+					}
+				}
+
 				if ((healFinal + cible.getPdv()) > pdvMax)
 					healFinal = pdvMax - cible.getPdv();
 				if (healFinal < 1)
@@ -3171,7 +3195,7 @@ public class SpellEffect {
 	private void applyEffect_110(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3184,7 +3208,7 @@ public class SpellEffect {
 	private void applyEffect_111(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		boolean repetibles = false;
@@ -3229,7 +3253,7 @@ public class SpellEffect {
 	private void applyEffect_112(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		if (duration < 1)
@@ -3250,7 +3274,7 @@ public class SpellEffect {
 	private void applyEffect_114(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		boolean modif = false;
@@ -3286,7 +3310,7 @@ public class SpellEffect {
 	private void applyEffect_115(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3300,7 +3324,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3314,7 +3338,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3331,7 +3355,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		if (spell == 52)//cupiditer
@@ -3347,7 +3371,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3361,7 +3385,7 @@ public class SpellEffect {
 	{
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		caster.addBuff(effectID, val, turns, 1, true, spell, args, caster, true);
@@ -3373,7 +3397,7 @@ public class SpellEffect {
 	private void applyEffect_121(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3386,7 +3410,7 @@ public class SpellEffect {
 	private void applyEffect_122(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3399,7 +3423,7 @@ public class SpellEffect {
 	private void applyEffect_123(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3412,7 +3436,7 @@ public class SpellEffect {
 	private void applyEffect_124(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3438,7 +3462,7 @@ public class SpellEffect {
 	private void applyEffect_126(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		if (spell == 52)//cupiditer
@@ -3509,7 +3533,7 @@ public class SpellEffect {
 	private void applyEffect_128(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		boolean repetibles = false;
@@ -3584,13 +3608,14 @@ public class SpellEffect {
 			target.debuff();
 			if (target.isHide()) target.unHide(spell);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 132, caster.getId() + "", target.getId() + "", this.effectID);
+			target.toRebuff =true;
 		}
 	}
 
 	private void applyEffect_138(ArrayList<Fighter> cibles, Fight fight) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3623,7 +3648,7 @@ public class SpellEffect {
 	private void applyEffect_142(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3716,7 +3741,7 @@ public class SpellEffect {
 	private void applyEffect_145(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3817,7 +3842,7 @@ public class SpellEffect {
 	private void applyEffect_155(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3859,7 +3884,7 @@ public class SpellEffect {
 	private void applyEffect_160(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3872,7 +3897,7 @@ public class SpellEffect {
 	private void applyEffect_161(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3885,7 +3910,7 @@ public class SpellEffect {
 	private void applyEffect_162(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -3898,7 +3923,7 @@ public class SpellEffect {
 	private void applyEffect_163(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		if (cibles.isEmpty() && spell == 310 && caster.getOldCible() != null) {
@@ -4037,7 +4062,7 @@ public class SpellEffect {
 	private void applyEffect_171(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4124,7 +4149,7 @@ public class SpellEffect {
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 180, caster.getId() + "", fighter.getGmPacket('+', true).substring(3), this.effectID);
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId() + "", fight.getGTL(), this.effectID);
 
-		this.checkTraps(fight, fighter);
+		Trap.doTraps(fight, fighter);
 	}
 
 	private void applyEffect_181(Fight fight)//invocation
@@ -4194,14 +4219,16 @@ public class SpellEffect {
 			return;
 
 		MG.setInFightID(fight.getNextLowerFighterGuid());
-		if (caster.getPlayer() != null && !caster.getPlayer().controleinvo) {
-			MG.modifStatByInvocator(caster); // Augmenter les statistiques uniquement pour les invocations de personnages
-			//System.out.println("On passe la");
-		}
+
 		Fighter F;
 		if(caster.getPlayer() != null) {
-			if (caster.getPlayer().controleinvo &&  id != 285) {
-				//System.out.println("Ou on passe ici");
+			boolean leadercontrolinvo = false;
+			if (caster.getPlayer().getSlaveLeader() != null) {
+				if (fight.isInFight(caster.getPlayer().getSlaveLeader())) {
+					leadercontrolinvo = caster.getPlayer().getSlaveLeader().controleinvo;
+				}
+			}
+			if ( (caster.getPlayer().controleinvo || leadercontrolinvo )  &&  id != 285 && id != 262) {
 				Player mobControlable = Player.createInvoControlable(caster.getFight().getSigIDFighter(), MG, caster);
 				F = new Fighter(fight, mobControlable);
 				F.setControllable(true);
@@ -4209,6 +4236,7 @@ public class SpellEffect {
 				caster.getPlayer().addCompagnon(F.getPlayer());
 				mobControlable.setFight(fight);
 			} else{
+				MG.modifStatByInvocator(caster);
 				F = new Fighter(fight, MG);
 				F.setTeam(caster.getTeam());
 			}
@@ -4226,19 +4254,25 @@ public class SpellEffect {
 		fight.addFighterInTeam(F, caster.getTeam());
 		String gm = F.getGmPacket('+', true).substring(3);
 		String gtl = fight.getGTL();
+		try {
+			if (this.caster.getMob() != null)
+				Thread.sleep(1000);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-		TimerWaiter.addNext(() -> {
-			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 181, caster.getId() + "", gm, this.effectID);
-			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId() + "", gtl, this.effectID);
-			caster.nbrInvoc++;
-			this.checkTraps(fight, F);
-		}, this.caster != null && this.caster.getMob() != null ? 1000 : 0, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 181, caster.getId() + "", gm, this.effectID);
+		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId() + "", gtl, this.effectID);
+		caster.nbrInvoc++;
+
+		this.checkTraps(fight, F, (short) 1200);
+
 	}
 
 	private void applyEffect_182(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4251,7 +4285,7 @@ public class SpellEffect {
 	private void applyEffect_183(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4264,7 +4298,7 @@ public class SpellEffect {
 	private void applyEffect_184(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4295,6 +4329,7 @@ public class SpellEffect {
 
 		if (monster == -1 || level == -1 || mobGrade == null)
 			return;
+
 		if (monster == 556 && this.caster.getPlayer() != null)
 			mobGrade.modifStatByInvocator(this.caster);
 
@@ -4314,7 +4349,7 @@ public class SpellEffect {
 	private void applyEffect_186(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		int val2 = val;
@@ -4366,7 +4401,7 @@ public class SpellEffect {
 		}
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4381,7 +4416,7 @@ public class SpellEffect {
 			return;
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4396,7 +4431,7 @@ public class SpellEffect {
 			return;
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4411,7 +4446,7 @@ public class SpellEffect {
 			return;
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4426,7 +4461,7 @@ public class SpellEffect {
 			return;
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4440,7 +4475,7 @@ public class SpellEffect {
 	private void applyEffect_215(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4453,7 +4488,7 @@ public class SpellEffect {
 	private void applyEffect_216(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4466,7 +4501,7 @@ public class SpellEffect {
 	private void applyEffect_217(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4479,7 +4514,7 @@ public class SpellEffect {
 	private void applyEffect_218(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4492,7 +4527,7 @@ public class SpellEffect {
 	private void applyEffect_219(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4514,7 +4549,7 @@ public class SpellEffect {
 	private void applyEffect_265(Fight fight, ArrayList<Fighter> cibles) {
 		int val = Formulas.getRandomJet(jet, caster);
 		if (val == -1) {
-			GameServer.a();
+			GameServer.a("Valeur jet negatif " + spell);
 			return;
 		}
 		for (Fighter target : cibles) {
@@ -4631,6 +4666,13 @@ public class SpellEffect {
 		caster.setState(300, turns + 1);
 	}
 
+	private void applyEffect_290(Fight fight, ArrayList<Fighter> cibles) {
+		for (Fighter target : cibles) {
+			target.addBuff(effectID, value, turns, 1, true, spell, args, caster, true);
+		}
+		//caster.setState(300, turns + 1);
+	}
+
 	private void applyEffect_320(Fight fight, ArrayList<Fighter> cibles) {
 		int value = 1;
 		try {
@@ -4672,7 +4714,7 @@ public class SpellEffect {
 		String po = World.world.getSort(spell).getStatsByLevel(spellLvl).getPorteeType();
 		byte size = (byte) World.world.getCryptManager().getIntByHashedValue(po.charAt(1));
 		SortStats TS = World.world.getSort(spellID).getStatsByLevel(level);
-		Trap g = new Trap(fight, caster, cell, size, TS, spell);
+		final Trap g = new Trap(fight, caster, cell, size, TS, spell, (byte) level);
 		fight.getAllTraps().add(g);
 		int unk = g.getColor();
 		int team = caster.getTeam() + 1;
@@ -4724,6 +4766,18 @@ public class SpellEffect {
 		str = "GDC" + cell.getId() + ";Haaaaaaaaa3005;";
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 999, caster.getId()
 				+ "", str, this.effectID);
+	}
+
+	private void applyEffect_405(ArrayList<Fighter> cibles,Fight fight) {
+
+		// D'abord il tue l'invoque si il y en a une dans la zone
+		for (Fighter target : cibles) {
+			if(target.isInvocation()){
+				fight.onFighterDie(target, target);
+				applyEffect_181(fight);
+				break;
+			}
+		}
 	}
 
 	private void applyEffect_671(ArrayList<Fighter> cibles, Fight fight) {
@@ -4956,7 +5010,7 @@ public class SpellEffect {
 		target.getCell().addFighter(target);
 
 		SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, caster.getId() + "", target.getId() + "," + cell.getId(), this.effectID);
-		TimerWaiter.addNext(() -> this.checkTraps(fight, target), 750, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+		Trap.doTraps(fight, target);
 	}
 
 	private void applyEffect_784(ArrayList<Fighter> cibles, Fight fight) {
@@ -5072,6 +5126,9 @@ public class SpellEffect {
 				continue;
 			//on enleve l'�tat
 			target.setState(id, 0);
+			if(this.getSpell() == 699 ) {
+				target.debuff(686);
+			}
 			//on envoie le packet
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, caster.getId() + "", target.getId() + "," + id + ",0", this.effectID);
 		}
@@ -5182,7 +5239,7 @@ public class SpellEffect {
 			caster.getCell().getFighters().clear();
 			caster.setCell(cell);
 			caster.getCell().addFighter(caster);
-			new ArrayList<>(fight.getAllTraps()).stream().filter(trap -> PathFinding.getDistanceBetween(fight.getMap(), trap.getCell().getId(), caster.getCell().getId()) <= trap.getSize()).forEach(trap -> trap.onTraped(caster));
+			Trap.doTraps(caster.getFight(), caster);
 			SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 4, caster.getId() + "", caster.getId() + "," + cell.getId(), this.effectID);
 		}
 
@@ -5428,53 +5485,34 @@ public class SpellEffect {
 		}
 	}
 
-	private void checkTraps(Fight fight, Fighter fighter) {
-		final short[] nbr = {0};
-		List<Trap> traps = new ArrayList<>(fight.getAllTraps());
-		this.recursiveCheckTrap(traps, 0, traps.size(), fight, fighter, nbr);
-	}
+	/**
+	 * Cette fonction doit etre utilise <b>uniquement lorsque</b> il faut attendre la fin d'une animation niveau client.<br>
+	 * Exemple une <b>teleportation , attirance , invocation ou bien le fait d'etre jete par un panda.</b><br>
+	 * Lorsque quelqu'un est pousse il n'est pas necessaire d'appeler cette fonction car le client prend en charge la possibilite de pousser a plusieurs repprises.
+	 *
+	 * @param fight L'instance de la class Fight
+	 * @param fighter Le joueur qu'il faut appliquer le reseau de pieges ou bien juste les pieges
+	 * @param time Temps que mets l'animation de tp/jeter/attirer niveau client
+	 *
+	 * @author Sarazar928Ghost
+	 */
+	private void checkTraps(Fight fight, Fighter fighter, short time) {
+		// Il est sur un piege qui pousse ?
+		final boolean isPushing = Trap.checkPushingTraps(fight, fighter);
 
-	private void recursiveCheckTrap(List<Trap> traps,int i, int size, Fight fight, Fighter fighter, short[] nbr) {
-		if(traps.size() > 0)
-		{
-			ArrayList<Trap> traptoExplode = new ArrayList<>();
-			ArrayList<Trap> trapRepuAExploser = new ArrayList<>();
-			for(Trap trap : traps)
-			{
-				if(PathFinding.getDistanceBetween(fight.getMap(), trap.getCell().getId(), fighter.getCell().getId()) <= trap.getSize())
-				{
-					if(trap.getSpellID() == 73)
-					{
-						trapRepuAExploser.add(trap);
-					}
-					else{
-						traptoExplode.add(trap);
-					}
-				}
-			}
-			for(Trap trapsToExplode : traptoExplode)
-			{
-				trapsToExplode.onTraped(fighter);
-				nbr[0]++;
-			}
-
-			for(Trap trapRepu : trapRepuAExploser)
-			{
-				trapRepu.onTraped(fighter);
-				nbr[0]++;
-			}
+		// Si il n'est pas dans un reseau
+		if(!isPushing) {
+			Trap.doTraps(fight, fighter);
+			return;
 		}
-		/*if(i < size) {
-			final Trap trap = traps.get(i);
-			int time = 0;
 
-			if (trap != null && PathFinding.getDistanceBetween(fight.getMap(), trap.getCell().getId(), fighter.getCell().getId()) <= trap.getSize()) {
-				trap.onTraped(fighter);
-				time = 750 + nbr[0] * 300;
-				nbr[0]++;
-			}
-			TimerWaiter.addNext(() -> recursiveCheckTrap(traps, i + 1, size, fight, fighter, nbr), time, TimerWaiter.DataType.FIGHT);
-		}*/
+		// Il est dans un reseau
+		fight.setTraped(true);
+
+		TimerWaiter.addNext(() -> {
+			Trap.doTraps(fight, fighter);
+			fight.removeTraped();
+		}, time, TimerWaiter.DataType.FIGHT);
 	}
 
 }

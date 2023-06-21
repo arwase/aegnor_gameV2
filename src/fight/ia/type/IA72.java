@@ -19,7 +19,7 @@ public class IA72 extends AbstractNeedSpell  {
     @Override
     public void apply() {
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
-            int time = 100, maxPo = 1;
+            int time = 10, maxPo = 1;
             boolean action = false;
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
@@ -27,129 +27,61 @@ public class IA72 extends AbstractNeedSpell  {
                 if(spellStats.getMaxPO() > maxPo)
                     maxPo = spellStats.getMaxPO();
 
-            Fighter C = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
-            Fighter L = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
-            Fighter L2 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 2, 5);
-            Fighter L3 = Function.getInstance().getNearEnnemylignenbrcasemax(this.fight, this.fighter, 0, maxPo);
+            Fighter C = Function.getInstance().getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
+            Fighter L = Function.getInstance().getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
 
-            if(maxPo == 1) L = null;
-            if(C != null) if(C.isHide()) C = null;
-            if(L != null) if(L.isHide()) L = null;
-
-            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+            if(this.fighter.getCurPa(this.fight) > 0) {
                 if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
                     time = 2000;
                     action = true;
                 }
             }
-            if(this.fighter.getCurPm(this.fight) > 0 && this.fighter.getCurPa(this.fight) > 0)
+
+            if(this.fighter.getCurPa(this.fight) > 0 && !action )
             {
                 int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                System.out.println("la " + value);
+                if(value != -1) {
+                    time = 800;
+                    action = true;
+                }
+            }
+
+            if(this.fighter.getCurPm(this.fight) > 0 && !action ) {
+                int value = Function.getInstance().moveenfaceIfPossibleWithLOS(this.fight, this.fighter, ennemy, maxPo + 1 + this.fighter.getBuffValue(117) - this.fighter.getBuffValue(116));
                 if(value != 0) {
-                    value = Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, maxPo + 1);
-                    if (value != 0) {
-                        value = Function.getInstance().moveToAttackIfPossible(this.fight, ennemy);
-                        if (value != 0) {
-                            boolean bollvalue = Function.getInstance().moveNearIfPossible(this.fight, this.fighter, ennemy);
-                            if (!bollvalue) {
-                                value = Function.getInstance().movecacIfPossible(this.fight, this.fighter, ennemy);
-                                if (value != 0) {
-                                    time = 2000;
-                                    action = true;
-                                } else {
-                                    value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                                    if (value != 0) {
-                                        time = 2000;
-                                        action = true;
-                                    } else {
-                                        if (this.fighter.getCurPm(this.fight) > 0) {
-                                            value = Function.getInstance().moveFarIfPossible(this.fight, ennemy);
-                                            if (value != 0) {
-                                                time = 2000;
-                                                action = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            } else {
-                                value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                                if (value != 0) {
-                                    time = 2000;
-                                    action = true;
-                                } else {
-                                    if (this.fighter.getCurPm(this.fight) > 0) {
-                                        value = Function.getInstance().moveFarIfPossible(this.fight, ennemy);
-                                        if (value != 0) {
-                                            time = 2000;
-                                            action = true;
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                            if (value != 0) {
-                                time = 2000;
-                                action = true;
-                            } else {
-                                if (this.fighter.getCurPm(this.fight) > 0) {
-                                    value = Function.getInstance().moveFarIfPossible(this.fight, ennemy);
-                                    if (value != 0) {
-                                        time = 2000;
-                                        action = true;
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                        if (value != 0) {
-                            time = 2000;
-                            action = true;
-                        } else {
-                            if (this.fighter.getCurPm(this.fight) > 0) {
-                                value = Function.getInstance().moveFarIfPossible(this.fight, ennemy);
-                                if (value != 0) {
-                                    time = 2000;
-                                    action = true;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if (this.fighter.getCurPm(this.fight) > 0) {
-                        value = Function.getInstance().moveFarIfPossible(this.fight, ennemy);
-                        if (value != 0) {
-                            time = 2000;
-                            action = true;
-                        }
-                    }
+                    time = value;
+                    action = true;
                 }
             }
 
             if(this.fighter.getCurPa(this.fight) > 0 && C != null && !action) {
                 if (Function.getInstance().debuffIfPossible(this.fight, this.fighter, C)) {
-                    time = 1000;
+                    time = 800;
                     action = true;
                 }
             } else if(this.fighter.getCurPa(this.fight) > 0 && L != null && !action) {
                 boolean value = Function.getInstance().debuffIfPossible(this.fight, this.fighter, L);
                 if (value) {
-                    time = 1000;
+                    time = 800;
                     action = true;
                 }
             }
+
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
-                    time = 1000;
+                    time = 800;
                     action = true;
                 }
             }
 
 
-            if(this.fighter.getCurPm(this.fight) > 0 && !action && C != null) {
+            if(this.fighter.getCurPm(this.fight) > 0 && !action) {
                 int value = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
-                if(value != 0) time = value;
+                if(value != 0){
+                    time = value;
+                    this.stop = true;
+                }
             }
 
             if(this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0) this.stop = true;

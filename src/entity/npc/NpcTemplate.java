@@ -2,7 +2,9 @@ package entity.npc;
 
 import game.world.World;
 import game.world.World.Couple;
+import kernel.Constant;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 import quest.Quest;
 
 import java.util.*;
@@ -273,6 +275,16 @@ public class NpcTemplate {
             if (template.getId() == id)
                 return true;
         return false;
+    }
+
+    public Couple<Integer,Integer> checkGetTypeObjects(ArrayList<Couple<Integer,Integer>> objects) {
+        Couple<Integer, Integer> fragment = new Couple<>(8378, 1);
+        for(Couple<Integer, Integer> entry2 : objects) {
+            int type = World.world.getGameObject(entry2.first).getTemplate().getType();
+            if(!(ArrayUtils.contains(Constant.FILTER_EQUIPEMENT,type))){ }
+            else{return fragment; }
+        }
+        return null;
     }
 
     public ArrayList<Couple<Integer,Integer>> checkGetObjects(ArrayList<Couple<Integer,Integer>> objects) {

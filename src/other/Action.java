@@ -314,7 +314,12 @@ public class Action {
                                             if (slave.getAccount() != null) {
                                                 if (slave.getAccount().getGameClient() != null) {
                                                     //On duplique la game action du maitre pour les slaves
-                                                    slave.teleport(newMapID, newCellID);
+                                                    if (!cond.equalsIgnoreCase("") && !cond.equalsIgnoreCase("-1") && !World.world.getConditionManager().validConditions(slave, cond)) {
+                                                        SocketManager.GAME_SEND_Im_PACKET(slave, "119");
+                                                    }
+                                                    else{
+                                                        slave.teleport(newMapID, newCellID);
+                                                    }
                                                 }
                                             }
                                         }
@@ -391,7 +396,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             case 5://objet
@@ -430,7 +435,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             case 6://Apprendre un m�tier
@@ -583,7 +588,7 @@ public class Action {
 					 */
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -624,7 +629,7 @@ public class Action {
                     player.learnSpell(sID, 1, true, true, true);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -648,7 +653,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -661,7 +666,7 @@ public class Action {
                     player.modifAlignement(newAlign);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -711,7 +716,7 @@ public class Action {
                         player.removeItem(itemID, 1, true, true);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -729,7 +734,7 @@ public class Action {
                         SocketManager.GAME_SEND_STATS_PACKET(player);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        GameServer.a();
+                        GameServer.a(e.getMessage());
                     }
                 } else {
                     SocketManager.GAME_SEND_MESSAGE(player, "Ton niveau est supérieur à 30. Tu ne peux donc pas te restaurer !");
@@ -794,12 +799,14 @@ public class Action {
                                                                 slave.teleport(newMapID, newCellID);
                                                                 slave.removeByTemplateID(ObjetNeed, 1);
                                                                 SocketManager.GAME_SEND_Ow_PACKET(slave);
+
                                                             }
                                                             else if(player.hasItemTemplate(ObjetNeed, 2)){
                                                                 slave.teleport(newMapID, newCellID);
                                                                 player.removeByTemplateID(ObjetNeed, 1);
                                                                 SocketManager.GAME_SEND_Ow_PACKET(player);
-                                                                SocketManager.GAME_SEND_MESSAGE(player, "Vous avez payé la clef pour " + slave.getName() +".", "009900");
+                                                                SocketManager.GAME_SEND_MESSAGE(player, "Vous avez payé la clef pour " + slave.getName() + ".", "009900");
+
                                                             }
                                                             else{
                                                                 SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas assez de clefs nécessaire pour faire entrer " + slave.getName() +".", "009900");
@@ -815,6 +822,7 @@ public class Action {
                                 player.teleport(newMapID, newCellID);
                                 player.removeByTemplateID(ObjetNeed, 1);
                                 SocketManager.GAME_SEND_Ow_PACKET(player);
+
                             } else if (player.getCurMap().getId() != MapNeed) {
                                 //Le perso n'est pas sur la bonne map
                                 SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
@@ -826,7 +834,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -862,7 +870,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -875,7 +883,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -906,7 +914,7 @@ public class Action {
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -924,7 +932,7 @@ public class Action {
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -939,7 +947,7 @@ public class Action {
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -968,7 +976,7 @@ public class Action {
                     SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(player.getCurMap(), player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1012,7 +1020,7 @@ public class Action {
                     player.getCurMap().startFightVersusMonstres(player, group); // Si bug startfight, voir "//Respawn d'un groupe fix" dans fight.java
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1027,7 +1035,7 @@ public class Action {
                     player.unlearnSpell(player, sID, 1, AncLevel, true, true);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1133,7 +1141,7 @@ public class Action {
                     SocketManager.GAME_SEND_STATS_PACKET(player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1331,7 +1339,7 @@ public class Action {
                     player.getCurMap().startFightVersusProtectors(player, group);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1560,7 +1568,7 @@ public class Action {
                         SocketManager.GAME_SEND_ALTER_GM_PACKET(player.getCurMap(), player);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1695,7 +1703,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 return true;
 
@@ -1730,7 +1738,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 return true;
 
@@ -1778,7 +1786,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 return true;
 
@@ -1834,7 +1842,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 return true;
 
@@ -1883,7 +1891,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 return true;
 
@@ -1925,7 +1933,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -1986,7 +1994,7 @@ public class Action {
                             + ";" + cellid + "," + animation.prepareToGA(), "");
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -2003,12 +2011,17 @@ public class Action {
             case 230://Point Boutique  
                 try {
                     int pts = Integer.parseInt(args);
-                    int ptsTotal = player.getAccount().getPoints() + pts;
+                    if(player.getAccount().getWebAccount() == null){
+                        player.sendMessage("Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web ");
+                        return true;
+                    }
+                    int points = player.getAccount().getWebAccount().getPoints();
+                    int ptsTotal =   points    + pts;
                     if (ptsTotal < 0)
                         ptsTotal = 0;
                     if (ptsTotal > 50000)
                         ptsTotal = 50000;
-                    player.getAccount().setPoints(ptsTotal);
+                    player.getAccount().getWebAccount().setPoints(ptsTotal);
                     if (player.isOnline())
                         SocketManager.GAME_SEND_STATS_PACKET(player);
                     SocketManager.GAME_SEND_MESSAGE(player, "Tu viens d'acquérir "
@@ -2019,7 +2032,7 @@ public class Action {
                     return true;
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -2047,7 +2060,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -2080,7 +2093,7 @@ public class Action {
                         player.getCurMap().startFightVersusMonstres(player, group);// Si bug startfight, voir "//Respawn d'un groupe fix" dans fight.java
                     } catch (Exception e) {
                         e.printStackTrace();
-                        GameServer.a();
+                        GameServer.a(e.getMessage());
                     }
                 } else {
                     SocketManager.GAME_SEND_MESSAGE(player, "Vous ne pouvez pas vous battre ici. Allez en arène !");
@@ -2128,7 +2141,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -4299,7 +4312,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
 
@@ -4372,7 +4385,7 @@ public class Action {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             case 1004://T�l�portation hors dj
@@ -4414,7 +4427,7 @@ public class Action {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             case 1005://T�l�portation donjon avec obj
@@ -4468,7 +4481,7 @@ public class Action {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             case 1006://Hotomani
@@ -4507,7 +4520,7 @@ public class Action {
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    GameServer.a();
+                    GameServer.a(e.getMessage());
                 }
                 break;
             default:

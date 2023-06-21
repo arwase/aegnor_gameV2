@@ -28,8 +28,15 @@ public class IA21 extends AbstractNeedSpell  {
             if(spellStats != null && spellStats.getMaxPO() > maxPo)
                 maxPo = spellStats.getMaxPO();
 
-        Fighter firstEnnemy = Function.getNearestEnnemynbrcasemax2(this.fight, this.fighter, 1, maxPo + 1);
-        Fighter secondEnnemy = Function.getNearestEnnemynbrcasemax2(this.fight, this.fighter, 0, 2);
+        Fighter firstEnnemy = Function.getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 1, maxPo + 1);
+        Fighter secondEnnemy = Function.getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 0, 2);
+
+        if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+            if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
+                time = 400;
+                action = true;
+            }
+        }
 
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
             Function.getInstance().buffIfPossibleKrala(this.fight, this.fighter, this.fighter);

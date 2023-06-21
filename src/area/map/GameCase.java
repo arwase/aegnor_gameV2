@@ -15,6 +15,7 @@ import game.world.World;
 import job.JobConstant;
 import job.maging.BreakingObject;
 import kernel.Constant;
+import lombok.var;
 import object.GameObject;
 import other.Action;
 import util.TimerWaiter;
@@ -51,24 +52,24 @@ public class GameCase {
         this.activate = activate;
         if (objId != -1)
             this.object = new InteractiveObject(objId, map, this);
-        var ancho = map.getH();
-        var _loc5 = (int)(floor((double)(this.id / (ancho * 2 - 1))));
-        var _loc6 = this.id - _loc5 * (ancho * 2 - 1);
-        var _loc7 = _loc6 % ancho;
+        byte ancho = map.getH();
+        int _loc5 = (int)(floor((double)(this.id / (ancho * 2 - 1))));
+        int _loc6 = this.id - _loc5 * (ancho * 2 - 1);
+        int _loc7 = _loc6 % ancho;
         coordY = Byte.parseByte(String.valueOf(_loc5 - _loc7));
         // es en plano inclinado, solo Y es negativo partiendo del 0 arriba negativo, abajo positivo
         coordX = Byte.parseByte(String.valueOf((this.id - (ancho - 1) * coordY) / ancho));
         int tempD = (int)((coordX + coordY - 1) * 13.5f);
-        var tempL = (this.level - 7) * 20;
+        int tempL = (this.level - 7) * 20;
         _esCaminableLevel = (tempD - tempL) >= 0;
-        var a = 0F;
+        float a = 0F;
         if ((int)slope == 1) {
             a = 0F;
         }
         else {
             a = 0.5f;
         }
-        var b = level - 7;
+        int b = level - 7;
         height = a + b;
     }
 

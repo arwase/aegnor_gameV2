@@ -41,7 +41,7 @@ public class IA8 extends AbstractNeedSpell  {
             PM = this.fighter.getCurPm(this.fight);
 
             if(PA > 0 && !action) {
-                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
                     time = 400;
                     action = true;
                 }

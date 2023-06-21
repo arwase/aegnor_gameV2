@@ -312,8 +312,6 @@ public class Trunk {
         if (this.object.get(guid) == null)
             return;
 
-        System.out.println( "Maintenant on check");
-
         GameObject PersoObj = P.getSimilarItem(TrunkObj);
         String str = "";
         int newQua = TrunkObj.getQuantity() - qua;

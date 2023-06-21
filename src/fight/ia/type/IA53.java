@@ -46,7 +46,7 @@ public class IA53 extends AbstractNeedSpell  {
             if(this.attack >= 3) {
                 int value = Function.getInstance().attackIfPossiblePeki(this.fight, this.fighter, L);
                 if(value != 0) {
-                    time = 3000;
+                    time = 2000;
                     action = true;
                     this.attack++;
                 }

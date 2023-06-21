@@ -101,7 +101,8 @@ public class ConditionParser {
             jep.addVariable("SI", perso.getCurMap().getId());//Mapid
             jep.addVariable("MiS", perso.getId());//Les pierres d'ames sont lancables uniquement par le lanceur.
             jep.addVariable("MA", perso.getAlignMap());//Pandala
-            jep.addVariable("PSB", perso.getAccount().getPoints());//Points Boutique
+            if(perso.getAccount().getWebAccount() != null)
+                jep.addVariable("PSB", perso.getAccount().getWebAccount().getPoints());//Points Boutique
             jep.addVariable("CF", (perso.getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR) == null ? -1 : perso.getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR).getTemplate().getId()));//Personnage suiveur
 
             Node node = jep.parse(req);
@@ -562,6 +563,7 @@ public class ConditionParser {
             return obj.getTemplate().getId() == newObj.getTemplate().getId() && stackIfSimilar
                     && obj.getStats().isSameStats(newObj.getStats())
                     && obj.isSameStats(newObj)
+                    && obj.getMimibiote() == newObj.getMimibiote()
                     && (obj.getRarity() == newObj.getRarity())
                     && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
@@ -600,7 +602,9 @@ public class ConditionParser {
                 && stackIfSimilar
                 && obj.getStats().isSameStats(newObj.getStats())
                 && obj.isSameStats(newObj)
+                && obj.isSametxtStats(newObj)
                 && obj.getRarity() == newObj.getRarity()
+                && obj.getMimibiote() == newObj.getMimibiote()
                 && stats1.equals(stats2)
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL

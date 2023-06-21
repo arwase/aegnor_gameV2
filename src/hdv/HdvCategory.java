@@ -63,7 +63,7 @@ public class HdvCategory {
     public String parseTemplate() {
         StringBuilder strTemplate = new StringBuilder();
         for (int templateId : this.getTemplates().keySet()) {
-            if (!strTemplate.isEmpty()) {
+            if (!strTemplate.toString().isEmpty()) {
                 strTemplate.append(";");
             }
             strTemplate.append(templateId);

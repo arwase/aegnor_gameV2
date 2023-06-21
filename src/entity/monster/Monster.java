@@ -54,7 +54,9 @@ public class Monster {
         this.type = type;
         int G = 1;
 
-        for (int n = 0; n < 12; n++) {
+        int nbGrade = (thisGrades.split("\\|")).length;
+
+        for (int n = 0; n < nbGrade; n++) {
             try {
                 //Grades
                 String[] split = thisGrades.split("\\|");
@@ -113,6 +115,14 @@ public class Monster {
                 //TODO: Enlever toutes les erreurs
             }
         }
+
+        /*if(grades.get(6) == null) {
+            //System.out.println("On génére les grade diff du monstre");
+            grades.put(6, generateGradeSix());
+        }
+        else{
+            System.out.println("Monstre spécifique :" + name + " , On ignore (Invo ou autre)");
+        }*/
     }
 
     public void setInfos(int gfxId, int align, String colors,
@@ -231,25 +241,97 @@ public class Monster {
             }
             String[] split = packet.split(Pattern.quote("|"));
             String[] stats = split[0].split(",");
-            for (String stat : stats) {
+            /*for (String stat : stats) {
                 try {
                     var a = stat.split(":");
                     mob.stats.put(Integer.parseInt(a[0]), Integer.parseInt(a[1]));
                 } catch (Exception ignored) {
                 }
-            }
+            }*/
+
             Monster m = World.world.getMonstre(mob.template.id);
+            //mob.changeStats(stats);
             mob.changeStats(split[0]);
+
+
             mob.pdvMax = Integer.parseInt(split[1]);
             mob.baseXp = Integer.parseInt(split[2]);
             m.minKamas = Integer.parseInt(split[3]);
             m.maxKamas = Integer.parseInt(split[4]);
-            var s = strStatsTodosMobs().split("~");
-            Database.getDynamics().getMonsterData().updateMonsterStats(id, s[0], s[1], s[2], split[3], split[4]);
+
+            String[] s = strStats4eachgrade().split("~");
+
+            String statsStringBase = s[0];
+            String statsInfoBase = s[6];
+            String statsAction = s[5];
+            String statInit = s[7];
+
+            Database.getDynamics().getMonsterData().updateMonsterStats(id, statsStringBase, s[1], s[2], split[3], split[4], statsInfoBase,statsAction,statInit);
+
+
             return true;
         } catch (Exception ignored) {
         }
         return false;
+    }
+
+    public String strStats4eachgrade() { // se usa mas q todo para el panel mobs, pero minkamas y maxkamas son int para sql
+        StringBuilder strStats = new StringBuilder();
+        StringBuilder strStatsAction = new StringBuilder();
+        StringBuilder strStatsInfo = new StringBuilder();
+        StringBuilder strStatsInit = new StringBuilder();
+        StringBuilder strPDV = new StringBuilder();
+        StringBuilder strExp = new StringBuilder();
+        StringBuilder strMinKamas = new StringBuilder();
+        StringBuilder strMaxKamas = new StringBuilder();
+        boolean e = false;
+        for (int i = 1 ; i < 6; i++) {
+            MobGrade mob;
+            if(grades.get(i) != null) {
+                mob = grades.get(i);
+            }
+            else{
+                break;
+            }
+            if(e) {
+                strStats.append("|");
+                strStatsAction.append("|");
+                strPDV.append("|");
+                strExp.append("|");
+                strStatsInit.append("|");
+                strMinKamas.append("|");
+                strMaxKamas.append("|");
+            }
+            else{
+                strStatsInfo.append(mob.stringStatsInfoMobgrade());
+            }
+            strStats.append(mob.stringStatsMobgradeBase());
+            strStatsAction.append(mob.stringStatsActionMobgrade());
+            strStatsInit.append(mob.init);
+            strPDV.append(mob.pdvMax);
+            strExp.append(mob.baseXp);
+            strMinKamas.append(mob.template.minKamas);
+            strMaxKamas.append(mob.template.maxKamas);
+
+            e = true;
+            /*
+            if (e) {
+                strStats.append("|");
+                strPDV.append("|");
+                strExp.append("|");
+                strMinKamas.append("|");
+                strMaxKamas.append("|");
+            }
+            strStats.append(mob.stringStatsActualizado());
+            strPDV.append(mob.pdvMax);
+            strExp.append(mob.baseXp);
+            strMinKamas.append(mob.template.minKamas);
+            strMaxKamas.append(mob.template.maxKamas);
+            e = true;*/
+        }
+
+        return (strStats.toString() + "~" + strPDV.toString() + "~" + strExp.toString() + "~" + strMinKamas.toString() + "~"
+                + strMaxKamas.toString() + "~" + strStatsAction.toString()  + "~" + strStatsInfo.toString() + "~" + strStatsInit.toString() );
     }
 
     public String strStatsTodosMobs() { // se usa mas q todo para el panel mobs, pero minkamas y maxkamas son int para sql
@@ -258,7 +340,7 @@ public class Monster {
         StringBuilder strExp = new StringBuilder();
         StringBuilder strMinKamas = new StringBuilder();
         StringBuilder strMaxKamas = new StringBuilder();
-        var e = false;
+        boolean e = false;
         for (int i = 1 ; i < 6; i++) {
             MobGrade mob;
             if(grades.get(i) != null) {
@@ -374,6 +456,7 @@ public class Monster {
         private String condition = "";
         private Timer condTimer;
         private ArrayList<GameObject> objects;
+        public boolean isHotomani = false;
 
         public MobGroup(int Aid, int Aalign, ArrayList<MobGrade> possibles,
                         GameMap Map, int cell, int fixSize, int minSize, int maxSize,
@@ -853,7 +936,10 @@ public class Monster {
                     if (mgs.isEmpty())
                         continue;
                     //On prend un grade au hasard entre 0 et size -1 parmis les mobs possibles
-                    this.mobs.put(guid, mgs.get(Formulas.getRandomValue(0, mgs.size() - 1)));
+                    int size = mgs.size() - 1;
+                    if(size > 4)
+                        size = 4;
+                    this.mobs.put(guid, mgs.get(Formulas.getRandomValue(0, size )));
                     if (m.getAggroDistance() > this.aggroDistance)
                         this.aggroDistance = m.getAggroDistance();
                     guid--;
@@ -872,43 +958,19 @@ public class Monster {
             this.isFix = true;
             int guid = -1;
             boolean star = false;
-
-            int tableLvlaugment = 0;
-            int i = 0;
-            // Calcul du lvl moyen d'augmentation
-            for (String data : groupData.split(";")) {
-                String[] infos = data.split(",");
-
-                    int idMonster = Integer.parseInt(infos[0]);
-                    int min = Integer.parseInt(infos[1]);
-                    int max = Integer.parseInt(infos[2]);
-                    Monster m = World.world.getMonstre(idMonster);
-                    MobGrade mgs =  m.getGrade(5);
-                    //on ajoute a la liste les grades possibles
-                    
-                    if(mgs.level < lvl){
-                        int augmentation = lvl - mgs.level;
-                        tableLvlaugment += augmentation;
-                        i++;
-                    }
-            }
-
-            int avgLvlBoost = tableLvlaugment/i;
-
             for (String data : groupData.split(";")) {
                 if (data.equalsIgnoreCase(""))
                     continue;
                 String[] infos = data.split(",");
                 try {
                     int idMonster = Integer.parseInt(infos[0]);
-                    int min = Integer.parseInt(infos[1]);
-                    int max = Integer.parseInt(infos[2]);
                     Monster m = World.world.getMonstre(idMonster);
                     MobGrade mgs = m.getGrade(5);
                     //on ajoute a la liste les grades possibles
                     MobGrade mg2 = mgs.getCopy();
-                    mg2.modifStatbyLvl(lvl,avgLvlBoost);
-                    mg2.baseXp = lvl*900;
+                    mg2.modifStatbyLvl(lvl,0);
+                    mg2.baseXp = lvl*1000;
+                    this.isHotomani = true;
                     //On prend un grade au hasard entre 0 et size -1 parmis les mobs possibles
                     this.mobs.put(guid, mg2);
                     if (m.getAggroDistance() > this.aggroDistance)
@@ -1076,9 +1138,18 @@ public class Monster {
                 mobIDs.append(entry.getValue().getTemplate().getId());
                 mobGFX.append(entry.getValue().getTemplate().getGfxId()).append("^").append(entry.getValue().getSize());
                 mobLevels.append(entry.getValue().getLevel());
-                colors.append(entry.getValue().getTemplate().getColors()).append(";0,0,0,0;");
-                totalExp += entry.getValue().baseXp;
+                //Accessories Mobs - Qu'Tan & Ili  (Debug Pandalette Ivre + Xelorette)
+                int tst = entry.getValue().getTemplate().getId();
+                if (tst==534) // Pandawa Ivre
+                    colors.append(entry.getValue().getTemplate().getColors()).append(";0,1C3C,1C40,0;");
+                else if (tst==547) // Pandalette ivre
+                    colors.append(entry.getValue().getTemplate().getColors()).append(";0,1C3C,1C40,0;");
+                else if (tst==1213) // Mage C�leste
+                    colors.append(entry.getValue().getTemplate().getColors()).append(";0,2BA,847,0;");
+                else
+                    colors.append(entry.getValue().getTemplate().getColors()).append(";0,0,0,0;");
 
+                totalExp += entry.getValue().baseXp;
                 isFirst = false;
             }
 
@@ -1114,7 +1185,7 @@ public class Monster {
         private ArrayList<SpellEffect> fightBuffs = new ArrayList<SpellEffect>();
         public Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
         private Map<Integer, SortStats> spells = new HashMap<Integer, SortStats>();
-        private ArrayList<Integer> statsInfos = new ArrayList<Integer>();
+        public ArrayList<Integer> statsInfos = new ArrayList<Integer>();
 
         public MobGrade(Monster template, int grade, int level, int pa, int pm, String resists, String stats, String statsInfos, String allSpells, int pdvMax, int aInit, int xp, int n) {
             this.size = 100 + n * pSize;
@@ -1161,6 +1232,7 @@ public class Monster {
                 this.stats.put(Constant.STATS_ADD_PERDOM, Integer.parseInt(statInfos[1]));
                 this.stats.put(Constant.STATS_ADD_SOIN, Integer.parseInt(statInfos[2]));
                 this.stats.put(Constant.STATS_CREATURE, Integer.parseInt(statInfos[3]));
+
             } catch (Exception e) {
                 World.world.logger.error("#1# Erreur lors du chargement du grade du monstre (template) : " + template.getId());
                 e.printStackTrace();
@@ -1192,11 +1264,40 @@ public class Monster {
             }
         }
 
+        public void changeStats(String statInfos) {
+            //this.stats.clear();
+            String[] stats = statInfos.split(",");
+            for(String s : stats)
+            {
+                String[] details = s.split(":");
+                if(Integer.parseInt(details[0]) == 111){
+                    this.pa = Integer.parseInt(details[1]);
+                }
+                else if(Integer.parseInt(details[0]) == 128){
+                    this.pm = Integer.parseInt(details[1]);
+                }
+                else if(Integer.parseInt(details[0]) == 174){
+                    this.init = Integer.parseInt(details[1]);
+                }
+                else{
+                    this.stats.put(Integer.parseInt(details[0]), Integer.parseInt(details[1]));
+                }
+            }
+
+            /*String[] stats = statInfos.split(",");
+            for(String s : stats)
+            {
+                String[] details = s.split(":");
+                this.stats.put(Integer.parseInt(details[0]), Integer.parseInt(details[1]));
+            }*/
+        }
+
+
         private MobGrade(Monster template, int grade, int level, int pdv,
                          int pdvMax, int pa, int pm,
                          Map<Integer, Integer> stats,
                          ArrayList<Integer> statsInfos,
-                         Map<Integer, SortStats> spells, int xp, int n) {
+                         Map<Integer, SortStats> spells, int xp, int n, int init) {
             this.size = 100 + n * pSize;
             this.template = template;
             this.grade = grade;
@@ -1209,14 +1310,109 @@ public class Monster {
             this.statsInfos = statsInfos;
             this.spells = spells;
             this.inFightId = -1;
-            this.baseXp = xp;
+            this.baseXp =xp;
+            this.init = init;
+            //this.baseXp = level*1000;
         }
 
         public MobGrade getCopy() {
             Map<Integer, Integer> newStats = new HashMap<Integer, Integer>();
             newStats.putAll(this.stats);
             int n = (this.size - 100) / pSize;
-            return new MobGrade(this.template, this.grade, this.level, this.pdv, this.pdvMax, this.pa, this.pm, newStats, this.statsInfos, this.spells, this.baseXp, n);
+            return new MobGrade(this.template, this.grade, this.level, this.pdv, this.pdvMax, this.pa, this.pm, newStats, this.statsInfos, this.spells, this.baseXp, n, this.init);
+        }
+
+        public void GrowMGByDiff(int fightDiff) {
+            Monster.MobGrade MG5 = this.getTemplate().getGrade(5);
+            Monster.MobGrade MG4 = this.getTemplate().getGrade(4);
+            Monster.MobGrade MG1 = this.getTemplate().getGrade(1);
+
+
+
+
+            switch (fightDiff) {
+                case 1:
+                   /* //int diff = getDiffbyLvl(stats,this.getTemplate());
+
+                    // Calcul pour avoir les nouvelles valeurs
+                    int lvlMin = this.getTemplate().getGrade(1).getLevel();
+                    int lvlMax = this.getTemplate().getGrade(5).getLevel();
+                    float lvlmoyen = (lvlMax - lvlMin)/4;
+                    newLvl = Math.round(this.level + (lvlmoyen*5));
+                    // Cal
+                    int pdvMin = this.getTemplate().getGrade(1).pdv;
+                    int pdvMax =this.getTemplate().getGrade(5).pdv;
+                    float pdvmoyen = (pdvMax - pdvMin)/4;
+                    newPdv = Math.round(this.pdv + (pdvmoyen*5));
+
+                    int paMin = this.getTemplate().getGrade(1).pa;
+                    int paMax =this.getTemplate().getGrade(5).pa;
+                    float pamoyen = 0;
+                    if(paMax > paMin){
+                        pamoyen = (paMax - paMin)/4;
+                    }
+                    else{
+                        pamoyen = ((1+paMax) - paMin)/4;
+                    }
+                    newPa = Math.round(this.pa + (pamoyen*5));
+
+                    int pmMin = this.getTemplate().getGrade(1).pa;
+                    int pmMax =this.getTemplate().getGrade(5).pa;
+                    float pmmoyen = 0;
+                    if(paMax > paMin){
+                        pmmoyen = (pmMax - pmMin)/4;
+                    }
+                    else{
+                        pmmoyen = ((1+pmMax) - pmMin)/4;
+                    }
+                    newPm = Math.round(this.pa + (pmmoyen*5));
+
+                    // String[] resist = resists.split(";"), stat = stats.split(","), statInfos = statsInfos.split(";");
+
+                    newStats.forEach((key, value) -> {
+                        int StatsMinOne = this.stats.get(key);
+                        int Diff = value - StatsMinOne;
+                        if(Diff <= 0){
+                            Diff = 5;
+                        }
+                        int NewValue = value + (Diff*5);
+                        value = NewValue;
+
+                    });
+
+                    */
+
+
+                    int lvlMin = MG4.getLevel();
+                    int lvlMax = MG5.getLevel();
+
+                    int lvlmoypergrade = (lvlMax - lvlMin);
+                    int LvlMG6 = 0;
+                    if(lvlmoypergrade != 0) {
+                        // On génére le niveau
+                        LvlMG6 = lvlMax + (lvlmoypergrade * 4);
+                    }
+                    else {
+                        LvlMG6 = lvlMax;
+                    }
+                    this.level = LvlMG6;
+                    this.size = 115;
+                    // XP
+                    int XPMG6 = MG5.baseXp + (MG5.baseXp - MG1.baseXp);
+                    // INIT
+                    int INITMG6 = MG5.init + (MG5.init - MG1.init);
+                    this.init = INITMG6;
+                    this.baseXp = XPMG6;
+
+                    break;
+                case 2:
+                case 3:
+                    this.level = MG5.getLevel() + fightDiff*50 ;
+                    this.size = 100 + fightDiff*15 ;
+                    break;
+            }
+
+
         }
 
         public void replaceStatsInfos(int s) {
@@ -1259,6 +1455,10 @@ public class Monster {
 
         public int getLevel() {
             return this.level;
+        }
+
+        public void setLevel(int lvl) {
+            this.level = lvl;
         }
 
         public int getPdv() {
@@ -1313,7 +1513,7 @@ public class Monster {
             if(this.getTemplate().getId() == 42 && !stats.containsKey(Constant.STATS_CREATURE))
                 stats.put(Constant.STATS_CREATURE, 5);
             if(this.stats.get(-1) != null) {
-                Map<Integer, Integer> stats = new HashMap<>();
+                Map<Integer, Integer> LinkedHashMap = new LinkedHashMap<>();
                 stats.putAll(this.stats);
                 stats.remove(-1); stats.remove(-100);
 
@@ -1336,15 +1536,35 @@ public class Monster {
         }
 
         public void modifStatByInvocator(Fighter caster) {
-            float taux = (1.0F + (caster.getLvl()) / 100.0F);
-            int life = Math.round(this.pdvMax * taux);
+            float tauxlvl = (1.0F + (caster.getLvl()) / 100.0F);
+            float tauxstat = 0.25F;
+            float tauxhp = 0.1F;
+
+            float boostlife = caster.getPdvMax() * tauxhp;
+            Stats casterboost = caster.getTotalStats();
+
+            float force2 = casterboost.get(Constant.STATS_ADD_FORC) * tauxstat;
+            float intel2 = casterboost.get(Constant.STATS_ADD_INTE) * tauxstat;
+            float agili2 = casterboost.get(Constant.STATS_ADD_AGIL) * tauxstat;
+            float sages2 = casterboost.get(Constant.STATS_ADD_SAGE) * tauxstat;
+            float chanc2 = casterboost.get(Constant.STATS_ADD_CHAN) * tauxstat;
+
+            float force3 = (this.stats.get(Constant.STATS_ADD_FORC) * tauxlvl) ;
+            float intel3 =  (this.stats.get(Constant.STATS_ADD_INTE) * tauxlvl) ;
+            float agili3 = (this.stats.get(Constant.STATS_ADD_AGIL) * tauxlvl) ;
+            float sages3 =  (this.stats.get(Constant.STATS_ADD_SAGE) * tauxlvl) ;
+            float chanc3 =  (this.stats.get(Constant.STATS_ADD_CHAN) * tauxlvl) ;
+
+            int life = Math.round(this.pdvMax * tauxlvl) + Math.round(boostlife) ;
             this.pdv = life;
-            this.pdvMax = this.pdv;
-            int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
-            int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
-            int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
-            int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
-            int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+            this.pdvMax = life;
+
+            int force = Math.round( force3 + force2 );
+            int intel = Math.round( intel3 + intel2 );
+            int agili = Math.round( agili3 + agili2 );
+            int sages = Math.round( sages3 + sages2 );
+            int chanc = Math.round( chanc3 + chanc2 );
+
             this.stats.put(Constant.STATS_ADD_FORC, force);
             this.stats.put(Constant.STATS_ADD_INTE, intel);
             this.stats.put(Constant.STATS_ADD_AGIL, agili);
@@ -1352,205 +1572,13 @@ public class Monster {
             this.stats.put(Constant.STATS_ADD_CHAN, chanc);
         }
 
-        public void modifStatByFightDifficulty(int Difficulty,Fight fight) {
-            int taux = 1 ;
-            switch (Difficulty){
-                case 0 :
-                    taux = 1;
-                    break;
-                case 1 :
-                    taux = 2;
-                    break;
-                case 2 :
-                case 3 :
-                    taux = 4;
-                    break;
-                default:
-                    taux = 1;
-                    break;
-            }
-
-            if(Difficulty < 3) {
-                int life = this.pdvMax;
-
-                if (taux > 1) {
-                    life = this.pdvMax * taux;
-                }
-
-                this.pdv = life;
-                this.pdvMax = this.pdv;
-
-                this.stats.put(Constant.STATS_ADD_FORC, this.stats.get(Constant.STATS_ADD_FORC) * taux);
-                this.stats.put(Constant.STATS_ADD_INTE, this.stats.get(Constant.STATS_ADD_INTE) * taux);
-                this.stats.put(Constant.STATS_ADD_AGIL, this.stats.get(Constant.STATS_ADD_AGIL) * taux);
-                this.stats.put(Constant.STATS_ADD_SAGE, this.stats.get(Constant.STATS_ADD_SAGE) * taux);
-                this.stats.put(Constant.STATS_ADD_CHAN, this.stats.get(Constant.STATS_ADD_CHAN) * taux);
-                if (this.getStats().getEffect(Constant.STATS_ADD_DOMA) == 0) {
-                    this.stats.put(Constant.STATS_ADD_DOMA, (taux * taux));
-                } else {
-                    this.stats.put(Constant.STATS_ADD_DOMA, this.stats.get(Constant.STATS_ADD_DOMA) * taux);
-                }
-                if (this.getStats().getEffect(Constant.STATS_ADD_DOMA2) == 0) {
-                    this.stats.put(Constant.STATS_ADD_DOMA2, (taux * taux));
-                } else {
-                    this.stats.put(Constant.STATS_ADD_DOMA2, this.stats.get(Constant.STATS_ADD_DOMA2) * taux);
-                }
-                if (this.getStats().getEffect(Constant.STATS_ADD_SOIN) == 0) {
-                    this.stats.put(Constant.STATS_ADD_SOIN, (taux * taux));
-                } else {
-                    this.stats.put(Constant.STATS_ADD_SOIN, this.stats.get(Constant.STATS_ADD_SOIN) * taux);
-                }
-                if (this.getStats().getEffect(Constant.STATS_ADD_INIT) == 0) {
-                    this.stats.put(Constant.STATS_ADD_INIT, (taux * taux));
-                } else {
-                    this.stats.put(Constant.STATS_ADD_INIT, this.stats.get(Constant.STATS_ADD_INIT) * taux);
-                }
-
-                this.stats.put(Constant.STATS_ADD_RP_NEU, this.stats.get(Constant.STATS_ADD_RP_NEU) + (taux * taux));
-                this.stats.put(Constant.STATS_ADD_RP_FEU, this.stats.get(Constant.STATS_ADD_RP_FEU) + (taux * taux));
-                this.stats.put(Constant.STATS_ADD_RP_EAU, this.stats.get(Constant.STATS_ADD_RP_EAU) + (taux * taux));
-                this.stats.put(Constant.STATS_ADD_RP_AIR, this.stats.get(Constant.STATS_ADD_RP_AIR) + (taux * taux));
-                this.stats.put(Constant.STATS_ADD_RP_TER, this.stats.get(Constant.STATS_ADD_RP_TER) + (taux * taux));
-                this.pa = this.pa + taux;
-                this.pm = this.pm + taux;
-
-                this.stats.put(Constant.STATS_ADD_PO, taux);
-                this.stats.put(Constant.STATS_CREATURE, this.stats.get(Constant.STATS_CREATURE) + taux);
-            }
-
-        }
-
         public void modifStatbyLvl(int newlvl,int avgLvlBoost) {
 
             int leveldepartMonstre = this.level;
 
-            if(leveldepartMonstre < newlvl) {}
-            else {
-                newlvl = (avgLvlBoost+leveldepartMonstre);
-            }
+            this.level = leveldepartMonstre + newlvl;
+            this.size = 160;
 
-            double taux = (float)newlvl / leveldepartMonstre;
-
-            //System.out.println( this.getTemplate().getName() + " passe de " + leveldepartMonstre + " a " + newlvl   );
-            //System.out.println( "Taux = " + taux );
-
-            int life = this.pdvMax;
-            double lifeperlevel = (float)life/leveldepartMonstre;
-
-
-                    // On fait un ratio des stats par level
-            double ratioForce = getRatioStatifExist(Constant.STATS_ADD_FORC, taux);
-            double ratioIntel = getRatioStatifExist(Constant.STATS_ADD_INTE, taux);
-            double ratioChance = getRatioStatifExist(Constant.STATS_ADD_CHAN, taux);
-            double ratioAgil = getRatioStatifExist(Constant.STATS_ADD_AGIL, taux);
-            double ratioSages = getRatioStatifExist(Constant.STATS_ADD_SAGE, taux);
-
-            double ratioDomma = getRatioPoidifExist(Constant.STATS_ADD_DOMA, 0.5);
-            double ratioSoin = getRatioPoidifExist(Constant.STATS_ADD_SOIN, 0.25);
-
-            double ratioResNeu = getRatioPoidifExist(Constant.STATS_ADD_RP_NEU, taux);
-                    if(ratioResNeu>0.15)
-                        ratioResNeu = 0.15;
-            double ratioResTer = getRatioPoidifExist(Constant.STATS_ADD_RP_TER, taux);
-                    if(ratioResTer>0.15)
-                        ratioResTer = 0.15;
-            double ratioResFeu = getRatioPoidifExist(Constant.STATS_ADD_RP_FEU, taux);
-                    if(ratioResFeu>0.15)
-                        ratioResFeu = 0.15;
-            double ratioResEau = getRatioPoidifExist(Constant.STATS_ADD_RP_EAU, taux);
-                    if(ratioResEau>0.15)
-                        ratioResEau = 0.15;
-            double ratioResAgi = getRatioPoidifExist(Constant.STATS_ADD_RP_AIR, taux);
-                    if(ratioResAgi>0.15)
-                        ratioResAgi = 0.15;
-
-            double ratioPO = getRatioPoidifExist(Constant.STATS_ADD_PO, 0.02);
-            double ratioCrea = getRatioPoidifExist(Constant.STATS_CREATURE, 0.02);
-            double ratioCrit = getRatioPoidifExist(Constant.STATS_ADD_CC, 0.05);
-
-            this.level = newlvl;
-            int diff = newlvl - leveldepartMonstre;
-            if(diff < 25){
-                 diff = 25;
-            }
-
-            int force = this.stats.get(Constant.STATS_ADD_FORC) ;
-            int intel = this.stats.get(Constant.STATS_ADD_INTE) ;
-            int chance =this.stats.get(Constant.STATS_ADD_CHAN) ;
-            int agil =this.stats.get(Constant.STATS_ADD_AGIL) ;
-            int sage =this.stats.get(Constant.STATS_ADD_SAGE) ;
-            int doma =this.stats.get(Constant.STATS_ADD_DOMA) ;
-            int soin =this.stats.get(Constant.STATS_ADD_SOIN) ;
-            int rpNeu =this.stats.get(Constant.STATS_ADD_RP_NEU) ;
-            int rpTer =this.stats.get(Constant.STATS_ADD_RP_TER) ;
-            int rpFeu =this.stats.get(Constant.STATS_ADD_RP_FEU) ;
-            int rpEau =this.stats.get(Constant.STATS_ADD_RP_EAU) ;
-            int rpAgi =this.stats.get(Constant.STATS_ADD_RP_AIR) ;
-            int rpPA =this.stats.get(Constant.STATS_ADD_AFLEE) ;
-            int rpPM = this.stats.get(Constant.STATS_ADD_MFLEE) ;
-
-            this.stats.put(Constant.STATS_ADD_FORC, force + (int) Math.round(diff * ratioForce));
-            this.stats.put(Constant.STATS_ADD_INTE, intel + (int) Math.round(diff * ratioIntel));
-            this.stats.put(Constant.STATS_ADD_CHAN, chance + (int) Math.round(diff * ratioChance));
-            this.stats.put(Constant.STATS_ADD_AGIL, agil + (int) Math.round(diff * ratioAgil));
-            this.stats.put(Constant.STATS_ADD_SAGE, sage + (int) Math.round(diff * ratioSages));
-            this.stats.put(Constant.STATS_ADD_DOMA, doma + (int) Math.round(diff * ratioDomma));
-            this.stats.put(Constant.STATS_ADD_SOIN, soin + (int) Math.round(diff * ratioSoin));
-            this.stats.put(Constant.STATS_ADD_RP_NEU, (int) (rpNeu + Math.abs(diff*ratioResNeu)));
-            this.stats.put(Constant.STATS_ADD_RP_TER, (int) (rpTer + Math.abs(diff*ratioResTer)));
-            this.stats.put(Constant.STATS_ADD_RP_FEU, (int) (rpFeu + Math.abs(diff*ratioResFeu)));
-            this.stats.put(Constant.STATS_ADD_RP_EAU, (int) (rpEau + Math.abs(diff*ratioResEau)));
-            this.stats.put(Constant.STATS_ADD_RP_AIR, (int) (rpAgi + Math.abs(diff*ratioResAgi)));
-            this.stats.put(Constant.STATS_ADD_AFLEE, rpPA + this.stats.get(Constant.STATS_ADD_SAGE)/4 );
-            this.stats.put(Constant.STATS_ADD_MFLEE, rpPM + this.stats.get(Constant.STATS_ADD_SAGE)/4 );
-            this.stats.put(Constant.STATS_ADD_PO,  (int) Math.round(diff * ratioPO));
-            this.stats.put(Constant.STATS_CREATURE,  (int) Math.round(diff * ratioCrea));
-            this.stats.put(Constant.STATS_ADD_CC,  (int) Math.round(diff * ratioCrit));
-
-            this.pdv = (int) Math.round(lifeperlevel * this.level);
-            this.pdvMax = this.pdv;
-            //System.out.println(this.pdvMax+ " / " + life + " Vie");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_FORC)+ " / " + force + " force");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_INTE)+ " / " + intel +" intel");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_CHAN)+ " / " + chance +" cha");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_AGIL)+ " / " + agil +" agi");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_SAGE)+ " / " + sage +" sagesse");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_DOMA)+ " / " + doma +" dommage");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_SOIN)+ " / " + soin +" soin");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_RP_NEU)+ " / " + rpNeu +"% Re neu");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_RP_TER)+ " / " + rpTer +"% Re ter");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_RP_FEU)+ " / " + rpFeu +"% Re feu");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_RP_EAU)+ " / " + rpEau +"% Re eau");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_RP_AIR)+ " / " + rpAgi +"% Re air");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_AFLEE)+ " / " + rpPA +"% Re PA");
-            //System.out.println(this.stats.get(Constant.STATS_ADD_MFLEE)+ " / " + rpPM +"% Re PM");
-            //System.out.println( " + " + this.stats.get(Constant.STATS_ADD_PO)+" PO");
-            //System.out.println(" + " + this.stats.get(Constant.STATS_CREATURE)+" Crea");
-            //System.out.println(" + " + this.stats.get(Constant.STATS_ADD_CC)+" Crit");
-
-                    //int ratioForce = Math.round(this.stats.get(Constant.STATS_ADD_FORC) / this.getLevel()) ;
-                    int pas = this.pa;
-                    int pms = this.pm;
-
-                    int maxPatoAdd = pas;
-                    int maxPmtoAdd = pms;
-
-                    float tranche = newlvl / maxPatoAdd;
-                    float tranche2 = newlvl / maxPmtoAdd;
-
-                    int nombrePA = Math.round(diff / tranche);
-                    if (nombrePA < 3) {
-                        nombrePA = 3;
-                    }
-                    int nombrePM = Math.round(diff / tranche2);
-                    if (nombrePM < 2) {
-                        nombrePM = 2;
-                    }
-
-                    this.pa = pas + nombrePA;
-                    this.pm = pms + nombrePM;
-                   // System.out.println(" + " + nombrePA+ " PA " + pas+"=>"+this.pa);
-                   // System.out.println(" + " + nombrePM+ " PM " + pms+"=>"+this.pm);
         }
 
         public double getRatioStatifExist(int stat,double taux){
@@ -1581,14 +1609,44 @@ public class Monster {
             return ratio;
         }
 
-        public void changeStats(String statInfos) {
-            this.stats.clear();
-            String[] stats = statInfos.split(",");
-            for(String s : stats)
-            {
-                String[] details = s.split(":");
-                this.stats.put(Integer.parseInt(details[0]), Integer.parseInt(details[1]));
-            }
+        public String stringStatsMobgradeBase() {
+            StringBuilder strStats = new StringBuilder();
+            strStats.append(this.stats.get(Constant.STATS_ADD_FORC)).append(",");
+            strStats.append(this.stats.get(Constant.STATS_ADD_SAGE)).append(",");
+            strStats.append(this.stats.get(Constant.STATS_ADD_INTE)).append(",");
+            strStats.append(this.stats.get(Constant.STATS_ADD_CHAN)).append(",");
+            strStats.append(this.stats.get(Constant.STATS_ADD_AGIL));
+            return strStats.toString();
+        }
+
+        public String stringStatsInfoMobgrade() {
+            StringBuilder strStats = new StringBuilder();
+            strStats.append(this.stats.get(Constant.STATS_ADD_DOMA)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_PERDOM)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_SOIN)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_CREATURE));
+            return strStats.toString();
+        }
+
+        public String stringStatsActionMobgrade() {
+            StringBuilder strStats = new StringBuilder();
+            strStats.append(this.pa).append(";");
+            strStats.append(this.pm);
+            return strStats.toString();
+        }
+
+        public String stringStatsResiGradeMobgrade() {
+            StringBuilder strStats = new StringBuilder();
+
+            strStats.append(this.getLevel()).append("@");
+            strStats.append(this.stats.get(Constant.STATS_ADD_RP_NEU)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_RP_TER)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_RP_FEU)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_RP_EAU)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_RP_AIR)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_AFLEE)).append(";");
+            strStats.append(this.stats.get(Constant.STATS_ADD_MFLEE));
+            return strStats.toString();
         }
 
         public String stringStatsActualizado() {
@@ -1599,14 +1657,24 @@ public class Monster {
                 switch (key) {
                     case Constant.STATS_ADD_PA:
                     case Constant.STATS_ADD_PM:
+                    case Constant.STATS_ADD_DOMA:
+                    case Constant.STATS_ADD_PERDOM:
                     case Constant.STATS_CREATURE:
+                    case Constant.STATS_ADD_SAGE:
+                    case Constant.STATS_ADD_RP_NEU:
+                    case Constant.STATS_ADD_RP_TER:
+                    case Constant.STATS_ADD_RP_FEU:
+                    case Constant.STATS_ADD_RP_EAU:
+                    case Constant.STATS_ADD_RP_AIR:
+                    case Constant.STATS_ADD_MFLEE:
+                    case Constant.STATS_ADD_AFLEE:
                     case Constant.STATS_ADD_CHAN:
                     case Constant.STATS_ADD_AGIL:
                     case Constant.STATS_ADD_FORC:
                     case Constant.STATS_ADD_INTE :
                     case Constant.STATS_ADD_INIT :
                     {
-                        if (!strStats.isEmpty()) {
+                        if (!strStats.toString().isEmpty()) {
                             strStats.append(",");
                         }
                         strStats.append(key).append(":").append(value);

@@ -214,7 +214,7 @@ public class Hdv {
 
     public String parseTemplateByIdObject(int categID) {
         String categ = "";
-        var catego = World.world.getObjTemplate(categID).getType();
+        int catego = World.world.getObjTemplate(categID).getType();
         try {
             categ = this.getCategorys().get(catego).parseTemplate();
             if (categ == null) {

@@ -23,6 +23,7 @@ import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.Fragment;
+import org.apache.commons.lang3.ArrayUtils;
 import util.lang.Lang;
 
 import javax.swing.Timer;
@@ -75,10 +76,14 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "multi")) {
+                if (player.getFight() != null) {
+                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Commande non-utilisable en combat");
+                    return true;
+                }
+
                 //Création du groupe
                 for (Player z : World.world.getOnlinePlayers()) {
                     if(z != player){
-
                         if (player.getAccount().getCurrentIp().toString().equalsIgnoreCase(z.getAccount().getCurrentIp().toString())){
 
                             if (z == null || !z.isOnline()) {
@@ -133,15 +138,6 @@ public class CommandPlayer {
                 if(player.getParty() != null)
                 {
                     List<Player> Players = player.getParty().getPlayers();
-                    if (player.cantTP()) {
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter votre équipe sur cette carte");
-                        return true;
-                    }
-                    if(GameMap.IsInDj(player.getCurMap()) || player.getCurMap().isDungeon()){
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter votre équipe sur cette carte");
-                        return true;
-                    }
-
                     for(final Player groupPlayer : Players)
                     {
                         if (groupPlayer.getName().equals(player.getName()))
@@ -155,12 +151,30 @@ public class CommandPlayer {
                             final int cellid = player.getCurCell().getId();
                             if (player.getAccount().getCurrentIp().toString().equalsIgnoreCase(groupPlayer.getAccount().getCurrentIp().toString())){
                                 //SocketManager.GAME_SEND_MESSAGE(player, message2);
-                                if (groupPlayer.cantTP()) {
-                                    SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + groupPlayer.getName() + " ne peut pas etre TP sur la map actuel");
-                                    return true;
+
+                                if(groupPlayer.getCurMap().getId() == player.getCurMap().getId()){
+
                                 }
-                                groupPlayer.teleport(mappid, cellid);
-                                SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information) " + groupPlayer.getName() + " </b> a été tp vers vous !");
+                                else {
+                                    boolean cantp = true;
+                                    if (player.cantTP()) {
+                                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter <b>"+ groupPlayer.getName()+ "</b>");
+                                        cantp = false;
+                                    }
+                                    if(GameMap.IsInDj(player.getCurMap()) || player.getCurMap().isDungeon()){
+                                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Vous ne pouvez pas téléporter <b>"+ groupPlayer.getName()+ "</b> sur cette carte");
+                                        cantp = false;
+                                    }
+                                    if (groupPlayer.cantTP()) {
+                                        SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + groupPlayer.getName() + "</b> ne peut pas etre TP");
+                                        cantp = false;
+                                    }
+
+                                    if(cantp) {
+                                        groupPlayer.teleport(mappid, cellid);
+                                        SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information) " + groupPlayer.getName() + " </b> a été tp vers vous !");
+                                    }
+                                }
                             }
                             else {
                                 SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + groupPlayer.getName() + " </b> n'a pas la même IP !");
@@ -170,80 +184,73 @@ public class CommandPlayer {
                 }
                 else{
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Commande non-utilisable sans groupe");
+                    return true;
                 }
 
                 // Maitre
-                if (player.getFight() != null) {
-                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Commande non-utilisable en combat");
-                    return true;
-                }
-                if(player.getParty() == null) {
-                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Commande non-utilisable sans groupe");
-                    return true;
-                }
                 if(player.getSlaveLeader() != null) {
                     SocketManager.GAME_SEND_MESSAGE(player,"<b>(Erreur)</b> Un esclave ne peut pas devenir maitre");
                     return true;
                 }
-                for (Player p : player.getParty().getPlayers()) {
-                    if (p == null) {
-                        continue;
-                    }
-                    if (!p.getAccount().getCurrentIp().equals(player.getAccount().getCurrentIp())) {
-                        continue;
-                    }
-                    if (p.getCurMap() != player.getCurMap()) {
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> n'est pas sur votre map !");
-                        continue;
-                    }
-                    if (p.getFight() != null) {
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> est en combat !");
-                        continue;
-                    }
 
-                    if (p.getId() == player.getId()) {
-                        continue;
-                    }
-                    if (!p.isOnline()) {
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> semble pas joignable !");
-                        continue;
-                    }
-                    if (p.getAccount().getGameClient() == null) {
-                        continue;
-                    }
-                    try {
-                        if (p.getSlaveLeader() != null) {
+                  for (Player p : player.getParty().getPlayers()) {
+                      if (p == null) {
+                          continue;
+                      }
+                      if (!p.getAccount().getCurrentIp().equals(player.getAccount().getCurrentIp())) {
+                          continue;
+                      }
+                      if (p.getCurMap() != player.getCurMap()) {
+                          SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + p.getName() + " </b> n'est pas sur votre map !");
+                          continue;
+                      }
+                      if (p.getFight() != null) {
+                          SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + p.getName() + " </b> est en combat !");
+                          continue;
+                      }
 
-                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning) " + p.getName() + " </b> avait déjà un maitre :" + p.getSlaveLeader().getName() + " - Il va être remplacé");
-                            p.setSlaveLeader(null) ;
-                            //continue;
-                        }
-                        p.setSlaveLeader(player);
-                        // Le joueur principal deviens le chef pour les esclaves  !
-                        if(player.PlayerList1.contains(p) ) {
-                            SocketManager.GAME_SEND_MESSAGE(p,"<b>(Information) " + player.getName() + " </b> est déjà votre maitre !");
-                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information) " + p.getName() + " </b> est déjà votre esclave !");
-                            continue;
-                        }
-                        else {
-                            player.PlayerList1.add(p);
-                        }
-                        p.teleport(player.getCurMap().getId(), player.getCurCell().getId());
-                        //On envoie le message a l'esclave
-                        SocketManager.GAME_SEND_MESSAGE(p,"<b>(Information) " + player.getName() + " </b> est désormais votre maitre !");
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information) " + p.getName() + " </b> vous suivras & entreras dans vos combats !");
-                    } catch (Exception e) {
+                      if (p.getId() == player.getId()) {
+                          continue;
+                      }
+                      if (!p.isOnline()) {
+                          SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + p.getName() + " </b> semble pas joignable !");
+                          continue;
+                      }
+                      if (p.getAccount().getGameClient() == null) {
+                          continue;
+                      }
+                      try {
+                          if (p.getSlaveLeader() != null) {
 
-                        e.printStackTrace();
-                    }
+                              SocketManager.GAME_SEND_MESSAGE(player, "<b>(Warning) " + p.getName() + " </b> avait déjà un maitre :" + p.getSlaveLeader().getName() + " - Il va être remplacé");
+                              p.setSlaveLeader(null);
+                              //continue;
+                          }
+                          p.setSlaveLeader(player);
+                          // Le joueur principal deviens le chef pour les esclaves  !
+                          if (player.PlayerList1.contains(p)) {
+                              SocketManager.GAME_SEND_MESSAGE(p, "<b>(Information) " + player.getName() + " </b> est déjà votre maitre !");
+                              SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information) " + p.getName() + " </b> est déjà votre esclave !");
+                              continue;
+                          } else {
+                              player.PlayerList1.add(p);
+                          }
+                          p.teleport(player.getCurMap().getId(), player.getCurCell().getId());
+                          //On envoie le message a l'esclave
+                          SocketManager.GAME_SEND_MESSAGE(p, "<b>(Information) " + player.getName() + " </b> est désormais votre maitre !");
+                          SocketManager.GAME_SEND_MESSAGE(player, "<b>(Information) " + p.getName() + " </b> vous suivras & entreras dans vos combats !");
+                      } catch (Exception e) {
 
-                }
+                          e.printStackTrace();
+                      }
+
+                  }
 
                 //One Windows
                 if (!player.PlayerList1.isEmpty()) {
                     if(player.oneWindows){
-                        player.oneWindows = false;
-                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez désactivé le mode one windows");
+                        //player.oneWindows = false;
+                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez déjà activé le mode one windows");
                     }
                     else{
                         player.oneWindows = true;
@@ -384,7 +391,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if(command(msg, "openfragment")) {
+            else if(command(msg, "openfragment") || command(msg, "ofrag")) {
                 if(player.getFight() != null){
                     return true;
                 }
@@ -421,7 +428,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if(command(msg, "difficulty0")) {
+            else if(command(msg, "difficulty0") || command(msg, "diff0")) {
                 if (player.difficulty != 0) {
                     player.difficulty = 0;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Normale");
@@ -431,7 +438,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if(command(msg, "difficulty1")) {
+            else if(command(msg, "difficulty1") || command(msg, "diff1")) {
 
                 if (player.difficulty != 1) {
                     player.difficulty = 1;
@@ -442,7 +449,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            else if(command(msg, "difficulty2")) {
+            else if(command(msg, "difficulty2") || command(msg, "diff2")) {
                   if (player.difficulty != 2) {
                     player.difficulty = 2;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Très difficile");
@@ -452,7 +459,7 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            /*else if (command(msg, "difficulty3")) {
+            else if(command(msg, "difficulty3") || command(msg, "diff3")) {
                 if (player.difficulty != 3) {
                     player.difficulty = 3;
                     player.sendMessage("A partir de maintenant vous lancerez les combats en difficulté : Monstreuse");
@@ -461,8 +468,8 @@ public class CommandPlayer {
                     player.sendMessage("Déjà en difficulté monstreuse");
                 }
                 return true;
-            }*/
-            else if (command(msg, "staff")) {
+            }
+            else if(command(msg, "staff")) {
                 String message = Lang.get(player, 5);
                 boolean vide = true;
                 for (Player target : World.world.getOnlinePlayers()) {
@@ -479,38 +486,7 @@ public class CommandPlayer {
                 player.sendMessage(message);
                 return true;
             }
-            /*else if (command(msg, "house")) {
-                String message = "";
-                if (!msg.contains("all")) {
-                    message = "L'id de la maison la plus proche est : ";
-                    short lstDist = 999;
-                    House nearest = null;
-                    for (House house : World.world.getHouses().values()) {
-                        if (house.getMapId() == player.getCurMap().getId()) {
-                            short dist = (short) PathFinding.getDistanceBetween(player.getCurMap(), house.getCellId(), player.getCurCell().getId());
-                            if (dist < lstDist) {
-                                nearest = house;
-                                lstDist = dist;
-                            }
-                        }
-                    }
-                    if (nearest != null) message += nearest.getId();
-                } else {
-                    for (House house : World.world.getHouses().values()) {
-                        if (house.getMapId() == player.getCurMap().getId()) {
-                            message += "Maison " + house.getId() + " | cellId : " + house.getId();
-                        }
-                    }
-                    if (message.isEmpty()) message = "Aucune maison sur cet carte.";
-                }
-                player.sendMessage(message);
-                return true;
-            }*/
             else if(command(msg, "shop")){
-                //if (player.isInPrison())
-                  //  return true;
-                //if (player.getFight() != null)
-                 //   return true;
                     if(  player.getGroupe().getId() >= 1 &&  player.getGroupe().getId() < 6 ) {
                         player.teleport((short) 10114, 282);
                     }else {
@@ -520,7 +496,19 @@ public class CommandPlayer {
             }
             else if(command(msg, "parcho")) {
                 int prix = 100;
-                int points = player.getAccount().getPoints();
+                if(player.getAccount().getWebAccount() == null && Config.INSTANCE.getAZURIOM()){
+                    String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
+                    player.sendMessage(mess);
+                    return true;
+                }
+                int points = 0;
+                if(Config.INSTANCE.getAZURIOM()) {
+                    points = player.getAccount().getWebAccount().getPoints();
+                }
+                else{
+                    points = player.getAccount().getOldpoints();
+                }
+
                 if(player.getisParcho() != 1){
                     if(points < prix) {
                         player.sendMessage("Il vous manque <b>" + (prix - points) + "</b> points boutique pour effectuer cet achat");
@@ -560,7 +548,13 @@ public class CommandPlayer {
                         }
 
                         SocketManager.GAME_SEND_STATS_PACKET(player);
-                        player.getAccount().setPoints(points - prix);
+                        if(Config.INSTANCE.getAZURIOM()) {
+                            player.getAccount().getWebAccount().setPoints(points - prix);
+                        }
+                        else{
+                            player.getAccount().setOldpoints(points - prix);
+                        }
+
                         player.sendMessage("Il vous reste <b>" + (points - prix) + "</b> après cet achat");
                         player.setisParcho(1);
                     }
@@ -611,11 +605,6 @@ public class CommandPlayer {
                  player.teleport((short) 13000, 222);
                  return true;
              }
-            /* else if(command(msg, "spellforget")) {
-                player.setExchangeAction(new ExchangeAction<>(ExchangeAction.FORGETTING_SPELL, 0));
-                SocketManager.GAME_SEND_FORGETSPELL_INTERFACE('+', player);
-                return true;
-            } */
             else if(command(msg, "hdv")) {
                 if(player.getExchangeAction() != null) GameClient.leaveExchange(player);
                 if (player.getDeshonor() >= 5) {
@@ -633,7 +622,39 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "points")){
-                player.sendMessage("Vous avez <b>" + player.getAccount().getPoints() + "</b> points boutique");
+                if(player.getAccount().getWebAccount() == null && Config.INSTANCE.getAZURIOM()){
+                    String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
+                    player.sendMessage(mess);
+                    return true;
+                }
+
+                int points = 0;
+                if(Config.INSTANCE.getAZURIOM()){
+                     points = player.getAccount().getWebAccount().getPoints();
+                }
+                else {
+                     points = player.getAccount().getOldpoints();
+                }
+                player.sendMessage("Vous avez <b>" + points + "</b> points boutique");
+                return true;
+            }
+            else if(command(msg, "transfertpoints")){
+                if(player.getAccount().getWebAccount() == null){
+                    String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
+                    player.sendMessage(mess);
+                    return true;
+                }
+                int points = player.getAccount().getOldpoints();
+                if(points>0) {
+                    player.sendMessage("Vous aviez <b>" + points + "</b> points boutique sur votre compte de jeu");
+
+                    int points2 = player.getAccount().getWebAccount().getPoints();
+                    player.getAccount().setOldpoints(0);
+                    player.getAccount().getWebAccount().setPoints(points2 + points);
+                    player.sendMessage("Vous avez maintenant <b>" + (points2 + points) + "</b> points boutique sur votre compte web");
+                }
+
+
                 return true;
             }
             else if(command(msg, "ipdrop")){
@@ -733,20 +754,6 @@ public class CommandPlayer {
                 }
                 return true;
             }
-             /* else if (command(msg, "restat")) {
-                player.getStatsParcho().getMap().clear();
-                player.getStatsParcho().getEffects().clear();
-                player.getStats().addOneStat(125,-player.getStats().getEffect(125));
-                player.getStats().addOneStat(124,-player.getStats().getEffect(124));
-                player.getStats().addOneStat(118,-player.getStats().getEffect(118));
-                player.getStats().addOneStat(123,-player.getStats().getEffect(123));
-                player.getStats().addOneStat(119,-player.getStats().getEffect(119));
-                player.getStats().addOneStat(126,-player.getStats().getEffect(126));
-                player.addCapital((player.getLevel() - 1) * 5 - player.get_capital());
-                SocketManager.GAME_SEND_STATS_PACKET(player);
-                SocketManager.GAME_SEND_Im_PACKET(player,"023;" + (player.getLevel() * 5 - 5));
-                return true;
-            } */
             else if (command(msg, "deblo")) {
                 if (player.cantTP())
                     return true;
@@ -956,8 +963,14 @@ public class CommandPlayer {
                 player.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_BANK, 0));
                 return true;
             }
-            else if(command(msg, "refreshMobs")) {
+            else if(command(msg, "refreshMobs") || command(msg, "rmobs")) {
                 if(player.getAccount().getVip() == 1) {
+
+                    if(ArrayUtils.contains(Constant.GLADIATROOL_MAPID,player.getCurMap().getId())){
+                        player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
+                        return true;
+                    }
+
                     if(player.getCurMap().haveMobFix() || player.getCurMap().getId()==10131
                             || player.getCurMap().getId()==10132 || player.getCurMap().getId()==10133
                             || player.getCurMap().getId()==10134 || player.getCurMap().getId()==10135
@@ -994,7 +1007,20 @@ public class CommandPlayer {
             }
             else if(command(msg, "spellboost")) {
                 int prix = 50;
-                int points = player.getAccount().getPoints();
+                if(player.getAccount().getWebAccount() == null && Config.INSTANCE.getAZURIOM()){
+                    String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
+                    player.sendMessage(mess);
+                    return true;
+                }
+
+                int points = 0;
+                if(Config.INSTANCE.getAZURIOM()) {
+                    points = player.getAccount().getWebAccount().getPoints();
+                }
+                else{
+                    points = player.getAccount().getOldpoints();
+                }
+
                 if(points < prix) {
                     player.sendMessage("Il vous manque <b>" + (prix - points) + "</b> points boutique pour effectuer cet achat");
                     return true;
@@ -1002,24 +1028,51 @@ public class CommandPlayer {
                 else{
                     player.set_spellPts(player.get_spellPts() + 15);
                     SocketManager.GAME_SEND_STATS_PACKET(player);
-                    player.getAccount().setPoints(points - prix);
+                    if(Config.INSTANCE.getAZURIOM()) {
+                        player.getAccount().getWebAccount().setPoints(points - prix);
+                    }
+                    else{
+                        player.getAccount().setOldpoints(points - prix);
+                    }
                     player.sendMessage("Il vous reste <b>" + (points - prix) + "</b> après cet achat");
                 }
                 return true;
             }
-            else if(command(msg, "vip")) {
+            else if(command(msg, "vip")  ) {
                 if(player.getAccount().getVip() == 0) {
                     int prix = 400;
-                    int points = player.getAccount().getPoints() - prix;
+                    if(player.getAccount().getWebAccount() == null && Config.INSTANCE.getAZURIOM() ){
+                        String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
+                        player.sendMessage(mess);
+                        return true;
+                    }
+                    int points = 0;
+                    if(Config.INSTANCE.getAZURIOM()) {
+                        points = player.getAccount().getWebAccount().getPoints();
+                    }
+                    else{
+                        points = player.getAccount().getOldpoints();
+                    }
+                    points = points - prix;
                     if(points < 0) {
-                        player.sendMessage("Il vous manque <b>" + (prix - player.getAccount().getPoints()) + "</b> points boutique pour effectuer cet achat");
+                        if(Config.INSTANCE.getAZURIOM()) {
+                            player.sendMessage("Il vous manque <b>" + (prix - player.getAccount().getWebAccount().getPoints()) + "</b> points boutique pour effectuer cet achat");
+                        }
+                        else {
+                            player.sendMessage("Il vous manque <b>" + (prix - player.getAccount().getOldpoints()) + "</b> points boutique pour effectuer cet achat");
+                        }
                         return true;
                     }
                     else{
                         player.getAccount().setVip(1);
-                        player.getAccount().setPoints(points);
+                        if(Config.INSTANCE.getAZURIOM()) {
+                            player.getAccount().getWebAccount().setPoints(points);
+                        }
+                        else{
+                            player.getAccount().setOldpoints(points);
+                        }
                         Database.getStatics().getAccountData().update(player.getAccount());
-                        player.sendMessage("Vous êtes maintenant VIP ! Il vous reste <b>" + player.getAccount().getPoints() + "</b> après cet achat");
+                        player.sendMessage("Vous êtes maintenant VIP ! Il vous reste <b>" + player.getAccount().getWebAccount().getPoints() + "</b> après cet achat");
                     }
                 }
                 else{
@@ -1237,7 +1290,7 @@ public class CommandPlayer {
                 return EventManager.getInstance().subscribe(player) == 1;
             }
             else {
-                player.sendMessage(Lang.get(player, 16));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
                 return true;
             }
         }

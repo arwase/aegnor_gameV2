@@ -661,8 +661,12 @@ public class ObjectAction {
                         break;
 
                     case 33://Ajout de points boutique.
-                        if (player0.getFight() != null) return;
-                        player.getAccount().setPoints(player.getAccount().getPoints() + Integer.parseInt(arg));
+                        if (player.getFight() != null) return;
+                        if(player.getAccount().getWebAccount() == null){
+                            player.sendMessage("Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web ");
+                            return;
+                        }
+                        player.getAccount().getWebAccount().setPoints(player.getAccount().getWebAccount().getPoints() + Integer.parseInt(arg));
                         break;
 
                     case 34://Fm cac

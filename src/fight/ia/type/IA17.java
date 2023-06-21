@@ -22,18 +22,18 @@ public class IA17 extends AbstractNeedSpell  {
             int time = 100, maxPo = 1;
             boolean action = false;
 
+
             for(SortStats spellStats : this.highests)
                 if(spellStats != null && spellStats.getMaxPO() > maxPo)
                     maxPo = spellStats.getMaxPO();
 
             Fighter target = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);
-
             if(target != null)
                 if(target.isHide())
                     target = null;
 
             if(this.fighter.getCurPa(this.fight) > 0) {
-                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
                     time = 3000;
                     action = true;
                 }

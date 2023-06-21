@@ -7,6 +7,7 @@ import game.GameClient;
 import game.world.World;
 import hdv.HdvEntry;
 import kernel.Config;
+import kernel.Constant;
 import object.GameObject;
 
 import java.util.*;
@@ -20,7 +21,7 @@ public class Account {
     private String currentIp = "";
     private String lastIP = "";
     private String lastConnectionDate = "";
-    private int points;
+    private int oldpoints;
     private long muteTime = 0;
     private String mutePseudo = "";
     private boolean banned = false;
@@ -36,12 +37,14 @@ public class Account {
     private List<Integer> enemys = new ArrayList<>();
     private Map<Integer, ArrayList<HdvEntry>> hdvsItems;
     private int vip = 0;
+    private AccountWeb accountweb;
+    private int _accWebID;
 
     public Account(int guid, String name, String pseudo,
                    String answer, boolean banned,
                    String lastIp, String lastConnectionDate, String friends,
-                   String enemy, int points, long subscriber, long muteTime, String mutePseudo,
-                   String lastVoteIP, String heureVote, int vip) {
+                   String enemy, long subscriber, long muteTime, String mutePseudo,
+                   String lastVoteIP, String heureVote, int vip,int accountwebid,int oldpoints) {
         this.id = guid;
         this.name = name;
         this.pseudo = pseudo;
@@ -50,7 +53,77 @@ public class Account {
         this.lastIP = lastIp;
         this.lastConnectionDate = lastConnectionDate;
         this.hdvsItems = World.world.getMyItems(guid);
-        this.points = points;
+        this.oldpoints = oldpoints;
+        this.subscriber = subscriber;
+        this.muteTime = muteTime;
+        this.mutePseudo = mutePseudo;
+        this.lastVoteIP = lastVoteIP;
+        this.vip = vip;
+        this._accWebID = accountwebid;
+        this.accountweb = World.world.getWebAccount(accountwebid);
+
+        if (heureVote.equalsIgnoreCase("")) this.heureVote = 0;
+        else this.heureVote = Long.parseLong(heureVote);
+
+        //Chargement de la liste d'amie
+        if(!friends.equalsIgnoreCase("")) {
+            for (String f : friends.split(";")) {
+                try {
+                    this.friends.add(Integer.parseInt(f));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        //Chargement de la liste d'Enemy
+        if (!enemy.equalsIgnoreCase("")) {
+            for (String e : enemy.split(";")) {
+                try {
+                    this.enemys.add(Integer.parseInt(e));
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+        //Chargement de la banque
+        String bank = Database.getDynamics().getBankData().get(guid);
+        if (bank == null) {
+            Database.getDynamics().getBankData().add(guid);
+        } else {
+            this.bankKamas = Integer.parseInt(bank.split("@")[0]);
+            String allItem = "";
+            try {
+                allItem = bank.split("@")[1];
+            } catch (Exception e2) {
+            }
+            if (!allItem.equals("")) {
+                for (String item : allItem.split("\\|")) {
+                    if (!item.equals("")) {
+                        GameObject obj = World.world.getGameObject(Integer.parseInt(item));
+                        if (obj != null)
+                            this.bank.add(obj);
+                    }
+                }
+            }
+        }
+        if (!Database.getDynamics().getGiftData().existByAccount(guid))
+            Database.getDynamics().getGiftData().create(guid);
+    }
+
+    public Account(int guid, String name, String pseudo,
+                   String answer, boolean banned,
+                   String lastIp, String lastConnectionDate, String friends,
+                   String enemy, long subscriber, long muteTime, String mutePseudo,
+                   String lastVoteIP, String heureVote, int vip,int oldpoints) {
+        this.id = guid;
+        this.name = name;
+        this.pseudo = pseudo;
+        this.answer = answer;
+        this.banned = banned;
+        this.lastIP = lastIp;
+        this.lastConnectionDate = lastConnectionDate;
+        this.hdvsItems = World.world.getMyItems(guid);
+        this.oldpoints = oldpoints;
         this.subscriber = subscriber;
         this.muteTime = muteTime;
         this.mutePseudo = mutePseudo;
@@ -109,6 +182,15 @@ public class Account {
         return this.heureVote;
     }
 
+    public int getOldpoints() {
+        return this.oldpoints;
+    }
+
+    public void setOldpoints(int i) {
+        oldpoints = i;
+        Database.getStatics().getAccountData().updatePoints(id, oldpoints);
+    }
+
     public String getLastVoteIP() {
         return this.lastVoteIP;
     }
@@ -164,20 +246,24 @@ public class Account {
     public int getVip() { return vip;}
     public void setVip(int i) { this.vip = i;}
 
-    public int getPoints() {
-        points = Database.getStatics().getAccountData().loadPoints(name);
-        return points;
+    public AccountWeb getWebAccount() {
+        if(accountweb == null && Config.INSTANCE.getAZURIOM()) {
+            Database.getSites().getAccountWebData().load(id);
+            if(World.world.getWebAccountBygameAccountid(id) != null) {
+                accountweb = World.world.getWebAccountBygameAccountid(id);
+                _accWebID = accountweb.getId();
+            }
+            else {
+                this.getCurrentPlayer().sendMessage("Tu n'as pas encore créé de compte web");
+                return null;
+            }
+        }
+        return accountweb;
     }
 
-    public void setPoints(int i) {
-        points = i;
-        Database.getStatics().getAccountData().updatePoints(id, points);
-    }
-
-    public void addPoints(int i) {
-        this.getPoints();
-        points += i;
-        Database.getStatics().getAccountData().updatePoints(id, points);
+    public void setWebaccount(AccountWeb c) {
+        accountweb = c;
+        _accWebID = accountweb.getId();
     }
 
     public void mute(short minutes, String pseudo) {
@@ -258,6 +344,7 @@ public class Account {
         });
         return players;
     }
+
 
     public Player getCurrentPlayer() {
         return this.currentPlayer;
@@ -559,15 +646,41 @@ public class Account {
             player.getParty().leave(player);
         if (player.getMount() != null)
             Database.getStatics().getMountData().update(player.getMount());
-        if (player.getSlaveLeader() != null) {
-            player.getSlaveLeader().PlayerList1.remove(player);
-            player.setSlaveLeader(null);
-        }//TODO : Add Gestion esclave
+
+
 
         if (player.getFight() != null) {
             if (player.getFight().playerDisconnect(player, false)) {
                 Database.getStatics().getPlayerData().update(player);
                 return;
+            }
+        }
+        else{
+            if (player.getSlaveLeader() != null) {
+                player.getSlaveLeader().PlayerList1.remove(player);
+                SocketManager.GAME_SEND_MESSAGE(player.getSlaveLeader(),"<b>(Information) " + player.getName() + "</b> ne fait plus parti de vos Suiveurs");
+                player.setSlaveLeader(null);
+            }//TODO : Add Gestion esclave
+
+            if(!player.PlayerList1.isEmpty()){
+
+                for(final Player slave : player.PlayerList1) {
+                    SocketManager.GAME_SEND_MESSAGE(slave, "<b>(Information) " + player.getName() + " </b> n'est plus votre maitre car il s'est déconnecté !");
+                    if(player.ipdrop){
+                        SocketManager.GAME_SEND_MESSAGE(slave, "<b>(Information) " + player.getName() + " </b> ne recupère plus vos drop !");
+                    }
+                    if(player.oneWindows){
+                        SocketManager.GAME_SEND_MESSAGE(slave, "<b>(Information) " + player.getName() + " </b> ne joue plus vos tour !");
+                    }
+                }
+                player.PlayerList1.clear();
+                player.ipdrop = false;
+                player.oneWindows = false;
+
+            }
+
+            if(player.controleinvo){
+                player.controleinvo = false;
             }
         }
         this.currentPlayer = null;
@@ -593,5 +706,9 @@ public class Account {
         Map<Integer, Player> players = test.getPlayers();
 
         return players.get(0);
+    }
+
+    public int getAccWebID() {
+        return _accWebID;
     }
 }

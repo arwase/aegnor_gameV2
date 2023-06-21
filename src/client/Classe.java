@@ -89,7 +89,7 @@ public class Classe
                 String[] ss = s.split(",");
                 int inicio = Integer.parseInt(ss[0]);
                 int coste = Integer.parseInt(ss[1]);
-                var puntos = 1;
+                int puntos = 1;
                 try {
                     puntos = Integer.parseInt(ss[2]);
                 } catch (Exception ignored) {
@@ -101,24 +101,40 @@ public class Classe
     }
 
     public BoostStat getBoostStat(int statID, int valorStat) {
-    var boosts = switch (statID) {
-        case Constant.STATS_ADD_VITA -> this._boostVita;
-        case Constant.STATS_ADD_FORC -> this._boostForce;
-        case Constant.STATS_ADD_INTE -> this._boostIntel;
-        case Constant.STATS_ADD_AGIL -> this._boostAgi;
-        case Constant.STATS_ADD_CHAN -> this._boostChance;
-        case Constant.STATS_ADD_SAGE -> this._boostSage;
-        default -> new ArrayList<BoostStat>();
-    };
-        var boost = BoostDefecto;
-    int temp = -1;
-    for (BoostStat b : boosts) {
-        if (b.inicio >= (temp + 1) && b.inicio <= valorStat) {
-            temp = b.inicio;
-            boost = b;
+        ArrayList<BoostStat> boosts = new ArrayList<BoostStat>();
+
+        switch (statID) {
+            case Constant.STATS_ADD_VITA :
+                boosts = this._boostVita;
+                break;
+            case Constant.STATS_ADD_FORC :
+                boosts =this._boostForce;
+                break;
+            case Constant.STATS_ADD_INTE :
+                boosts =this._boostIntel;
+                break;
+            case Constant.STATS_ADD_AGIL :
+                boosts =this._boostAgi;
+                break;
+            case Constant.STATS_ADD_CHAN :
+                boosts =this._boostChance;
+                break;
+            case Constant.STATS_ADD_SAGE :
+                boosts =this._boostSage;
+                break;
+            default :
+                boosts = new ArrayList<BoostStat>();
+                break;
+        };
+        BoostStat boost = BoostDefecto;
+        int temp = -1;
+        for (BoostStat b : boosts) {
+            if (b.inicio >= (temp + 1) && b.inicio <= valorStat) {
+                temp = b.inicio;
+                boost = b;
+            }
         }
-    }
-    return boost;
+        return boost;
     }
 
     public Boolean aprenderHechizo(Player perso, int nivel) {

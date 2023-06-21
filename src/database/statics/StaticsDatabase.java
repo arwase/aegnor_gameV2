@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 public class StaticsDatabase {
     //connection
     private HikariDataSource dataSource;
-    private Logger logger = (Logger) LoggerFactory.getLogger(StaticsDatabase.class);
+    private static Logger logger = (Logger) LoggerFactory.getLogger(StaticsDatabase.class);
 
     //data
     private AccountData accountData;
@@ -69,7 +69,7 @@ public class StaticsDatabase {
 
     public boolean initializeConnection() {
         try {
-            logger.setLevel(Level.ALL);
+            logger.setLevel(Level.ERROR);
             logger.trace("Reading database config");
 
             HikariConfig config = new HikariConfig();

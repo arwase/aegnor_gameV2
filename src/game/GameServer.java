@@ -3,9 +3,11 @@ package game;
 import client.Account;
 import client.Player;
 import com.sun.istack.NotNull;
+import database.Database;
 import exchange.ExchangeClient;
 import game.world.World;
 import kernel.Config;
+import kernel.Constant;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,15 +36,20 @@ public class GameServer {
     private final static @NotNull Logger log = LoggerFactory.getLogger(GameServer.class);
     private final @NotNull IoAcceptor acceptor;
 
-    static {
+   // static {
 
-    }
+    //}
 
     private GameServer(){
         acceptor = new NioSocketAcceptor();
         acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(StandardCharsets.UTF_8, LineDelimiter.NUL, new LineDelimiter("\n\0"))));
         acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 60 * 10 /*10 Minutes*/);
         acceptor.setHandler(new GameHandler());
+    }
+
+    public static String getServerTime() {
+
+        return "BT" + (new Date().getTime() + 3600000 * 2);
     }
 
     public boolean start() {
@@ -105,8 +113,8 @@ public class GameServer {
         if(!waitingClients.contains(account)) waitingClients.add(account);
     }
 
-    public static void a() {
-        log.warn("Unexpected behaviour detected");
+    public static void a(String err) {
+        log.warn("Unexpected behaviour detected : "+ err);
     }
 
     public void kickAll(boolean kickGm) {
@@ -114,6 +122,7 @@ public class GameServer {
             if (player != null && player.getGameClient() != null) {
                 if (player.getGroupe() != null && !player.getGroupe().isPlayer() && kickGm)
                     continue;
+                Database.getStatics().getPlayerData().update(player);
                 player.send("M04");
                 player.getGameClient().kick();
             }

@@ -5,6 +5,7 @@ import area.map.GameMap;
 import client.Player;
 import fight.Fight;
 import fight.Fighter;
+import fight.ia.util.AstarPathfinding;
 import fight.spells.Spell;
 import fight.traps.Glyph;
 import fight.traps.Trap;
@@ -95,6 +96,7 @@ public class PathFinding {
         return false;
     }
 
+
     public static int getCaseIdWithPo(int cellIdFighter, char dir, int dist)
     {
         int result = cellIdFighter;
@@ -152,6 +154,131 @@ public class PathFinding {
         return result;
     }
 
+    public static int getValidCaseIdWithPo(int cellIdFighter, char dir, int dist)
+    {
+        int result = cellIdFighter;
+        char dire = 'z';
+        if(dir == 'z')
+        {
+            Random random = new Random();
+            int rand = random.nextInt(4 - 1 + 1);
+            switch (rand)
+            {
+                case 1 :
+                    dire = 'b';
+                    break;
+                case 2 :
+                    dire = 'd';
+                    break;
+                case 3 :
+                    dire = 'f';
+                    break;
+                case 4 :
+                    dire = 'h';
+                    break;
+            }
+        }
+        else{
+            dire = dir;
+        }
+        switch (dire)
+        {
+            case 'b' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result += 15;
+                }
+                break;
+            case 'd' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result += 14;
+                }
+                break;
+            case 'f' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result -= 15;
+                }
+                break;
+            case 'h' :
+                for(int i = 0; i < dist; i++)
+                {
+                    result -= 14;
+                }
+                break;
+        }
+        return result;
+    }
+
+    public static ArrayList<GameCase> getAvailableCellsTowardCible(int cellId, GameMap map, Fighter F,Fight fight){
+        ArrayList<GameCase> path = new AstarPathfinding(fight.getMapOld(), fight, F.getCell().getId(), cellId).getShortestPath(-1);
+        return path;
+    }
+
+    public static ArrayList<GameCase> getInLineCellsWithLOS(Fighter F,Fight fight){
+        ArrayList<GameCase> casesinLine = new ArrayList<>();
+        ArrayList<GameCase> casesb = getAllCasesFromDir(fight,F,'b');
+        ArrayList<GameCase> casesd = getAllCasesFromDir(fight,F,'d');
+        ArrayList<GameCase> casesf = getAllCasesFromDir(fight,F,'f');
+        ArrayList<GameCase> casesh = getAllCasesFromDir(fight,F,'h');
+        for (GameCase Cell :  casesb) {
+            if(checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+                casesinLine.add(Cell);
+            }
+        }
+        for (GameCase Cell :  casesd) {
+            if(checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+                casesinLine.add(Cell);
+            }
+        }
+        for (GameCase Cell :  casesf) {
+            if(checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+                casesinLine.add(Cell);
+            }
+        }
+        for (GameCase Cell :  casesh) {
+            if(checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+                casesinLine.add(Cell);
+            }
+        }
+
+        return casesinLine;
+    }
+
+    public static ArrayList<GameCase> getAllCellsWithLOS(Fighter F,Fight fight, int distance){
+        ArrayList<GameCase> casesinLOS = new ArrayList<>();
+        List<GameCase> cases = getAllCases(fight);
+        for (GameCase Cell :  cases) {
+                if(Cell.isWalkable(false)) {
+                    if ( getDistanceBetween(fight.getMap(), F.getCell().getId(), Cell.getId()) <= distance) {
+                        if (checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+
+                            casesinLOS.add(Cell);
+                        }
+                    }
+                }
+        }
+
+        return casesinLOS;
+    }
+
+    public static ArrayList<GameCase> getAllCellsWithLOS(Fighter F,Fight fight, int distance, int distmin){
+        ArrayList<GameCase> casesinLOS = new ArrayList<>();
+        List<GameCase> cases = getAllCases(fight);
+        for (GameCase Cell :  cases) {
+            if(Cell.isWalkable(false)) {
+                if ( getDistanceBetween(fight.getMap(), F.getCell().getId(), Cell.getId()) <= distance && getDistanceBetween(fight.getMap(), F.getCell().getId(), Cell.getId()) >= distmin) {
+                    if (checkLoSBetween2Cells(fight.getMap(), Cell.getId(), F.getCell().getId())) {
+
+                        casesinLOS.add(Cell);
+                    }
+                }
+            }
+        }
+
+        return casesinLOS;
+    }
     public static boolean isCACwithEnnemy(Fighter fighter,
                                           ArrayList<Fighter> Ennemys) {
         for (Fighter f : Ennemys)
@@ -438,6 +565,7 @@ public class PathFinding {
         return -1;
     }
 
+
     public static int getDistanceBetween(GameMap map, int id1, int id2) {
         if (id1 == id2)
             return 0;
@@ -465,8 +593,8 @@ public class PathFinding {
         return null;
     }
 
-    public static int newCaseAfterPush(Fight fight, GameCase CCase, GameCase TCase, int value) {
-        GameMap map = fight.getMap();
+    public static int newCaseAfterPush(final Fight fight, final GameCase CCase, final GameCase TCase, int value) {
+        final GameMap map = fight.getMap();
         if (CCase.getId() == TCase.getId())
             return 0;
 
@@ -480,15 +608,15 @@ public class PathFinding {
         boolean b = false;
         for (int a = 0; a < value; a++) {
             int nextCase = GetCaseIDFromDirrection(id, c, map, true);
-            for (Trap p : fight.getAllTraps()) {
-                if (getDistanceBetweenTwoCase(map, p.getCell(), map.getCase(nextCase)) <= p.getSize()) {
-                    id = nextCase;
+            for (final Trap trap : fight.getAllTraps()) {
+                final GameCase nextCell = map.getCase(nextCase);
+                if (PathFinding.getDistanceBetween(fight.getMap(), trap.getCell().getId(), nextCell.getId()) <= trap.getSize())
                     b = true;
-                }
             }
-            if (b) break;
-            if (map.getCase(nextCase) != null && map.getCase(nextCase).isWalkable(true) && map.getCase(nextCase).getFirstFighter() == null)
+            if (map.getCase(nextCase) != null && map.getCase(nextCase).isWalkable(true) && map.getCase(nextCase).getFirstFighter() == null) {
                 id = nextCase;
+                if(b) break;
+            }
             else return -(value - a);
         }
 
@@ -497,7 +625,7 @@ public class PathFinding {
     }
 
 
-    public static int newCaseAfterPush(Fight fight, GameCase currentCell, GameCase targetCell, int value, boolean piege) {
+    /*public static int newCaseAfterPush(Fight fight, GameCase currentCell, GameCase targetCell, int value, boolean piege) {
         GameMap map = fight.getMap();
 
         if (currentCell.getId() == targetCell.getId())
@@ -533,7 +661,7 @@ public class PathFinding {
         if (id == targetCell.getId())
             return 0;
         return id;
-    }
+    }*/
 
     public static int getDistanceBetweenTwoCase(GameMap map, GameCase c1, GameCase c2) {
         int dist = 0;
@@ -1491,6 +1619,7 @@ public class PathFinding {
         }
         return false;
     }
+
     public static ArrayList<GameCase> getAllCasesFromDir(Fight fight, Fighter caster, char dir)
     {
         ArrayList<GameCase> cases = new ArrayList<>();
@@ -1558,6 +1687,77 @@ public class PathFinding {
         }
         return cases;
     }
+
+    public static List<GameCase> getAllCases(Fight fight) {
+        GameMap map = fight.getMap();
+        List<GameCase> cases = map.getCases();
+        return cases;
+    }
+
+    public static ArrayList<GameCase> getAllCasesFromDir(Fight fight, int cellId, char dir)
+    {
+        ArrayList<GameCase> cases = new ArrayList<>();
+        GameMap map = fight.getMap();
+        boolean finish = false;
+
+        switch(dir)
+        {
+            case 'b':
+                while(!finish)
+                {
+                    cellId += 15;
+                    if(map.getCase(cellId) != null)
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case 'd':
+                while(!finish)
+                {
+                    cellId += 14;
+                    if(map.getCase(cellId) != null)
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case'f':
+                while(!finish)
+                {
+                    cellId -= 15;
+                    if(map.getCase(cellId) != null)
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+            case'h':
+                while(!finish)
+                {
+                    cellId -= 14;
+                    if(map.getCase(cellId) != null)
+                    {
+                        cases.add(map.getCase(cellId));
+                    }
+                    else{
+                        finish = true;
+                    }
+                }
+                break;
+        }
+        return cases;
+    }
+
 
     public static ArrayList<Fighter> getCiblesByZoneByWeapon(Fight fight,
                                                              int type, GameCase cell, int castCellID) {
@@ -1708,7 +1908,7 @@ public class PathFinding {
                 break;
 
             default:
-                GameServer.a();
+                GameServer.a("Zone inconnue " + zoneStr.charAt(c));
                 break;
         }
         return cases;
@@ -1727,28 +1927,6 @@ public class PathFinding {
         int loc6 = cellID - loc5 * ((w * 2) - 1);
         int loc7 = loc6 % w;
         return (loc5 - loc7);
-    }
-
-    public static boolean checkLoS(GameMap map, int cell1, int cell2) {
-
-        int dist = getDistanceBetween(map, cell1, cell2);
-        ArrayList<Integer> los = new ArrayList<Integer>();
-        if (dist > 2)
-            los = getLoS(cell1, cell2);
-        if (los != null && dist > 2) {
-            for (int i : los) {
-                if (i != cell1 && i != cell2 && !map.getCase(i).blockLoS()) {
-                    return false;
-                }
-            }
-        }
-        if (dist > 2) {
-            int cell = getNearestCellAround(map, cell2, cell1, null);
-            if (cell != -1 && !map.getCase(cell).blockLoS()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static int getNearestCellAround(GameMap map, int startCell, int endCell,
@@ -1941,12 +2119,13 @@ public class PathFinding {
 
         return test.contains(id);
     }
+
     private ArrayList<Character> listaDirEntreDosCeldas(GameMap mapa, int celdaInicio, int celdaDestino) {
         if (celdaInicio == celdaDestino || mapa == null) {
             return null;
         }
-        var abc = new ArrayList<Character>(4);
-        var b = listaDirEntreDosCeldas2(mapa, celdaInicio, celdaDestino, (-1));
+        ArrayList abc = new ArrayList<Character>(4);
+        ArrayList<Byte> b = listaDirEntreDosCeldas2(mapa, celdaInicio, celdaDestino, (-1));
         for (int i = 0; i < 4; i++) {
             switch (b.get(i)) {
                 case 0 :
@@ -1965,30 +2144,28 @@ public class PathFinding {
         }
         return abc;
     }
-    private ArrayList<Byte> listaDirEntreDosCeldas2(
-            GameMap mapa, int celdaInicio, int celdaDestino,
-            int celdaAnterior
-    ) {
+
+    private ArrayList<Byte> listaDirEntreDosCeldas2( GameMap mapa, int celdaInicio, int celdaDestino,int celdaAnterior ) {
         if (celdaInicio == celdaDestino || mapa == null) {
             return null;
         }
         GameCase cInicio = mapa.getCase(celdaInicio);
         GameCase cDestino = mapa.getCase(celdaDestino);
-        var difX = cDestino.getCoordX() - cInicio.getCoordX();
-        var difY = cDestino.getCoordY() - cInicio.getCoordY();
+        int difX = cDestino.getCoordX() - cInicio.getCoordX();
+        int difY = cDestino.getCoordY() - cInicio.getCoordY();
         if (Math.abs(difY) == Math.abs(difX) && celdaAnterior > 0) {
             return listaDirEntreDosCeldas2(mapa, celdaAnterior, celdaDestino, -1);
         } else if (Math.abs(difY) > Math.abs(difX)) {
             Integer[] c1 = new Integer[]{difX, 0, 2};
             Integer[] c2 = new Integer[]{difY, 1, 3};
-            var c = new ArrayList<Integer[]>();
+            ArrayList<Integer[]> c = new ArrayList<Integer[]>();
             c.add(c1);
             c.add(c2);
            return formulaDireccion(c);
         } else {
             Integer[] c1 = new Integer[]{difY, 1, 3};
             Integer[] c2 = new Integer[]{difX, 0, 2};
-            var c = new ArrayList<Integer[]>();
+            ArrayList<Integer[]> c = new ArrayList<Integer[]>();
             c.add(c1);
             c.add(c2);
             return formulaDireccion(c);
@@ -1999,7 +2176,7 @@ public class PathFinding {
         ArrayList<Byte> abc = new ArrayList<Byte>(4);
         for (int i = 0; i < 2; i++) {
             Integer dif = c.get(i)[0];
-            var p = i;
+            int p = i;
             if (dif < 0) {
                 p = Math.abs(3 - i);
             }
@@ -2007,30 +2184,6 @@ public class PathFinding {
             abc.add(Math.abs(3 - p), Byte.parseByte(c.get(i)[2].toString()));
         }
         return abc;
-    }
-
-    public static ArrayList<Integer> getLoS(int cell1, int cell2) {
-        ArrayList<Integer> Los = new ArrayList<Integer>();
-        int cell = cell1;
-        boolean next = false;
-        int[] dir1 = {1, -1, 29, -29, 15, 14, -15, -14};
-
-        for (int i : dir1) {
-            Los.clear();
-            cell = cell1;
-            Los.add(cell);
-            next = false;
-            while (!next) {
-                cell += i;
-                Los.add(cell);
-                if (isBord2(cell) || isBord1(cell) || cell <= 0 || cell >= 400)
-                    next = true;
-                if (cell == cell2) {
-                    return Los;
-                }
-            }
-        }
-        return null;
     }
 
     public static boolean checkLoS(GameMap map, int cell1, int cell2,
@@ -2056,6 +2209,20 @@ public class PathFinding {
         }
         return true;
     }
+    public static boolean checkLoSBetween2Cells(GameMap map, int cell1, int cell2) {
+        ArrayList<Integer> CellsToConsider = getLoSBotheringIDCases(map, cell1, cell2, true);
+        if (CellsToConsider == null) {
+            return true;
+        }
+        for (Integer cellID : CellsToConsider) {
+            if (map.getCase(cellID) != null)
+                if (!map.getCase(cellID).blockLoS()
+                        || (!map.getCase(cellID).isWalkable(false) && false)) {
+                    return false;
+                }
+        }
+        return true;
+    }
 
     private static ArrayList<Integer> getLoSBotheringIDCases(GameMap map,
                                                              int cellID1, int cellID2, boolean Combat) {
@@ -2073,7 +2240,7 @@ public class PathFinding {
         dirs.add('h');
 
         while (getDistanceBetween(map, consideredCell1, consideredCell2) > 2
-                && compteur < 300) {
+                && compteur < 600) {
             diffX = getCellXCoord(map, consideredCell1)
                     - getCellXCoord(map, consideredCell2);
             diffY = getCellYCoord(map, consideredCell1)
@@ -2097,8 +2264,9 @@ public class PathFinding {
                 toReturn.add(consideredCell1); // la liste des cases potentiellement obstacles
                 toReturn.add(consideredCell2); // la liste des cases potentiellement obstacles
             } else {
-                if (compteur == 0) // si on est en diagonale parfaite
+                if (compteur == 0) { // si on est en diagonale parfaite
                     return getLoSBotheringCasesInDiagonal(map, cellID1, cellID2, diffX, diffY);
+                }
                 if (dir == 'f' || dir == 'b') // on change la direction dans le cas o� on se retrouve en diagonale
                     if (diffY > 0)
                         dir = 'h';
@@ -2138,8 +2306,10 @@ public class PathFinding {
         return toReturn;
     }
 
+
     private static ArrayList<Integer> getLoSBotheringCasesInDiagonal(GameMap map,
                                                                      int cellID1, int cellID2, int diffX, int diffY) {
+
         ArrayList<Integer> toReturn = new ArrayList<Integer>();
         char dir = 'a';
         if (diffX > 0 && diffY > 0)
@@ -2150,9 +2320,11 @@ public class PathFinding {
             dir = 'a';
         if (diffX < 0 && diffY < 0)
             dir = 'c';
+
         int consideredCell = cellID1, compteur = 0;
-        while (consideredCell != -1 && compteur < 100) {
-            consideredCell = GetCaseIDFromDirrection(consideredCell, dir, map, true);
+        while (consideredCell != -1 && compteur < 300) {
+            consideredCell = GetCaseIDFromDirrection(consideredCell, dir, map, false);
+
             if (consideredCell == cellID2)
                 return toReturn;
             toReturn.add(consideredCell);
@@ -2176,7 +2348,7 @@ public class PathFinding {
         return fighters;
     }
 
-    public static char getDirEntreDosCeldas(GameMap map, int id1, int id2) {
+    public static char getDirBetweenCells(GameMap map, int id1, int id2) {
         if (id1 == id2)
             return 0;
         if (map == null)

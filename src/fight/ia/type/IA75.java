@@ -28,7 +28,7 @@ public class IA75 extends AbstractNeedSpell {
                 }
             }
             if(this.fighter.getCurPa(this.fight) > 0) {
-                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,target)) {
                     time = 1500;
                 }
             }

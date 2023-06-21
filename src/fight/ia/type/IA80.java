@@ -9,9 +9,9 @@ import fight.spells.Spell.SortStats;
 /**
  * Created by Locos on 04/10/2015.
  */
-public class IA30 extends AbstractNeedSpell {
+public class IA80 extends AbstractNeedSpell {
 
-    public IA30(Fight fight, Fighter fighter, byte count) {
+    public IA80(Fight fight, Fighter fighter, byte count) {
         super(fight, fighter, count);
     }
 
@@ -51,6 +51,27 @@ public class IA30 extends AbstractNeedSpell {
                 }
             }
 
+            if (this.fighter.getCurPa(this.fight) > 0 && longestEnnemy != null && nearestEnnemy == null && !action) {
+                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                if (value != -1) {
+                    time = value;
+                    action = true;
+                }
+            } else if (this.fighter.getCurPa(this.fight) > 0 && nearestEnnemy != null && !action) {
+                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.cacs);
+                if (value != -1) {
+                    time = value;
+                    action = true;
+                }
+            }
+
+            if (this.fighter.getCurPa(this.fight) > 0 && nearestEnnemy != null && !action) {
+                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                if (value != -1) {
+                    time = value;
+                    action = true;
+                }
+            }
 
             if (this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
@@ -59,27 +80,6 @@ public class IA30 extends AbstractNeedSpell {
                 }
             }
 
-            if (this.fighter.getCurPa(this.fight) > 0 && longestEnnemy != null && nearestEnnemy == null && !action) {
-                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                if (value != 0) {
-                    time = value;
-                    action = true;
-                }
-            } else if (this.fighter.getCurPa(this.fight) > 0 && nearestEnnemy != null && !action) {
-                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.cacs);
-                if (value != 0) {
-                    time = value;
-                    action = true;
-                }
-            }
-
-            if (this.fighter.getCurPa(this.fight) > 0 && nearestEnnemy != null && !action) {
-                int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                if (value != 0) {
-                    time = value;
-                    action = true;
-                }
-            }
 
             if (this.fighter.getCurPm(this.fight) > 0 && !action) {
                 int value = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, ennemy);

@@ -26,7 +26,7 @@ public class IA71 extends AbstractNeedSpell {
                 if(S.getMaxPO() > maxPo)
                     maxPo = S.getMaxPO();
 
-            Fighter ennemy1 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 8);// pomax +1;
+            Fighter ennemy1 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 13);// pomax +1;
             Fighter ennemy2 = this.getNearestLowerHpEnemy();// low hp enemy
 
             if(this.fighter.getCurPa(this.fight) > 0) {
@@ -40,10 +40,11 @@ public class IA71 extends AbstractNeedSpell {
             }
 
             if(this.fighter.getCurPa(this.fight) > 0) {
-                if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy1)) {
                     time = 1000;
                 }
             }
+
             if(this.fighter.getCurPa(this.fight) > 0) {
                 if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
                     time = 1200;

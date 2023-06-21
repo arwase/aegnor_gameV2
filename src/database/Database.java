@@ -2,6 +2,7 @@ package database;
 
 import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.DynamicsDatabase;
+import database.site.SitesDatabase;
 import database.statics.StaticsDatabase;
 
 import java.sql.Connection;
@@ -9,9 +10,10 @@ import java.sql.Connection;
 public class Database {
     private final static DynamicsDatabase dynamics = new DynamicsDatabase();
     private final static StaticsDatabase statics = new StaticsDatabase();
+    private final static SitesDatabase sites= new SitesDatabase();
 
     public static boolean launchDatabase() {
-        return !(!statics.initializeConnection() || !dynamics.initializeConnection());
+        return !(!statics.initializeConnection() || !dynamics.initializeConnection() || !sites.initializeConnection());
     }
 
     public static DynamicsDatabase getDynamics() {
@@ -21,6 +23,8 @@ public class Database {
     public static StaticsDatabase getStatics() {
         return statics;
     }
+
+    public static SitesDatabase getSites() { return sites;}
 
     public static boolean tryConnection(HikariDataSource dataSource) {
         try {

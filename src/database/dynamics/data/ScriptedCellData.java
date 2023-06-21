@@ -49,7 +49,7 @@ public class ScriptedCellData extends AbstractDAO<Object> {
                         break;
 
                     default:
-                        GameServer.a();
+                        GameServer.a("Pas d'action connue" + RS.getInt("EventID"));
                         break;
                 }
                 nbr++;

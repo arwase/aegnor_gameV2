@@ -11,9 +11,10 @@ import kernel.Config;
 import kernel.Main;
 
 public class DynamicsDatabase {
-    private static Logger logger = (Logger) LoggerFactory.getLogger(DynamicsDatabase.class);
     //connection
     private HikariDataSource dataSource;
+    private static Logger logger = (Logger) LoggerFactory.getLogger(DynamicsDatabase.class);
+
     //data
     private AreaData areaData;
     private GangsterData gangsterData;
@@ -117,7 +118,7 @@ public class DynamicsDatabase {
 
     public boolean initializeConnection() {
         try {
-            logger.setLevel(Level.ALL);
+            logger.setLevel(Level.ERROR);
             logger.trace("Reading database config");
 
             HikariConfig config = new HikariConfig();

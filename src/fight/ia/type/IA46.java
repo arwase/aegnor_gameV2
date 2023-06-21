@@ -28,7 +28,7 @@ public class IA46 extends AbstractNeedSpell  {
                 if(spellStats.getMaxPO() > maxPo)
                     maxPo = spellStats.getMaxPO();
 
-            Fighter L = Function.getInstance().getNearestAminoinvocnbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
+            Fighter L = Function.getInstance().getNearestAminoinvocnbrcasemax(this.fight, this.fighter, 3, maxPo + 1);// pomax +1;
             if(this.fighter.getCurPa(this.fight) > 0 && (L != null || A != null) && !this.boost) {
                 if (Function.getInstance().buffIfPossible(this.fight, this.fighter, (L == null ? A : L), this.buffs)) {
                     time = 1000;

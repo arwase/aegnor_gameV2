@@ -82,4 +82,5 @@ public abstract class AdminUser {
     }
 
     public abstract void apply(String packet);
+
 }

@@ -22,11 +22,11 @@ public class Minotoror {
     }
 
     public static void demi() {
-        TimerWaiter.addNext(Minotoror::spawnDemi, 10, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+        //TimerWaiter.addNext(Minotoror::spawnDemi, 10, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
     }
 
     public static void momi() {
-        TimerWaiter.addNext(Minotoror::spawnMomi, 10, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+        //TimerWaiter.addNext(Minotoror::spawnMomi, 10, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
     }
 
     private static void initializeBoss() {

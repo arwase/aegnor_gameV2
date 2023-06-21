@@ -2,20 +2,23 @@ package command;
 
 
 import client.Player;
-import command.administration.AdminUser;
 import common.SocketManager;
+import game.scheduler.entity.WorldSave;
 import game.world.World;
 import jakarta.xml.bind.DatatypeConverter;
+import kernel.Config;
 import kernel.Main;
 import util.lang.Lang;
+import game.GameClient;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -33,7 +36,8 @@ public class AzuriomCommands implements Runnable {
 
     private ServerSocket listen_socket;
     protected final static String KEYSTORE_PASSWORD = "SUPERCOMPLICATEDPASSWORD148936257412356";
-    protected final static String CERTIFICATE_PATH = "/home/aegnor/key/server.pem";
+    protected final static String CERTIFICATE_PATH = "server.pem";
+    //protected final static String CERTIFICATE_PATH = "C:\\wamp64\\www\\server.pem";
 
 
     public AzuriomCommands(int port)
@@ -162,8 +166,8 @@ public class AzuriomCommands implements Runnable {
     private class ClientSocket implements Runnable
     {
         private Socket socket;
-        private boolean timerStart = false;
-        private Timer timer;
+        public boolean timerStart = false;
+        public Timer timer;
 
         public ClientSocket(Socket socket){
             this.socket = socket;
@@ -180,7 +184,7 @@ public class AzuriomCommands implements Runnable {
                     this.parseCommand(command.split(" "));
                 }
             } catch (Exception e) {
-                System.out.println("Ici -" +  e.getMessage() );
+                //System.out.println("Ici -" +  e.getMessage() );
             }
         }
 
@@ -195,9 +199,13 @@ public class AzuriomCommands implements Runnable {
                     //Command is : give playerId itemId quantity
                     //giveCommand(Integer.valueOf(command[1]), Integer.valueOf(command[2]), Integer.valueOf(command[3]));
                     break;
+                case "save":
+                    //Command is : give playerId itemId quantity
+                   save(Integer.valueOf(command[1]));
+                    break;
                 case "reboot":
                     //Command is : give playerId itemId quantity
-                    reboot(Integer.valueOf(command[1]));
+                    reboot(Integer.valueOf(command[1]),Integer.valueOf(command[2]));
                     //giveCommand(Integer.valueOf(command[1]), Integer.valueOf(command[2]), Integer.valueOf(command[3]));
                     break;
                 default:
@@ -205,78 +213,17 @@ public class AzuriomCommands implements Runnable {
             }
         }
 
-        private void reboot(int min){
-            int time = 30, OffOn = 0;
-            try {
-                time = min;
-            } catch (Exception e) {
-                // ok
-            }
-
-            if (OffOn == 1 && this.isTimerStart())// demande de demarer le reboot
-            {
-                System.out.println("Reboot deja en cours");
-            } else if (OffOn == 1 && !this.isTimerStart()) {
-                if (time <= 5) {
-                    for(Player player : World.world.getOnlinePlayers()) {
-                        player.sendServerMessage(Lang.get(player, 14));
-                        player.send("M13");
-                    }
-                    Main.INSTANCE.setFightAsBlocked(true);
-                }
-                this.setTimer(createTimer(time));
-                this.getTimer().start();
-                this.setTimerStart(true);
-                String timeMSG = "minutes";
-                if (time <= 1)
-                    timeMSG = "minute";
-                SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " " + timeMSG);
-                System.out.println("Reboot programmé.");
-            } else if (OffOn == 0 && this.isTimerStart()) {
-                this.getTimer().stop();
-                this.setTimerStart(false);
-                for(Player player : World.world.getOnlinePlayers())
-                    player.sendServerMessage(Lang.get(player, 15));
-                Main.INSTANCE.setFightAsBlocked(false);
-                System.out.println("Reboot arrêté.");
-            } else if (OffOn == 0 && !this.isTimerStart()) {
-                System.out.println("Aucun reboot n'est lancé.");
-            }
-
+        public void reboot(int launch,int min){
+            World.world.reboot(launch,min);
         }
 
-        // POUR LA GESTION DES REBOOT
-        public boolean isTimerStart() {
-            return timerStart;
+        private void save(int playerID){
+            Player player = World.world.getPlayer(playerID);
+            WorldSave.cast(1);
+            String mess = "Sauvegarde lancée!";
+            player.sendMessage(mess);
         }
 
-        public void setTimerStart(boolean timerStart) {
-            this.timerStart = timerStart;
-        }
-
-        public Timer getTimer() {
-            return timer;
-        }
-
-        public void setTimer(Timer timer) {
-            this.timer = timer;
-        }
-
-        public Timer createTimer(final int timer) {
-            ActionListener action = new ActionListener() {
-                int time = timer;
-
-                public void actionPerformed(ActionEvent event) {
-                    time = time - 1;
-                    if (time == 1)
-                        SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minute");
-                    else
-                        SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minutes");
-                    if (time <= 0) Main.INSTANCE.stop("Shutdown by an administrator");
-                }
-            };
-            return new Timer(60000, action);
-        }
 
     }
 }

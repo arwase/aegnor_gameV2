@@ -72,7 +72,7 @@ public class CraftSecure extends PlayerExchange {
         if (success)
             winXP = Formulas.calculXpWinCraft(jobStat.get_lvl(), sizeList) * Config.INSTANCE.getRATE_JOB();
         else if (!jobStat.getTemplate().isMaging())
-            winXP = Formulas.calculXpWinCraft(jobStat.get_lvl(), sizeList) * Config.INSTANCE.getRATE_JOB();
+            //winXP = Formulas.calculXpWinCraft(jobStat.get_lvl(), sizeList) * Config.INSTANCE.getRATE_JOB();
 
         if (winXP > 0) {
             jobStat.addXp(this.player1, winXP);

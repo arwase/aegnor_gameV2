@@ -34,7 +34,7 @@ public class IA50 extends AbstractNeedSpell  {
             if(L != null) if(L.isHide()) L = null;
 
             if(this.fighter.getCurPa(this.fight) > 0 && !this.fighter.haveInvocation()) {
-                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
                     time = 2000;
                     action = true;
                 }

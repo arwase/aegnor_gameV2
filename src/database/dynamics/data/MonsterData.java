@@ -87,11 +87,13 @@ public class MonsterData extends AbstractDAO<Monster> {
                 int aggroDistance = RS.getInt("aggroDistance");
                 boolean capturable = (RS.getInt("capturable") == 1);
                 int type = RS.getInt("type");
+
                 if (World.world.getMonstre(id) == null) {
                     World.world.addMobTemplate(id, new Monster(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type));
                 } else {
                     World.world.getMonstre(id).setInfos(gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type);
                 }
+
             }
         } catch (SQLException e) {
             super.sendError("MonsterData reload", e);
@@ -100,16 +102,19 @@ public class MonsterData extends AbstractDAO<Monster> {
         }
     }
 
-    public boolean updateMonsterStats(int id, String stats, String pdv, String exp, String minKamas, String maxKamas) {
+    public boolean updateMonsterStats(int id, String stats, String pdv, String exp, String minKamas, String maxKamas, String statsInfoBase, String statsAction, String statsinit) {
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("UPDATE monsters SET stats = ?, pdvs = ?,exps = ? ,minKamas = ?,maxKamas = ? WHERE id = ?;");
+            p = getPreparedStatement("UPDATE monsters SET stats = ?, pdvs = ?,exps = ? ,minKamas = ?,maxKamas = ?,statsInfos = ?,points = ?,inits = ? WHERE id = ?;");
             p.setString(1, stats);
             p.setString(2, pdv);
             p.setString(3, exp);
             p.setString(4, minKamas);
             p.setString(5, maxKamas);
-            p.setInt(6, id);
+            p.setString(6, statsInfoBase);
+            p.setString(7, statsAction);
+            p.setString(8, statsinit);
+            p.setInt(9, id);
             execute(p);
             return true;
         } catch (SQLException e) {

@@ -11,6 +11,7 @@ import area.map.labyrinth.PigDragon;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import client.Account;
+import client.AccountWeb;
 import client.Classe;
 import client.Player;
 import client.other.Stats;
@@ -36,6 +37,7 @@ import command.AzuriomCommands;
 import kernel.Boutique;
 import kernel.Config;
 import kernel.Constant;
+import kernel.Main;
 import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
@@ -48,7 +50,11 @@ import org.slf4j.LoggerFactory;
 import other.Sets;
 import other.Titre;
 import util.TimerWaiter;
+import util.lang.Lang;
 
+import javax.swing.Timer;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -65,6 +71,7 @@ public class World {
 
 
     private Map<Integer, Account>    accounts    = new HashMap<>();
+    private Map<Integer, AccountWeb>    accountsWeb    = new HashMap<>();
     private Map<Integer, Player>     players     = new HashMap<>();
     private Map<Short, GameMap>    maps        = new HashMap<>();
     private Map<Integer, GameObject> objects     = new ConcurrentHashMap<>();
@@ -105,6 +112,9 @@ public class World {
     private Map<Integer, area.map.entity.Tutorial> Tutorial = new HashMap<>();
     private Map<Short, Long> delayCollectors = new HashMap<>();
     private Map<Integer, Classe> Classes = new HashMap<>();
+
+    private boolean timerStart = false;
+    private Timer timer;
 
     public Map<Short, Long> getDelayCollectors() {
         return delayCollectors;
@@ -179,6 +189,44 @@ public class World {
                 return account;
         return null;
     }
+    //endregion
+
+    //region Accounts data
+    public void addWebAccount(AccountWeb account) {
+        accountsWeb.put(account.getId(), account);
+    }
+
+    public Map<Integer, AccountWeb> getWebAccountsByIp(String ip) {
+        Map<Integer, AccountWeb> newAccounts = new HashMap<>();
+        accountsWeb.values().stream().filter(accountweb -> accountweb.getLastIP().equalsIgnoreCase(ip)).forEach(accountweb -> newAccounts.put(newAccounts.size(), accountweb));
+        return newAccounts;
+    }
+
+    public AccountWeb getWebAccount(int id) {
+        return accountsWeb.get(id);
+    }
+
+    public AccountWeb getWebAccountBygameAccountid(int id) {
+        for (AccountWeb account : accountsWeb.values()){
+            for (int accountID : account.getAccountsId().values()){
+                if (id == accountID)
+                    return account;
+            }
+        }
+        return null;
+    }
+
+    public Collection<AccountWeb> getWebAccounts() {
+        return accountsWeb.values();
+    }
+
+    public AccountWeb getAccountByName(String pseudo) {
+        for (AccountWeb account : accountsWeb.values())
+            if (account.getName().equals(pseudo))
+                return account;
+        return null;
+    }
+
     //endregion
 
     //region Players data
@@ -265,8 +313,10 @@ public class World {
     public void addGameObject(GameObject gameObject, boolean saveSQL) {
         if (gameObject != null) {
             objects.put(gameObject.getGuid(), gameObject);
-            if (saveSQL)
+            if (saveSQL){
                 gameObject.modification = 0;
+                Database.getStatics().getObjectData().insert(gameObject);
+            }
         }
     }
 
@@ -442,6 +492,8 @@ public class World {
         Database.getDynamics().getNpcData().load();
         logger.debug("The placement of non-player character were done successfully.");
 
+        Database.getStatics().getPetData().load();
+        logger.debug("The pets were loaded successfully.");
 
         Database.getDynamics().getObjectActionData().load();
         logger.debug("The action of objects were loaded successfully.");
@@ -454,6 +506,9 @@ public class World {
         Database.getDynamics().getAnimationData().load();
         logger.debug("The animations were loaded successfully.");
 
+        Database.getSites().getAccountWebData().load();
+        logger.debug("The accountsWeb were loaded successfully.");
+
         Database.getStatics().getAccountData().load();
         logger.debug("The accounts were loaded successfully.");
 
@@ -465,9 +520,6 @@ public class World {
 
         clearInactiveGuilds();
         logger.debug("Nettoyage des guildes vides ou inactives terminé.");
-
-        Database.getStatics().getPetData().load();
-        logger.debug("The pets were loaded successfully.");
 
         Database.getStatics().getTitleData().load();
         logger.debug("The titles were loaded successfully.");
@@ -540,10 +592,12 @@ public class World {
         + new SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.FRANCE).format(new Date()) + " in "
                 + new SimpleDateFormat("mm", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " min "
                 + new SimpleDateFormat("ss", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " s.");
-        logger.setLevel(Level.ALL);
+        logger.setLevel(Level.ERROR);
 
-        logger.debug("Initialisation Connection with Azuriom.");
-        new AzuriomCommands(2333).start();
+        if(Config.INSTANCE.getAZURIOM()) {
+            logger.debug("Initialisation Connection with Azuriom.");
+            new AzuriomCommands(2333).start();
+        }
 
     }
 
@@ -658,7 +712,9 @@ public class World {
     }
 
     public void loadMonsterOnMap() {
-        Database.getDynamics().getHeroicMobsGroups().load();
+        if(Config.INSTANCE.getHEROIC()) {
+            Database.getDynamics().getHeroicMobsGroups().load();
+        }
         maps.values().stream().filter(map -> map != null).forEach(map -> {
             try {
                 map.loadMonsterOnMap();
@@ -1063,7 +1119,7 @@ public class World {
     }
 
     public int getItemSetNumber() {
-        return ItemSets.size();
+        return 250;
     }
 
     public ArrayList<GameMap> getMapByPosInArray(int mapX, int mapY) {
@@ -1129,6 +1185,11 @@ public class World {
         players.values().stream().filter(player -> player.getAccID() == account.getId()).forEach(player -> player.setAccount(account));
     }
 
+    public void ReassignAccountWebToAccount(AccountWeb accountweb) {
+        Database.getStatics().getAccountData().loadByAccountWebId(accountweb.getId());
+        accounts.values().stream().filter(account -> account.getAccWebID() == accountweb.getId()).forEach(account -> account.setWebaccount(accountweb));
+    }
+
     public int getZaapCellIdByMapId(short i) {
         for (Entry<Integer, Integer> zaap : Constant.ZAAPS.entrySet()) {
             if (zaap.getKey() == i)
@@ -1183,7 +1244,8 @@ public class World {
                 e.printStackTrace();
                 return new GameObject(id, template, qua, pos, stats, 0,rarity, -1);
             }
-        } else {
+        }
+        else {
             return new GameObject(id, template, qua, pos, stats, 0,rarity, mimibiote);
         }
 
@@ -1599,7 +1661,8 @@ public class World {
             if (!hasArround && id == 36)
                 isGood = false;
             //Mains propre
-            if (!hasDisciple && id == 19)
+            //TODO Debug ce chall
+            if (/*!hasDisciple && */id == 19)
                 isGood = false;
 
             switch (id) {
@@ -1809,7 +1872,7 @@ public class World {
             Database.getDynamics().getDropData().reload();
         }
        catch (Exception e){
-            System.out.println("IciBase" + e);
+            //System.out.println("IciBase" + e);
        }
     }
 
@@ -1827,11 +1890,11 @@ public class World {
             ArrayList<ObjectTemplate> arrayBlackItem = new ArrayList<>();
             ArrayList<Monster> arrayMonstre = new ArrayList<>();
             try {
-            getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && (!objectTemplate.getStrTemplate().isBlank()) && !objectTemplate.getName().contains("Polyk")
+            getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && (!objectTemplate.getStrTemplate().isEmpty()) && !objectTemplate.getName().contains("Polyk")
                     && (objectTemplate.getLevel() >= finalI && objectTemplate.getLevel()<= finalI+9) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  && !isDropable(objectTemplate.getId()) ).forEach(arrayBlackItem::add);
             }
             catch (Exception e){
-                System.out.println("ici item" + e);
+                //System.out.println("ici item" + e);
             }
 
             try {
@@ -1839,7 +1902,7 @@ public class World {
                        && (getLvlMoyenMonstre(monster) >= finalI && getLvlMoyenMonstre(monster) <= finalI + 9)).forEach(arrayMonstre::add);
            }
            catch (Exception e){
-                System.out.println("ici monstre" + e);
+                //System.out.println("ici monstre" + e);
            }
 
             if(arrayMonstre.size() == 0){
@@ -1867,7 +1930,7 @@ public class World {
                     action = 10;
                     condition = "2";
                 }
-                World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false);
+                World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false,true,false);
                 Mob.addDrop(drop);
                 l++;
                 if(l>=arrayMonstre.size()){
@@ -1893,7 +1956,7 @@ public class World {
                         action = 10;
                         condition = "2";
                     }
-                    World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false);
+                    World.Drop drop = new World.Drop(item.getId(), percents, 0, action, -1, condition,false,true,false);
                     Mob.addDrop(drop);
 
                     p++;
@@ -1906,25 +1969,6 @@ public class World {
 
 
         }
-
-
-
-        /*String filename= "MyFile.csv";
-        FileWriter fw = null;
-
-
-        try {
-            fw = new FileWriter(filename, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        fw.write(obj.getName()+";"+obj.getLevel()+"\n");//appends the string to the file
-        try {
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-        //World.world.getMonstres().stream().filter(monster -> monster != null).forEach(monster -> monster.addDrop(drop));
     }
 
     public boolean isDropable(int id) {
@@ -1974,6 +2018,11 @@ public class World {
         Trunks.clear();
         Database.getStatics().getTrunkData().load();
         Database.getDynamics().getTrunkData().load();
+    }
+
+    public void reloadTitres() {
+        titres.clear();
+        Database.getStatics().getTitleData().load();
     }
 
     public void reloadMaps() {
@@ -2437,7 +2486,7 @@ public class World {
         TimerWaiter.addNext(() -> World.world.getOnlinePlayers().stream()
                         .filter(player -> player != null && player.getGameClient() != null && player.isOnline())
                         .forEach(player -> player.sendMessage(message)),
-                0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+                10, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
     }
 
     public ArrayList<ObjectTemplate> getPotentialBlackItem(int level,int fightdifficulty) {
@@ -2465,8 +2514,8 @@ public class World {
         return array;
     }
 
-    public Boolean isPotentielBlackItem(int level,int fightdifficulty,ObjectTemplate obj){
-        int boostdiff = 0;
+    public Drop getPotentialMount(int level,int fightdifficulty){
+        int boostdiff = 1;
         switch (fightdifficulty){
             case 0 :
                 break;
@@ -2476,20 +2525,36 @@ public class World {
             case 2 :
                 boostdiff = 10;
                 break;
+            case 3 :
+                boostdiff = 15;
+                break;
+            case 4 :
+                boostdiff = 20;
+                break;
             default:
-                boostdiff = 0;
+                boostdiff = 1;
                 break;
         }
-        if(level>=175){
-            level=175;
+        Drop runesfinal;
+        if(1 <= level && level <= 100 ){
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0,false);
         }
-        final int levelMin = (level - 5 <= 1 ? 2 : level - 5), levelMax = level + 5+boostdiff;
-        if(obj.getPanoId() == -1 && obj.getPanoId() == -1 && !obj.getStrTemplate().contains("32c#") && !obj.getName().contains("Polyk")
-                && (levelMin <= obj.getLevel() && obj.getLevel() <= levelMax) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, obj.getType() ) ){
-            return true;
+        else if(100 < level && level <= 150 ){
+
+            runesfinal = new Drop(17198, 0.075*boostdiff, 0,false);
+        }
+        else if(150 < level && level <= 180 ){
+
+            runesfinal = new Drop(17199, 0.05*boostdiff, 0,false);
+        }
+        else if(180 < level){
+            runesfinal = new Drop(17200, 0.025*boostdiff, 0,false);
+        }
+        else{
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0,false);
         }
 
-        return false;
+        return runesfinal;
     }
 
     public Drop getPotentialRuneReini(int level, int fightdifficulty) {
@@ -2503,27 +2568,33 @@ public class World {
             case 2 :
                 boostdiff = 10;
                 break;
+            case 3 :
+                boostdiff = 15;
+                break;
+            case 4 :
+                boostdiff = 20;
+                break;
             default:
                 boostdiff = 1;
                 break;
         }
         Drop runesfinal;
         if(1 <= level && level <= 100 ){
-            runesfinal = new Drop(17197, 0.1*boostdiff, 0);
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0,false);
         }
         else if(100 < level && level <= 150 ){
 
-            runesfinal = new Drop(17198, 0.075*boostdiff, 0);
+            runesfinal = new Drop(17198, 0.075*boostdiff, 0,false);
         }
         else if(150 < level && level <= 180 ){
 
-            runesfinal = new Drop(17199, 0.05*boostdiff, 0);
+            runesfinal = new Drop(17199, 0.05*boostdiff, 0,false);
         }
         else if(180 < level){
-            runesfinal = new Drop(17200, 0.025*boostdiff, 0);
+            runesfinal = new Drop(17200, 0.025*boostdiff, 0,false);
         }
         else{
-            runesfinal = new Drop(17197, 0.1*boostdiff, 0);
+            runesfinal = new Drop(17197, 0.1*boostdiff, 0,false);
         }
 
         return runesfinal;
@@ -2550,7 +2621,124 @@ public class World {
     }
 
 
+    // POUR LA GESTION DES REBOOT
+    public void reboot(int launch,int min){
+        int time = 30, OffOn = 0;
+        try {
+            OffOn = launch;
+            time = min;
+        } catch (Exception e) {
+            // ok
+        }
 
+        System.out.println( "Timer ?" + isTimerStart());
+
+        if (OffOn == 1 && isTimerStart() )// demande de demarer le reboot
+        {
+            System.out.println("Reboot deja en cours");
+        } else if (OffOn == 1 && !isTimerStart()) {
+            if (time <= 5) {
+                for(Player player : World.world.getOnlinePlayers()) {
+                    player.sendServerMessage(Lang.get(player, 14));
+                    player.send("M13");
+                }
+                Main.INSTANCE.setFightAsBlocked(true);
+            }
+            setTimer(createTimer(time));
+            getTimer().start();
+            setTimerStart(true);
+
+            String timeMSG = "minutes";
+            if (time <= 1)
+                timeMSG = "minute";
+            SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " " + timeMSG);
+            System.out.println("Reboot programmé.");
+        } else if (OffOn == 0 && isTimerStart() ) {
+            getTimer().stop();
+            setTimerStart(false);
+            for(Player player : World.world.getOnlinePlayers()){
+                player.sendServerMessage("La maintenance a été annulée, le serveur ne va plus redémarrer.");
+                player.sendServerMessage(Lang.get(player, 15));
+            }
+            Main.INSTANCE.setFightAsBlocked(false);
+            System.out.println("Reboot arrêté.");
+        } else if (OffOn == 0 && !isTimerStart() ) {
+            System.out.println("Aucun reboot n'est lancé.");
+        }
+    }
+
+    public boolean isTimerStart() {
+        return timerStart;
+    }
+
+    public void setTimerStart(boolean timerStart) {
+        this.timerStart = timerStart;
+    }
+
+    public Timer getTimer() {
+        return timer;
+    }
+
+    public void setTimer(Timer timer) {
+        this.timer = timer;
+    }
+
+    public Timer createTimer(final int timer) {
+        ActionListener action = new ActionListener() {
+            int time = timer;
+
+            public void actionPerformed(ActionEvent event) {
+                time = time - 1;
+                if (time == 1)
+                    SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minute");
+                else
+                    SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minutes");
+                if (time <= 0) Main.INSTANCE.stop("Shutdown by WebSite");
+            }
+        };
+        return new Timer(60000, action);
+    }
+
+    public ArrayList<Monster.MobGrade> getMobgradeBetweenLvl(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
+                && !(ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_MONSTRES, monster.getId())) && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+    public ArrayList<Monster.MobGrade> getArchiMobgradeBetweenLvl(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.MONSTRE_TYPE_ARCHI, monster.getType())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_ARCHI, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+                && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+    public ArrayList<Monster.MobGrade> getBossMobgradeBetweenLvl(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_BOSS, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
+                && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+    public int getLvlMax(Monster monstre){
+        int levelmoyen = monstre.getGrade(5).getLevel();
+        return levelmoyen;
+    }
 
     public static class Drop {
         private int objectId, ceil, action, level;
@@ -2558,18 +2746,22 @@ public class World {
         private ArrayList<Double> percents;
         private double localPercent;
         private boolean isOnAllMob=false;
+        private boolean isBlackitem=false;
+        private boolean isNoPPInfluence=false;
 
-        public Drop(int objectId, ArrayList<Double> percents, int ceil, int action, int level, String condition,boolean isOnAllMob) {
+        public Drop(int objectId, ArrayList<Double> percents, int ceil, int action, int level, String condition,boolean isOnAllMob,boolean isBlackitem,boolean isNoPPInfluence) {
             this.objectId = objectId;
             this.percents = percents;
             this.ceil = ceil;
             this.action = action;
             this.level = level;
             this.condition = condition;
-            this.isOnAllMob=isOnAllMob;
+            this.isOnAllMob = isOnAllMob;
+            this.isBlackitem = isBlackitem;
+            this.isNoPPInfluence= isNoPPInfluence;
         }
 
-        public Drop(int objectId, double percent, int ceil) {
+        public Drop(int objectId, double percent, int ceil, boolean isNoPPInfluence) {
             this.objectId = objectId;
             this.localPercent = percent;
             this.ceil = ceil;
@@ -2577,7 +2769,10 @@ public class World {
             this.level = -1;
             this.condition = "";
             this.isOnAllMob=false;
+            this.isBlackitem=false;
+            this.isNoPPInfluence=isNoPPInfluence;
         }
+
         public int getObjectId() {
             return objectId;
         }
@@ -2592,6 +2787,18 @@ public class World {
 
         public int getAction() {
             return action;
+        }
+
+        public boolean isBlackitem() {
+            return isBlackitem;
+        }
+
+        public boolean isNoPPInfluence() {
+            return isNoPPInfluence;
+        }
+
+        public void setNoPPInfluence(boolean value) {
+             this.isNoPPInfluence = value;
         }
 
         public int getLevel() {
@@ -2611,7 +2818,7 @@ public class World {
         }
 
         public Drop copy(int grade) {
-            Drop drop = new Drop(this.objectId, null, this.ceil, this.action, this.level, this.condition,this.isOnAllMob);
+            Drop drop = new Drop(this.objectId, null, this.ceil, this.action, this.level, this.condition,this.isOnAllMob,this.isBlackitem,this.isNoPPInfluence);
             if(this.percents == null) return null;
             if(this.percents.isEmpty()) return null;
             try {

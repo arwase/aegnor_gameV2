@@ -6,12 +6,13 @@ import guild.Guild;
 import kernel.Constant;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 public class Stats {
 
-    private Map<Integer, Integer> effects = new HashMap<>();
+    private Map<Integer, Integer> effects = new LinkedHashMap<>();
 
     public Stats(Map<Integer, Integer> stats) {
         this.effects = stats;
@@ -29,6 +30,8 @@ public class Stats {
     }
 
     public Stats(Map<Integer, Integer> stats, boolean addBases, Player player) {
+
+
         this.effects = stats;
         if (addBases) {
             this.effects.put(Constant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);

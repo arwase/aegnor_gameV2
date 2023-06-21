@@ -27,6 +27,7 @@ public class IA35 extends AbstractNeedSpell  {
                     maxPo = S.getMaxPO();
 
             Fighter ennemy1 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
+            Fighter ennemyforInvo = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, 50);// pomax +1;
             Fighter ennemy2 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
 
             if(maxPo == 1) ennemy1 = null;
@@ -45,7 +46,7 @@ public class IA35 extends AbstractNeedSpell  {
             }
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
-                if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemyforInvo)) {
                     time = 1000;
                     action = true;
                 }

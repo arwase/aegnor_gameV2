@@ -45,10 +45,13 @@ public class GameMap {
                 for(RespawnGroup respawnGroup : new ArrayList<>(this.groups)) {
                     if(respawnGroup.cell != -1) {
                         Map<String, String> data = World.world.getGroupFix(respawnGroup.map.id, respawnGroup.cell);
+                        if(data != null) {
 
-                        if(time - respawnGroup.lastTime > Long.parseLong(data.get("timer"))) {
-                            respawnGroup.map.addStaticGroup(respawnGroup.cell, data.get("groupData"), true);
-                            this.groups.remove(respawnGroup);
+                            if (time - respawnGroup.lastTime > Long.parseLong(data.get("timer"))) {
+                                System.out.println("Groupe a respawn :"+ data);
+                                respawnGroup.map.addStaticGroup(respawnGroup.cell, data.get("groupData"), true);
+                                this.groups.remove(respawnGroup);
+                            }
                         }
                     } else if(time - respawnGroup.lastTime > random) {
                         respawnGroup.map.spawnGroup(-1, 1, true, -1);
@@ -878,6 +881,9 @@ public class GameMap {
 
     public void addPlayer(Player perso) {
         SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this, perso);
+        if( perso.getCurCell() == null){
+            perso.setCurCell(getRandomFreeCell());
+        }
         perso.getCurCell().addPlayer(perso);
         if (perso.getEnergy() > 0) {
             if (perso.getEnergy() >= 10000)
@@ -946,6 +952,7 @@ public class GameMap {
     public void loadMonsterOnMap() {
         if (maxGroup == 0)
             return;
+
         spawnGroup(Constant.ALIGNEMENT_NEUTRE, this.maxGroup, false, -1);//Spawn des groupes d'alignement neutre
         spawnGroup(Constant.ALIGNEMENT_BONTARIEN, 1, false, -1);//Spawn du groupe de gardes bontarien s'il y a
         spawnGroup(Constant.ALIGNEMENT_BRAKMARIEN, 1, false, -1);//Spawn du groupe de gardes brakmarien s'il y a
@@ -1133,6 +1140,7 @@ public class GameMap {
             return;
         if (this.mobGroups.size() - this.fixMobGroups.size() >= this.maxGroup)
             return;
+
         for (int a = 1; a <= nbr; a++) {
             // mobExtras
             ArrayList<Monster.MobGrade> mobPoss = new ArrayList<>(this.mobPossibles);
@@ -1173,7 +1181,6 @@ public class GameMap {
     }
 
     public void spawnNewGroupWithDifficulty(boolean timer, int cellID, String groupData, int level) {
-
         while(this.mobGroups.get(this.nextObjectId) != null)
             this.nextObjectId--;
         while (this.containsForbiddenCellSpawn(cellID))
@@ -1183,7 +1190,7 @@ public class GameMap {
         if (group.getMobs().isEmpty())
             return;
         this.mobGroups.put(this.nextObjectId, group);
-        group.setIsFix(false);
+        group.setIsFix(true);
         group.setStarBonus(200);
         SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
         this.nextObjectId--;
@@ -1191,6 +1198,26 @@ public class GameMap {
             group.startCondTimer();
 
     }
+
+    public Monster.MobGroup spawnNewGroupWithDifficulty(String groupData, int lvl) {
+        while(this.mobGroups.get(this.nextObjectId) != null)
+            this.nextObjectId--;
+        int cell = this.getRandomFreeCellId();
+        while (this.containsForbiddenCellSpawn(cell))
+            cell = this.getRandomFreeCellId();
+
+        Monster.MobGroup group = new Monster.MobGroup(this.nextObjectId, cell, groupData,lvl);
+        if (group.getMobs().isEmpty())
+            return null;
+        this.mobGroups.put(this.nextObjectId, group);
+        group.setIsFix(true);
+        group.setStarBonus(200);
+        SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
+        this.nextObjectId--;
+        return group;
+    }
+
+
 
     private static class RespawnGroup {
 
@@ -1210,9 +1237,11 @@ public class GameMap {
             return;
         if (this.mobGroups.size() + this.fixMobGroups.size() >= this.maxGroup)
             return;
+
         for (int a = 1; a <= nbr; a++) {
             // mobExtras
             ArrayList<Monster.MobGrade> mobPoss = new ArrayList<>(this.mobPossibles);
+
             if (!this.mobExtras.isEmpty()) {
                 for (Entry<Integer, Integer> entry : this.mobExtras.entrySet()) {
                     if (entry.getKey() == 499) // Si c'est un minotoboule de nowel
@@ -1238,9 +1267,10 @@ public class GameMap {
                 this.nextObjectId--;
 
             Monster.MobGroup group = new Monster.MobGroup(this.nextObjectId, align, mobPoss, this, cellID, this.fixSize, this.minSize, this.maxSize, null);
-            group.setStarBonus(200);
-            if (group.getMobs().isEmpty())
+            if (group.getMobs().isEmpty()){
                 continue;
+            }
+            group.setStarBonus(200);
             this.mobGroups.put(this.nextObjectId, group);
             if (log)
                 SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
@@ -1498,7 +1528,7 @@ public class GameMap {
                 str.append("|").append(signo).append(s.getId()).append(";0;5");
             }
         }*/
-        if (str.isEmpty()) {
+        if (str.toString().isEmpty()) {
             return;
         }
         SocketManager.send(perso, "GDZ"+str);
@@ -1576,7 +1606,7 @@ public class GameMap {
                 }
             }
         }
-        if (str.isEmpty()) {
+        if (str.toString().isEmpty()) {
             return;
         }
         SocketManager.send(perso, "GDZ"+ str);
@@ -1617,6 +1647,9 @@ public class GameMap {
     public void startFightVersusMonstres(Player player, Monster.MobGroup group) {
         if (player.getFight() != null)
             return;
+        if (group.getMobs().size() == 0) {
+            return;
+        }
         if (player.isInAreaNotSubscribe()) {
             SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(player.getGameClient(), 'S');
             return;
@@ -1645,29 +1678,6 @@ public class GameMap {
                 return;
             }
 
-        /*final Party party = player.getParty();
-
-        if(party != null && party.getMaster() != null && !party.getMaster().getName().equals(player.getName()) && party.isWithTheMaster(player, false)) return;
-
-        int id = 1;
-        if(this.fights == null)
-            this.fights = new ArrayList<>();
-        if (!this.fights.isEmpty())
-            id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
-
-        this.mobGroups.remove(group.getId());
-        Fight fight = new Fight(id, this, player, group);
-        this.fights.add(fight);
-        SocketManager.GAME_SEND_MAP_FIGHT_COUNT_TO_MAP(this);
-
-        if(party != null && party.getMaster() != null && party.getMaster().getName().equals(player.getName())) {
-            TimerWaiter.addNext(() -> party.getPlayers().stream().filter((follower) -> party.isWithTheMaster(follower, false)).forEach(follower -> {
-                if (fight.getPrism() != null)
-                    fight.joinPrismFight(follower, (fight.getTeam0().containsKey(player.getId()) ? 0 : 1));
-                else
-                    fight.joinFight(follower, player.getId());
-            }), 1, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
-        }*/
         int id = 1;
         if(this.fights == null)
             this.fights = new ArrayList<>();
@@ -1854,6 +1864,57 @@ public class GameMap {
             return -1;
         return freecell.get(Formulas.getRandomValue(0, freecell.size() - 1));
     }
+
+    public GameCase getRandomFreeCell() {
+        ArrayList<GameCase> freecell = new ArrayList<>();
+
+        for (GameCase entry : cases) {
+            if (entry == null)
+                continue;
+            if (!entry.isWalkable(true))
+                continue;
+            if (entry.getObject() != null)
+                continue;
+            if(this.id == 8279) {
+                switch(entry.getId()) {
+                    case 86:
+                    case 100:
+                    case 114:
+                    case 128:
+                    case 142:
+                    case 156:
+                    case 170:
+                    case 184:
+                    case 198:
+                        continue;
+                }
+            }
+            if (this.mountPark != null)
+                if (this.mountPark.getCellOfObject().contains((int) entry.getId()))
+                    continue;
+
+            boolean ok = true;
+            if (this.mobGroups != null)
+                for (Monster.MobGroup mg : this.mobGroups.values())
+                    if (mg != null)
+                        if (mg.getCellId() == entry.getId())
+                            ok = false;
+            if (this.npcs != null)
+                for (Npc npc : this.npcs.values())
+                    if (npc != null)
+                        if (npc.getCellId() == entry.getId())
+                            ok = false;
+
+            if (!ok || !entry.getPlayers().isEmpty())
+                continue;
+            freecell.add(entry);
+        }
+
+        if (freecell.isEmpty())
+            return null;
+        return freecell.get(Formulas.getRandomValue(0, freecell.size() - 1));
+    }
+
     public int getRandomNearFreeCellId(int cellid)//obtenir une cell al�atoire et proche
     {
         ArrayList<Integer> freecell = new ArrayList<>();

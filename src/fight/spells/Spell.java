@@ -198,7 +198,7 @@ public class Spell {
                     effets.add(new SpellEffect(id, args, spellID, level));
                 } catch (Exception f) {
                     f.printStackTrace();
-                    Main.INSTANCE.stop("parseEffect spell");
+                    Main.INSTANCE.stop("parseEffect spell",3);
                 }
             }
             return effets;
@@ -292,40 +292,6 @@ public class Spell {
             return porteeType;
         }
 
-        public void applySpellEffectToFight(Fight fight, Fighter perso,
-                                            GameCase cell, ArrayList<GameCase> cells, boolean isCC) {
-            // Seulement appell� par les pieges, or les sorts de piege
-            ArrayList<SpellEffect> effets;
-            if (isCC)
-                effets = CCeffects;
-            else
-                effets = effects;
-            GameServer.a();
-            int jetChance = Formulas.getRandomValue(0, 99);
-            int curMin = 0;
-            for (SpellEffect SE : effets) {
-                if (SE.getChance() != 0 && SE.getChance() != 100)// Si pas 100%
-                {
-                    if (jetChance <= curMin || jetChance >= (SE.getChance() + curMin)) {
-                        curMin += SE.getChance();
-                        continue;
-                    }
-                    curMin += SE.getChance();
-                }
-                ArrayList<Fighter> cibles = SpellEffect.getTargets(SE, fight, cells);
-
-                if ((fight.getType() != Constant.FIGHT_TYPE_CHALLENGE)
-                        && (fight.getAllChallenges().size() > 0)) {
-                    for (Entry<Integer, Challenge> c : fight.getAllChallenges().entrySet()) {
-                        if (c.getValue() == null)
-                            continue;
-                        c.getValue().onFightersAttacked(cibles, perso, SE, this.getSpellID(), true);
-                    }
-                }
-
-                SE.applyToFight(fight, perso, cell, cibles);
-            }
-        }
 
         public void applySpellEffectToFight(Fight fight, Fighter perso,
                                             GameCase cell, boolean isCC, boolean isTrap) {
@@ -334,7 +300,7 @@ public class Spell {
                 effets = CCeffects;
             else
                 effets = effects;
-            GameServer.a();
+
             int jetChance = 0;
             if (this.getSpell().getSpellID() == 101) // Si c'est roulette
             {
@@ -345,10 +311,13 @@ public class Spell {
                 jetChance = Formulas.getRandomValue(0, 96);
             else if (this.getSpell().getSpellID() == 574) // Si c'est Ouverture hasardeuse
                 jetChance = Formulas.getRandomValue(0, 95);
+            else if (this.getSpell().getSpellID() == 913) // Si c'est Ouverture hasardeuse
+                jetChance = Formulas.getRandomValue(0, 95);
             else
                 jetChance = Formulas.getRandomValue(0, 99);
             int curMin = 0;
             int num = 0;
+
             for (SpellEffect SE : effets) {
                 try {
                     if (fight.getState() >= Constant.FIGHT_STATE_FINISHED)
@@ -371,7 +340,8 @@ public class Spell {
                     ArrayList<GameCase> finalCells = new ArrayList<GameCase>();
                     int TE = 0;
                     Spell S = World.world.getSort(spellID);
-                    // on prend le targetFlag corespondant au num de l'effet
+
+                    // on prend le targetFlag correspondant au num de l'effet
                     if (S != null && S.getEffectTargets().size() > num)
                         TE = S.getEffectTargets().get(num);
 
@@ -405,6 +375,7 @@ public class Spell {
                         // N'affecte PERSONNE : 1024
                         if ((((TE >> 10) & 1) == 1))
                             continue;
+
                         // Si pas encore eu de continue, on ajoute la case, tout le monde : 0
                         finalCells.add(C);
                     }

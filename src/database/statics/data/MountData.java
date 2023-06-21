@@ -137,6 +137,8 @@ public class MountData extends AbstractDAO<Mount> {
     }
 
     public int getNextId() {
+        return Database.getStatics().getWorldEntityData().getNextMountId();
+        /*
         final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 1);
         try {
             synchronized(queue) {
@@ -149,5 +151,6 @@ public class MountData extends AbstractDAO<Mount> {
             e.printStackTrace();
         }
         return queue.getValue();
+      */
     }
 }

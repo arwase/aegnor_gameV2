@@ -47,7 +47,7 @@ public class DropData extends AbstractDAO<World.Drop> {
                     percents.add(RS.getDouble("percentGrade4"));
                     percents.add(RS.getDouble("percentGrade5"));
 
-                    MT.addDrop(new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,false));
+                    MT.addDrop(new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,false,false,false));
                 } else {
                     if(MT == null && RS.getInt("monsterId") == 0) {
                         String action = RS.getString("action");
@@ -64,7 +64,7 @@ public class DropData extends AbstractDAO<World.Drop> {
                         percents.add(RS.getDouble("percentGrade3"));
                         percents.add(RS.getDouble("percentGrade4"));
                         percents.add(RS.getDouble("percentGrade5"));
-                        World.Drop drop = new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,true);
+                        World.Drop drop = new World.Drop(RS.getInt("objectId"), percents, RS.getInt("ceil"), Integer.parseInt(action), RS.getInt("level"), condition,true,false,false);
                         World.world.getMonstres().stream().filter(monster -> monster != null).forEach(monster -> monster.addDrop(drop));
                     }
                 }

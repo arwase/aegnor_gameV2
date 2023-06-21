@@ -251,7 +251,18 @@ public class IAHandler {
                     case 77 : //Tentacul Primaire
                         ia = new IA77(fight, fighter, (byte) 5);
                         break;
-
+                    case 78 : //Père FWETAR
+                        ia = new IA78(fight, fighter, (byte) 5);
+                        break;
+                    case 79://IA boostinvocator stay close to him
+                        ia = new IA79(fight, fighter, (byte) 6);
+                        break;
+                    case 80://IA attack then boost
+                        ia = new IA80(fight, fighter, (byte) 6);
+                        break;
+                    case 81://IA Soutient Heal allié, Heal Perso, Boost Allié, Boost Perso, Tape et reste proche d'allié ou ennemie si plus d'allié
+                        ia = new IA81(fight, fighter, (byte) 6);
+                        break;
                 }
                 //endregion
             }

@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractNeedSpell extends AbstractIA {
 
-    protected List<SortStats> buffs, glyphs, invocations, cacs, highests;
+    protected List<SortStats> buffs, glyphs, invocations, cacs, highests, moveable, heals;
 
     public AbstractNeedSpell(Fight fight, Fighter fighter, byte count) {
         super(fight, fighter, count);
@@ -28,18 +28,22 @@ public abstract class AbstractNeedSpell extends AbstractIA {
             Map<String, List<SortStats>> spellPerco = getPercoSpells(fighter);
             if(spellPerco != null) {
                 this.buffs = spellPerco.get("BUFF");
+                this.heals = spellPerco.get("BUFF");
                 this.glyphs = spellPerco.get("GLYPH");
                 this.invocations = spellPerco.get("INVOCATION");
                 this.cacs = spellPerco.get("CAC");
                 this.highests = spellPerco.get("HIGHEST");
+                this.moveable = spellPerco.get("DEPLACEMENT");
             }
         }
         else {
             this.buffs = AbstractNeedSpell.getListSpellOf(fighter, "BUFF");
+            this.heals = AbstractNeedSpell.getListSpellOf(fighter, "HEAL");
             this.glyphs = AbstractNeedSpell.getListSpellOf(fighter, "GLYPH");
             this.invocations = AbstractNeedSpell.getListSpellOf(fighter, "INVOCATION");
             this.cacs = AbstractNeedSpell.getListSpellOf(fighter, "CAC");
             this.highests = AbstractNeedSpell.getListSpellOf(fighter, "HIGHEST");
+            this.moveable = AbstractNeedSpell.getListSpellOf(fighter, "DEPLACEMENT");
         }
     }
 
@@ -50,6 +54,12 @@ public abstract class AbstractNeedSpell extends AbstractIA {
                 switch (type) {
                     case "BUFF":
                         if (spell.getSpell().getType() == 1) spells.add(spell);
+                        break;
+                    case "DEPLACEMENT":
+                        if (spell.getSpell().getType() == 5) spells.add(spell);
+                        break;
+                    case "HEAL":
+                        if (spell.getSpell().getType() == 3) spells.add(spell);
                         break;
                     case "GLYPH":
                         if (spell.getSpell().getType() == 4) spells.add(spell);
@@ -91,6 +101,7 @@ public abstract class AbstractNeedSpell extends AbstractIA {
             List<SortStats> spellHighest = new ArrayList<SortStats>();
             List<SortStats> spellGlyph = new ArrayList<SortStats>();
             List<SortStats> spellInvocation = new ArrayList<SortStats>();
+            List<SortStats> spellMove = new ArrayList<>();
             List<SortStats> spellCac = new ArrayList<SortStats>();
             for(SortStats spell :  spellsPerco.values())
             {
@@ -109,6 +120,7 @@ public abstract class AbstractNeedSpell extends AbstractIA {
             spellsExploit.put("GLYPH", spellGlyph);
             spellsExploit.put("INVOCATION", spellInvocation);
             spellsExploit.put("CAC", spellCac);
+            spellsExploit.put("DEPLACEMENT", spellMove);
             return  spellsExploit;
         }
         return null;

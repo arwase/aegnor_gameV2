@@ -3,9 +3,6 @@ package kernel
 import com.natpryce.konfig.*
 import java.io.File
 
-/**
- * Created by flore on 26/02/2017.
- */
 object ConfigReader {
     lateinit var data: Configuration
 
@@ -45,6 +42,14 @@ object ConfigReader {
             val pass by stringType
             val name by stringType
         }
+
+        object site : PropertyGroup() {
+            val host by stringType
+            val port by intType
+            val user by stringType
+            val pass by stringType
+            val name by stringType
+        }
     }
 
     object rate : PropertyGroup() {
@@ -65,6 +70,8 @@ object ConfigReader {
     }
 
     object mode : PropertyGroup() {
+        val linux by booleanType
+        val azuriom by booleanType
         val halloween by booleanType
         val christmas by booleanType
         val heroic by booleanType

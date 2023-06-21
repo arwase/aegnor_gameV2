@@ -88,6 +88,7 @@ public class WorldEntityData extends AbstractDAO<Object> {
     }
 
     public synchronized int getNextObjectId() {
+        //System.out.println(nextObjectId);
         return ++nextObjectId;
     }
 

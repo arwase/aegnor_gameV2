@@ -73,6 +73,7 @@ public class Player {
     public boolean isNew = false;
     public boolean controleinvo = false;
     public boolean noxp=false;
+    public byte needRestat = 0;
     //Job
     private JobAction _curJobAction;
     //Disponibilit�
@@ -226,6 +227,9 @@ public class Player {
     private boolean changeName;
     public boolean afterFight = false;
 
+    public int lastfightmap = 0;
+    public GameCase lastfightcell = null;
+
     public int isParcho = 0;
     private boolean maitre;
     public boolean ipdrop = false;
@@ -287,7 +291,7 @@ public class Player {
                   String savePos, String jobs, int mountXp, int mount, int honor,
                   int deshonor, int alvl, String z, byte title, int wifeGuid,
                   String morphMode, String allTitle, String emotes, long prison,
-                  boolean isNew, String parcho, long timeDeblo, boolean noall, String deadInformation, byte deathCount, long totalKills, int isParcho) {
+                  boolean isNew, String parcho, long timeDeblo, boolean noall, String deadInformation, byte needRestat, long totalKills, int isParcho) {
         this.id = id;
         this.noall = noall;
         this.name = name;
@@ -341,7 +345,7 @@ public class Player {
             e.printStackTrace();
         }
         this.totalKills = totalKills;
-        this.deathCount = deathCount;
+        this.needRestat = needRestat;
         try {
             if (!emotes.isEmpty())
                 for (String i : emotes.split(";"))
@@ -367,7 +371,7 @@ public class Player {
                 this.curMap = World.world.getMap((short) 7411);
                 this.curCell = curMap.getCase(311);
             } else if (curMap == null && World.world.getMap((short) 7411) == null) {
-                GameServer.a();
+                GameServer.a("Null MAP");
                 Main.INSTANCE.stop("Player1");
                 return;
             } else if (curMap != null) {
@@ -412,6 +416,20 @@ public class Player {
 
                 if (obj == null)
                     continue;
+
+                try {
+                    if (obj.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER) {
+                        PetEntry MyPets = World.world.getPetsEntry(guid);
+                        if (MyPets == null) {
+                            System.out.println("Création du familier " + obj.getGuid() + " car il n'existait plus " + obj.getTemplate().getName());
+                            obj.getTemplate().createOldFamilier(obj);
+                        }
+                    }
+                }catch (Exception e){
+                    System.out.println(this.getName() + " - Erreur avec la création de fami "+ obj.getGuid() + " - " + e );
+                    continue;
+                }
+
                 objects.put(obj.getGuid(), obj);
             }
             try {
@@ -629,15 +647,34 @@ public class Player {
         _saveSorts.putAll(mobModelo.getSpells());
     }
     public void modifStatByInvocator(Fighter caster, Monster.MobGrade MobModelo) {
-        float taux = (1.0F + (caster.getLvl()) / 100.0F);
-        int life = Math.round(MobModelo.getPdvMax() * taux);
+        float tauxlvl = (1.0F + (caster.getLvl()) / 100.0F);
+        float tauxstat = 0.25F;
+        float tauxhp = 0.1F;
+
+        float boostlife = caster.getPdvMax() * tauxhp;
+        Stats casterboost = caster.getTotalStats();
+
+        float force2 = casterboost.get(Constant.STATS_ADD_FORC) * tauxstat;
+        float intel2 = casterboost.get(Constant.STATS_ADD_INTE) * tauxstat;
+        float agili2 = casterboost.get(Constant.STATS_ADD_AGIL) * tauxstat;
+        float sages2 = casterboost.get(Constant.STATS_ADD_SAGE) * tauxstat;
+        float chanc2 = casterboost.get(Constant.STATS_ADD_CHAN) * tauxstat;
+
+        float force3 = (this.stats.get(Constant.STATS_ADD_FORC) * tauxlvl) ;
+        float intel3 =  (this.stats.get(Constant.STATS_ADD_INTE) * tauxlvl) ;
+        float agili3 = (this.stats.get(Constant.STATS_ADD_AGIL) * tauxlvl) ;
+        float sages3 =  (this.stats.get(Constant.STATS_ADD_SAGE) * tauxlvl) ;
+        float chanc3 =  (this.stats.get(Constant.STATS_ADD_CHAN) * tauxlvl) ;
+
+        int life = Math.round(this.maxPdv * tauxlvl) + Math.round(boostlife);
         this.curPdv = life;
-        this.maxPdv = this.curPdv;
-        int force = this.stats.get(Constant.STATS_ADD_FORC) * (int) taux;
-        int intel = this.stats.get(Constant.STATS_ADD_INTE) * (int) taux;
-        int agili = this.stats.get(Constant.STATS_ADD_AGIL) * (int) taux;
-        int sages = this.stats.get(Constant.STATS_ADD_SAGE) * (int) taux;
-        int chanc = this.stats.get(Constant.STATS_ADD_CHAN) * (int) taux;
+        this.maxPdv = life;
+
+        int force = Math.round( force3 + force2 );
+        int intel = Math.round( intel3 + intel2 );
+        int agili = Math.round( agili3 + agili2 );
+        int sages = Math.round( sages3 + sages2 );
+        int chanc = Math.round( chanc3 + chanc2 );
         this.stats.addOneStat(Constant.STATS_ADD_FORC, -(this.stats.get(Constant.STATS_ADD_FORC)));
         this.stats.addOneStat(Constant.STATS_ADD_INTE, -(this.stats.get(Constant.STATS_ADD_INTE)));
         this.stats.addOneStat(Constant.STATS_ADD_AGIL, -(this.stats.get(Constant.STATS_ADD_AGIL)));
@@ -799,6 +836,8 @@ public class Player {
 
     public void setClasse(int classe) {
         this.classe = classe;
+        this.classeinit = World.world.getClasse(classe);
+
     }
 
     public int getColor1() {
@@ -1492,7 +1531,7 @@ public class Player {
 
     public void learnSpell(int spell, int level, char pos) {
         if (World.world.getSort(spell).getStatsByLevel(level) == null) {
-            GameServer.a();
+            GameServer.a("LearnSpell " + spell + " level " + level);
             return;
         }
 
@@ -1511,7 +1550,7 @@ public class Player {
 
         //System.out.println(spellID);
         if (World.world.getSort(spellID).getStatsByLevel(level) == null) {
-            GameServer.a();
+            GameServer.a("Learn Spell " + spellID + " level "+ level + "/ Pas définie");
             return false;
         }
 
@@ -1532,7 +1571,7 @@ public class Player {
 
     public boolean learnSpell(int spellID, int level) {
         if (World.world.getSort(spellID).getStatsByLevel(level) == null) {
-            GameServer.a();
+            GameServer.a("Learn Spell " + spellID + " level "+ level + "/ Pas définie");
             return false;
         }
 
@@ -1546,7 +1585,7 @@ public class Player {
 
     public boolean unlearnSpell(int spell) {
         if (World.world.getSort(spell) == null) {
-            GameServer.a();
+            GameServer.a("Learn Spell " + spell +"/ Pas définie");
             return false;
         }
 
@@ -1573,7 +1612,7 @@ public class Player {
             spellPoint = 5 + 10;
 
         if (World.world.getSort(spellID).getStatsByLevel(level) == null) {
-            GameServer.a();
+            GameServer.a("Learn Spell " + spellID + " level "+ level + "/ Pas définie");
             return false;
         }
 
@@ -1836,7 +1875,7 @@ public class Player {
         perso.append(Config.INSTANCE.getSERVER_ID()).append(";");
 
         if (this.dead == 1 && Config.INSTANCE.getHEROIC()) {
-            perso.append(this.dead).append(";").append(this.deathCount);
+            perso.append(this.dead).append(";").append(0);
         } else {
             perso.append(0);
         }
@@ -1985,6 +2024,13 @@ public class Player {
         this.checkVote();
         SocketManager.GAME_SEND_SETS_PACKET(this);
         World.world.logger.info("The player " + this.getName() + " come to connect.");
+
+        if(this.needRestat ==1){
+            this.Restat_Stats(true);
+            this.needRestat = 0;
+            Database.getStatics().getPlayerData().update(this);
+            SocketManager.GAME_SEND_MESSAGE(this, "Suite à une mise à jour, vos caractéristiques ont été réinitialisées. N'oubliez pas de les replacer", "2997F1");
+        }
 
         if (this.getCurMap().getSubArea() != null) {
             if (this.getCurMap().getSubArea().getId() == 319 || this.getCurMap().getSubArea().getId() == 210)
@@ -2382,7 +2428,8 @@ public class Player {
         Stats stats = new Stats(false, null);
         ArrayList<Integer> itemSetApplied = new ArrayList<>();
 
-        for (GameObject gameObject : this.objects.values()) {
+        for (GameObject gameObject : this.getEquippedObjects()) {
+
             byte position = (byte) gameObject.getPosition();
             if (position != Constant.ITEM_POS_NO_EQUIPED) {
                 if (position >= 35 && position <= 48)
@@ -2394,8 +2441,25 @@ public class Player {
                 if (id > 0 && !itemSetApplied.contains(id)) {
                     itemSetApplied.add(id);
                     ObjectSet objectSet = World.world.getItemSet(id);
-                    if (objectSet != null)
+                    if (objectSet != null) {
                         stats = Stats.cumulStat(stats, objectSet.getBonusStatByItemNumb(this.getNumbEquipedItemOfPanoplie(id)));
+
+                        if(objectSet.getId() ==166){
+                            int NumOfPrimal = 0;
+                            for (GameObject Dofus : this.getEquippedObjects()) {
+                                if (Dofus.getTemplate().getType() == Constant.ITEM_TYPE_DOFUS){
+                                    if(Dofus.getRarity() ==5)
+                                        NumOfPrimal++;
+                                }
+                            }
+                            if(NumOfPrimal >= 3){
+                                stats.addOneStat(Constant.STATS_ADD_PM,1);
+                                if(NumOfPrimal >= 6){
+                                    stats.addOneStat(Constant.STATS_ADD_PA,1);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -2636,16 +2700,23 @@ public class Player {
     }
 
     public boolean addObjet(GameObject newObj, boolean stackIfSimilar) {
-        for (Entry<Integer, GameObject> entry : objects.entrySet()) {
-            GameObject obj = entry.getValue();
-            if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, stackIfSimilar)) {
-                obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantit� de l'objet existant
-                if (isOnline)
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this, obj);
-                return false;
+        if(stackIfSimilar) {
+            for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+                GameObject obj = entry.getValue();
+                if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, stackIfSimilar)) {
+                    obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantitê de l'objet existant
+                    if (isOnline)
+                        SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this, obj);
+                    return false;
+                }
             }
         }
+
+        if(newObj.getGuid() == -1)
+            newObj.setId();
+
         objects.put(newObj.getGuid(), newObj);
+        Database.getStatics().getPlayerData().update(this);
         SocketManager.GAME_SEND_OAKO_PACKET(this, newObj);
         return true;
     }
@@ -2667,10 +2738,22 @@ public class Player {
     }
 
     public String parseItemToASK() {
+
         StringBuilder str = new StringBuilder();
         if (objects.isEmpty())
             return "";
         for (GameObject obj : objects.values()) {
+            str.append(obj.parseItem());
+        }
+        return str.toString();
+    }
+
+    public String parseItemEquippedToASK() {
+        List<GameObject> equipedObject = this.getEquippedObjects();
+        StringBuilder str = new StringBuilder();
+        if (equipedObject.isEmpty())
+            return "";
+        for (GameObject obj : equipedObject) {
             str.append(obj.parseItem());
         }
         return str.toString();
@@ -2987,8 +3070,10 @@ public class Player {
             if (gameObject.getTemplate().getId() == exGameObject.getTemplate().getId()
                     && gameObject.getStats().isSameStats(exGameObject.getStats())
                     && gameObject.isSameStats(exGameObject)
+                    && gameObject.isSametxtStats(exGameObject)
                     && gameObject.getRarity() == exGameObject.getRarity()
                     && gameObject.getGuid() != exGameObject.getGuid()
+                    && gameObject.getMimibiote() == exGameObject.getMimibiote()
                     && stats1.equals(stats2)
                     && !Constant.isIncarnationWeapon(exGameObject.getTemplate().getId())
                     && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
@@ -3277,7 +3362,7 @@ public class Player {
         GameObject arme = this.getObjetByPos(Constant.ITEM_POS_ARME);
         GameObject bouclier = this.getObjetByPos(Constant.ITEM_POS_BOUCLIER);
         if (arme != null) {
-            if (arme.getTemplate().isTwoHanded() && bouclier != null) {
+            if (arme.getTemplate().isTwoHanded() && bouclier != null && bouclier.getTemplate().getId() != 11621 ) {
                 this.unequipedObjet(arme);
                 SocketManager.GAME_SEND_Im_PACKET(this, "119|44");
             } else if (!arme.getTemplate().getConditions().equalsIgnoreCase("")
@@ -3302,6 +3387,14 @@ public class Player {
                 return true;
 
         return false;
+    }
+
+    public int getPosItem(int id) {
+        for (Entry<Integer, GameObject> entry : objects.entrySet())
+            if (entry.getValue().getTemplate().getId() == id
+                    && entry.getValue().getPosition() != Constant.ITEM_POS_NO_EQUIPED)
+                return entry.getValue().getPosition();
+        return Constant.ITEM_POS_NO_EQUIPED;
     }
 
     public int getInvitation() {
@@ -3434,12 +3527,12 @@ public class Player {
 
         GameMap map = World.world.getMap(newMapID);
         if (map == null) {
-            GameServer.a();
+            GameServer.a("Map " + newMapID + " null ");
             return;
         }
 
         if (map.getCase(newCellID) == null) {
-            GameServer.a();
+            GameServer.a("Cell " + newCellID + " null on map " + newMapID);
             return;
         }
 
@@ -3488,7 +3581,7 @@ public class Player {
         if (col != null) {
             if (World.world.getGuild(col.getGuildId()) == null)// Ne devrait pas arriver
             {
-                GameServer.a();
+                GameServer.a("La guilde " + col.getGuildId() + " n'existe pas");
                 Collector.removeCollector(col.getGuildId());
             }
         }
@@ -3537,11 +3630,11 @@ public class Player {
             PW = account.getGameClient();
         }
         if (map == null) {
-            GameServer.a();
+           // GameServer.a("Map voulu null");
             return;
         }
         if (map.getCase(cell) == null) {
-            GameServer.a();
+            //GameServer.a();
             return;
         }
         if (!cantTP()) {
@@ -3591,7 +3684,7 @@ public class Player {
                 && curMap.getMountPark().getGuild().getId() != -1) {
             if (World.world.getGuild(curMap.getMountPark().getGuild().getId()) == null)// Ne devrait  pas  arriver
             {
-                GameServer.a();
+                GameServer.a("LA guilde " +curMap.getMountPark().getGuild().getId() + " semble ne pas exister");
                 //FIXME : Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
             }
         }
@@ -3599,7 +3692,7 @@ public class Player {
         if (Collector.getCollectorByMapId(curMap.getId()) != null) {
             if (World.world.getGuild(Collector.getCollectorByMapId(curMap.getId()).getGuildId()) == null)// Ne devrait pas arriver
             {
-                GameServer.a();
+                GameServer.a("LA guilde " +Collector.getCollectorByMapId(curMap.getId()).getGuildId() + " semble ne pas exister");
                 Collector.removeCollector(Collector.getCollectorByMapId(curMap.getId()).getGuildId());
             }
         }
@@ -3683,7 +3776,11 @@ public class Player {
             case "bankCost":
                 return getBankCost() + "";
             case "points":
-                return this.getAccount().getPoints() + "";
+                if(this.getAccount().getWebAccount() !=null)
+                return this.getAccount().getWebAccount().getPoints() + "";
+                else{
+                    return  -1+"";
+                }
             case "nbrOnline":
                 return GameServer.getClients().size() + "";
             case "align":
@@ -3744,7 +3841,7 @@ public class Player {
             SocketManager.GAME_SEND_STATS_PACKET(this);
         } catch (Exception e) {
             e.printStackTrace();
-            GameServer.a();
+            GameServer.a(e.getMessage());
         }
     }
 
@@ -4258,7 +4355,7 @@ public class Player {
             return;
         }
 
-        if (_mount.getEnergy() < Formulas.calculEnergieLooseForToogleMount(_mount.getFatigue())) {
+        if (!_onMount && _mount.getEnergy() < Formulas.calculEnergieLooseForToogleMount(_mount.getFatigue())) {
             SocketManager.GAME_SEND_Im_PACKET(this, "1113");
             return;
         }
@@ -4559,17 +4656,17 @@ public class Player {
         int SubAreaID = curMap.getSubArea().getArea().getSuperArea();
         int cellID = World.world.getZaapCellIdByMapId(id);
         if (World.world.getMap(mapID) == null) {
-            GameServer.a();
+            //GameServer.a();
             SocketManager.GAME_SEND_WUE_PACKET(this);
             return;
         }
         if (World.world.getMap(mapID).getCase(cellID) == null) {
-            GameServer.a();
+            //GameServer.a();
             SocketManager.GAME_SEND_WUE_PACKET(this);
             return;
         }
         if (!World.world.getMap(mapID).getCase(cellID).isWalkable(true)) {
-            GameServer.a();
+            //GameServer.a();
             SocketManager.GAME_SEND_WUE_PACKET(this);
             return;
         }
@@ -5037,15 +5134,19 @@ public class Player {
     }
 
     /** Heroic **/
-    private byte dead = 0, deathCount = 0, deadType = 0;
+    private byte dead = 0, deadType = 0;
     private long deadTime = 0, killByTypeId = 0, totalKills = 0;
 
     public byte isDead() {
         return dead;
     }
 
-    public byte getDeathCount() {
-        return deathCount;
+    public byte getNeedRestat() {
+        return needRestat;
+    }
+
+    public void setNeedRestat(Byte Needrestat) {
+        this.needRestat = Needrestat;
     }
 
     public void increaseTotalKills() {
@@ -5063,7 +5164,7 @@ public class Player {
     public void die(byte type, long id) {
         new ArrayList<>(this.getItems().values()).stream().filter(object -> object != null).forEach(object -> this.removeItem(object.getGuid(), object.getQuantity(), true, false));
         this.setFuneral();
-        this.deathCount++;
+        //this.deathCount++;
         this.deadType = type;
         this.killByTypeId = id;
     }
@@ -5257,7 +5358,7 @@ public class Player {
         }
 
         if (objects.get(ObjID) == null) {
-            GameServer.a();
+            GameServer.a("Pas d'objet " + ObjID);
             return;
         }
 
@@ -5344,7 +5445,7 @@ public class Player {
         GameObject SimilarObj = World.world.getGameObject(guid);
         //Si le joueur n'a pas l'item dans son store ...
         if (_storeItems.get(guid) == null) {
-            GameServer.a();
+            GameServer.a("Pas d'objet "+ guid + " chez " + this.getName());
             return;
         }
 
@@ -5763,11 +5864,11 @@ public class Player {
             PW = account.getGameClient();
         }
         if (World.world.getMap(newMapID) == null) {
-            GameServer.a();
+            //GameServer.a();
             return;
         }
         if (World.world.getMap(newMapID).getCase(newCellID) == null) {
-            GameServer.a();
+            //GameServer.a();
             return;
         }
         if (PW != null) {
@@ -5785,7 +5886,7 @@ public class Player {
                 && curMap.getMountPark().getGuild().getId() != -1) {
             if (World.world.getGuild(curMap.getMountPark().getGuild().getId()) == null)//Ne devrait pas arriver
             {
-                GameServer.a();
+                //GameServer.a();
                 GameMap.removeMountPark(curMap.getMountPark().getGuild().getId());
             }
         }
@@ -5793,7 +5894,7 @@ public class Player {
         if (Collector.getCollectorByMapId(curMap.getId()) != null) {
             if (World.world.getGuild(Collector.getCollectorByMapId(curMap.getId()).getGuildId()) == null)//Ne devrait pas arriver
             {
-                GameServer.a();
+                //GameServer.a();
                 Collector.removeCollector(Collector.getCollectorByMapId(curMap.getId()).getGuildId());
             }
         }
@@ -6064,7 +6165,23 @@ public class Player {
     }
 
     public GameClient getGameClient() {
-        return this.getAccount().getGameClient();
+        if(this.getAccount()!= null){
+            return this.getAccount().getGameClient();
+        }
+        else{
+           if(this.getFight().getFighterByPerso(this).isInvocation()){
+               return this.getFight().getFighterByPerso(this).getInvocator().getPlayer().getGameClient();
+           }
+           else{
+               if(this.getSlaveLeader() != null){
+                   return this.getSlaveLeader().getGameClient();
+               }
+               else{
+                   return this.getAccount().getGameClient();
+               }
+           }
+        }
+
     }
 
     public void send(String packet) {
@@ -6303,17 +6420,33 @@ public class Player {
     }
     public void boostStats2(final int type, int pointUsed)
     {
+        if(this.isMorph()){
+            this.sendMessage("Vous êtes incarné, vous ne pouvez donc pas vous ajoutez de point de caractéristique !");
+            return;
+        }
         if (_capital <= 0) {
             return;
         }
         int statID = 0, usados = 0;
         switch (type) {
-            case 10 -> statID = (Constant.STATS_ADD_FORC);
-            case 11 -> statID = (Constant.STATS_ADD_VITA);
-            case 12 -> statID = (Constant.STATS_ADD_SAGE);
-            case 13 -> statID = (Constant.STATS_ADD_CHAN);
-            case 14 -> statID = (Constant.STATS_ADD_AGIL);
-            case 15 -> statID = (Constant.STATS_ADD_INTE);
+            case 10 :
+                statID = (Constant.STATS_ADD_FORC);
+                break;
+            case 11 :
+                statID = (Constant.STATS_ADD_VITA);
+                break;
+            case 12 :
+                statID = (Constant.STATS_ADD_SAGE);
+                break;
+            case 13 :
+                statID = (Constant.STATS_ADD_CHAN);
+                break;
+            case 14 :
+                statID = (Constant.STATS_ADD_AGIL);
+                break;
+            case 15 :
+                statID = (Constant.STATS_ADD_INTE);
+                break;
         }
         if (pointUsed > _capital) {
             pointUsed = _capital;
@@ -6481,7 +6614,7 @@ public class Player {
             return false;
         }
 
-        setClasse(clase);
+        this.setClasse(clase);
         //Clase = Mundo.getClase(ClaseID);
         SocketManager.GAME_SEND_AC_CHANGE_CLASSE(this, getClasse());
         this._sorts = Constant.getStartSorts(classe);
@@ -6501,6 +6634,8 @@ public class Player {
         }
         demorph();
         restat();
+        this.stats = new Stats(this.stats.getMap(), true, this);
+        SocketManager.GAME_SEND_STATS_PACKET(this);
         refreshToMap();
         Database.getStatics().getPlayerData().updateInfos(this);
         Database.getStatics().getPlayerData().update(this);
@@ -6552,8 +6687,10 @@ public class Player {
     }
 
     public void changeColor(String packet) {
-        int playerOgrine = getAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_COULEUR();
-        getAccount().setPoints(playerOgrine);
+        int playerOgrine = getAccount().getWebAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_COULEUR();
+
+
+        getAccount().getWebAccount().setPoints(playerOgrine);
         if(!packet.isEmpty())
         {
             String[] colores = packet.substring(3).split(Pattern.quote("|"));
@@ -6562,6 +6699,7 @@ public class Player {
             SocketManager.GAME_SEND_bV_CLOSE_PANEL(this);
         }
     }
+
     public void setColors(int color1, int color2, int color3) {
         if (color1 < -1) {
             color1 = -1;
@@ -6586,8 +6724,8 @@ public class Player {
 
     public void changePlayerName(String packet) {
         if (!packet.isEmpty()) {
-            int playerOgrine = getAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_PSEUDO();
-            getAccount().setPoints(playerOgrine);
+            int playerOgrine = getAccount().getWebAccount().getPoints() - Config.INSTANCE.getPRIX_CHANGEMENT_PSEUDO();
+            getAccount().getWebAccount().setPoints(playerOgrine);
             String[] params = packet.substring(3).split(";");
             String nombre = params[0];
             /*int colorN = 0;

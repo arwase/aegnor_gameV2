@@ -1,6 +1,7 @@
 package database.statics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
+import database.Database;
 import database.statics.AbstractDAO;
 import exchange.transfer.DataQueue;
 import game.world.World;
@@ -140,11 +141,11 @@ public class ObjectData extends AbstractDAO<GameObject> {
     }
 
     public int getNextId() {
-        //return Database.getStatics().getWorldEntityData().getNextObjectId();
+        return Database.getStatics().getWorldEntityData().getNextObjectId();
         //  final DataType<Integer> queue = new DataType<>((byte) 2);
         //  public int getNextId() {
 
-            final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 2);
+            /*final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 2);
             try {
                 synchronized (queue) {
                     long count = DataQueue.count();
@@ -156,7 +157,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
                 e.printStackTrace();
             }
             return queue.getValue();
-            //  }
+            //  }*/
 
        // return queue.getValue();
     }

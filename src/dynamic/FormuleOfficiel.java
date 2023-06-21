@@ -193,6 +193,7 @@ public class FormuleOfficiel {
     public static long getXp2(Object object, ArrayList<Fighter> winners,
                              long groupXp, double nbonus, int star, int challenge, int lvlMax,
                              int lvlMin, int lvlLoosers, int lvlWinners,double bonusip, double bonusclasse) {
+
         if (lvlMin <= 0 || object == null)
             return 0;
         if (object instanceof Fighter) {

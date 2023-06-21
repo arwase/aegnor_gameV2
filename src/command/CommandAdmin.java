@@ -161,7 +161,46 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(mess);
 
             return;
-        } else if (command.equalsIgnoreCase("GONAME")
+        }
+        else if (command.equalsIgnoreCase("SENDOBJECT")) {
+            Player perso = this.getPlayer();
+            Collection<GameObject> objCOll = GameObject.getunkownOriginObject();
+            String mess = null;
+
+            for (GameObject entry : objCOll) {
+                mess = entry.getGuid() + " || "
+                        + entry.getTemplate().getName() + " || "
+                        + entry.getQuantity();
+                this.sendMessage(mess);
+            }
+
+            this.sendMessage("Il y a : "
+                    + objCOll.size() + " objets non trouvé.\n");
+            mess = "==========";
+            this.sendMessage(mess);
+
+            return;
+        }
+        else if (command.equalsIgnoreCase("WHOGOT")) {
+            Player perso = this.getPlayer();
+            Collection<GameObject> objCOll = GameObject.getunkownOriginObject();
+            String mess = null;
+
+            for (GameObject entry : objCOll) {
+                mess = entry.getGuid() + " || "
+                        + entry.getTemplate().getName() + " || "
+                        + entry.getQuantity();
+                this.sendMessage(mess);
+            }
+
+            this.sendMessage("Il y a : "
+                    + objCOll.size() + " objets non trouvé.\n");
+            mess = "==========";
+            this.sendMessage(mess);
+
+            return;
+        }
+        else if (command.equalsIgnoreCase("GONAME")
                 || command.equalsIgnoreCase("JOIN")
                 || command.equalsIgnoreCase("join")
                 || command.equalsIgnoreCase("GON")) {
@@ -2406,10 +2445,20 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(mess);
                 return;
             }
-            this.sendMessage(perso.getName()
-                    + " possede "
-                    + perso.getAccount().getPoints()
-                    + " points boutique.");
+
+            if(perso.getAccount().getWebAccount()!=null) {
+
+                this.sendMessage(perso.getName()
+                        + " possede "
+                        + perso.getAccount().getWebAccount().getPoints()
+                        + " points boutique.");
+            }
+            else{
+                this.sendMessage(perso.getName()
+                        + " possede "
+                        + " pas de "
+                        + " points boutique. car pas lié a son compte web");
+            }
             return;
         } else if (command.equalsIgnoreCase("ADDNPC")) {
             int id = 0;
@@ -2544,7 +2593,12 @@ public class CommandAdmin extends AdminUser {
             World.world.reloadTrunks();
             this.sendMessage("Le rechargement des coffres a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADACTION")) {
+        }
+        else if (command.equalsIgnoreCase("RELOADTITRE")) {
+            World.world.reloadTitres();
+            this.sendMessage("Le rechargement des titres a ete effectue.");
+            return;
+        }  else if (command.equalsIgnoreCase("RELOADACTION")) {
             World.world.reloadObjectsActions();
             this.sendMessage("Le rechargement des actions a ete effectue.");
             return;
@@ -2792,12 +2846,17 @@ public class CommandAdmin extends AdminUser {
                 if (perso == null)
                     perso = this.getPlayer();
             }
-            int pointtotal = perso.getAccount().getPoints() + count;
+            if(perso.getAccount().getWebAccount() == null){
+                String mess = "Vous ne pouvez pas attribuer de PB a quelqu'un qui n'a pas lié son compte web.";
+                this.sendMessage(mess);
+                return;
+            }
+            int pointtotal = perso.getAccount().getWebAccount().getPoints() + count;
             if (pointtotal < 0)
                 pointtotal = 0;
             if (pointtotal > 50000)
                 pointtotal = 50000;
-            perso.getAccount().setPoints(pointtotal);
+            perso.getAccount().getWebAccount().setPoints(pointtotal);
             if (perso.isOnline())
                 SocketManager.GAME_SEND_STATS_PACKET(perso);
             String mess = "Vous venez de donner " + count
@@ -3491,11 +3550,11 @@ public class CommandAdmin extends AdminUser {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une execption est survenue dans la commande");
         } else if(command.equalsIgnoreCase("ADD_ACTION_END_FIGHT"))
             try {
-                var tipo = 0;
-                var accionID = 0;
-                var args = "";
-                var condicion = "";
-                var descripcion = "";
+                int tipo = 0;
+                int accionID = 0;
+                String args = "";
+                String condicion = "";
+                String descripcion = "";
                 StringBuilder strB = new StringBuilder();
                 try {
                     tipo = Integer.parseInt(infos[1]);
@@ -3643,16 +3702,16 @@ public class CommandAdmin extends AdminUser {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Monster " + infos[1] + " no existe");
                     return;
                 }
-                MobGrade mGrado = mobModelo.getGradeByLevel(grado);
+                MobGrade mGrado = mobModelo.getGrade(grado);
                 if (mGrado == null) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "MobGrade " + infos[1] + "-" + infos[2] + " no existe");
                     return;
                 }
                 if (mobModelo.modifyStats(grado, stats)) {
-                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Le monstre ID  " + mobModelo.getId() + "  g: " + grado + " lvl: " + mobModelo.getGradeByLevel(grado).getLevel() + " a été modifié avec les stats " + stats);
+                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Le monstre ID  " + mobModelo.getId() + "  g: " + grado + " lvl: " + mobModelo.getGrade(grado).getLevel() + " a été modifié avec les stats " + stats);
                 }
             } catch (Exception e) {
-            SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est apparu dans la commande");
+            SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est apparu dans la commande : " + e.getMessage());
         } else if(command.equalsIgnoreCase("ADD_GRUPO_MOB_SQL"))
         {
             Boolean sql = true;
@@ -3722,8 +3781,8 @@ public class CommandAdmin extends AdminUser {
                     return;
                 }
 
-                var mobModelo = World.world.getMonstre(mobID);
-                var objModelo = World.world.getObjTemplate(objModID);
+                Monster mobModelo = World.world.getMonstre(mobID);
+                ObjectTemplate objModelo = World.world.getObjTemplate(objModID);
                 if (mobModelo == null || objModelo == null) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Item ou Monstre null");
                     return;
@@ -3749,8 +3808,8 @@ public class CommandAdmin extends AdminUser {
                     return;
                 }
 
-                var mobModelo = World.world.getMonstre(mobID);
-                var objModelo = World.world.getObjTemplate(objModID);
+                Monster mobModelo = World.world.getMonstre(mobID);
+                ObjectTemplate objModelo = World.world.getObjTemplate(objModID);
                 if (mobModelo == null || objModelo == null) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Item ou Monstre null");
                     return;
@@ -3762,11 +3821,11 @@ public class CommandAdmin extends AdminUser {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est survenue");
         } else if(command.equalsIgnoreCase("ADD_DROP"))
             try {
-                var mobID = 0;
-                var objModID = 0;
-                var prospecc = 0;
-                var max = -1;
-                var porcentaje = 0f;
+                int mobID = 0;
+                int objModID = 0;
+                int prospecc = 0;
+                int max = -1;
+                float porcentaje = 0f;
                 try {
                     mobID = Integer.parseInt(infos[1]);
                     objModID = Integer.parseInt(infos[2]);
@@ -3783,13 +3842,13 @@ public class CommandAdmin extends AdminUser {
                 }
 
 
-                var mobModelo = World.world.getMonstre(mobID);
-                var objModelo = World.world.getObjTemplate(objModID);
+                Monster mobModelo = World.world.getMonstre(mobID);
+                ObjectTemplate objModelo = World.world.getObjTemplate(objModID);
                 if (mobModelo == null || objModelo == null) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Objet ou monstre null");
                     return;
                 }
-                mobModelo.addDrop(new World.Drop(objModID, porcentaje, prospecc));
+                mobModelo.addDrop(new World.Drop(objModID, porcentaje, prospecc,false));
                 Database.getDynamics().getDropData().insertDrop(mobID, objModID, prospecc, porcentaje, max, objModelo.getName(), mobModelo.getName());
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Ajout du drop sur le monstre "+ mobModelo.getName() +" (" + mobModelo.getId() + ") de l'item " + objModelo.getName() + " (" + objModelo.getId() + ") Seuil: " + prospecc + ", " + porcentaje + "%, Action: " + max);
             } catch (Exception e) {
@@ -3851,7 +3910,7 @@ public class CommandAdmin extends AdminUser {
             getPlayer().getCurMap().panelPosiciones(getPlayer(), true);
         } else if (command.equalsIgnoreCase("INFO_NPC"))
             try {
-                var npcMod = World.world.getNPCTemplate(Integer.parseInt(infos[1]));
+                NpcTemplate npcMod = World.world.getNPCTemplate(Integer.parseInt(infos[1]));
                 if (npcMod == null) {
                     SocketManager.ENVIAR_M145_MENSAJE_PANEL_INFORMACION(getPlayer(), "NPC NO EXISTE");
                 } else {

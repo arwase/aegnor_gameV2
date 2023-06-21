@@ -50,7 +50,6 @@ public class IA56 extends AbstractNeedSpell  {
                     }
                 }
             }
-
             if(this.fighter.getCurPm(this.fight) > 0) {
                 int value = Function.getInstance().moveenfaceIfPossible(this.fight, this.fighter, ennemy, maxPo + 1 + this.fighter.getBuffValue(117));
                 //System.out.println("On essaie de se mettre en face");

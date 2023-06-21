@@ -1,5 +1,7 @@
 package fight;
 
+import common.PathFinding;
+import job.JobAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import area.map.GameCase;
@@ -17,10 +19,7 @@ import game.world.World;
 import guild.Guild;
 import kernel.Constant;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -30,6 +29,7 @@ public class Fighter implements Comparable<Fighter> {
     public int nbrInvoc;
     public boolean inLancer = false;
     public boolean isStatique = false;
+    public boolean toRebuff =false;
     private int id = 0;
     private boolean canPlay = false;
     private Fight fight;
@@ -203,6 +203,15 @@ public class Fighter implements Comparable<Fighter> {
     public int getTeam() {
         return this.team;
     }
+
+
+    public int getDistanceBetween(Fighter tocompare) {
+       int distance = 0;
+        distance = PathFinding.getDistanceBetween(fight.getMap(), this.getCell().getId(), tocompare.getCell().getId());
+        return distance;
+    }
+
+
 
     public void setTeam(int i) {
         this.team = i;
@@ -390,6 +399,32 @@ public class Fighter implements Comparable<Fighter> {
         if (t != 0) this.state.put(id, t);
     }
 
+    public void setState(int id, int t, int casterId)
+    {
+        if(t!=0)
+        {
+            if(state.get(id)!=null) //fighter already has same state
+            {
+                if(state.get(id)==-1||state.get(id)>t) //infite duration state or current state lasts longer than parameter state
+                    return;
+                else //current state lasts shorter than parameter state, refresh state
+                {
+                    state.remove(id);
+                    state.put(id,t);
+                }
+            }
+            else //fighter does not have parameter state
+            {
+                state.put(id,t);
+            }
+        }
+        else //t=0 removes state
+        {
+            this.state.remove(id);
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight,7,950,new StringBuilder(String.valueOf(casterId)).toString(),String.valueOf(this.getId())+","+id+",0");
+        }
+    }
+
     public int getState(int id) {
         return this.state.get(id) != null ? this.state.get(id) : -1;
     }
@@ -460,7 +495,7 @@ public class Fighter implements Comparable<Fighter> {
     }
 
     public Stats getTotalStatsLessBuff() {
-        Stats stats = new Stats(new HashMap<>());
+        Stats stats = new Stats(new LinkedHashMap<>());
         if (this.type == 1)
             stats = this.perso.getTotalStats();
         if (this.type == 2)
@@ -485,35 +520,117 @@ public class Fighter implements Comparable<Fighter> {
         return false;
     }
 
-    public void addBuff(int id, int val, int duration, int turns, boolean debuff, int spellID, String args, Fighter caster, boolean addingTurnIfCanPlay) {
-        if(this.mob != null)
-            for(int id1 : Constant.STATIC_INVOCATIONS)
-                if (id1 == this.mob.getTemplate().getId())
-                    return;
 
-        switch(spellID) {
-            case 99:case 5:case 20:case 127:
-            case 89:case 126:case 115:case 192:
-            case 4:case 1:case 6:case 14:case 18:case 7:
-            case 284:case 197:case 704:case 168:case 45:
-            case 159:case 171:case 167:case 511:case 513:
-                debuff = true;
-                break;
-            case 431:case 433:case 437:case 443:case 441:
-                debuff = false;
-                break;
+    public void buffMobByDiff(int fightDiff){
+        int StateId = 100 + fightDiff;
+        this.setState(StateId, -1);
+        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.getFight(), 7, 950, this.getId() + "", this.getId() + "," + StateId + ",1", StateId);
+        this.generateBuffByDiff(fightDiff);
+    }
+
+    public void generateBuffByDiff(int fightDiff){
+        if(fightDiff == 0)
+            return;
+
+        Monster.MobGrade MG5 = this.getMob().getTemplate().getGrade(5);
+        Monster.MobGrade MG1 = this.getMob().getTemplate().getGrade(1);
+
+        // On génére les HP
+        int pdvMin = MG1.getPdv();
+        int pdvMax = MG5.getPdv();
+        int pdvmoyen = (pdvMax - pdvMin);
+        if(pdvmoyen <= 0)
+            pdvmoyen = 50*MG5.getLevel();
+
+        // On génére les stats
+        Map<Integer, Integer> newStats = new HashMap<Integer, Integer>();
+        newStats.putAll(MG5.stats);
+        newStats.forEach((key, value) -> {
+            int  StatsMini = MG1.stats.get(key);
+            int  StatsMaxi = value;
+
+            if(key >= Constant.STATS_ADD_RP_TER && key <= Constant.STATS_REM_RP_NEU && key != Constant.STATS_CREATURE) {
+
+            }
+            else {
+                if (StatsMini == StatsMaxi) {
+                    value = Math.round(StatsMaxi * 1.5f);
+                } else {
+                    value = ((StatsMaxi - StatsMini));
+                }
+                this.addBuffStats(key, value, Constant.SPELL_BOOSTBYDIFF, this);
+                // System.out.println( "Stats "+ key + " : "+ value);
+            }
+        });
+
+        // On génère les PA
+        int paMin = MG1.getPa();
+        int paMax = MG5.getPa();
+        int pamoyen;
+        if(paMax > paMin){
+            pamoyen = (paMax - paMin);
+        }
+        else{
+            pamoyen = 1;
         }
 
-        if(id == 606 || id == 607 || id == 608 || id == 609 || id == 611 || id == 125 || id == 114 ||
-                (spellID == 197 && (id == 149 || id == 169 || id == 183 || id == 184 || id == 168 || id == 108))) {
-            debuff = true;
+        // On génère les PM
+        int pmMin = MG1.getPa();
+        int pmMax = MG5.getPa();
+        int pmmoyen;
+        if(pmMax > pmMin){
+            pmmoyen = (pmMax - pmMin);
+        }
+        else{
+            pmmoyen = 1;
         }
 
+        if(fightDiff == 1){
+            this.addBuffStats(Constant.STATS_ADD_DOMA,30*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+            this.addBuffStats(Constant.STATS_ADD_VITA,pdvmoyen,Constant.SPELL_BOOSTBYDIFF,this);
+        }
+        else {
+            this.addBuffStats(Constant.STATS_ADD_DOMA,100*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+            this.addBuffStats(Constant.STATS_ADD_VITA,pdvmoyen + (Math.abs(1600 - this.getLvl() )) * fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        }
 
-        //Si c'est le jouer actif qui s'autoBuff, on ajoute 1 a la durée
-        this.fightBuffs.add(new SpellEffect(id,val,(addingTurnIfCanPlay && this.canPlay?duration+1:duration),turns,debuff,caster,args,spellID));
-        //logger.debug("Ajout du Buff "+id+" sur le personnage fighter ("+this.getId()+") val : "+val+" duration : "+duration+" turns : "+turns+" debuff : "+debuff+" spellid : "+spellID+" args : "+args+" !");
+        this.addBuffStats(Constant.STATS_ADD_RP_FEU,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_RP_AIR,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_RP_EAU,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_RP_TER,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_RP_NEU,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_PM,pmmoyen +fightDiff-1,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_PA,pamoyen +fightDiff-1,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_PERDOM,10*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_PO,fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_CC,7*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_ADD_SOIN,fightDiff*20,Constant.SPELL_BOOSTBYDIFF,this);
+        this.addBuffStats(Constant.STATS_CREATURE,1+Math.round(fightDiff/2.0f),Constant.SPELL_BOOSTBYDIFF,this);
 
+    }
+
+    public void addBuffStats(int id, int val, int spellID, Fighter caster){
+        if(val > 0) {
+             String args = id +";"+val+";"+val+";-1;0;0d0+"+val;
+            this.fightBuffs.add(new SpellEffect(id, val, -1, -1, false, caster, args, spellID));
+            SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", -1, spellID);
+            switch (id){
+                case Constant.STATS_ADD_MFLEE:
+                case Constant.STATS_ADD_AFLEE:
+                case Constant.STATS_ADD_RP_EAU:
+                case Constant.STATS_ADD_RP_TER:
+                case Constant.STATS_ADD_RP_NEU:
+                case Constant.STATS_ADD_RP_FEU:
+                case Constant.STATS_ADD_RP_AIR:
+                case Constant.STATS_ADD_PM:
+                case Constant.STATS_ADD_PA:
+                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, id, caster.getId() + "", caster.getId() + "," + val + "," + -1, id);
+            }
+        }
+    }
+
+    public void resentBuff(int id, int val, int duration, int turns, boolean debuff, int spellID, String args, Fighter caster, boolean addingTurnIfCanPlay) {
+        System.out.println(id + " " + val + " " + duration + " " + turns + " " + debuff + " " + spellID + " " + args + " " + caster );
         switch(id) {
             case 6://Renvoie de sort
                 SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), -1, val+"", "10", "", duration, spellID);
@@ -561,10 +678,119 @@ public class Fighter implements Comparable<Fighter> {
                 else if(valMax1.compareTo("-1") != 0)
                     SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, valMax1, "", "", duration, spellID);
                 break;
-
+            case Constant.SPELL_BOOSTBYDIFF:
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", -1, spellID);
+                break;
             default:
                 SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", duration, spellID);
+        }
+    }
+
+    public void addBuff(int id, int val, int duration, int turns, boolean debuff, int spellID, String args, Fighter caster, boolean addingTurnIfCanPlay) {
+        if(this.mob != null)
+            for(int id1 : Constant.STATIC_INVOCATIONS)
+                if (id1 == this.mob.getTemplate().getId())
+                    return;
+
+        switch(spellID) {
+            case 99:case 5:case 20:case 127:
+            case 89:case 126:case 115:case 192:
+            case 4:case 1:case 6:case 14:case 18:case 7:
+            case 284:case 197:case 704:case 168:case 45:
+            case 159:case 171:case 167:case 511:case 513:
+                debuff = true;
                 break;
+            case 431:case 433:case 437:case 443:case 441: case Constant.SPELL_BOOSTBYDIFF:
+                debuff = false;
+                break;
+        }
+
+        if(id == 606 || id == 607 || id == 608 || id == 609 || id == 611 || id == 125 || id == 114 ||
+                (spellID == 197 && (id == 149 || id == 169 || id == 183 || id == 184 || id == 168 || id == 108))) {
+            debuff = true;
+        }
+
+
+        //Si c'est le jouer actif qui s'autoBuff, on ajoute 1 a la durée
+        this.fightBuffs.add(new SpellEffect(id,val,(addingTurnIfCanPlay && this.canPlay?duration+1:duration),turns,debuff,caster,args,spellID));
+        //logger.debug("Ajout du Buff "+id+" sur le personnage fighter ("+this.getId()+") val : "+val+" duration : "+duration+" turns : "+turns+" debuff : "+debuff+" spellid : "+spellID+" args : "+args+" !");
+
+        switch(id) {
+            case 6://Renvoie de sort
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), -1, val+"", "10", "", duration, spellID);
+                break;
+
+            case 79://Chance éca
+                val = Integer.parseInt(args.split(";")[0]);
+                String valMax = args.split(";")[1];
+                String chance = args.split(";")[2];
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, valMax, chance, "", duration, spellID);
+                break;
+
+            case 606:
+            case 607:
+            case 608:
+            case 609:
+            case 611:
+                // de X sur Y tours
+                String jet = args.split(";")[5];
+                int min = Formulas.getMinJet(jet);
+                int max = Formulas.getMaxJet(jet);
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), min, "" + max, "" + max, "", duration,spellID);
+                break;
+
+            case 788://Fait apparaitre message le temps de buff sacri Chatiment de X sur Y tours
+                val = Integer.parseInt(args.split(";")[1]);
+                String valMax2 = args.split(";")[2];
+                if(Integer.parseInt(args.split(";")[0]) == 108)
+                    return;
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, ""+val, ""+valMax2, "", duration, spellID);
+
+                break;
+            case 283:
+            case 284:
+            case 285:
+            case 286:
+            case 287:
+            case 288://Fait apparaitre message le temps de buff sacri Chatiment de X sur Y tours
+            case 289:
+            case 290:
+            case 291:
+            case 292:
+            case 293:
+            case 294:
+                String maxvalue = args.split(";")[2];
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(),val ,"", ""+maxvalue, "", duration, spellID,caster.getId());
+                break;
+            case 98://Poison insidieux
+            case 107://Mot d'épine (2à3), Contre(3)
+            case 100://Flèche Empoisonnée, Tout ou rien
+            case 108://Mot de Régénération, Tout ou rien
+            case 165://Maîtrises
+            case 781://MAX
+            case 782://MIN
+                val = Integer.parseInt(args.split(";")[0]);
+                String valMax1 = args.split(";")[1];
+                if(valMax1.compareTo("-1") == 0 || spellID == 82 || spellID == 94)
+                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", duration, spellID);
+                else if(valMax1.compareTo("-1") != 0)
+                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, valMax1, "", "", duration, spellID);
+                break;
+            case Constant.SPELL_BOOSTBYDIFF:
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", -1, spellID);
+                break;
+            default:
+                SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", duration, spellID);
+        }
+    }
+
+    public void debuff(int Spell) {
+        Iterator<SpellEffect> it = this.fightBuffs.iterator();
+        while (it.hasNext()) {
+            SpellEffect spellEffect = it.next();
+            if(spellEffect.getSpell() == Spell) {
+                it.remove();
+            }
         }
     }
 
@@ -579,6 +805,7 @@ public class Fighter implements Comparable<Fighter> {
                 case 433:
                 case 443:
                 case 441://Châtiments
+                case Constant.SPELL_BOOSTBYDIFF://SpellDiff
                     continue;
                 case 197://Puissance sylvestre
                 case 52://Cupidité
@@ -605,12 +832,20 @@ public class Fighter implements Comparable<Fighter> {
         }
         ArrayList<SpellEffect> array = new ArrayList<>(this.fightBuffs);
         if (!array.isEmpty()) {
+            // On renvoie les effets qui aurait disparu ?
             this.fightBuffs.clear();
             array.stream().filter(spellEffect -> spellEffect != null).forEach(spellEffect -> this.addBuff(spellEffect.getEffectID(), spellEffect.getValue(), spellEffect.getDuration(), spellEffect.getTurn(), spellEffect.isDebuffabe(), spellEffect.getSpell(), spellEffect.getArgs(), this, true));
         }
 
         if (this.perso != null && !this.hasLeft) // Envoie les stats au joueurs
             SocketManager.GAME_SEND_STATS_PACKET(this.perso);
+    }
+
+    public void rebuff() {
+        ArrayList<SpellEffect> array = new ArrayList<>(this.fightBuffs);
+        if (!array.isEmpty()) {
+            array.stream().filter(spellEffect -> spellEffect != null).forEach(spellEffect -> this.resentBuff(spellEffect.getEffectID(), spellEffect.getValue(), spellEffect.getDuration(), spellEffect.getTurn(), spellEffect.isDebuffabe(), spellEffect.getSpell(), spellEffect.getArgs(), this, true));
+        }
     }
 
     public void refreshEndTurnBuff() {
@@ -699,7 +934,7 @@ public class Fighter implements Comparable<Fighter> {
     }
 
     public Stats getTotalStats() {
-        Stats stats = new Stats(new HashMap<>());
+        Stats stats = new Stats(new LinkedHashMap<>());
         if (this.type == 1)
             stats = this.perso.getTotalStats();
         if (this.type == 2) {
@@ -755,16 +990,26 @@ public class Fighter implements Comparable<Fighter> {
         if (agi < 0)
             agi = 0;
         porcCC -= getTotalStats().getEffect(Constant.STATS_ADD_CC);
-        if (fighter.getType() == 1
-                && perso.getObjectsClassSpell().containsKey(sSort.getSpellID())) {
-            int modi = perso.getValueOfClassObject(sSort.getSpellID(), 287);
-            porcCC -= modi;
+
+        int valueCC = porcCC;
+
+        if (fighter.getType() == 1 && perso.getObjectsClassSpell().containsKey(sSort.getSpellID())) {
+            int value = perso.getValueOfClassObject(sSort.getSpellID(), 287);
+            valueCC -= value;
         }
-        porcCC = (int) ((porcCC * 2.9901) / Math.log(agi + 12));
-        if (porcCC < 2)
-            porcCC = 2;
-        int jet = Formulas.getRandomValue(1, porcCC);
-        return (jet == porcCC);
+
+        if(fighter.hasBuff(287)){
+            if(sSort.getSpellID() == fighter.getBuff(287).getValue()) {
+                int value =  Integer.parseInt(fighter.getBuff(287).getArgs().split(";")[2]);
+                valueCC -= value;
+            }
+        }
+
+        valueCC = (int) ((valueCC * 2.9901) / Math.log(agi + 12));
+        if (valueCC < 2)
+            valueCC = 2;
+        int jet = Formulas.getRandomValue(1, valueCC);
+        return (jet == valueCC);
     }
 
     public int getInitiative() {
@@ -911,6 +1156,7 @@ public class Fighter implements Comparable<Fighter> {
         return 0;
     }
 
+
     public String xpString(String str) {
         if (this.perso != null) {
             int max = this.perso.getLevel() + 1;
@@ -994,7 +1240,14 @@ public class Fighter implements Comparable<Fighter> {
                 str.append(this.mob.getTemplate().getGfxId()).append("^").append(this.mob.getSize()).append(";");
                 str.append(this.mob.getGrade()).append(";");
                 str.append(this.mob.getTemplate().getColors().replace(",", ";")).append(";");
-                str.append("0,0,0,0;");
+                if (this.mob.getTemplate().getId()==534) // Pandawa Ivre
+                    str.append("0,1C3C,1C40,0;");
+                else if (this.mob.getTemplate().getId()==547) // Pandalette ivre
+                    str.append("0,1C3C,1C40,0;");
+                else if (this.mob.getTemplate().getId()==1213) // Mage Céleste
+                    str.append("0,2BA,847,0;");
+                else
+                    str.append("0,0,0,0;");
                 str.append(this.getPdvMax()).append(";");
                 str.append(this.mob.getPa()).append(";");
                 str.append(this.mob.getPm()).append(";");

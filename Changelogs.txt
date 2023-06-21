@@ -227,3 +227,13 @@ Version 3.4 (08/12/2021):
 - Ajout de la rareté quand on FM un objet (interface de FM)
 - Ajout de la rareté quand on fait un echange avec un joueur
 - Ajout de la rareté quand on regarde la liste des items d'un joueur en mode marchand
+
+Version 4 (07/12/2022):
+
+- Plein de fix
+
+Version 4.1 (08/12/2022):
+
+- Sauvegarde de Cell entre 2 fight sur la même map
+- Ajout de la gestion de commande Azuriom dans la config
+

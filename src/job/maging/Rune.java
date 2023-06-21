@@ -35,7 +35,8 @@ public class Rune {
     }
 
     int id;
-    private short characteristic;
+    private int characteristic;
+    private String characteristicString;
     private float weight;
     private byte bonus;
 
@@ -44,18 +45,29 @@ public class Rune {
         this.weight = weight;
         this.bonus = bonus;
         this.setCharacteristic();
+        this.setCharacteristicString();
         Rune.runes.add(this);
     }
+
+
 
     public int getId() {
         return id;
     }
 
     private void setCharacteristic() {
-        this.characteristic = Short.parseShort(World.world.getObjTemplate(this.id).getStrTemplate().split("#")[0], 16);
+        this.characteristic = Integer.parseInt(World.world.getObjTemplate(this.id).getStrTemplate().split("#")[0], 16);
     }
 
-    public short getCharacteristic() {
+    private void setCharacteristicString() {
+        this.characteristicString = World.world.getObjTemplate(this.id).getStrTemplate().split("#")[0];
+    }
+
+    public String getCharacteristicString() {
+        return characteristicString;
+    }
+
+    public int getCharacteristic() {
         return characteristic;
     }
 

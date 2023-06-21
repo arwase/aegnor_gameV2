@@ -16,6 +16,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.spells.LaunchedSpell;
 import game.GameClient;
+import game.GameServer;
 import game.world.World;
 import guild.Guild;
 import guild.GuildMember;
@@ -141,7 +142,6 @@ public class SocketManager {
         //String packet = perso.getAsPacket();
         String packet = perso.SetsPacket();
         if(packet.contains("|")) {
-            System.out.println(packet);
             send(perso, packet);
         }
     }
@@ -287,8 +287,8 @@ public class SocketManager {
 
     public static void GAME_SEND_MAPDATA_COMPLETE(Player player)
     {
-        var map = player.getCurMap();
-        var packet = new StringBuilder();
+        GameMap map = player.getCurMap();
+        StringBuilder packet = new StringBuilder();
         packet.append("GDM").append('|').append(map.getId()).append('|').append(map.getDate()).append('|').append('|')
                 .append(map.getW()).append('|').append(map.getH()).append('|').append(map.getBackgroundID()).append('|')
                 .append(map.getMusicID()).append('|').append(map.getAmbianceID()).append('|').append(map.getOutDoor()).append('|')
@@ -948,6 +948,7 @@ public class SocketManager {
         }
     }
 
+
     public static void GAME_SEND_GA_PACKET_TO_FIGHT(Fight fight, int teams,
                                                     int actionID, String s1, String s2, int effect) {
         String packet = "GA;" + actionID + ";" + s1;
@@ -1026,7 +1027,6 @@ public class SocketManager {
                 continue;
             send(f.getPlayer(), packet);
         }
-        System.out.println(packet);
     }
     public static void ENVIAR_NJ_STATS_DEFECTO_MOB(Player perso, String str) {
         String packet = "ÑJ" + str;
@@ -1122,6 +1122,20 @@ public class SocketManager {
         }
 
     }
+    public static void GAME_SEND_FIGHT_GIE_TO_FIGHT(Fight fight, int teams,
+                                                    int mType, int cible, int value, String mParam2, String mParam3,
+                                                    String mParam4, int turn, int spellID, int casterID) {
+        StringBuilder packet = new StringBuilder();
+        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(""+value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID).append(";").append(casterID+"");
+        for (Fighter f : fight.getFighters(teams)) {
+            if (f.hasLeft() || f.getPlayer() == null)
+                continue;
+            if (f.getPlayer().isOnline())
+                send(f.getPlayer(), packet.toString());
+        }
+
+    }
+
 
     public static void GAME_SEND_MAP_FIGHT_GMS_PACKETS_TO_FIGHT(Fight fight,
                                                                 int teams, GameMap map) {
@@ -1883,6 +1897,7 @@ public class SocketManager {
     public static void GAME_SEND_OS_PACKET(Player perso, int pano) {
         StringBuilder packet = new StringBuilder();
         packet.append("OS");
+        int numofprimal = 0;
         int num = perso.getNumbEquipedItemOfPanoplie(pano);
         if (num <= 0)
             packet.append("-").append(pano);
@@ -1899,9 +1914,27 @@ public class SocketManager {
                         if (items.length() > 0)
                             items.append(";");
                         items.append(OT.getId());
+                        if(perso.getPosItem(OT.getId()) != -1){
+                            GameObject test = perso.getObjetByPos(perso.getPosItem(OT.getId()));
+                            if(test.getRarity() == 5){
+                                numofprimal++;
+                            }
+                        }
                     }
                 }
-                packet.append(items.toString()).append("|").append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
+                if(pano == 166){
+                    packet.append(items.toString()).append("|");
+                    if(numofprimal >= 3){
+                        packet.append("80#1#0#0#0d0+1,");
+                        if(numofprimal >= 6){
+                            packet.append("6f#1#0#0#0d0+1,");
+                        }
+                    }
+                    packet.append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
+                }
+                else {
+                    packet.append(items.toString()).append("|").append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
+                }
             }
         }
         send(perso, packet.toString());
@@ -2052,7 +2085,7 @@ public class SocketManager {
     }
 
     public static void ENVIAR_M145_MENSAJE_PANEL_INFORMACION(Player perso, String str) {
-        var packet = "M145|" + str.replace("\\n", "\n").replace("\\t", "\t").replace("\\r", "\r");
+        String packet = "M145|" + str.replace("\\n", "\n").replace("\\t", "\t").replace("\\r", "\r");
         send(perso, packet);
     }
 
@@ -2792,12 +2825,12 @@ public class SocketManager {
     }
 
     public static void GAME_SEND_SL_LISTE_SORTS(Player player) {
-        var packet = "SL" + player.stringListeSorts();
+        String packet = "SL" + player.stringListeSorts();
         send(player, packet);
     }
 
     public static void GAME_SEND_SL_LISTE_SORTS_TO_LEADER(Player player, Player leader) {
-        var packet = "SL" + player.stringListeSorts();
+        String packet = "SL" + player.stringListeSorts();
         send(leader, packet);
     }
 
@@ -2855,7 +2888,7 @@ public class SocketManager {
     }
 
     public static void GAME_SEND_SL_LISTE_FROM_INVO(Fighter invoc, Player leader) {
-        var packet = "SL" + invoc.getPlayer().stringListeSorts();
+        String packet = "SL" + invoc.getPlayer().stringListeSorts();
         send(leader, packet);
         StringBuilder p = new StringBuilder();
         if (invoc.getLaunchedSpell() != null) {
@@ -2871,7 +2904,7 @@ public class SocketManager {
         }
     }
     public static void GAME_SEND_SL_LISTE(Fighter leader) {
-        var packet = "SL" + leader.getPlayer().stringListeSorts();
+        String packet = "SL" + leader.getPlayer().stringListeSorts();
         send(leader.getPlayer(), packet);
         StringBuilder p = new StringBuilder();
         if (leader.getLaunchedSpell() != null) {
@@ -2916,6 +2949,31 @@ public class SocketManager {
         send(leader, packet);
     }
 
+    public static void SEND_AB_LEADER_OPTI(Player player, Player leader) {
+        String packet = "AB" + player.getId() + "|" + player.getName() + "|" + player.getLevel() + "|"
+                + player.getClasse() + "|" + player.getSexe() + "|" + player.getGfxId() + "|";
+        if (player.getColor1() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor1()) + "|";
+        }
+        if (player.getColor2() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor2()) + "|";
+        }
+        if (player.getColor3() == -1) {
+            packet += "-1|";
+        }
+        else {
+            packet += Integer.toHexString(player.getColor3()) + "|";
+        }
+        packet += player.parseItemEquippedToASK();
+        send(leader, packet);
+    }
+
     public static void GAME_SEND_ITEM_CLASSE_ON_LEADER(Player player, Player leader) {
         List<GameObject> equipedObject = player.getEquippedObjects();
         for(GameObject item : equipedObject)
@@ -2923,7 +2981,7 @@ public class SocketManager {
             int panoId = item.getTemplate().getPanoId();
             ObjectTemplate template = item.getTemplate();
             int position = item.getPosition();
-            if(panoId >= 81 && panoId <= 92 && position != Constant.ITEM_POS_NO_EQUIPED) {
+            if( (panoId >= 81 && panoId <= 92 && position != Constant.ITEM_POS_NO_EQUIPED)  ) {
                 String[] stats = template.getStrTemplate().split(",");
 
                 for (String stat : stats) {
@@ -2942,13 +3000,22 @@ public class SocketManager {
         int nbInvoc = current.nbrInvoc;
         int nbInvocMax = current.getPlayer().getTotalStats().getEffect(Constant.STATS_CREATURE);
         String packet = "XC" + nbInvoc + "," + nbInvocMax + "|";
-        for(Fighter invoc : current.getFight().getFighters(current.getTeam()))
+        ArrayList<Fighter> listAllie = current.getFight().getFighters(current.getTeam2());
+        for(Entry<Integer, Fighter> entry : current.getFight().getTeam(current.getTeam2()).entrySet())
         {
-            if((invoc.isMob() || invoc.isControllable()) &  invoc.getInvocator() == current)
+            Fighter invoc = entry.getValue();
+
+            if((invoc.isMob() || invoc.isControllable()) &&  invoc.getInvocator() == current)
             {
                 packet += invoc.getId() + ";";
             }
         }
         send(master, packet);
+    }
+
+    public static void GAME_SEND_SERVER_HOUR(GameClient out) {
+        String packet = GameServer.getServerTime();
+        send(out, packet);
+
     }
 }

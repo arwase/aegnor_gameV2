@@ -102,9 +102,9 @@ object Main {
             WorldSave.cast(0)
             if (!Config.HEROIC) {
                 Database.getDynamics().heroicMobsGroups.deleteAll()
-                for (map in World.world.maps) {
+                /*for (map in World.world.maps) {
                     map.mobGroups.values.filterNot { it.isFix }.forEach { Database.getDynamics().heroicMobsGroups.insert(map.id, it, null) }
-                }
+                }*/
             }
             GameServer.INSTANCE.setState(0)
 
@@ -114,6 +114,7 @@ object Main {
         GameServer.INSTANCE.stop()
         logger.info("The server is now closed.")
     }
+
 
     @JvmOverloads
     fun stop(reason: String, exitCode : Int = 0) {

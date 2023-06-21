@@ -39,6 +39,14 @@ public class Constant {
     public static final int ETAT_ENCRE_SECONDAIRE = 32;
     public static final int ETAT_ENCRE_TERTIDIAIRE = 33;
     public static final int ETAT_ENCRE_QUATENAIRE = 34;
+    public static final int ETAT_LOURD = 63;
+
+    public static final int ETAT_DIFFICILE = 101;
+    public static final int ETAT_TRESDIFFICILE =102;
+    public static final int ETAT_MONSTREUX = 103;
+    public static final int ETAT_HOTOMANI = 104;
+    public static final int SPELL_BOOSTBYDIFF = 999;
+
     public static final int FIGHT_TYPE_CHALLENGE = 0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //D�fies
     public static final int FIGHT_TYPE_AGRESSION = 1;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Aggros
     public static final int FIGHT_TYPE_CONQUETE = 2;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Conquete
@@ -407,6 +415,13 @@ public class Constant {
     public static final int MONSTRES_LES_ARCHIMONSTRES = 78;
     public static final int MONSTRES_TO_VERIF = 79;
 
+    public static int[] BOSS_ID = {58,85,86,107,113,121,147,173,180,225,226,230,232,251,252,257,289,295,374,375,377,382,404,423,430,457,478,568,605,612,669,670,673,675,677,681,780,792,797,799,800,827,854,926,939,940,943,1015,1027,1045,1051,1071,1072,1085,1086,1087,1159,1170,1184,1185,1186,1187,1188,1195};
+    public static int[] BOSS_HOTOMANI_ID = {58,85,86,107,113,121,147,173,180,225,226,230,232,251,252,257,289,295,374,375,377,382,404,423,430,457,478,568,605,612,669,670,673,675,677,681,780,792,797,799,800,827,854,926,939,940,943,1015,1027,1045,1051,1071,1072,1085,1086,1087,1159,1170,1184,1185,1186,1187,1188,1195};
+
+    public static int[] EXCEPTION_GLADIATROOL_BOSS = {251,295,404,423,450,1159};
+    public static int[] EXCEPTION_GLADIATROOL_ARCHI = {251,404,423,450,1159};
+    public static int[] EXCEPTION_GLADIATROOL_MONSTRES = {258,260,251,404,424,450,1090,1091,1092,1094};
+    public static int[] GLADIATROOL_MAPID = {12012,12023,12001,12006,12007,12008,12004,12009};
 
     //Alignement
     public static final int ALIGNEMENT_NEUTRE = -1;
@@ -453,6 +468,9 @@ public class Constant {
     public static final int[][] STATE_REQUIRED = {{699, Constant.ETAT_SAOUL}, {690, Constant.ETAT_SAOUL}};
     //Buff d�clench� en cas de frappe
     public static final int[] ON_HIT_BUFFS = {9, 79, 107, 788, 606, 607, 608, 609, 611};
+
+
+
     //Effects
     public static final int STATS_ADD_PM2 = 78;
     public static final int STATS_REM_PA = 101;
@@ -543,6 +561,22 @@ public class Constant {
     public static final int STATS_REDUCE_SPELL_DELAY = 286; //11e#0#0#+Nb Delais Reduit en Hexa#0d0+idSpell
     public static final int STATS_ADD_CC_SPELL = 287;//11f#0#0#+CC en Hexa#0d0+idSpell
     public static final int STATS_LAUNCHABLE_IN_LINE = 288; //120#idSpellEnHexa#0#0#0d0+idSpell
+
+    public static final String COULEUR_SUCCES = "009404";
+    public static final String COULEUR_ECHEC = "A82214";
+    public static final String COULEUR_INFO = "095DAB";
+
+    //Liste des stats négatives
+    public static final int[] STATS_NEGATIVE = {STATS_REM_DOMA, STATS_REM_CHAN,STATS_REM_VITA,
+            STATS_REM_AGIL, STATS_REM_INTE, STATS_REM_SAGE, STATS_REM_FORC, STATS_REM_PODS, STATS_REM_AFLEE,
+            STATS_REM_CC, STATS_REM_SOIN, STATS_REM_INIT,STATS_REM_PA,STATS_REM_PA2,STATS_REM_PM,STATS_REM_PM2,
+            STATS_REM_MFLEE, STATS_REM_PO, STATS_REM_PROS,
+            STATS_REM_R_AIR, STATS_REM_R_EAU, STATS_REM_R_FEU, STATS_REM_R_NEU, STATS_REM_R_TER,
+            STATS_REM_RP_AIR, STATS_REM_RP_EAU,STATS_REM_RP_FEU,STATS_REM_RP_NEU,STATS_REM_RP_TER,
+            STATS_REM_RP_PVP_AIR,STATS_REM_RP_PVP_EAU,STATS_REM_RP_PVP_FEU,STATS_REM_RP_PVP_NEU,STATS_REM_RP_PVP_TER
+    };
+
+
     //Effets ID & Buffs
     public static final int EFFECT_PASS_TURN = 140;
 
@@ -558,6 +592,7 @@ public class Constant {
     public static final int STATS_PETS_SOUL = 717;
     // Objet d'�levage
     public static final int STATS_RESIST = 812;
+    public static final int STATS_DD_ID = 995;
     // Other
     public static final int STATS_TURN = 811;
     public static final int STATS_EXCHANGE_IN = 983;
@@ -571,17 +606,22 @@ public class Constant {
     public static final int STATS_DATE = 805;
 
     public static final int STATS_NIVEAU = 962;
-    public static final int APPARENCE = 970;
+    public static final int OBVIJEVANT_APPARENCE = 970;
     public static final int OBVIJEVANT_HUMOR = 971;
     public static final int OBVIJEVANT_SKIN = 972;
-    public static final int REAL_TYPE = 973;
+    public static final int OBVIJEVANT_TYPE = 973;
+    //public static final int OBVIJEVANT_TYPE = 974;
+
+
     public static final int STATS_NAME_DJ = 814;
-    public static final int MIMIBIOTE = 915;
+    //public static final int MIMIBIOTE = 915;
     public static final int STATS_OWNER_1 = 987;//#4
     public static final int STATS_SIGNATURE = 988;
     public static final int ERR_STATS_XP = 1000;
     public static final int COMPATIBLE_AVEC = 1003;
     public static final int APPARAT_ITEM = 915;
+    public static final int APPARAT_NAME2 = 916;
+    public static final int APPARAT_NAME = 969;
     //ZAAPI <alignID,{mapID,mapID,...,mapID}>
     public static Map<Integer, String> ZAAPI = new HashMap<Integer, String>();
     //ZAAP <mapID,cellID>
@@ -2542,10 +2582,6 @@ public class Constant {
     }
 
     public static Stats getMountStats(int color, int lvl) {
-        double ratiobaseStats = 1.25;
-        double ratiobaseVita = 2;
-        double ratiobaseInit = 10;
-
         Stats stats = new Stats();
         switch (color) {
             //Amande sauvage
@@ -2931,6 +2967,16 @@ public class Constant {
                 stats.addOneStat(STATS_ADD_RP_FEU, lvl / 20);
                 stats.addOneStat(STATS_ADD_RP_NEU, lvl / 20);
                 break;
+            //Tabi
+            case 90:
+                stats.addOneStat(STATS_ADD_PERDOM, lvl / 2);
+                stats.addOneStat(STATS_ADD_PA, lvl / 100);
+                break;
+            //Karnage
+            case 91:
+                stats.addOneStat(STATS_ADD_DOMA, lvl / 10);
+                stats.addOneStat(STATS_ADD_PM, lvl / 100);
+                break;
         }
         return stats;
     }
@@ -3150,6 +3196,13 @@ public class Constant {
             //Armure
             case 88:
                 return World.world.getObjTemplate(9582);
+            //Tabi
+            case 90:
+                return World.world.getObjTemplate(12780);
+            //Karnage
+            case 91:
+                return World.world.getObjTemplate(12827);
+
         }
         return null;
     }
@@ -4483,6 +4536,20 @@ public class Constant {
             }
         }
         return -1;
+    }
+
+
+    public static short getTrapsAnimation(int spell) {
+        switch(spell) {
+            case 73: // Repulsif
+                return 409;
+            case 79: // Masse
+                return 410;
+            case 77: // Silence
+                return 411;
+            default:
+                return 407;
+        }
     }
 
     public static boolean MimibioteItem(int type){

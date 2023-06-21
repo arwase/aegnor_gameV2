@@ -1,4 +1,4 @@
-package database.statics;
+package database.site;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -15,7 +15,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 
     protected final Object locker = new Object();
     protected HikariDataSource dataSource;
-    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [S]");
+    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [blue]");
     protected Logger logger2 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.PoolBase");
     protected Logger logger3 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.HikariPool");
     protected Logger logger4 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariDataSource");
@@ -90,7 +90,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
             e.printStackTrace();
             logger.error("Can't getWaitingAccount datasource connection", e);
             dataSource.close();
-            if (!Database.getStatics().initializeConnection())
+            if (!Database.getSites().initializeConnection())
                 Main.INSTANCE.stop("statics prepared statement failed");
             return null;
         }

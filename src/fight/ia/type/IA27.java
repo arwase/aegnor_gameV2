@@ -42,18 +42,41 @@ public class IA27 extends AbstractNeedSpell  {
                     secondEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);
                     if(maxPo == 1) firstEnnemy = null;
                 }
-            }else if (this.fighter.getCurPm(this.fight) > 0 & E != null)
+            } else if (this.fighter.getCurPm(this.fight) > 0 & E != null)
             {
                 int num = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, E);
-                if(num != 0) time = num;
+                if(num != 0)
+                    time = num;
+            }
+
+            if(this.fighter.getCurPa(this.fight) > 0 && !action && secondEnnemy ==null && E !=null) {
+                if (Function.getInstance().mobilityIfPossible(this.fight, this.fighter, E)) {
+                    time = 600;
+                    action = true;
+                }
             }
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
-                    time = 2000;
+                    time = 600;
                     action = true;
                 }
             }
+
+            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,E)) {
+                    time = 600;
+                    action = true;
+                }
+            }
+
+            if (this.fighter.getCurPa(this.fight) > 0 && !action) {
+                if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter, this.buffs)) {
+                    time = 400;
+                    action = true;
+                }
+            }
+
 
             if(this.fighter.getCurPa(this.fight) > 0 && firstEnnemy != null && secondEnnemy == null && !action) {
                 int num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);

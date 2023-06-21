@@ -40,7 +40,7 @@ public class ExchangeClient {
         ioConnector = new NioSocketConnector();
         ioConnector.setHandler(new ExchangeHandler());
         Main.exchangeClient = this;
-        ExchangeClient.logger.setLevel(Level.ALL);
+        ExchangeClient.logger.setLevel(Level.OFF);
         ioConnector.setConnectTimeoutMillis(1000);
     }
 

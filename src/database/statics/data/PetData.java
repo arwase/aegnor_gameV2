@@ -1,6 +1,7 @@
 package database.statics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
+import database.Database;
 import database.statics.AbstractDAO;
 import entity.pet.PetEntry;
 import exchange.transfer.DataQueue;
@@ -95,7 +96,8 @@ public class PetData extends AbstractDAO<PetEntry> {
     }
 
     public int getNextId() {
-        final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 5);
+        return Database.getStatics().getWorldEntityData().getNextPetId();
+       /*final DataQueue.Queue<Integer> queue = new DataQueue.Queue<>((byte) 5);
         try {
             synchronized(queue) {
                 long count = DataQueue.count();
@@ -107,5 +109,6 @@ public class PetData extends AbstractDAO<PetEntry> {
             e.printStackTrace();
         }
         return queue.getValue();
+       }*/
     }
 }

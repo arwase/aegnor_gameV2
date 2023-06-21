@@ -190,7 +190,7 @@ public class Mount {
 				Mount mountArg = World.world.getMountById(arg);
 				if(mountArg == null) continue;
 
-                if(mountArg.getSex() !=	mount.getSex() && mountArg.isFecund() != 0 && mount.isFecund() != 0 ) {
+                if(mountArg.getSex() !=	mount.getSex() && mountArg.isFecund() != 0 && mount.isFecund() != 0 && mountArg.getOwner() == mount.getOwner()) {
 					//System.out.println("On est la ");
 					if(mountArg.getReproduction() < 20 && mount.getReproduction() < 20 && !mountArg.isCastrated() && !mount.isCastrated()) {
 						//System.out.println("On est la 2");
@@ -265,12 +265,17 @@ public class Mount {
 
 			SocketManager.GAME_SEND_Im_PACKET(player, "1111;" + offspring);
 			Mount father = World.world.getMountById(this.getCouple());
-			for(int i = 0; i < offspring; i++) {
-                int color = Constant.colorToEtable(player, this, (father == null ? this : father));
-				Mount baby = new Mount(color, this, (father == null ? this : father));
-                player.getCurMap().getMountPark().getEtable().add(baby);
-                baby.state = 0;
-                baby.setToMax();
+			try {
+				for (int i = 0; i < offspring; i++) {
+					int color = Constant.colorToEtable(player, this, (father == null ? this : father));
+					Mount baby = new Mount(color, this, (father == null ? this : father));
+					player.getCurMap().getMountPark().getEtable().add(baby);
+					baby.state = 0;
+					baby.setToMax();
+				}
+			}
+			catch (Exception e){
+				System.out.println(e);
 			}
 
             this.aumReproduction();
@@ -505,7 +510,7 @@ public class Mount {
 
 	public void addXp(long amount) {
 		this.exp += amount;
-		while(this.exp >= World.world.getExpLevel(this.level+1).mount && this.level < 100)
+		while(this.exp >= World.world.getExpLevel(this.level+1).mount && this.level < 150)
 			this.addLvl();
         Database.getStatics().getMountData().update(this);
 	}
@@ -666,7 +671,7 @@ public class Mount {
 		MountPark MP = map.getMountPark();
 		char dir;
 		int azar = Formulas.getRandomValue(1, 10);
-		dir = PathFinding.getDirEntreDosCeldas(map, this.cellId, player.getCurCell().getId());
+		dir = PathFinding.getDirBetweenCells(map, this.cellId, player.getCurCell().getId());
 		if(remove)
 			dir = PathFinding.getOpositeDirection(dir);
 		int cell = this.cellId;

@@ -5,6 +5,7 @@ import client.other.Stats;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
+import entity.mount.Mount;
 import entity.pet.PetEntry;
 import fight.spells.SpellEffect;
 import game.world.World;
@@ -44,6 +45,7 @@ public class ObjectTemplate {
                           int level, int pod, int price, int panoId, String conditions,
                           String armesInfos, int sold, int avgPrice, int points, int newPrice, int boutique) {
         this.id = id;
+        //this.strTemplate = Formulas.sortStatsByOrder(strTemplate);
         this.strTemplate = strTemplate;
         this.name = name;
         this.type = type;
@@ -79,7 +81,8 @@ public class ObjectTemplate {
     }
 
     public void setInfos(String strTemplate, String name, int type, int level, int pod, int price, int panoId, String conditions, String armesInfos, int sold, int avgPrice, int points, int newPrice, int boutique) {
-        this.strTemplate = strTemplate;
+        this.strTemplate = Formulas.sortStatsByOrder(strTemplate);
+        //this.strTemplate = strTemplate;
         this.name = name;
         this.type = type;
         this.level = level;
@@ -289,7 +292,7 @@ public class ObjectTemplate {
 
     public GameObject createNewFamilier(GameObject obj) {
         int id = Database.getStatics().getObjectData().getNextId();
-        Map<Integer, String> stats = new HashMap<>();
+        Map<Integer, String> stats = new LinkedHashMap<>();
         stats.putAll(obj.getTxtStat());
 
         GameObject object = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, obj.getStats(), new ArrayList<>(), new HashMap<>(), stats, 0, 0, -1);
@@ -299,6 +302,25 @@ public class ObjectTemplate {
         Database.getStatics().getPetData().add(id, time, getId());
         return object;
     }
+
+    public void createOldFamilier(GameObject obj) {
+        int id = obj.getGuid();
+        Map<Integer, String> stats = new LinkedHashMap<>();
+        stats.putAll(obj.getTxtStat());
+
+        //GameObject object = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, obj.getStats(), new ArrayList<>(), new HashMap<>(), stats, 0, 0, -1);
+
+        long time = System.currentTimeMillis();
+        try {
+            World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, Integer.parseInt(stats.get(Constant.STATS_PETS_PDV), 16), Integer.parseInt(stats.get(Constant.STATS_PETS_POIDS), 16), !stats.containsKey(Constant.STATS_PETS_EPO)));
+        }
+        catch (Exception e){
+            World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
+        }
+        Database.getStatics().getPetData().add(id, time, getId());
+        //return object;
+    }
+
 
     public GameObject createNewBenediction(int turn) {
         int id = Database.getStatics().getObjectData().getNextId();
@@ -362,7 +384,6 @@ public class ObjectTemplate {
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
-            //System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "sans duppli verif " );
             Database.getStatics().getPetData().add(id, time, getId());
 
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
@@ -423,7 +444,6 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplicationForJobs(Collection<GameObject> objects, int qua, boolean useMax,int chanceimpact) {
-
         int id = -1;
         GameObject item = null;
         try{
@@ -501,7 +521,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplication(Collection<GameObject> objects, int qua, boolean useMax) {
-        int id = -1;
+        int id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         try{
 
@@ -517,10 +537,10 @@ public class ObjectTemplate {
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
-            //System.out.println("id obj créé + "+ id + " itemasset + " + getId() + "without rarity " );
             Database.getStatics().getPetData().add(id, time, getId());
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
             item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(getStrTemplate(), useMax, 0), getEffectTemplate(getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
+
         } else {
             if (getType() == Constant.ITEM_TYPE_OBJET_ELEVAGE) {
                 item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), getStringResistance(getStrTemplate()), 0,0,-1);
@@ -572,11 +592,11 @@ public class ObjectTemplate {
             }
         }
 
-        for(GameObject object : objects) {
+        /*for(GameObject object : objects) {
             if (World.world.getConditionManager().stackIfSimilar2(object, item, true)) {
                 return object;
             }
-        }
+        }*/
 
         }
         catch (Exception e) {
@@ -586,7 +606,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplicationAndRarityBoost(Collection<GameObject> objects, int qua, boolean useMax,int difficulty) {
-        int id = -1;
+        int id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         try{
 
@@ -634,7 +654,7 @@ public class ObjectTemplate {
                                         statID = Integer.parseInt(stats[0], 16);
                                     }
                                     catch(Exception e) {
-                                        statID = 64;
+                                        //statID = 64;
                                         e.printStackTrace();
                                     }
                                     if (statID == Constant.STATS_RESIST) {
@@ -657,11 +677,11 @@ public class ObjectTemplate {
                 }
             }
 
-            for(GameObject object : objects) {
+            /*for(GameObject object : objects) {
                 if (World.world.getConditionManager().stackIfSimilar2(object, item, true)) {
                     return object;
                 }
-            }
+            }*/
 
         }
         catch (Exception e) {
@@ -711,7 +731,18 @@ public class ObjectTemplate {
         String[] splitted = statsTemplate.split(",");
         for (String s : splitted) {
             String[] stats = s.split("#");
-            int statID = Integer.parseInt(stats[0], 16);
+            int statID = 64;
+            try {
+                statID = Integer.parseInt(stats[0], 16);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+            boolean PositiveStat = true;
+            if(ArrayUtils.contains(Constant.STATS_NEGATIVE,statID)){
+                PositiveStat = false;
+            }
+
             boolean follow = true;
 
             for (int a : Constant.ARMES_EFFECT_IDS)
@@ -744,18 +775,34 @@ public class ObjectTemplate {
                     case 1:{
                         if(stats.length > 4) {
                             jet = stats[4];
+                            int min = Integer.parseInt(stats[1], 16);
+                            int max = Integer.parseInt(stats[2], 16);
                             value = Formulas.getRandomJet(jet);
                             if (useMax) {
-                                try {
-                                    //on prend le jet max
-                                    int min = Integer.parseInt(stats[1], 16);
-                                    int max = Integer.parseInt(stats[2], 16);
-                                    value = min;
-                                    if (max != 0)
-                                        value = max;
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    value = Formulas.getRandomJet(jet);
+                                if(PositiveStat) {
+                                    try {
+                                        //on prend le jet max
+                                         min = Integer.parseInt(stats[1], 16);
+                                         max = Integer.parseInt(stats[2], 16);
+                                        value = min;
+                                        if (max != 0)
+                                            value = max;
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        value = Formulas.getRandomJet(jet);
+                                    }
+                                }
+                                else{
+                                    try {
+                                        //on prend le jet max
+                                        min = Integer.parseInt(stats[1], 16);
+                                        value = min;
+                                        if (min != 0)
+                                            value = min;
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        value = Formulas.getRandomJet(jet);
+                                    }
                                 }
                             }
                         }
@@ -766,19 +813,61 @@ public class ObjectTemplate {
                             jet = stats[4];
                             int min = Integer.parseInt(stats[1], 16);
                             int max = Integer.parseInt(stats[2], 16);
-                            value = Formulas.getRandomJetWithRarity(min, max, rarete);
+                            value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                             if (useMax) {
-                                try {
-                                    //on prend le jet max
-                                    min = Integer.parseInt(stats[1], 16);
-                                    max = Integer.parseInt(stats[2], 16);
-                                    value = min;
-                                    if (max != 0)
-                                        value = max;
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    value = Formulas.getRandomJet(jet);
+                                if(PositiveStat) {
+                                    try {
+                                        //on prend le jet max
+                                        min = Integer.parseInt(stats[1], 16);
+                                        max = Integer.parseInt(stats[2], 16);
+                                        value = min;
+                                        if (max != 0)
+                                            value = max;
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        value = Formulas.getRandomJet(jet);
+                                    }
                                 }
+                                else{
+                                    try {
+                                        //on prend le jet max
+                                        min = Integer.parseInt(stats[1], 16);
+                                        value = min;
+                                        if (min != 0)
+                                            value = min;
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                        value = Formulas.getRandomJet(jet);
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case 3 :{
+                        if(PositiveStat) {
+                            try {
+                                //on prend le jet max
+                                int min = Integer.parseInt(stats[1], 16);
+                                int max = Integer.parseInt(stats[2], 16);
+                                value = min;
+                                if (max != 0)
+                                    value = max;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                value = Formulas.getRandomJet(jet);
+                            }
+                        }
+                        else{
+                            try {
+                                //on prend le jet min negatif
+                                int min = Integer.parseInt(stats[1], 16);
+                                value = min;
+                                if (min != 0)
+                                    value = min;
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                value = Formulas.getRandomJet(jet);
                             }
                         }
                         break;
@@ -789,32 +878,19 @@ public class ObjectTemplate {
                             jet = stats[4];
                             int min = Integer.parseInt(stats[1], 16);
                             int max = Integer.parseInt(stats[2], 16);
-                            value = Formulas.getRandomJetWithRarity(min, max, rarete);
+                            value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                             if (useMax) {
                                 try {
-                                    value = Formulas.getRandomJetWithRarity(min, max, 5);
+                                    value = Formulas.getRandomJetWithRarity(min, max, 5,PositiveStat);
                                 } catch (Exception e) {
                                     e.printStackTrace();
-                                    value = Formulas.getRandomJetWithRarity(min, max, rarete);
+                                    value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                                 }
                             }
                         }
                         break;
                     }
-                    case 3 :{
-                        try {
-                            //on prend le jet max
-                            int min = Integer.parseInt(stats[1], 16);
-                            int max = Integer.parseInt(stats[2], 16);
-                            value = min;
-                            if (max != 0)
-                                value = max;
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            value = Formulas.getRandomJet(jet);
-                        }
-                        break;
-                    }
+
                 }
                 if(value > 0) {
                     itemStats.addOneStat(statID, value);
@@ -834,6 +910,8 @@ public class ObjectTemplate {
 
         String[] splitted = statsTemplate.split(",");
         for (String s : splitted) {
+
+
             String[] stats = s.split("#");
             int statID = Integer.parseInt(stats[0], 16);
             for (int a : Constant.ARMES_EFFECT_IDS) {
@@ -843,6 +921,10 @@ public class ObjectTemplate {
                     String max = stats[2];
                     String jet = stats[4];
                     String args = min + ";" + max + ";-1;-1;0;" + jet;
+                    if(this.getId() == 7176){
+                        System.out.println(statsTemplate);
+                        System.out.println(args);
+                    }
                     Effets.add(new SpellEffect(id, args, 0, -1));
                 }
             }
@@ -859,6 +941,7 @@ public class ObjectTemplate {
                     break;
             }
         }
+        System.out.println(Effets);
         return Effets;
     }
 

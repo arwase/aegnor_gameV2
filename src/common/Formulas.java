@@ -10,11 +10,14 @@ import guild.GuildMember;
 import kernel.Config;
 import kernel.Constant;
 import object.GameObject;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Formulas {
@@ -45,22 +48,112 @@ public class Formulas {
             return -1;
         }
     }
-    public static int getRandomJetWithRarity(int min ,int max, int rarity)//1d5+6
+
+    private final static short[] order = new short[] {
+
+            Constant.STATS_ADD_PA,
+            Constant.STATS_ADD_PM,
+            Constant.STATS_ADD_PO,
+            Constant.STATS_ADD_VITA,
+            Constant.STATS_ADD_AGIL,
+            Constant.STATS_ADD_CHAN,
+            Constant.STATS_ADD_FORC,
+            Constant.STATS_ADD_INTE,
+            Constant.STATS_ADD_SAGE,
+            Constant.STATS_ADD_CC,
+            Constant.STATS_ADD_DOMA,
+            Constant.STATS_ADD_PERDOM,
+            Constant.STATS_MULTIPLY_DOMMAGE,
+            Constant.STATS_ADD_INIT,
+
+
+    };
+
+    /**
+     * Permet de trier les stats d'un item template et d'un item cree. Il faut lui donner uniquement les stats normaux et non les autres.
+     * Les stats qui ne sont pas specifie dans le tableaux order seront mis a la fin par ordre croissant selon leur stat ID
+     *
+     * @author Sarazar928Ghost Kevin#6537
+     * @param Stats de l'objet
+     * @return Stats sort by order
+     */
+    public static String sortStatsByOrder(final String strStats) {
+
+        if(strStats.isEmpty()) return strStats;
+
+        final Map<Byte, String> orderStats = new TreeMap<>();
+        final Map<Integer, String> unknowStats = new TreeMap<>();
+
+        for(final String stat : strStats.split(",")) {
+            final int id = Integer.parseInt(stat.split("#")[0], 16);
+
+            boolean ok = false;
+
+            for(byte i = 0; i < order.length; ++i) {
+                if(order[i] != id) continue;
+                orderStats.put(i, stat);
+                ok = true;
+                break;
+            }
+
+            if(ok) continue;
+
+            unknowStats.put(id, stat);
+
+        }
+
+
+        final StringBuilder theReturn = new StringBuilder();
+        boolean isFirst = true;
+
+        for(final byte number : orderStats.keySet())
+        {
+
+            if(!isFirst)
+                theReturn.append(",");
+            isFirst = false;
+
+            theReturn.append(orderStats.get(number));
+
+        }
+
+        for(final String stat : unknowStats.values()) {
+
+            if(!isFirst)
+                theReturn.append(",");
+            isFirst = false;
+
+            theReturn.append(stat);
+        }
+
+        return theReturn.toString();
+
+    }
+
+
+    public static int getRandomJetWithRarity(int min ,int max, int rarity,boolean positifStats)//1d5+6
     {
         try {
             int num = 0;
             switch (rarity) {
+                // c'est un jet rare
                 case 2 : {
-                    if (min < max) {
-                        min = (int) Math.floor(min + ((max - min)*0.75));
-                        num = getRandomValue(min, max);
-                    }
-                    else if (min == max) {
-                        min = max;
-                        num = min;
-                    }
-                    else {
-                        num = min;
+                    // Stat positive a boost
+                    if(positifStats) {
+                        if (min < max) {
+                            min = (int) Math.floor(min + ((max - min) * 0.75));
+                            num = getRandomValue(min, max);
+                        } else {
+                            num = min;
+                        }
+                    }// Stat negative a limité
+                    else{
+                        if (min < max) {
+                            max = (int) Math.round(min + ((max - min) * 0.25));
+                            num = getRandomValue(min, max);
+                        } else {
+                            num = min;
+                        }
                     }
                     break;
                 }
@@ -68,32 +161,55 @@ public class Formulas {
                     // pas géré ici car simple jet parfait
                     break;
                 }
+                // C'est un jet legendaire
                 case 4 : {
-                    if (min < max) {
-                        min = (int) Math.floor(min + ((max - min)*0.75));
-                        max = (int) Math.floor(max + ((max) *0.5));
-                        num = getRandomValue(min, max);
+                    // Stat positive a boost
+                    if(positifStats) {
+                        if (min < max) {
+                            min = (int) Math.floor(min + ((max - min)*0.75));
+                            max = (int) Math.floor(max *1.5);
+                            num = getRandomValue(min, max);
+                        }
+                        else if (min == max) {
+                            min = max;
+                            max = (int) Math.floor(max *1.5);
+                            num = getRandomValue(min, max);
+                        }
+                        else {
+                            num = min;
+                        }
                     }
-                    else if (min == max) {
-                        min = max;
-                        num = min;
-                    }
-                    else {
-                        num = min;
+                    // Stat negative a limité
+                    else{
+                        if (min < max) {
+                            max = (int) Math.floor(min + ((max - min)*0.25));
+                            min = (int) Math.round(min - ((min) *0.50));
+                            num = getRandomValue(min, max);
+                        }
+                        else if (min == max) {
+                            min = max;
+                            min = (int) Math.round(min - ((min) *0.50));
+                            num = getRandomValue(min, max);
+                        }
+                        else {
+                            num = (int) Math.round(min - ((min) *0.50));
+                        }
                     }
                     break;
                 }
+                // C'est un jet primal
                 case 5 : {
-                    if (min < max) {
-                        max = (int) Math.floor(max + ((max)*0.5));
-                        num = max;
+                    if(positifStats) {
+                        if (min < max) {
+                            max = (int) Math.floor(max + ((max) * 0.5));
+                            num = max;
+                        }
+                        else {
+                            num = (int) Math.floor(min + ((min) * 0.5));
+                        }
                     }
-                    else if (min == max) {
-                        min = max;
-                        num = min;
-                    }
-                    else {
-                        num = min;
+                    else{
+                        num = (int) Math.round(min - ((min) * 0.50));
                     }
                     break;
                 }
@@ -103,9 +219,10 @@ public class Formulas {
         } catch (NumberFormatException e) {
             //World.world.logger.trace("New item 2: "+e);
             e.printStackTrace();
-            return -1;
+            return 0;
         }
     }
+
     public static int getMaxJet(String jet) {
         int num = 0;
         try {
@@ -158,6 +275,7 @@ public class Formulas {
             }
         }
     }
+
     public static int getRandomJet(String jet, Fighter caster)//1d5+6
     {
         assert caster != null;
@@ -190,6 +308,7 @@ public class Formulas {
             }
         }
     }
+
     public static int getRandomJet(String jet)//1d5+6
     {
         try {
@@ -216,45 +335,21 @@ public class Formulas {
         }
     }
 
-    /*public static int getRandomJet(String jet, Fighter target, Fighter caster)//1d5+6
-    {
-        try {
-            if(target != null)
-                if(target.hasBuff(782))
-                    return Formulas.getMaxJet(jet);
-            if(caster != null)
-                if(caster.hasBuff(781))
-                    return Formulas.getMinJet(jet);
-            int num = 0, des, faces, add;
-
-            des = Integer.parseInt(jet.split("d")[0]);
-            faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
-            add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
-
-            if (faces == 0 && add == 0) {
-                num = getRandomValue(0, des);
-            } else {
-                for (int a = 0; a < des; a++) {
-                    num += getRandomValue(1, faces);
-                }
-            }
-            num += add;
-            return num;
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }*/
-
-    public static int getMiddleJet(String jet)//1d5+6
+    public static int getMiddleJet(String jet)//1d5+6 ! con de ta mère tu fait quoi a 0d0+10000 ??
     {
         try {
             int num = 0;
             int des = Integer.parseInt(jet.split("d")[0]);
             int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
             int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
-            num += ((1 + faces) / 2) * des;//on calcule moyenne
-            num += add;
+
+            if(des > 0 ) {
+                num += ((1 + faces) / 2) * des;//on calcule moyenne
+                num += add;
+            }
+            else{ // AJOUT : Si valeur fixe
+                num = add;
+            }
             return num;
         } catch (NumberFormatException e) {
             e.printStackTrace();
@@ -265,6 +360,14 @@ public class Formulas {
     public static int getTacleChance(Fighter fight, Fighter fighter) {
         int agiTacleur = fight.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
         int agiEnemi = fighter.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
+        if(fighter.isInvocation()){
+            if(fighter.getMob() != null && fighter.getMob().getTemplate() != null) {
+                if(ArrayUtils.contains(Constant.STATIC_INVOCATIONS,fighter.getMob().getTemplate().getId())){
+                    return 100;
+                }
+            }
+        }
+
         int div = agiTacleur + agiEnemi + 50;
         if (div == 0)
             div = 1;
@@ -282,7 +385,7 @@ public class Formulas {
 
     public static int calculFinalHealCac(Fighter healer, int rank, boolean isCac) {
         int intel = healer.getTotalStats().getEffect(126);
-        int heals = healer.getTotalStats().getEffect(178);
+        int heals = healer.getTotalStats().getEffect(178) - healer.getTotalStats().getEffect(179);
         if (intel < 0)
             intel = 0;
         float adic = 90; // petit bonus 100 normalement
@@ -331,7 +434,7 @@ public class Formulas {
         return 0;
     }
 
-    public static int calculXpWinFm(int lvl, int poid) {
+    public static int calculXpWinFm(int lvl, float poid) {
         if (lvl <= 1) {
             if (poid <= 10)
                 return 10;
@@ -495,6 +598,7 @@ public class Formulas {
                                          Fighter target, int statID, int jet, boolean isHeal, boolean isCaC,
                                          int spellid) {
         // if (target.hasBuff(788) && target.getBuff(788).getValue() == 101)
+
         float i = 0;//Bonus maitrise
         float j = 100; //Bonus de Classe
         float a = 1;//Calcul
@@ -503,14 +607,10 @@ public class Formulas {
         int multiplier = 0;
         if (!isHeal) {
             domC = caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA);
-            //System.out.println(caster.getId() + " Dommages ? " + domC  );
             domC +=	caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA2);
-            //System.out.println(caster.getId() + " Dommages 2 ? " + domC  );
 
             perdomC = caster.getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
-            //System.out.println(caster.getId() + " % dom ? " + perdomC  );
             multiplier = caster.getTotalStats().getEffect(Constant.STATS_MULTIPLY_DOMMAGE);
-            //System.out.println(caster.getId() + " multiplier ? " + multiplier  );
             if (caster.hasBuff(114))
                 mulT = caster.getBuffValue(114);
         } else {
@@ -588,6 +688,7 @@ public class Formulas {
                 }
                 //Ajout de la resist Magique
                 resfT = target.getTotalStats().getEffect(183);
+
                 break;
         }
         //On bride la resistance a 50% si c'est un joueur
@@ -636,6 +737,7 @@ public class Formulas {
 
         num = a * mulT * (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100))
                 + domC;//d�gats bruts
+
         //Poisons
         if (spellid != -1) {
             switch (spellid) {
@@ -654,7 +756,7 @@ public class Formulas {
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
-
+                    break;
                 case 71:
                 case 196:
                 case 219:
@@ -671,7 +773,7 @@ public class Formulas {
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
-
+                    break;
                 case 181:
                 case 200:
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
@@ -687,8 +789,10 @@ public class Formulas {
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
+                    break;
             }
         }
+
         //Renvoie
         if (caster.getId() != target.getId()) {
             int renvoie = target.getTotalStatsLessBuff().getEffect(Constant.STATS_RETDOM);
@@ -713,6 +817,7 @@ public class Formulas {
                         + "", caster.getId() + ",-" + renvoie, 107);
             }
         }
+
         int reduc = (int) ((num / (float) 100) * respT);//Reduc %resis
         if (!isHeal)
             num -= reduc;
@@ -723,26 +828,30 @@ public class Formulas {
             if (armor > 0)
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId()
                         + "", target.getId() + "," + armor, 105);
+
         if (!isHeal)
             num -= resfT;//resis fixe
         //d�gats finaux
         if (num < 1)
             num = 0;
+
         //Perte de 10% des PDV MAX par points de degat 10 PDV = 1PDV max en moins
         if (target.getPlayer() != null)
             target.removePdvMax((int) Math.floor(num / 10));
+
         // D�but Formule pour les MOBs
         if (caster.getPlayer() == null && !caster.isCollector()) {
             if (caster.getMob().getTemplate().getId() == 116)//Sacrifi� Dommage = PDV*2
             {
-                return (int) ((num / 25) * caster.getPdvMax());
+                //return (int) ((num / 25) * caster.getPdvMax());
             } else {
                 int niveauMob = caster.getLvl();
                 double CalculCoef = ((niveauMob * 0.5) / 100);
                 int Multiplicateur = (int) Math.ceil(CalculCoef);
-                return (int) num * Multiplicateur;
+                return (int) num ;
             }
         }
+
         return (int) num;
     }
 
@@ -1165,6 +1274,7 @@ public class Formulas {
 
         if (mStat > 1.2)
             mStat = 1.2F;
+
         float a = ((((((WeightTotalBase + diff) * coef) * mStat) * c) * x));
         float b = (float) (Math.sqrt(currentWeithTotal + currentWeightStats) + weight);
         if (b < 1.0)
@@ -1410,7 +1520,7 @@ public class Formulas {
 
     // NOUVELLE FONCTION PAS TROP MAL
     public static ArrayList<Integer> chanceFM2(final int PoidMaxItem, final int PoidMiniItem,final int PoidTotItemActuel, final int PoidActuelStatAFm,
-                                               final int PoidTotStatsExoItemActuel,final int poidRune,  final int maxStat, final int minStat,final int actualStat, final int statsAdd,
+                                               final int PoidTotStatsExoItemActuel,final float poidRune,  final int maxStat, final int minStat,final int actualStat, final int statsAdd,
                                                double poidUnitaire, final int statsJetfutur, final float x, final float coef, Player player, int puit,String loi) {
 
 
@@ -1432,7 +1542,7 @@ public class Formulas {
             return chances;
         }
 
-        final int diff = (int) Math.abs(PoidMaxItem * 1.3f - PoidTotItemActuel);
+        final int diff = (int) Math.abs( (PoidMaxItem +100) - PoidTotItemActuel);
 
         //player.sendMessage("Poid en JP : " + WeightTotalBase );
         //player.sendMessage("Poid en JM : " + WeightTotalBaseMin );

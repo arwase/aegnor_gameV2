@@ -43,8 +43,8 @@ public class JobCraft {
     }
 
     public void repeat(final int time1, final int time2, final Player player) {
-        this.player.sendMessage("La création est instantannée, cela peut créer un leger freeze de l'interface");
-        final int j = time1 - time2;
+        this.player.sendMessage("La création est instantannée, cela peut créer un bug de l'interface");
+
         this.jobAction.player = player;
         this.jobAction.isRepeat = true;
         boolean isOneShotCraft = false;
@@ -59,7 +59,6 @@ public class JobCraft {
                 SocketManager.GAME_SEND_EA_PACKET(this.jobAction.player, 0 + "");
                 this.jobAction.craft(this.jobAction.isRepeat, time1-1);
                 isOneShotCraft = true;
-
         }
 
         if (time2 <= 0 || isOneShotCraft) this.end();
@@ -73,7 +72,8 @@ public class JobCraft {
         SocketManager.GAME_SEND_Ea_PACKET(this.jobAction.player, "1");
         if (!this.jobAction.data.isEmpty())
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.jobAction.player, 'O', "+", this.jobAction.data);
-        // this.jobAction.ingredients.clear();
+
+        this.jobAction.ingredients.clear();
         this.jobAction.isRepeat = false;
         this.jobAction.setJobCraft(null);
         this.thread.interrupt();

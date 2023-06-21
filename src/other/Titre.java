@@ -44,7 +44,7 @@ public class Titre {
         return this.conditions;
     }
 
-    private String getName() {
+    public String getName() {
         return this.name;
     }
 

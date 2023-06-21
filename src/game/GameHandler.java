@@ -28,18 +28,24 @@ public class GameHandler implements IoHandler {
     public void messageReceived(IoSession arg0, Object arg1) throws Exception {
         GameClient client = (GameClient) arg0.getAttachment();
         String packet = (String) arg1;
-
-        if (Config.INSTANCE.getENCRYPT_PACKET() && !packet.startsWith("AT") && !packet.startsWith("Ak") && !packet.startsWith("N") ) {
-            packet = World.world.getCryptManager().decryptMessage(packet, client.getPreparedKeys());
+        if (Config.INSTANCE.getENCRYPT_PACKET() && !packet.startsWith("AT") && !packet.startsWith("Ak")) {
+            try {
+                packet = World.world.getCryptManager().decryptMessage(packet, client.getPreparedKeys());
+            }
+            catch(Exception e){
+                System.out.println(e.getMessage() + " : " + packet + " : " + client.toString());
+            }
             if (packet != null) packet = packet.replace("\n", "");
             else packet = (String) arg1;
         }
 
+
         String[] s = packet.split("\n");
 
         for(String str : s){
-            client.parsePacket(str);
             client.logger.trace(" <-- " + str);
+            System.out.println(" <-- " + str);
+            client.parsePacket(str);
         }
     }
 
@@ -73,6 +79,7 @@ public class GameHandler implements IoHandler {
                 packet = World.world.getCryptManager().decryptMessage(packet, client.getPreparedKeys()).replace("\n", "");
             if (packet.startsWith("am")) return;
             client.logger.trace(" --> " + packet);
+            System.out.println(" --> " + packet);
         }
     }
 
