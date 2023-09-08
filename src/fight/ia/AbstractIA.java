@@ -19,14 +19,14 @@ public abstract class AbstractIA implements IA {
     protected boolean stop;
     protected byte count;
 
-    public AbstractIA(Fight fight, Fighter fighter, byte count) {
+    public AbstractIA(Fight fight, Fighter fighter, byte count, String IA) {
         this.fight = fight;
         this.fighter = fighter;
         this.count = count;
         this.executor = Executors.newSingleThreadScheduledExecutor( r -> {
             Thread thread = new Thread(r);
             //thread.setDaemon(true);
-            thread.setName(AbstractIA.class.getName());
+            thread.setName(IA);
             return thread;
         });
     }
@@ -59,6 +59,9 @@ public abstract class AbstractIA implements IA {
                 this.executor.shutdownNow();
             }
         } else {
+            if(this.fighter.isDead())
+                this.executor.shutdownNow();
+
             if(!this.fight.isFinish())
                 this.addNext(this::endTurn, 50);
             else
@@ -76,12 +79,11 @@ public abstract class AbstractIA implements IA {
     }
 
     public void addNext(Runnable runnable, Integer time) {
-        //System.out.println(this.fight.isCurAction() + " ou la " + this.fight.isTraped() );
-        while(this.fight.isCurAction() || this.fight.isTraped())
+        /*while(this.fight.isCurAction() || this.fight.isTraped())
             try {
                 time -= 20;
                 Thread.sleep(20);
-            } catch (InterruptedException e) {}
-        executor.schedule(runnable,time < 0 ? 0 : time,TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {}*/
+        executor.schedule(runnable,time < 50 ? 50 : time,TimeUnit.MILLISECONDS);
     }
 }

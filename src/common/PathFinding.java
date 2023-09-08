@@ -6,7 +6,7 @@ import client.Player;
 import fight.Fight;
 import fight.Fighter;
 import fight.ia.util.AstarPathfinding;
-import fight.spells.Spell;
+import fight.spells.SpellGrade;
 import fight.traps.Glyph;
 import fight.traps.Trap;
 import game.GameServer;
@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static area.map.GameCase.getCaseCoordonnee;
 
 public class PathFinding {
 
@@ -94,6 +96,166 @@ public class PathFinding {
                 return true;
         }
         return false;
+    }
+
+    public static boolean isCellInCircle(int cellID, int centerX, int centerY, int rayon, GameMap map) {
+        GameCase.Coord coord = getCaseCoordonnee(map, cellID);
+        int cellX = coord.x;
+        int cellY = coord.y;
+        int distance = Math.abs(cellX - centerX) + Math.abs(cellY - centerY);
+        return distance <= rayon;
+    }
+
+    public boolean checkAlign(GameMap map, int cellid1 ,int cellid2)
+    {
+        GameCase.Coord cellcoord1 = getCaseCoordonnee(map,cellid1);
+        GameCase.Coord cellcoord2 = getCaseCoordonnee(map,cellid2);
+        if(cellcoord1.x == cellcoord2.x)
+        {
+            return true;
+        }
+        if(cellcoord1.y == cellcoord2.y)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+    // Dev By Arwase
+    public static boolean isValidCoordinate(GameMap map, int X ,int Y){
+        int diff = Math.abs(map.getH()-map.getW());
+        int maxrange = map.getH()+map.getW();
+        if( (X+Y) >= 0 && ((X+Math.abs(Y))<=(maxrange)) && Y<=X && Y>(-map.getW()) && Y<map.getH()){
+            if(Y <= 0 && (X+Math.abs(Y)) > (maxrange-(diff*2)) ) {
+                return false;
+            }
+            return true;
+        }
+        return  false;
+    }
+
+
+    // Dev By Arwase
+    public static List<GameCase> drawCircleBorder(int rayonduCercle, int cellIDstart, GameMap map) {
+        List<GameCase> CircleBorderCase = new ArrayList<>();
+
+        if(rayonduCercle == 0){
+            CircleBorderCase.add(map.getCase(cellIDstart));
+            return CircleBorderCase;
+        }
+        // Aucun sans que le rayon dépasse le nombre de case maximal en diagonal
+        if(rayonduCercle < map.getH()+map.getW()) {
+            // De Haut a gauche vers haut a droite
+            GameCase.Coord coord = getCaseCoordonnee(map, cellIDstart);
+            int XcircleStart = coord.x - rayonduCercle;
+            int YcircleStart = coord.y;
+            for (int i = 0; i < rayonduCercle; i++) {
+                XcircleStart += 1;
+                YcircleStart -= 1;
+
+                if (isValidCoordinate(map, XcircleStart, YcircleStart)) {
+                    int CaseIDToAdd = getCaseByPos(map, XcircleStart, YcircleStart); // You need to implement this method
+                    GameCase CaseToAdd = map.getCase(CaseIDToAdd);
+                    if (CaseToAdd != null) {
+                        CircleBorderCase.add(CaseToAdd);
+                    }
+                }
+            }
+
+            // De Haut a droite vers bas a droite
+            for (int i = 0; i < rayonduCercle; i++) {
+                XcircleStart += 1;
+                YcircleStart += 1;
+
+                if (isValidCoordinate(map, XcircleStart, YcircleStart)) {
+                    int CaseIDToAdd = getCaseByPos(map, XcircleStart, YcircleStart); // You need to implement this method
+                    GameCase CaseToAdd = map.getCase(CaseIDToAdd);
+                    if (CaseToAdd != null) {
+                        CircleBorderCase.add(CaseToAdd);
+                    }
+                }
+            }
+
+            // De bas a droite vers bas a gauche
+            for (int i = 0; i < rayonduCercle; i++) {
+                XcircleStart -= 1;
+                YcircleStart += 1;
+
+                if (isValidCoordinate(map, XcircleStart, YcircleStart)) {
+                    int CaseIDToAdd = getCaseByPos(map, XcircleStart, YcircleStart); // You need to implement this method
+                    GameCase CaseToAdd = map.getCase(CaseIDToAdd);
+                    if (CaseToAdd != null) {
+                        CircleBorderCase.add(CaseToAdd);
+                        //SocketManager.send("Arwase", "Gf901|" + CaseIDToAdd);
+                    }
+                }
+            }
+
+            // De bas a gauche vers haut a gauche
+            for (int i = 0; i < rayonduCercle; i++) {
+                XcircleStart -= 1;
+                YcircleStart -= 1;
+
+                if (isValidCoordinate(map, XcircleStart, YcircleStart)) {
+                    int CaseIDToAdd = getCaseByPos(map, XcircleStart, YcircleStart); // You need to implement this method
+                    GameCase CaseToAdd = map.getCase(CaseIDToAdd);
+                    if (CaseToAdd != null) {
+                        CircleBorderCase.add(CaseToAdd);
+                    }
+                }
+            }
+
+        }
+        // La boucle est bouclé
+        return CircleBorderCase;
+    }
+
+
+    public static List<GameCase> drawRectangleBorder(int var2, int var3, int var5, GameMap map) {
+        List<GameCase> correctedCases = new ArrayList<>();
+        int var7 = map.getW() * 2 - 1;
+        int var8 = var5;
+
+        int var9 = 0;
+        while (var9 < var2) {
+            if (var9 != 0) {
+                var8 = var8 + 1;
+            }
+            GameCase var11 = map.getCase(var8); // You need to implement this method
+            correctedCases.add(var11);
+            var9 = var9 + 1;
+        }
+
+        var9 = var9 - 1;
+        int var10 = 0;
+        while (var10 < var3 - 1) {
+            var8 = var8 + var7;
+            GameCase var11 = map.getCase(var8); // You need to implement this method
+            correctedCases.add(var11);
+            var10 = var10 + 1;
+        }
+
+        var9 = var2 - 1;
+        while (var9 >= 0) {
+            if (var9 != var2 - 1) {
+                var8 = var8 - 1;
+            }
+            GameCase var11 = map.getCase(var8); // You need to implement this method
+            correctedCases.add(var11);
+            var9 = var9 - 1;
+        }
+
+        var9 = var9 + 1;
+        int var15 = var3 - 2;
+        while (var15 >= 0) {
+            var8 = var8 - var7;
+            GameCase var11 = map.getCase(var8); // You need to implement this method
+            correctedCases.add(var11);
+            var15 = var15 - 1;
+        }
+
+        return correctedCases;
     }
 
 
@@ -279,6 +441,7 @@ public class PathFinding {
 
         return casesinLOS;
     }
+
     public static boolean isCACwithEnnemy(Fighter fighter,
                                           ArrayList<Fighter> Ennemys) {
         for (Fighter f : Ennemys)
@@ -427,10 +590,10 @@ public class PathFinding {
     }
 
     public static ArrayList<Integer> getListCaseFromFighter(Fight fight,
-                                                            Fighter fighter, int cellStart, ArrayList<Spell.SortStats> SS) {
+                                                            Fighter fighter, int cellStart, ArrayList<SpellGrade> SS) {
         int bestPo = 0;
         if (SS != null) {
-            for (Spell.SortStats sort : SS) {
+            for (SpellGrade sort : SS) {
                 if (sort.getMaxPO() > bestPo)
                     bestPo = sort.getMaxPO();
             }
@@ -483,9 +646,9 @@ public class PathFinding {
     }
 
     public static ArrayList<Integer> getListCaseFromFighter(Fight fight,
-                                                            Fighter fighter, ArrayList<Spell.SortStats> SS, Fighter nearest) {
+                                                            Fighter fighter, ArrayList<SpellGrade> SS, Fighter nearest) {
         int bestPo = 0;
-        for (Spell.SortStats sort : SS) {
+        for (SpellGrade sort : SS) {
             if (sort.getMaxPO() > bestPo)
                 bestPo = sort.getMaxPO();
         }
@@ -936,6 +1099,7 @@ public class PathFinding {
         ArrayList<Glyph> glyphs = new ArrayList<Glyph>();//Copie du tableau
         glyphs.addAll(fight.getAllGlyphs());
         int dist = 1000;
+        int j = 0;
         //On prend la cellule autour de la cible, la plus proche
         int cellID = startCell;
         if (forbidens == null)
@@ -988,11 +1152,14 @@ public class PathFinding {
                 cellID = c;
             }
             boolean ok = false;
-            while(!ok)
+            while(!ok && j < 500)
             {
+                j++;
+
                 int h = PathFinding.GetCaseIDFromDirrection(c, d, map, true);
                 if (map.getCase(h) == null)
                     ok = true;
+
                 dis = PathFinding.getDistanceBetween(map, endCell, c);
                 dis2 = PathFinding.getDistanceBetween(map, startCell, c);
                 // Si la distance est strictement inférieur à 1000 et que la case
@@ -1015,7 +1182,7 @@ public class PathFinding {
                     dist = dis;
                     // On modifie la cellule
                     cellID = c;
-                }else if (dis < dist && map.getCase(c).isWalkable(true, true, -1)
+                } else if (dis < dist && map.getCase(c).isWalkable(true, true, -1)
                         && map.getCase(c).getFirstFighter() == null
                         && !forbidens.contains(map.getCase(c)))
                 {
@@ -1854,19 +2021,54 @@ public class PathFinding {
         }
         return 0;
     }
+    public static byte[] getCoordByDir(final char c) {
+        byte[][] f = { { 1, -1 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }, { 0, -1 } };
+        byte i = 0;
+        char[] allDirs = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+        for (char a : allDirs) {
+            if (c == a)
+                return f[i];
+            i++;
+        }
+        return null;
+    }
+
+    private static ArrayList<Short> casesByLines(final GameCase caseI, final GameMap mapI, final int distance, char dir) {
+        ArrayList<Short> allCases = new ArrayList<Short>();
+        if (dir == 0) {
+            return allCases;
+        }
+        int x = getCellXCoord(mapI,caseI.getId()),
+                y = getCellYCoord(mapI,caseI.getId());
+
+        byte[] b = getCoordByDir(dir);
+        for (int x2 = distance; x2 >= 0; x2--) {
+            int CellId = getCaseByPos(mapI,(x + (b[0] * x2)), (y + (b[1] * x2)));
+            GameCase cell = mapI.getCase(CellId);
+            if (cell != null) {
+                if (!allCases.contains(cell.getId()))
+                    allCases.add((short)cell.getId());
+            }
+        }
+        return allCases;
+    }
 
     public static ArrayList<GameCase> getCellListFromAreaString(GameMap map,
-                                                            int cellID, int castCellID, String zoneStr, int PONum, boolean isCC) {
+                                                            int cellID, int castCellID, String zoneStr) {
         ArrayList<GameCase> cases = new ArrayList<GameCase>();
-        int c = PONum;
+
         if (map.getCase(cellID) == null)
             return cases;
-        cases.add(map.getCase(cellID));
 
-        int taille = World.world.getCryptManager().getIntByHashedValue(zoneStr.charAt(c + 1));
-        switch (zoneStr.charAt(c)) {
+        int taille = World.world.getCryptManager().getIntByHashedValue(zoneStr.charAt(1));
+        switch (zoneStr.charAt(0)) {
             case 'C':// Cercle
-                for (int a = 0; a < taille; a++) {
+                int i= 0;
+                while ( i <= taille) {
+                    cases.addAll(drawCircleBorder(i, cellID, map));
+                    i += 1;
+                }
+                /*for (int a = 0; a < taille; a++) {
                     char[] dirs = {'b', 'd', 'f', 'h'};
                     ArrayList<GameCase> cases2 = new ArrayList<GameCase>();// on �vite les
                     // modifications
@@ -1881,10 +2083,10 @@ public class PathFinding {
                                 cases.add(cell);
                         }
                     }
-                }
+                }*/
                 break;
-
             case 'X':// Croix
+                cases.add(map.getCase(cellID));
                 char[] dirs = {'b', 'd', 'f', 'h'};
                 for (char d : dirs) {
                     int cID = cellID;
@@ -1894,8 +2096,98 @@ public class PathFinding {
                     }
                 }
                 break;
+            case 'R': //Supposed to be Rectangle, is broken
+            {
+                List<GameCase> casesID =  drawRectangleBorder(taille,taille,cellID,map);
 
+                char[] dirs3= { 'h', 'd' };
+                for(char d : dirs3)
+                {
+                    int cID=cellID;
+                    for(int a=0;a<taille;a++)
+                    {
+                        if(!cases.contains(map.getCase(GetCaseIDFromDirrection(cID,d,map,true))))
+                            cases.add(map.getCase(GetCaseIDFromDirrection(cID,d,map,true)));
+                        cID=GetCaseIDFromDirrection(cID,d,map,true);
+                    }
+                }
+
+                char[] dirss= { 'b', 'f' };
+                for(char d : dirss)
+                {
+                    int cID=cellID;
+                    for(int a=0;a<taille;a++)
+                    {
+                        if(!cases.contains(map.getCase(GetCaseIDFromDirrection(cID,d,map,true))))
+                            cases.add(map.getCase(GetCaseIDFromDirrection(cID,d,map,true)));
+                        int tempcID=map.getCase(GetCaseIDFromDirrection(cID,d,map,true)).getId();
+                        cID=map.getCase(GetCaseIDFromDirrection(cID,d,map,true)).getId();
+                        char[] dirs2= { 'h', 'd' };
+                        for(char ch : dirs2)
+                        {
+                            int cID2=cID;
+                            for(int a2=0;a2<taille;a2++)
+                            {
+                                if(!cases.contains(map.getCase(GetCaseIDFromDirrection(cID2,d,map,true))))
+                                    cases.add(map.getCase(GetCaseIDFromDirrection(cID2,ch,map,true)));
+                                cID2=map.getCase(GetCaseIDFromDirrection(cID2,ch,map,true)).getId();
+                            }
+                        }
+                        cID=tempcID;
+                    }
+                }
+                break;
+            }
+            case 'D':// Damier
+                int pair = taille % 2 == 0 ? 0 : 1;
+                while (pair < taille) {
+                    cases.addAll(drawCircleBorder(pair, cellID, map));
+                    pair += 2;
+                }
+                break;
+            case 'O':
+                cases.add(map.getCase(cellID));
+                for (final short celda2 : casesByDistances(map.getCase(cellID), map, taille)) {
+                    GameCase celda = map.getCase(celda2);
+                    if (!cases.contains(celda)) {
+                        cases.add(celda);
+                    }
+                }
+                break;
+            case 'A':// Croix
+                cases.add(map.getCase(cellID));
+                for (int a = taille; a >= 0; a--) {
+                    for (final int caseII : casesByCroix(map.getCase(castCellID), map, a)) {
+                        GameCase caseI = map.getCase(caseII);
+                        if (!cases.contains(caseI)) {
+                            cases.add(caseI);
+                        }
+                    }
+                }
+                break;
+            case 'T':
+                cases.add(map.getCase(cellID));
+                final char dir2 = getDirBetweenTwoCase( (short)castCellID,(short)cellID,map, true);
+                for (final short caseII : casesByLines(map.getCase(cellID), map, taille,
+                        correctDir((char) (dir2 - 2)))) {
+                    GameCase caseI = map.getCase(caseII);
+                    if (!cases.contains(caseI)) {
+                        cases.add(caseI);
+                    }
+                }
+                for (final short celda2 : casesByLines(map.getCase(cellID), map, taille,
+                        correctDir((char) (dir2 + 2)))) {
+                    GameCase caseI = map.getCase(celda2);
+                    if (!cases.contains(caseI)) {
+                        cases.add(caseI);
+                    }
+                }
+                if (!cases.contains(map.getCase(cellID))) {
+                    cases.add(map.getCase(cellID));
+                }
+                break;
             case 'L':// Ligne
+                cases.add(map.getCase(cellID));
                 char dir = PathFinding.getDirBetweenTwoCase(castCellID, cellID, map, true);
                 for (int a = 0; a < taille; a++) {
                     cases.add(map.getCase(GetCaseIDFromDirrection(cellID, dir, map, true)));
@@ -1903,15 +2195,98 @@ public class PathFinding {
                 }
                 break;
 
-            case 'P':// Player?
-
+            case 'P':// Pointer
+                cases.add(map.getCase(cellID));
                 break;
 
             default:
-                GameServer.a("Zone inconnue " + zoneStr.charAt(c));
+                cases.add(map.getCase(cellID));
+                System.out.println("Zone d'effet Inconnu ! " + zoneStr);
+                GameServer.a("Zone d'effet inconnue " + zoneStr.charAt(0) + " - " + map.getId());
                 break;
         }
+
+        /*for(GameCase cells : cases){
+            SocketManager.send("Arwase","Gf901|"+cells.getId());
+        }*/
         return cases;
+    }
+
+    private static char correctDir(char dir) {
+        switch (dir) {
+            case 'h' - 8:
+                return 'h';
+            case 'g' - 8:
+                return 'g';
+            case 'f' - 8:
+                return 'f';
+            case 'e' - 8:
+                return 'e';
+            case 'd' - 8:
+                return 'd';
+            case 'c' - 8:
+                return 'c';
+            case 'b' - 8:
+                return 'b';
+            case 'a' - 8:
+                return 'a';
+            case 'h' + 8:
+                return 'h';
+            case 'g' + 8:
+                return 'g';
+            case 'f' + 8:
+                return 'f';
+            case 'e' + 8:
+                return 'e';
+            case 'd' + 8:
+                return 'd';
+            case 'c' + 8:
+                return 'c';
+            case 'b' + 8:
+                return 'b';
+            case 'a' + 8:
+                return 'a';
+        }
+        return dir;
+    }
+
+    private static ArrayList<Integer> casesByCroix(final GameCase caseI, final GameMap mapI, final int disatnce) {
+        ArrayList<Integer> allCases = new ArrayList<Integer>();
+        int x = caseI.getCoordX(), y = caseI.getCoordY();
+        byte[][] coordArround = { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+        for (byte[] b : coordArround) {
+            int CellId = getCaseByPos(mapI,(x + (b[0] * disatnce)), (y + (b[1] * disatnce)));
+            GameCase cell = mapI.getCase(CellId);
+            if (cell != null) {
+                if (!allCases.contains(cell.getId()))
+                    allCases.add(cell.getId());
+            }
+        }
+        return allCases;
+    }
+
+
+    public static ArrayList<Short> casesByDistances(final GameCase caseI, final GameMap mapI, final int distance) {
+        ArrayList<Short> allCases = new ArrayList<Short>();
+
+        GameCase.Coord coord = getCaseCoordonnee(mapI,caseI.getId());
+        int x = coord.x,y = coord.y;
+
+        byte[][] f = { { 1, 1 }, { 1, -1 }, { -1, 1 }, { -1, -1 } };
+        for (int x2 = 0; x2 <= distance; x2++) {
+            int y2 = distance - x2;
+            for (byte[] b : f) {
+                int CellId = getCaseByPos(mapI,(x + (b[0] * x2)), (y + (b[1] * y2)));
+                GameCase cell = mapI.getCase(CellId);
+                if (cell != null) {
+
+                    if (!allCases.contains(cell.getId()))
+                        allCases.add((short)cell.getId());
+                }
+
+            }
+        }
+        return allCases;
     }
 
     public static int getCellXCoord(GameMap map, int cellID) {
@@ -2186,20 +2561,140 @@ public class PathFinding {
         return abc;
     }
 
+    public static int getXFromCellID(int cellID, int mapWidth) {
+        return cellID % mapWidth;
+    }
+
+    public static int getYFromCellID(int cellID, int mapWidth) {
+        return (cellID - getXFromCellID(cellID, mapWidth)) / mapWidth;
+    }
+
+    public static int getCellIDFromXY(int x, int y, int mapWidth) {
+        return y * mapWidth + x;
+    }
+
+    public static boolean checkView(GameMap mapHandler, int cellId1, int cellId2) {
+        GameCase.Coord startCoord = getCaseCoordonnee(mapHandler, cellId1);
+        GameCase.Coord endCoord = getCaseCoordonnee(mapHandler, cellId2);
+        GameCase startCellData = mapHandler.getCase(cellId1);
+        GameCase endCellData = mapHandler.getCase(cellId2);
+        /*if(startCellData.getId() == endCellData.getId()){
+            return true;
+        }*/
+
+        double startHeightModifier = (startCellData.isLoS()) ? 1.5 : 0;
+        double endHeightModifier = (endCellData.isLoS()) ? 1.5 : 0;
+        startHeightModifier += startCellData.blockLoS() ? 1.5 : 0;
+        endHeightModifier += endCellData.blockLoS() ? 1.5 : 0;
+        startCoord.z = (int) (startCellData.getHeight()  + startHeightModifier);
+        endCoord.z = (int) (endCellData.getHeight() + endHeightModifier);
+
+        double heightDifference = endCoord.z - startCoord.z;
+        int maxDistance = Math.max(Math.abs(startCoord.y - endCoord.y), Math.abs(startCoord.x - endCoord.x));
+        double slope = (double) (startCoord.y - endCoord.y) / (startCoord.x - endCoord.x);
+        double intercept = startCoord.y - slope * startCoord.x;
+        int xDirection = (endCoord.x - startCoord.x >= 0) ? 1 : -1;
+        int yDirection = (endCoord.y - startCoord.y >= 0) ? 1 : -1;
+        double currentY = startCoord.y;
+        double currentX = startCoord.x;
+        int endX = endCoord.x * xDirection;
+        int endY = endCoord.y * yDirection;
+        double currentXWithOffset = startCoord.x + 0.5 * xDirection;
+
+        while (currentXWithOffset * xDirection <= endX) {
+            double currentYOnSlope = slope * currentXWithOffset + intercept;
+            double roundUpY;
+            double roundDownY;
+            if (yDirection > 0) {
+                roundUpY = Math.round(currentYOnSlope);
+                roundDownY = Math.ceil(currentYOnSlope - 0.5);
+            } else {
+                roundUpY = Math.ceil(currentYOnSlope - 0.5);
+                roundDownY = Math.round(currentYOnSlope);
+            }
+            double currentYToCheck = currentY;
+
+            while (currentYToCheck * yDirection <= roundDownY * yDirection) {
+
+                if (!checkCellView(mapHandler, currentXWithOffset - ((double)xDirection / 2.0), currentYToCheck, false, startCoord, endCoord, heightDifference, maxDistance)) {
+                    return false;
+                }
+                currentYToCheck += yDirection;
+            }
+
+            currentY = roundUpY;
+            currentXWithOffset += xDirection;
+        }
+
+        double currentYToCheck = currentY;
+        while (currentYToCheck * yDirection <= endCoord.y * yDirection) {
+            if (!checkCellView(mapHandler, currentXWithOffset - (0.5 * (double)xDirection), currentYToCheck, false, startCoord, endCoord, heightDifference, maxDistance)) {
+                return false;
+            }
+            currentYToCheck += yDirection;
+        }
+
+        if (!checkCellView(mapHandler, currentXWithOffset - (0.5 * (double)xDirection), (currentYToCheck - (double)yDirection), true, startCoord, endCoord, heightDifference, maxDistance)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static int getCaseByPos(GameMap mapHandler, int x, int y) {
+        int width = mapHandler.getW();
+        return x * width + y * (width - 1);
+    }
+
+
+    public static boolean checkCellView(GameMap mapHandler, double x, double y, boolean hasSpriteOnId, GameCase.Coord startCoord, GameCase.Coord endCoord, double heightDifference, int maxDistance) {
+        int cellNum = getCaseByPos(mapHandler, (int)x, (int)y);
+        GameCase cellData = mapHandler.getCase(cellNum);
+        int maxCoordDifference = Math.max(Math.abs(startCoord.y - (int) y), Math.abs(startCoord.x - (int) x));
+        double coordRatio = 0;
+        try {
+            if(maxDistance != 0 && heightDifference != 0 ) {
+                coordRatio = (maxCoordDifference / (double) maxDistance * heightDifference) + startCoord.z;
+            }
+            else
+                coordRatio = startCoord.z;
+        }
+        catch (Exception ignored){
+            ignored.printStackTrace();
+            coordRatio =0;
+        }
+        double cellHeight = cellData.getHeight();
+
+        boolean isBlocked = !(cellData.isEmpty() == null || (maxCoordDifference == 0 || (hasSpriteOnId || endCoord.x == (int) x && endCoord.y == (int) y)));
+        if (cellData.isLoS() && cellData.isActivate() && (cellHeight <= coordRatio && !isBlocked) ) {
+            return true;
+        }
+
+        if (hasSpriteOnId) {
+            return true;
+        }
+
+        return false;
+    }
+
+
     public static boolean checkLoS(GameMap map, int cell1, int cell2,
                                    Fighter fighter, boolean isPeur) {
 
         if (fighter == null) // on ne rev�rifie pas (en plus du client) pour les joueurs
             return false;
 
+        /*
         if (fighter.getPlayer() != null) // on ne rev�rifie pas (en plus du client) pour les joueurs
             return true;
+            */
 
         ArrayList<Integer> CellsToConsider = new ArrayList<Integer>();
         CellsToConsider = getLoSBotheringIDCases(map, cell1, cell2, true);
         if (CellsToConsider == null) {
             return true;
         }
+
         for (Integer cellID : CellsToConsider) {
             if (map.getCase(cellID) != null)
                 if (!map.getCase(cellID).blockLoS()
@@ -2209,19 +2704,9 @@ public class PathFinding {
         }
         return true;
     }
+
     public static boolean checkLoSBetween2Cells(GameMap map, int cell1, int cell2) {
-        ArrayList<Integer> CellsToConsider = getLoSBotheringIDCases(map, cell1, cell2, true);
-        if (CellsToConsider == null) {
-            return true;
-        }
-        for (Integer cellID : CellsToConsider) {
-            if (map.getCase(cellID) != null)
-                if (!map.getCase(cellID).blockLoS()
-                        || (!map.getCase(cellID).isWalkable(false) && false)) {
-                    return false;
-                }
-        }
-        return true;
+        return checkView(map, cell1, cell2);
     }
 
     private static ArrayList<Integer> getLoSBotheringIDCases(GameMap map,
@@ -2452,4 +2937,8 @@ public class PathFinding {
         return ha != 4;
 
     }
+
+
+
+
 }

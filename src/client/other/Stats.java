@@ -273,6 +273,10 @@ public class Stats {
                 if (this.effects.get(Constant.STATS_REM_RP_NEU) != null)
                     val -= this.effects.get(Constant.STATS_REM_RP_NEU);
                 break;
+            case Constant.STATS_ADD_FINALDMG:
+                if (this.effects.get(Constant.STATS_REM_FINALDMG) != null)
+                    val -= this.effects.get(Constant.STATS_REM_FINALDMG);
+                break;
             case Constant.STATS_ADD_MAITRISE:
                 if (this.effects.get(Constant.STATS_ADD_MAITRISE) != null)
                     val = this.effects.get(Constant.STATS_ADD_MAITRISE);

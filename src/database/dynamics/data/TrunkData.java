@@ -104,6 +104,7 @@ public class TrunkData extends AbstractDAO<Trunk> {
         }
     }
 
+
     public void insert(Trunk trunk) {
         PreparedStatement p = null;
         try {

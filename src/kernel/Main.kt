@@ -60,6 +60,7 @@ object Main {
             stop("Can't init game server",2)
             return
         }
+
         GameServer.INSTANCE.setState(1)
         logger.info("Server is ready ! Waiting for connection..\n")
 
@@ -96,9 +97,9 @@ object Main {
 
     private fun closeServer() {
         if (Config.isRunning) {
-            Config.isRunning = false
-
             GameServer.INSTANCE.setState(0)
+            Config.isRunning = false
+            GameServer.INSTANCE.kickAll(true)
             WorldSave.cast(0)
             if (!Config.HEROIC) {
                 Database.getDynamics().heroicMobsGroups.deleteAll()
@@ -106,9 +107,6 @@ object Main {
                     map.mobGroups.values.filterNot { it.isFix }.forEach { Database.getDynamics().heroicMobsGroups.insert(map.id, it, null) }
                 }*/
             }
-            GameServer.INSTANCE.setState(0)
-
-            GameServer.INSTANCE.kickAll(true)
             Database.getStatics().serverData.loggedZero()
         }
         GameServer.INSTANCE.stop()
@@ -122,6 +120,12 @@ object Main {
         Runtime.getRuntime().removeShutdownHook(shutdownThread);
         closeServer()
         System.exit(exitCode)
+    }
+
+    @JvmStatic
+    fun refreshTitle() {
+        //if (Main.isRunning)
+        //    Main.setTitle(Config.getInstance().NAME + " - Port : " + Main.gamePort + " | " + Main.key + " | " + Main.gameServer.getClients().size() + " Joueur(s)");
     }
 
 }

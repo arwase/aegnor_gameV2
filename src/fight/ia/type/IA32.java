@@ -6,6 +6,7 @@ import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.LaunchedSpell;
 import fight.spells.Spell;
+import fight.spells.SpellGrade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,7 @@ public class IA32 extends AbstractNeedSpell  {
     private int attack = 0;
 
     public IA32(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA32");
     }
 
     @Override
@@ -29,9 +30,9 @@ public class IA32 extends AbstractNeedSpell  {
             Fighter nearestEnnemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
             ArrayList<Fighter> Exclusions = new ArrayList<>();
 
-            for(Spell.SortStats S : this.highests) {
+            for(SpellGrade S : this.highests) {
                 if (S != null && S.getMaxPO() > maxPo) {
-                    if (S.getSpell().getType() == 0 && LaunchedSpell.cooldownGood(this.fighter, S.getSpellID())) {
+                    if (S.getTypeSwitchSpellEffects() == 0 && LaunchedSpell.cooldownGood(this.fighter, S.getSpellID())) {
                         maxPo = S.getMaxPO();
 
                         if(S.isModifPO())
@@ -57,7 +58,7 @@ public class IA32 extends AbstractNeedSpell  {
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
-                    time = 2000;
+                    time = 1000;
                     action = true;
                 }
             }
@@ -88,7 +89,7 @@ public class IA32 extends AbstractNeedSpell  {
                 }
             }
 
-            if(this.fighter.getCurPm(this.fight) > 0 && !action) {
+            if(this.fighter.getCurPm(this.fight) > 0 && this.fighter.getCurPa(this.fight) > 0 && !action) {
                 int value = Function.getInstance().movetoAttackwithLOS(this.fight, this.fighter,nearestEnnemy,maxPo);
                 if(value != 0) {
                     time = value;
@@ -126,7 +127,10 @@ public class IA32 extends AbstractNeedSpell  {
 
             if(this.fighter.getCurPm(this.fight) > 0 && !action) {
                 int value = Function.getInstance().moveFarIfPossible(this.fight, this.fighter);
-                if(value != 0) time = value;
+                if(value != 0) {
+                    time = value;
+                    this.stop = true;
+                }
             }
 
             if(this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0)

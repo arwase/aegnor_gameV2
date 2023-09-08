@@ -1,10 +1,12 @@
 package fight.ia.type;
 
+import common.Formulas;
+import common.PathFinding;
 import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,20 +14,19 @@ import fight.spells.Spell.SortStats;
 public class IA17 extends AbstractNeedSpell  {
 
     public IA17(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA17");
     }
 
     @Override
     public void apply() {
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
+            Fighter invocationAllie = Function.getInstance().getNearestFriendInvoc(this.fight, this.fighter);
             int time = 100, maxPo = 1;
             boolean action = false;
 
 
-            for(SortStats spellStats : this.highests)
-                if(spellStats != null && spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter target = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);
             if(target != null)
@@ -34,12 +35,36 @@ public class IA17 extends AbstractNeedSpell  {
 
             if(this.fighter.getCurPa(this.fight) > 0) {
                 if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
-                    time = 3000;
+                    time = 2000;
                     action = true;
                 }
             }
 
-            if(this.fighter.getCurPm(this.fight) > 0 && target == null) {
+            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+                if (Function.getInstance().buffIfPossible(this.fight, this.fighter, this.fighter,this.buffs)) {
+                    time = 800;
+                    action = true;
+                }
+            }
+
+            if(this.fighter.getCurPa(this.fight) > 0 && !action && invocationAllie != null) {
+                if (Function.getInstance().buffIfPossible(this.fight, this.fighter, invocationAllie,this.buffs)) {
+                    time = 800;
+                    action = true;
+                }
+            }
+
+
+            if(this.fighter.getCurPm(this.fight) < PathFinding.getDistanceBetween(fight.getMap(),this.fighter.getCell().getId(),ennemy.getCell().getId()) && target == null && !action) {
+                if(Function.getInstance().mobilityIfPossible(this.fight, this.fighter, ennemy)) {
+                    time = 800;
+                    action = true;
+                    target = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);
+                }
+            }
+
+
+            if(this.fighter.getCurPm(this.fight) > 0 && target == null && !action) {
                 int num = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, ennemy);
                 if(num != 0) {
                     time = num;
@@ -48,7 +73,7 @@ public class IA17 extends AbstractNeedSpell  {
                 }
             }
 
-            if(this.fighter.getCurPa(this.fight) > 0 && target == null) {
+            if(this.fighter.getCurPa(this.fight) > 0 && target == null && !action) {
                 int num = Function.getInstance().attackBondIfPossible(this.fight, this.fighter, ennemy);
                 if(num != 0) {
                     time = num;

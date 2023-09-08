@@ -72,8 +72,8 @@ public class CommandAdmin extends AdminUser {
             }
 
             this.command(command, infos, msg);
-        } catch (Exception ignored) {
-            System.out.println(ignored);
+        } catch (Exception e) {
+            System.out.println("Erreur " +msg + " " + e.getMessage() );
         }
     }
 
@@ -106,30 +106,31 @@ public class CommandAdmin extends AdminUser {
             }
             return;
         } else if (command.equalsIgnoreCase("ONLINE")) {
-            Player perso = this.getPlayer();
-            if (infos.length > 1) {//Si un nom de perso est specifie
-                try {
-                    perso = World.world.getPlayerByName(infos[1]);
-                } catch (Exception e) {
-                    // ok
+                 Player perso = this.getPlayer();
+                if (infos.length > 1) {//Si un nom de perso est specifie
+                    try {
+                        perso = World.world.getPlayerByName(infos[1]);
+                    } catch (Exception e) {
+                        // ok
+                    }
+                    if (perso == null) {
+                        this.sendMessage("Le personnage n'a pas ete trouve");
+                        return;
+                    }
                 }
-                if (perso == null) {
-                    this.sendMessage("Le personnage n'a pas ete trouve");
-                    return;
-                }
-            }
-            if (perso.getGameClient() != null)
-                perso.getGameClient().kick();
-            perso.setOnline(false);
-            perso.resetVars();
-            Database.getStatics().getPlayerData().update(perso);
-            SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(perso.getCurMap(), perso.getId());
-            World.world.unloadPerso(perso);
-            Database.getStatics().getPlayerData().load(perso.getId());
-            World.world.ReassignAccountToChar(perso.getAccount());
-            String str = "Le joueur " + perso.getName() + " a ete reinitialise de ces variables.";
-            this.sendMessage(str);
-            return;
+                if (perso.getGameClient() != null)
+                    perso.getGameClient().kick();
+                perso.setOnline(false);
+                perso.resetVars();
+                Database.getStatics().getPlayerData().update(perso);
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(perso.getCurMap(), perso.getId());
+                World.world.unloadPerso(perso);
+                Database.getStatics().getPlayerData().load(perso.getId());
+                World.world.ReassignAccountToChar(perso.getAccount());
+                String str = "Le joueur " + perso.getName() + " a ete reinitialise de ces variables.";
+                this.sendMessage(str);
+                return;
+
         } else if (command.equalsIgnoreCase("ANAME")) {
             infos = msg.split(" ", 2);
             String prefix = "<b><a href='asfunction:onHref,ShowPlayerPopupMenu," + this.getPlayer().getName() + "'>[" + this.getPlayer().getGroupe().getName() + "] " + this.getPlayer().getName() + "</a></b>";
@@ -417,41 +418,59 @@ public class CommandAdmin extends AdminUser {
                 mapID = Short.parseShort(infos[1]);
                 cellID = Integer.parseInt(infos[2]);
             } catch (Exception e) {
-                // ok
+                System.out.println("bug récup loc");
+                System.out.println(e);
             }
-            if(cellID <= -1)
-            {
-                cellID = World.world.getMap(mapID).getRandomFreeCellId();
-            }
-            if (mapID == -1 || cellID == -1 || World.world.getMap(mapID) == null) {
-                String str = "";
-                if (mapID == -1 || World.world.getMap(mapID) == null)
-                    str = "MapID invalide.";
-                else
-                    str = "cellID invalide.";
-                this.sendMessage(str);
-                return;
-            }
-            if (World.world.getMap(mapID).getCase(cellID) == null) {
-                String str = "cellID invalide.";
-                this.sendMessage(str);
-                return;
-            }
-            Player perso = this.getPlayer();
-            if (infos.length > 3)//Si un nom de perso est specifie
-            {
-                perso = World.world.getPlayerByName(infos[3]);
-                if (perso == null || perso.getFight() != null) {
-                    String str = "Le personnage n'a pas ete trouve ou est en combat";
+
+            try {
+                if(cellID <= -1)
+                {
+                    cellID = World.world.getMap(mapID).getRandomFreeCellId();
+                }
+                if (mapID == -1 || cellID == -1 || World.world.getMap(mapID) == null) {
+                    String str = "";
+                    if (mapID == -1 || World.world.getMap(mapID) == null)
+                        str = "MapID invalide.";
+                    else
+                        str = "cellID invalide.";
                     this.sendMessage(str);
                     return;
                 }
-                if(!perso.isOnline()) {
-                    perso.setCurMap(World.world.getMap(mapID));
-                    perso.setCurCell(World.world.getMap(mapID).getCase(cellID));
+                if (World.world.getMap(mapID).getCase(cellID) == null) {
+                    String str = "cellID invalide.";
+                    this.sendMessage(str);
+                    return;
                 }
+            } catch (Exception e) {
+                System.out.println("bug génération cell");
+                System.out.println(e);
             }
-            perso.teleport(mapID, cellID);
+            Player perso = this.getPlayer();
+            try {
+
+                if (infos.length > 3)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[3]);
+                    if (perso == null || perso.getFight() != null) {
+                        String str = "Le personnage n'a pas ete trouve ou est en combat";
+                        this.sendMessage(str);
+                        return;
+                    }
+                    if(!perso.isOnline()) {
+                        perso.setCurMap(World.world.getMap(mapID));
+                        perso.setCurCell(World.world.getMap(mapID).getCase(cellID));
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("changement de map bug");
+                System.out.println(e);
+            }
+            try {
+                perso.teleport(mapID, cellID);
+            } catch (Exception e) {
+                System.out.println("bug teleport");
+                System.out.println(e);
+            }
             String str = "Le joueur " + perso.getName() + " a ete teleporte.";
             this.sendMessage(str);
             return;
@@ -1536,7 +1555,7 @@ public class CommandAdmin extends AdminUser {
             uptime %= (1000 * 60);
             int sec = (int) (uptime / (1000));
 
-            String message = "\n<u><b>Global informations system of the StarLoco emulator :</b></u>\n\n<u>Uptime :</u> " + day + "j " + hour + "h " + min + "m " + sec + "s.\n";
+            String message = "\n**Global informations system of the Aegnor emulator :**\n\nUptime : " + day + "j " + hour + "h " + min + "m " + sec + "s.\n";
             message += "Online players         : " + GameServer.getClients().size() + "\n";
             message += "Unique online players  : " + GameServer.getPlayersNumberByIp() + "\n";
             message += "Online clients         : " + GameServer.getClients().size() + "\n";
@@ -1552,6 +1571,7 @@ public class CommandAdmin extends AdminUser {
             message += "\nMax Memory   : " + instance.maxMemory() / mb + " Mo.";
             message += "\n\n<u>Available processor :</u> " + instance.availableProcessors();
             Set<Thread> list = Thread.getAllStackTraces().keySet();
+
             int news = 0, running = 0, blocked = 0, waiting = 0, sleeping = 0, terminated = 0;
             for(Thread thread : list) {
                 switch(thread.getState()) {
@@ -1577,7 +1597,7 @@ public class CommandAdmin extends AdminUser {
             if(infos.length > 1) {
                 message = "List of all threads :\n";
                 for(Thread thread : list)
-                    message += "- " + thread.getId() + " -> " + thread.getName() + " -> " + thread.getState().name().toUpperCase() + "" + (thread.isDaemon() ? " (Daemon)" : "") + ".\n";
+                    message += "- " + thread.getId() + "-> "+ thread.getPriority() + " -> " + thread.getName() + " -> " + thread.getState().name().toUpperCase() + "" + (thread.isDaemon() ? " (Daemon)" : "") + " ressources " + thread.getContextClassLoader() + ".\n";
                 this.sendMessage(message);
             }
             return;
@@ -1677,6 +1697,7 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             if (Database.getStatics().getBanIpData().delete(perso.getAccount().getCurrentIp())) {
+                perso.getAccount().setBanned(false);
                 this.sendMessage("L'IP a ete debanni.");
                 return;
             }
@@ -2286,7 +2307,7 @@ public class CommandAdmin extends AdminUser {
             return;
         } else if (command.equalsIgnoreCase("KICKALL")) {
             this.sendMessage("Tout le monde va etre kicke.");
-            GameServer.INSTANCE.kickAll(true);
+            GameServer.INSTANCE.kickAll(false);
             return;
         } else if (command.equalsIgnoreCase("RESET")) {
             Player perso = this.getPlayer();
@@ -2856,7 +2877,14 @@ public class CommandAdmin extends AdminUser {
                 pointtotal = 0;
             if (pointtotal > 50000)
                 pointtotal = 50000;
-            perso.getAccount().getWebAccount().setPoints(pointtotal);
+
+            if(Config.INSTANCE.getAZURIOM()) {
+                perso.getAccount().getWebAccount().setPoints(pointtotal);
+            }
+            else{
+                perso.getAccount().setOldpoints(pointtotal);
+            }
+
             if (perso.isOnline())
                 SocketManager.GAME_SEND_STATS_PACKET(perso);
             String mess = "Vous venez de donner " + count

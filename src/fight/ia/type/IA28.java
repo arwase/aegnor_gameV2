@@ -14,7 +14,7 @@ public class IA28 extends AbstractIA  {
     private boolean tp = false, invoc = false;
 
     public IA28(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA28");
     }
 
     @Override

@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractIA;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,7 +12,7 @@ import fight.spells.Spell.SortStats;
 public class IA14 extends AbstractIA  {
 
     public IA14(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA14");
     }
 
     @Override
@@ -22,7 +22,7 @@ public class IA14 extends AbstractIA  {
                 if (!Function.getInstance().invocIfPossible(this.fight, this.fighter)) {
                     Fighter target = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
                     int value = Function.getInstance().moveToAttackIfPossible(this.fight, this.fighter), cellId = value - (value / 1000) * 1000;
-                    SortStats spellStats = this.fighter.getMob().getSpells().get(value / 1000);
+                    SpellGrade spellStats = this.fighter.getMob().getSpells().get(value / 1000);
 
                     if (this.fight.canCastSpell1(this.fighter, spellStats, this.fighter.getCell(), cellId)) this.fight.tryCastSpell(this.fighter, spellStats, cellId);
                     else Function.getInstance().moveNearIfPossible(fight, this.fighter, target);
@@ -30,7 +30,7 @@ public class IA14 extends AbstractIA  {
             } else {
                 Fighter target = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
                 int value = Function.getInstance().moveToAttackIfPossible(this.fight, this.fighter), cellId = value - (value / 1000) * 1000;
-                SortStats spellStats = this.fighter.getMob().getSpells().get(value / 1000);
+                SpellGrade spellStats = this.fighter.getMob().getSpells().get(value / 1000);
 
                 if (this.fight.canCastSpell1(this.fighter, spellStats, this.fighter.getCell(), cellId)) this.fight.tryCastSpell(this.fighter, spellStats, cellId);
                 else Function.getInstance().moveNearIfPossible(this.fight, this.fighter, target);

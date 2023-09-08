@@ -12,7 +12,7 @@ import java.util.Map.Entry;
 public class Pet {
 
     private int templateId;
-    private int type;                            //0 ne mange rien, 1 mange des creatures, 2 mange des objets, 3 mange un groupe d'objet.
+    private int type;                            //0 ne mange rien, 1 mange des creatures, 2 mange des objets, 3 mange un groupe d'objet, 4 Difficulty Eater.
     private String gap;                            //En heure 5,72 si type = 2 ou 3
     private String statsUp;
     private int max;
@@ -82,6 +82,8 @@ public class Pet {
     public void setStatsMax() {
         this.jet =	this.statsMax;
     }
+
+
     public int getNumbMonster(int StatID, int monsterID) {
         for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet()) {
             if (ID.getKey() == StatID) {
@@ -96,6 +98,9 @@ public class Pet {
         }
         return 0;
     }
+
+
+
 
     public void decompileStatsUpItem() {
         if (this.type == 3 || this.type == 2) {
@@ -132,7 +137,8 @@ public class Pet {
                 if (this.type == 2)
                     this.template.put(statsID, ar);
             }
-        } else if (this.type == 1) //StatID|monsterID,qua#monsterID,qua;StatID2|monsterID,qua#monsterID,qua
+        }
+        else if (this.type == 1) //StatID|monsterID,qua#monsterID,qua;StatID2|monsterID,qua#monsterID,qua
         {
             if (this.statsUp.contains(";"))//Plusieurs stats
             {
@@ -201,7 +207,8 @@ public class Pet {
                 if (ID.getValue().contains(categID))
                     return true;
             return false;
-        } else {
+        }
+        else {
             return false;
         }
     }
@@ -224,7 +231,8 @@ public class Pet {
                 if (ID.getValue().contains(categID))
                     return ID.getKey();
             return 0;
-        } else {
+        }
+        else {
             return 0;
         }
     }

@@ -17,7 +17,7 @@ public class IA20 extends AbstractIA  {
     private byte attack = 0;
 
     public IA20(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA20");
     }
 
     @Override

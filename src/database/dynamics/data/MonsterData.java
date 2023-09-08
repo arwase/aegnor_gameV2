@@ -69,6 +69,7 @@ public class MonsterData extends AbstractDAO<Monster> {
             ResultSet RS = result.resultSet;
             while (RS.next()) {
                 int id = RS.getInt("id");
+                //if(id == 1044) continue;
                 String name = RS.getString("name");
                 int gfxID = RS.getInt("gfxID");
                 int align = RS.getInt("align");
@@ -85,13 +86,14 @@ public class MonsterData extends AbstractDAO<Monster> {
                 int IAType = RS.getInt("AI_Type");
                 String xp = RS.getString("exps");
                 int aggroDistance = RS.getInt("aggroDistance");
-                boolean capturable = (RS.getInt("capturable") == 1);
+                boolean capturable = RS.getInt("capturable") == 1;
                 int type = RS.getInt("type");
 
                 if (World.world.getMonstre(id) == null) {
-                    World.world.addMobTemplate(id, new Monster(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type));
+                    Monster monster = new Monster(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type);
+                    World.world.addMobTemplate(id, monster);
                 } else {
-                    World.world.getMonstre(id).setInfos(gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type);
+                    World.world.getMonstre(id).setInfos(id, name, gfxID, align, colors, grades, spells, stats, statsInfos, pdvs, pts, inits, mK, MK, xp, IAType, capturable, aggroDistance,type);
                 }
 
             }

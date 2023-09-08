@@ -42,6 +42,13 @@ public class SocketManager {
             SocketManager.send(player.getGameClient(), packet);
     }
 
+    public static void send(String playerName, String packet) {
+        Player player = World.world.getPlayerByName(playerName);
+        if (player != null && player.getAccount() != null)
+            SocketManager.send(player.getGameClient(), packet);
+    }
+
+
     public static void send(GameClient client, String packet) {
         if (client != null && client.getSession() != null && !client.getSession().isClosing() && client.getSession().isConnected())
             client.send(packet);
@@ -337,9 +344,8 @@ public class SocketManager {
             return;
         String packet = "GM|-" + guid;
         for (Player z : map.getPlayers()) {
-            if (z.getGameClient() == null)
+            if (z == null || z.getGameClient() == null)
                 continue;
-
             send(z.getGameClient(), packet);
         }
     }
@@ -825,6 +831,8 @@ public class SocketManager {
 
     public static void GAME_SEND_GTL_PACKET_TO_FIGHT(Fight fight, int teams) {
         for (Fighter f : fight.getFighters(teams)) {
+            if(f == null)
+                continue;
             if (f.hasLeft())
                 continue;
             if (f.getPlayer() == null || !f.getPlayer().isOnline())
@@ -984,12 +992,16 @@ public class SocketManager {
 
     public static void GAME_SEND_GA_PACKET(GameClient out, String actionID,
                                            String s0, String s1, String s2) {
+
         String packet = "GA" + actionID + ";" + s0;
         if (!s1.equals(""))
             packet += ";" + s1;
         if (!s2.equals(""))
             packet += ";" + s2;
 
+        if(out.getPlayer().getSlaveLeader() != null && s0 == "0") {
+            send(out.getPlayer().getSlaveLeader().getGameClient(), packet);
+        }
         send(out, packet);
 
     }
@@ -1113,7 +1125,7 @@ public class SocketManager {
                                                     int mType, int cible, int value, String mParam2, String mParam3,
                                                     String mParam4, int turn, int spellID) {
         StringBuilder packet = new StringBuilder();
-        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID);
+        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID).append(";").append(cible);
         for (Fighter f : fight.getFighters(teams)) {
             if (f.hasLeft() || f.getPlayer() == null)
                 continue;
@@ -1122,6 +1134,22 @@ public class SocketManager {
         }
 
     }
+
+
+    public static void GAME_SEND_FIGHT_GIE_TO_FIGHT(Fight fight, int teams,
+                                                    int mType, int cible, String minvalue, String maxvalue, int turn, int spellID,int casterId) {
+        StringBuilder packet = new StringBuilder();
+        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(minvalue).append(";").append(maxvalue).append(";").append(";").append(";").append(turn).append(";").append(spellID).append(";").append(casterId);
+        for (Fighter f : fight.getFighters(teams)) {
+            if (f.hasLeft() || f.getPlayer() == null)
+                continue;
+            if (f.getPlayer().isOnline())
+                send(f.getPlayer(), packet.toString());
+        }
+
+    }
+
+
     public static void GAME_SEND_FIGHT_GIE_TO_FIGHT(Fight fight, int teams,
                                                     int mType, int cible, int value, String mParam2, String mParam3,
                                                     String mParam4, int turn, int spellID, int casterID) {
@@ -1269,6 +1297,30 @@ public class SocketManager {
 
     }
 
+    public static void GAME_SEND_GDZ_PACKET_TO_FIGHT_DONE(Fight fight, int teams,
+                                                     String suffix) {
+        for (Fighter f : fight.getFighters(teams)) {
+            if (f.hasLeft())
+                continue;
+            if (f.getPlayer() == null || !f.getPlayer().isOnline())
+                continue;
+            send(f.getPlayer(), suffix);
+        }
+
+    }
+
+    public static void GAME_SEND_GDC_PACKET_TO_FIGHT_DONE(Fight fight, int teams,String packet) {
+        for (Fighter f : fight.getFighters(teams)) {
+            if (f.hasLeft())
+                continue;
+            if (f.getPlayer() == null || !f.getPlayer().isOnline())
+                continue;
+            send(f.getPlayer(), packet);
+        }
+
+    }
+
+
     public static void GAME_SEND_GDC_PACKET_TO_FIGHT(Fight fight, int teams,
                                                      int cell) {
         String packet = "GDC" + cell;
@@ -1316,13 +1368,11 @@ public class SocketManager {
         if (!str.equals(""))
             packet += "|" + str;
         send(out, packet);
-
     }
 
     public static void GAME_SEND_ITEM_VENDOR_LIST_PACKET(GameClient out, Npc npc) {
         String packet = "EL" + npc.getTemplate().getItemVendorList();
         send(out, packet);
-
     }
 
     public static void GAME_SEND_ITEM_LIST_PACKET_PERCEPTEUR(GameClient out,
@@ -1916,14 +1966,16 @@ public class SocketManager {
                         items.append(OT.getId());
                         if(perso.getPosItem(OT.getId()) != -1){
                             GameObject test = perso.getObjetByPos(perso.getPosItem(OT.getId()));
-                            if(test.getRarity() == 5){
-                                numofprimal++;
+                            if(test != null) {
+                                if (test.getRarity() == 5) {
+                                    numofprimal++;
+                                }
                             }
                         }
                     }
                 }
                 if(pano == 166){
-                    packet.append(items.toString()).append("|");
+                    packet.append(items).append("|");
                     if(numofprimal >= 3){
                         packet.append("80#1#0#0#0d0+1,");
                         if(numofprimal >= 6){
@@ -1933,7 +1985,7 @@ public class SocketManager {
                     packet.append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
                 }
                 else {
-                    packet.append(items.toString()).append("|").append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
+                    packet.append(items).append("|").append(IS.getBonusStatByItemNumb(num).parseToItemSetStats());
                 }
             }
         }
@@ -2554,6 +2606,9 @@ public class SocketManager {
         send(player, "Im" + str);
 
     }
+
+
+
 
     public static void GAME_SEND_MESSAGE_SERVER(Player out, String args) {
         String packet = "M1" + args;

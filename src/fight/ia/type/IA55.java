@@ -14,7 +14,7 @@ public class IA55 extends AbstractNeedSpell  {
     private byte attack = 0, glyph = 0;
 
     public IA55(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA55");
     }
 
     @Override
@@ -23,9 +23,7 @@ public class IA55 extends AbstractNeedSpell  {
             int time = 100, maxPo = 1;
             boolean action = false;
 
-            for(Spell.SortStats spellStats : this.highests)
-                if(spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
             Fighter L = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;

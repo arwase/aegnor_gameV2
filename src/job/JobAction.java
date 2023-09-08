@@ -229,23 +229,24 @@ public class JobAction {
         player.setAway(false);
     }
 
+
+    public boolean isMagging(){
+        return (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169));
+    }
+
     public synchronized void craft(boolean isRepeat, int repeat) {
         if (!this.isCraft) return;
 
 
         if (this.id == 1 || this.id == 113 || this.id == 115 || this.id == 116 || this.id == 117 || this.id == 118 || this.id == 119 || this.id == 120 || (this.id >= 163 && this.id <= 169)) {
             this.craftMaging(isRepeat, repeat);
+            boolean isMassiveCraft = false;
             return;
         }
         boolean isMassiveCraft = false;
         if(repeat == -1){
             repeat = 1 ;
         }
-        //System.out.println(repeat);
-        //if(isRepeat) {
-        //    this.ingredients.putAll(this.lastCraft);
-        //}
-
         Map<Integer, Integer> items = new HashMap<>();
         //on ajoutes les ingrédient a une liste
         for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
@@ -266,7 +267,6 @@ public class JobAction {
         SocketManager.GAME_SEND_Ow_PACKET(this.player);
 
         boolean isUnjobSkill = this.getJobStat() == null;
-
         if (!isUnjobSkill) {
             JobStat SM = this.player.getMetierBySkill(this.id);
             int templateId = World.world.getObjectByIngredientForJob(SM.getTemplate().getListBySkill(this.id), items);
@@ -281,7 +281,6 @@ public class JobAction {
             boolean canlaunch = true;
             // on les supprime que si c'est bon pour tous
             for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-
                     GameObject obj = World.world.getGameObject(e.getKey());
                     if (obj == null) {
                         SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
@@ -297,7 +296,6 @@ public class JobAction {
 
             // C'est bon pour tous
             for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
-
                 GameObject obj = World.world.getGameObject(e.getKey());
                 if (obj == null) {
                     SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
@@ -321,7 +319,6 @@ public class JobAction {
                 }
 
             }
-
 
             int chan = JobConstant.getChanceByNbrCaseByLvl(SM.get_lvl(), this.ingredients.size());
             int chan2 = JobConstant.getChanceByNbrCaseByLvlnormal(SM.get_lvl(), this.ingredients.size());
@@ -870,11 +867,13 @@ public class JobAction {
             else{
                 // Objet
                 int type = ing.getTemplate().getType(); // On récupÃ¨re son type
-                if ((type >= 1 && type <= 11) || (type >= 16 && type <= 22)
+
+
+                if (((type >= 1 && type <= 11) || (type >= 16 && type <= 22)
                         || type == 81 || type == 102 || type == 114
-                        || ing.getTemplate().getPACost() > 0) { // Si c'est un obj avec des stats ou avec des PA d'utilisation
+                        || ing.getTemplate().getPACost() > 0) && type != Constant.ITEM_TYPE_FAMILIER && type != Constant.ITEM_TYPE_BOUCLIER && ing.getPosition() == -1 && ing.getObvijevanPos() == 0) { // Si c'est un obj avec des stats ou avec des PA d'utilisation
                     objectFm = ing;
-                    objectSave = ing;
+
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK_FM(this.player.getGameClient(), 'O', "+", objectFm.getGuid()
                             + "|" + 1); // On envoie un packet de validation au joueur il me semble
                     deleteID = idIngredient; // On récupÃ¨re l'id de l'ingrédient pour le supprimer plus tard
@@ -891,6 +890,10 @@ public class JobAction {
                     objectFm = newObj; // Tout neuf avec un nouveau identifiant
 
                 }
+                else{
+                    objectSave = ing;
+                }
+
             }
         }
 
@@ -899,19 +902,28 @@ public class JobAction {
         }
          //System.out.println("La :" + objectFm.getTemplate().getId() + " " + runeOrPotion.getTemplate().getName() + " " + SM );
         //runeOrPotion.getTemplate().getName()
-        if( objectFm.getTemplate() == null || runeOrPotion == null ) { // pas de runes
-            this.player.sendMessage("Aucune rune détecté");
+        if( objectFm == null || runeOrPotion == null ) { // pas de runes
+            this.player.sendMessage("Aucun Objet Modifiable ou Aucune rune détecté");
             if (objectFm != null) {
                 World.world.addGameObject(objectFm, true);
                 this.player.addObjet(objectFm);
                 //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
+                        + objectFm.parseStatsString()+ "|"+objectFm.getRarity();
+                SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+            }
+            else{
+                if (objectSave != null) {
+                    World.world.addGameObject(objectFm, true);
+                    this.player.addObjet(objectFm);
+                    //SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, objectFm);
+                }
             }
             SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // packet d'echec
             SocketManager.GAME_SEND_IO_PACKET_TO_MAP(this.player.getCurMap(), this.player.getId(), "-");  // packet d'icone rouge je crois
             // On nettoie les ingrédients
-            final String data = String.valueOf(objectFm.getGuid()) + "|1|" + objectFm.getTemplate().getId() + "|"
-                    + objectFm.parseStatsString()+ "|"+objectFm.getRarity();
-            SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
+
+
             this.ingredients.clear();
             return;
         } // Pas de rune
@@ -1542,7 +1554,6 @@ public class JobAction {
                         runeOrPotion.setQuantity(newQua);
                         SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, runeOrPotion);
                     }
-                    //System.out.println("tj la  ? " + runeOrPotion.getQuantity() );
                 }
 
                 World.world.addGameObject(objectFm, true);
@@ -1554,7 +1565,6 @@ public class JobAction {
                     this.reConfigingRunes = -1;
                 }
                 if (this.reConfigingRunes != 0 || this.broken) {
-                    System.out.println("On passe la ?");
                     SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.player, 'O', "+", data);
                 }
                 //this.player.sendMessage(""+data);

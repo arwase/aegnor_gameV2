@@ -329,6 +329,7 @@ public class ConditionParser {
 
     private static String havePO(String cond, Player perso)//On remplace les PO par leurs valeurs si possession de l'item
     {
+
         boolean Jump = false;
         boolean ContainsPO = false;
         boolean CutFinalLenght = true;

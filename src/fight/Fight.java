@@ -5,6 +5,7 @@ import area.map.GameCase;
 import area.map.GameMap;
 import area.map.labyrinth.Hotomani;
 import area.map.labyrinth.Minotoror;
+import ch.qos.logback.classic.Logger;
 import client.Player;
 import client.other.Party;
 import client.other.Stalk;
@@ -24,7 +25,7 @@ import fight.arena.FightManager;
 import fight.arena.TeamMatch;
 import fight.ia.IAHandler;
 import fight.spells.LaunchedSpell;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import fight.spells.SpellEffect;
 import fight.traps.Glyph;
 import fight.traps.Trap;
@@ -37,10 +38,12 @@ import game.world.World.Drop;
 import guild.Guild;
 import kernel.Config;
 import kernel.Constant;
+import kernel.Logging;
 import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.SoulStone;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.LoggerFactory;
 import other.Action;
 import quest.Quest;
 import quest.QuestPlayer;
@@ -56,6 +59,7 @@ import java.util.stream.Collectors;
 
 public class Fight {
 
+    public Logger logger = (Logger) LoggerFactory.getLogger(Fight.class);
 
     private int id, state = 0, guildId = -1, type = -1; /** type/state -> byte **/
     private int st1, st2;
@@ -105,8 +109,10 @@ public class Fight {
     private String walkingPacket = "";
     private boolean traped = false;
     private int maxplayer = 8;
-    private int maxclasse=8;
+    private int maxclasse = 8;
     public boolean isCopyFight = false;
+    public boolean startedTimerPass = false;
+    public int boucle = 0;
 
     public Fight(int type, int id, GameMap map, Player perso, Player init2) {
         launchTime = System.currentTimeMillis();
@@ -339,7 +345,7 @@ public class Fight {
                 fightdifficulty = 4;
             }
 
-           if(fightdifficulty > 0 && fightdifficulty < 4) {
+           if(fightdifficulty > 0 && fightdifficulty <= 4) {
                MG = entry.getValue().getTemplate().getGrade(5).getCopy();
                MG.GrowMGByDiff(fightdifficulty);
            }
@@ -389,7 +395,8 @@ public class Fight {
             else if(!hasGrasme && hasGrozil)
                 Hotomani.spawnBoss1();
         }
-        if(ArrayUtils.contains(Constant.GLADIATROOL_MAPID,map.getId())){
+
+        if (ArrayUtils.contains(Constant.HOTOMANI_MAPID, map.getId())) {
             Hotomani.spawnGroupHotomani(map.getId());
         }
 
@@ -737,11 +744,6 @@ public class Fight {
         }
     }
 
-    public void getStartTurn()
-    {
-        this.startTurn();
-    }
-
     public static void FightStateAddFlag(GameMap map, Player player) {
         map.getFights().stream().filter(fight -> fight.state == Constant.FIGHT_STATE_PLACE).forEach(fight -> {
             if (fight.type == Constant.FIGHT_TYPE_CHALLENGE) {
@@ -848,11 +850,11 @@ public class Fight {
         this.curFighterPa = curFighterPa;
     }
 
-    int getCurFighterPm() {
+    public int getCurFighterPm() {
         return curFighterPm;
     }
 
-    void setCurFighterPm(int curFighterPm) {
+    public void setCurFighterPm(int curFighterPm) {
         this.curFighterPm = curFighterPm;
     }
 
@@ -925,6 +927,17 @@ public class Fight {
     public List<Trap> getAllTraps() {
         return allTraps;
     }
+
+    public List<Trap> getAllTrapsinAera(int cellid,String area) {
+        List<Trap> traptoShow = new ArrayList<>();
+        ArrayList<GameCase> cells = PathFinding.getCellListFromAreaString(this.getMap(), cellid, cellid, area);
+        for (Trap trap : allTraps){
+            if(cells.contains(trap.getCell()))
+                traptoShow.add(trap);
+        }
+        return traptoShow;
+    }
+
 
     ArrayList<Fighter> getCapturer() {
         return capturer;
@@ -1142,7 +1155,7 @@ public class Fight {
                 if (this.getState() != Constant.FIGHT_STATE_ACTIVE)
                     this.startFight();
             }
-        }, time, TimeUnit.SECONDS, TimerWaiter.DataType.FIGHT);
+        }, time, TimeUnit.SECONDS);
     }
 
     private void demorph(Player p) {
@@ -1150,7 +1163,8 @@ public class Fight {
             p.unsetMorph();
     }
 
-    public void startFight() {
+    public void
+    startFight() {
         this.launchTime = -1;
         this.startTime = System.currentTimeMillis();
         if (this.collector != null && !this.collectorProtect) {
@@ -1163,7 +1177,7 @@ public class Fight {
                         player.teleport(this.getMapOld().getId(), this.collector.getCell());
                     }
 
-                    TimerWaiter.addNext(() -> this.joinCollectorFight(player, collector.getId()), 1000, TimerWaiter.DataType.CLIENT);
+                    TimerWaiter.addNext(() -> this.joinCollectorFight(player, collector.getId()), 1000, TimeUnit.MILLISECONDS);
                 } else {
                     SocketManager.GAME_SEND_MESSAGE(player, "Vous n'avez pas pu rejoindre le combat du percepteur suite à votre indisponibilité.");
                     collector.delDefenseFight(player);
@@ -1186,7 +1200,7 @@ public class Fight {
             return;
 
         if (this.getType() == Constant.FIGHT_TYPE_PVM) {
-            if (this.getMobGroup().isFix() && isCheckTimer() && this.getMapOld().getId() != 6826 && this.getMapOld().getId() != 10332 && this.getMapOld().getId() != 7388 && !ArrayUtils.contains(Constant.GLADIATROOL_MAPID,this.getMapOld().getId()) && !ArrayUtils.contains(Constant.GLADIATROOL_MAPID,this.getMapOld().getId()))
+            if (this.getMobGroup().isFix() && isCheckTimer() && this.getMapOld().getId() != 6826 && this.getMapOld().getId() != 10332 && this.getMapOld().getId() != 7388 && !ArrayUtils.contains(Constant.HOTOMANI_MAPID,this.getMapOld().getId()) )
                 this.getMapOld().spawnAfterTimeGroupFix(this.getMobGroup().getCellId());// Respawn d'un groupe fix
             if(!Config.INSTANCE.getHEROIC())
                 if (!this.getMobGroup().isFix() && this.isCheckTimer())
@@ -1370,6 +1384,7 @@ public class Fight {
                 bonusGroupe *= getTeam1().size();
                 getAllChallenges().put(challengeID, new Challenge(this, challengeID, challengeXP + bonusGroupe, challengeDP + bonusGroupe));
             }
+
             for (Entry<Integer, Challenge> c : getAllChallenges().entrySet()) {
                 if (c.getValue() == null)
                     continue;
@@ -1381,9 +1396,11 @@ public class Fight {
 
         for (Fighter F : getFighters(3)) {
             Player player = F.getPlayer();
-            if (player != null)
+            if (player != null) {
+                //player.checkDoubleStuff();
                 if (player.isOnMount())
                     SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 3, 950, player.getId() + "", player.getId() + "," + Constant.ETAT_CHEVAUCHANT + ",1");
+            }
         }
 
         for (Fighter F : getFighters(2)) {
@@ -1426,11 +1443,11 @@ public class Fight {
                         if(!this.isBegin && target == null) return;
 
                         if(  !(caster.getPlayer().PlayerList1.isEmpty()) && caster.getPlayer().oneWindows ) {
-                            ResetOneWindow(caster,playerCaster);
+                            ResetOneWindow(caster,playerCaster,true);
                         }
 
                         if(  caster.getPlayer().controleinvo ) {
-                            ResetOneWindow(caster,playerCaster);
+                            ResetOneWindow(caster,playerCaster,true);
                         }
 
 
@@ -1742,6 +1759,7 @@ public class Fight {
     }
 
     public void endFight(boolean b) {
+
         if (this.launchTime > 1)
             return;
         if (b) {
@@ -1752,6 +1770,9 @@ public class Fight {
                     caster.setIsDead(true);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    if (Logging.USE_LOG)
+                        Logging.getInstance().write("Error", "EndFight error" + e.getMessage());
+
                 }
             }
             verifIfTeamAllDead();
@@ -1763,51 +1784,52 @@ public class Fight {
                     caster.setIsDead(true);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    if (Logging.USE_LOG)
+                        Logging.getInstance().write("Error", "EndFight error" + e.getMessage());
                 }
             }
             verifIfTeamAllDead();
         }
     }
 
-    private void initOneWindow(boolean forSlave)
+    private void initOneWindow()
     {
         Fighter current = getFighterByOrdreJeu();
-        if(forSlave) {
-            Player master = current.getPlayer().getSlaveLeader();
-            master.setCurrentCompagnon(current);
-            SocketManager.send(master, "SC");
-            SocketManager.SEND_AB_LEADER_OPTI(current.getPlayer(), master);
-            SocketManager.ENVIAR_AI_CAMBIAR_ID(master, current.getId());
-            SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master);
-            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-            SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), master);
-            SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master);
-            SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), master);
-            SocketManager.GAME_SEND_XC_PACKET(current, master);
-        }
-        else {
-            if (current.getPlayer().getCurrentCompagnon() != null) {
-                current.getPlayer().deleteCurrentCompagnon();
+        Player master = current.getPlayer().getSlaveLeader();
+
+        if(master != null && isInFight(master) ) {
+            if(master.oneWindows) {
+                if (master.getCurrentCompagnon() != null) {
+                    master.setCurrentCompagnon(null);
+                }
+                master.setCurrentCompagnon(current);
+                SocketManager.send(master, "SC");
+                SocketManager.SEND_AB_LEADER_OPTI(current.getPlayer(), master);
+                SocketManager.ENVIAR_AI_CAMBIAR_ID(master, current.getId());
+                SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), master);
+                SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
+                SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), master);
+                SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, master);
+                SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), master);
+                SocketManager.GAME_SEND_XC_PACKET(current, master);
             }
-            SocketManager.send(current.getPlayer(), "SC");
-            SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(current.getPlayer(), current.getPlayer());
-            SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
-            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-            SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), current.getPlayer());
-            SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-            SocketManager.GAME_SEND_SL_LISTE(current);
-            SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), current.getPlayer());
-            SocketManager.GAME_SEND_XC_PACKET(current, current.getPlayer());
         }
     }
 
-    private void ResetOneWindow(Fighter current,Player player)
+
+
+    private void ResetOneWindow(Fighter current,Player player,boolean fullinventory)
     {
             if (player.getCurrentCompagnon() != null) {
                 player.deleteCurrentCompagnon();
             }
             SocketManager.send(player, "SC");
-            SocketManager.SEND_AB_LEADER_OPTI(player, player);
+            if(fullinventory) {
+                SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(player, player);
+            }
+            else{
+                SocketManager.SEND_AB_LEADER_OPTI(player, player);
+            }
             SocketManager.GAME_SEND_STATS_PACKET(player);
             SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
             SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(player, player);
@@ -1818,273 +1840,211 @@ public class Fight {
 
     }
 
-    private void initControlInvoc(boolean forMaster)
+    private void initControlInvoc()
     {
-        Fighter current = getFighterByOrdreJeu();
-        if(!forMaster)
-        {
-            Fighter master = current.getInvocator();
-            if (current.getPlayer().getCurrentCompagnon() != null) {
-                current.getPlayer().deleteCurrentCompagnon();
-            }
-            if (current.isInvocation()) {
-                Player MasterOfInvocator = master.getPlayer().getSlaveLeader();
-                Player Invocator = master.getPlayer();
-                if(MasterOfInvocator != null && isInFight(MasterOfInvocator) && MasterOfInvocator.controleinvo ) {
-                    MasterOfInvocator.setCurrentCompagnon(current);
-                    SocketManager.send(MasterOfInvocator, "SC");
-                    SocketManager.ENVIAR_AI_CAMBIAR_ID(MasterOfInvocator, current.getId());
-                    SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, MasterOfInvocator);
-                    SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), MasterOfInvocator);
-                    SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                }
-                else{
-                    Invocator.setCurrentCompagnon(current);
-                    SocketManager.send(Invocator, "SC");
-                    SocketManager.ENVIAR_AI_CAMBIAR_ID(Invocator, current.getId());
-                    SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(current, Invocator);
-                    SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(current.getPlayer(), Invocator);
-                    SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-                }
-            }
+        Fighter Invocation = getFighterByOrdreJeu();
+
+        if (!Invocation.isControllable()){
+            return;
         }
-        else{
-            if (current.getPlayer().getCurrentCompagnon() != null) {
-                current.getPlayer().deleteCurrentCompagnon();
-            }
-            SocketManager.send(current.getPlayer(), "SC");
-            SocketManager.ENVIAR_AB_PERSONAJE_A_LIDER(current.getPlayer(), current.getPlayer());
-            SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
-            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, current);
-            SocketManager.GAME_SEND_ITEM_CLASSE_ON_LEADER(current.getPlayer(), current.getPlayer());
-            SocketManager.ENVIAR_AI_CAMBIAR_ID(current.getPlayer(), current.getId());
-            SocketManager.GAME_SEND_SL_LISTE(current);
-            SocketManager.GAME_SEND_Aa_TURN_LIDER(current.getPlayer(), current.getPlayer());
+
+        Fighter invocatorf = Invocation.getInvocator();
+        Player Invocator = invocatorf.getPlayer();
+        if(invocatorf != null ) {
+            Player MasterOfInvocator = invocatorf.getPlayer().getSlaveLeader();
+                    if (MasterOfInvocator != null && isInFight(MasterOfInvocator) ) {
+                            if (MasterOfInvocator.getCurrentCompagnon() != null) {
+                                MasterOfInvocator.setCurrentCompagnon(null);
+                            }
+                            MasterOfInvocator.setCurrentCompagnon(Invocation);
+                            SocketManager.send(MasterOfInvocator, "SC");
+                            SocketManager.ENVIAR_AI_CAMBIAR_ID(MasterOfInvocator, Invocation.getId());
+                            SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(Invocation, MasterOfInvocator);
+                            SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(Invocation.getPlayer(), MasterOfInvocator);
+                            SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, Invocation);
+                            SocketManager.GAME_SEND_XC_PACKET(Invocation, MasterOfInvocator);
+                    }
+                    else if (Invocator != null && isInFight(Invocator))
+                    {
+                        if(Invocator.getCurrentCompagnon() != null) {
+                            Invocator.setCurrentCompagnon(null);
+                        }
+                        Invocator.setCurrentCompagnon(Invocation);
+                        SocketManager.send(Invocator, "SC");
+                        SocketManager.ENVIAR_AI_CAMBIAR_ID(Invocator, Invocation.getId());
+                        SocketManager.GAME_SEND_SL_LISTE_FROM_INVO(Invocation, Invocator);
+                        SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(Invocation.getPlayer(), Invocator);
+                        SocketManager.ENVIAR_GM_LUCHADORES_A_PERSO2(this.map, Invocation);
+                        SocketManager.GAME_SEND_XC_PACKET(Invocation, Invocator);
+                    }
+                    else {
+                        // No Control
+                    }
+        }
+        else {
+            // No Control
         }
     }
 
     void startTurn() {
-        if (verifyStillInFight())
-            verifIfTeamAllDead();
+        try {
+            if (verifyStillInFight())
+                verifIfTeamAllDead();
 
-        if (getState() >= Constant.FIGHT_STATE_FINISHED)
-            return;
-
-        setCurPlayer(getCurPlayer() + 1);
-        setCurAction("");
-
-        if (getCurPlayer() >= this.getOrderPlayingSize())
-            setCurPlayer(0);
-
-        Fighter current = this.getFighterByOrdreJeu();
-
-        for(Fighter torebuf : this.getFighters(3)){
-            if(torebuf.toRebuff){
-                torebuf.rebuff();
-                torebuf.toRebuff = false;
-            }
-        }
-
-        if(current.getPlayer() != null && !(current.hasLeft() || current.isDead() || current.getPlayer().passturn ) ) {
-            boolean leadercontrolinvo = false;
-            if(current.getPlayer().getSlaveLeader() !=null){
-                if( isInFight(current.getPlayer().getSlaveLeader())  ) {
-                    leadercontrolinvo = current.getPlayer().getSlaveLeader().controleinvo;
-                }
-            }
-
-            if(current.isInvocation()) {
-                // Contrôle d'invocation
-                if (current.isControllable()) {
-                    initControlInvoc(false);
-                } else if (current.getPlayer().getCurrentCompagnon() != null && (current.getPlayer().controleinvo || leadercontrolinvo)) {
-                    initControlInvoc(true);
-                }
-            }
-
-            //OneWindow
-            if (current.getPlayer().getSlaveLeader() != null ) {
-                if (isInFight(current.getPlayer().getSlaveLeader())) {
-                    if(current.getPlayer().getSlaveLeader().oneWindows || leadercontrolinvo) {
-                        initOneWindow(true);
-                    }
-                }
-            }
-            else {
-                if (!(current.getPlayer().PlayerList1.isEmpty())) {
-                    if (current.getPlayer().oneWindows) {
-                        initOneWindow(false);
-                    }
-                }
-                else{
-                    if (current.getPlayer().controleinvo) {
-                        initOneWindow(false);
-                    }
-                }
-            }
-
-
-        }
-
-        if(current == this.getOrderPlaying().get(0) && !current.isControllable() )
-        {
-            turnTotal++;
-        }
-
-        setCurFighterPa(current.getPa());
-        setCurFighterPm(current.getPm());
-        setCurFighterUsedPa();
-        setCurFighterUsedPm();
-
-        if (current.hasLeft() || current.isDead()) {
-            this.endTurn(false, current);
-            return;
-        }
-
-        current.applyBeginningTurnBuff(this);
-
-        if(current.isDead() && current.isInvocation()) {
-            endTurn(false, this.getFighterByOrdreJeu());
-            return;
-        }
-
-        if (getState() == Constant.FIGHT_STATE_FINISHED)
-            return;
-
-        if (current.getPdv() <= 0) {
-            onFighterDie(current, getInit0());
-            endTurn(false, current);
-            return;
-        }
-
-        // reset des Max des Chatis
-        current.getChatiValue().clear();
-
-        if (current.isDead() && !current.isInvocation()) {
-            endTurn(false, current);
-            return;
-        }
-
-
-        if (current.hasBuff(Constant.EFFECT_PASS_TURN)) {
-            endTurn(false, current);
-            return;
-        }
-
-        current.refreshLaunchedSort();
-        SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
-
-        current.setCanPlay(true);
-
-        // On actualise les sorts launch
-        this.turn = new Turn(this, current);
-
-        // Gestion des glyphes
-        ArrayList<Glyph> glyphs = new ArrayList<>(this.getAllGlyphs());// Copie du tableau
-
-        for (Glyph glyph : glyphs) {
-            if (glyph.getCaster().getId() == current.getId()) {
-                if (glyph.decrementDuration() == 0) {
-                    getAllGlyphs().remove(glyph);
-                    glyph.disappear();
-                    continue;
-                }
-            }
-
-            if (PathFinding.getDistanceBetween(getMap(), current.getCell().getId(), glyph.getCell().getId()) <= glyph.getSize() && glyph.getSpell() != 476)
-                glyph.onTrapped(current);
-        }
-
-
-        if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector()
-                || getType() == Constant.FIGHT_TYPE_DOPEUL && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector())
-            for (Challenge challenge : this.getAllChallenges().values())
-                if(challenge != null)
-                    challenge.onPlayerStartTurn(current);
-
-                // SI .pass
-        if(current.getPlayer() != null){
-            if ( current.getPlayer().passturn){
-                endTurn(false, current);
+            if (getState() >= Constant.FIGHT_STATE_FINISHED)
                 return;
+
+            if (this.getCurPlayer() != -1){
+                ResetControl(this.getOrderPlaying().get(this.getCurPlayer()));
             }
-        }
 
+            setCurPlayer(getCurPlayer() + 1);
+            setCurAction("");
 
-        if (current.isDeconnected()) {
-            current.setTurnRemaining();
-            if (current.getTurnRemaining() <= 0) {
-                if (current.getPlayer() != null) {
-                    leftFight(current.getPlayer(), null);
-                    current.getPlayer().disconnectInFight();
-                } else {
-                    onFighterDie(current, current);
-                    current.setLeft(true);
+            if (getCurPlayer() >= this.getOrderPlayingSize())
+                setCurPlayer(0);
+
+            Fighter current = this.getFighterByOrdreJeu();
+
+            for (Fighter torebuf : this.getFighters(3)) {
+                if (torebuf.toRebuff) {
+                    torebuf.rebuff();
+                    torebuf.toRebuff = false;
                 }
-            } else {
-                SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(this, 7, "0162;" + current.getPacketsName() + "~" + current.getTurnRemaining());
+            }
+
+            if (current == this.getOrderPlaying().get(0) && !current.isControllable()) {
+                turnTotal++;
+            }
+
+            setCurFighterPa(current.getPa());
+            setCurFighterPm(current.getPm());
+            setCurFighterUsedPa();
+            setCurFighterUsedPm();
+
+
+            current.applyBeginningTurnBuff(this);
+
+            if (current.hasLeft() || current.isDead() && !(current.isInvocation()) ) {
                 this.endTurn(false, current);
                 return;
             }
-        }
 
-        if (current.getPlayer() == null || current.getDouble() != null || current.getCollector() != null)
-            IAHandler.select(this, current);
+            if (current.isDead() && current.isInvocation()) {
+                endTurn(false, this.getFighterByOrdreJeu());
+                return;
+            }
+            if (current.isDead() && !current.isInvocation()) {
+                endTurn(false, current);
+                return;
+            }
+
+            if (getState() == Constant.FIGHT_STATE_FINISHED)
+                return;
+
+            if (current.getPdv() <= 0) {
+                onFighterDie(current, getInit0());
+                endTurn(false, current);
+                return;
+            }
+
+            // reset des Max des Chatis
+            current.getChatiValue().clear();
+
+            if (current.hasBuff(Constant.EFFECT_PASS_TURN)) {
+                endTurn(false, current);
+                return;
+            }
+            // SI .pass
+            if (current.getPlayer() != null) {
+                if (current.getPlayer().passturn) {
+                    endTurn(false, current);
+                    return;
+                }
+            }
+
+            if (current.getPlayer() != null && !(current.hasLeft() || current.isDead() || current.getPlayer().passturn || current.hasBuff(Constant.EFFECT_PASS_TURN) )) {
+                if (current.isInvocation()) {// Contrôle d'invocation
+                    initControlInvoc();
+                }
+                else if (current.getPlayer().getSlaveLeader() != null) {  //OneWindow
+                    initOneWindow();
+                }
+            }
+
+            current.refreshLaunchedSort();
+
+            SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
+            current.setCanPlay(true);
+
+            // On actualise les sorts launch
+            this.turn = new Turn(this, current);
+
+            // Gestion des glyphes
+            ArrayList<Glyph> glyphs = new ArrayList<>(this.getAllGlyphs());// Copie du tableau
+            for (Glyph glyph : glyphs) {
+                if (glyph.getCaster().getId() == current.getId()) {
+                    if (glyph.decrementDuration() == 0) {
+                        getAllGlyphs().remove(glyph);
+                        glyph.disappear();
+                        continue;
+                    }
+                }
+
+                if(ArrayUtils.contains(glyph.getCellsZone().toArray(),current.getCell()))
+                    glyph.onTrapped(current);
+
+            }
+
+            if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector()
+                    || getType() == Constant.FIGHT_TYPE_DOPEUL && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector())
+                for (Challenge challenge : this.getAllChallenges().values())
+                    if (challenge != null)
+                        challenge.onPlayerStartTurn(current);
+
+
+            if (current.isDeconnected()) {
+                current.setTurnRemaining();
+                if (current.getTurnRemaining() <= 0) {
+                    if (current.getPlayer() != null) {
+                        leftFight(current.getPlayer(), null);
+                        current.getPlayer().disconnectInFight();
+                    } else {
+                        onFighterDie(current, current);
+                        current.setLeft(true);
+                    }
+                } else {
+                    SocketManager.GAME_SEND_Im_PACKET_TO_FIGHT(this, 7, "0162;" + current.getPacketsName() + "~" + current.getTurnRemaining());
+                    this.endTurn(false, current);
+                    return;
+                }
+            }
+
+            if (current.getPlayer() == null || current.getDouble() != null || current.getCollector() != null)
+                IAHandler.select(this, current);
+
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            System.out.println("Erreur avec le tour");
+            Fighter current = this.getFighterByOrdreJeu();
+            this.endTurn(false, current);
+        }
     }
 
     public synchronized void endTurn(boolean onAction, Fighter f) {
-        final Fighter current = this.getFighterByOrdreJeu();
-
-        if(current != null){
-            if(current.getPlayer() != null){
-                Player ToEndTrun = current.getPlayer();
-                if(current.isInvocation()){
-                    Player Invocateur = current.getInvocator().getPlayer();
-
-                    // On reset une invocation controllé par un maitre ou un joueur
-                    if(Invocateur.getSlaveLeader() !=null){
-                        if(Invocateur.getSlaveLeader().controleinvo && Invocateur.getSlaveLeader().getFight() !=null){
-                            //RAF car par le controle
-                            ResetOneWindow(Invocateur.getSlaveLeader().getFight().getFighterByPerso(Invocateur.getSlaveLeader()), Invocateur.getSlaveLeader() );
-                        }
-                    }
-                    else{
-                        // Il n'as pas de maitre
-                        // On procède a l'envoie des stats de l'invocateur
-                        if(Invocateur.controleinvo && Invocateur.getFight() !=null){
-                            //RAF car par le controle
-                            ResetOneWindow(Invocateur.getFight().getFighterByPerso(Invocateur), Invocateur );
-                        }
-                    }
-
-                }
-                else{
-                    // On reset un joueur controllé par un maitre
-                    if(ToEndTrun.getSlaveLeader() !=null){
-                        if(ToEndTrun.getSlaveLeader().oneWindows && ToEndTrun.getSlaveLeader().getFight() !=null){
-                            //RAF car par le controle
-                            ResetOneWindow(ToEndTrun.getSlaveLeader().getFight().getFighterByPerso(ToEndTrun.getSlaveLeader()), ToEndTrun.getSlaveLeader() );
-                        }
-                        else{
-                            //RAF car par le controle
-                        }
-                    }
-                    else{
-                        // Il n'as pas de maitre
-                        // Dans l'idée RAF
-                    }
-                }
-                System.out.println(current.getPlayer().getName());
-            }
-            else if(current.isInvocation()){
-
-            }
+        try {
+            final Fighter current = this.getFighterByOrdreJeu();
+            if (current != null)
+                if (f == current)
+                    this.endTurn(onAction);
         }
-
-
-        if (current != null)
-            if (f == current)
-                this.endTurn(onAction);
+        catch (Exception e){
+            e.printStackTrace();
+            System.out.println("Erreur avec le tour");
+            Fighter current = this.getFighterByOrdreJeu();
+            this.endTurn(onAction);
+        }
     }
 
     public boolean isInFight(Player player) {
@@ -2103,14 +2063,16 @@ public class Fight {
 
     public synchronized void endTurn(final boolean onAction) {
         final Fighter current = this.getFighterByOrdreJeu();
-        if (current == null)
-            return;
-
         try {
             if (getState() >= Constant.FIGHT_STATE_FINISHED)
                 return;
             if (this.turn != null)
                 this.turn.stop();
+
+            if(current == null){
+                startTurn();
+                return;
+            }
 
             if (current.hasLeft() || current.isDead()) {
                 startTurn();
@@ -2118,7 +2080,21 @@ public class Fight {
             }
 
             if (!this.getCurAction().equals("")) {
-                TimerWaiter.addNext(() -> this.endTurn(onAction, current), 100, TimerWaiter.DataType.FIGHT);
+                this.boucle++;
+                if(this.boucle > 4){
+
+
+                    this.setCurAction("");
+                    if(current.getPlayer() != null){
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 102, current.getId() + "", current.getId() + ",-0");
+                        if (Logging.USE_LOG) {
+                            Logging.getInstance().write("Error", "Action de " + current.getPlayer().getName() + " débloqué " + this.getMap().getId());
+                        }
+                    }
+                    boucle = 0;
+                }
+
+                TimerWaiter.addNext(() -> this.endTurn(onAction, current), 200, TimeUnit.MILLISECONDS);
                 return;
             }
 
@@ -2130,101 +2106,168 @@ public class Fight {
             setCurAction("");
 
             if(onAction)
-                TimerWaiter.addNext(() -> this.newTurn(current), 2100, TimerWaiter.DataType.FIGHT);
+                TimerWaiter.addNext(() -> this.newTurn(current), 2100, TimeUnit.MILLISECONDS);
             else
                 this.newTurn(current);
+
         } catch (NullPointerException e) {
             e.printStackTrace();
+            if (Logging.USE_LOG) {
+                Logging.getInstance().write("Error", "endTurn error " + e.getMessage() + " " + e.getLocalizedMessage());
+            }
             this.endTurn(false);
+        }
+    }
+
+
+    private void ResetControl(Fighter current){
+        if (current != null ) {
+            if (current.getPlayer() != null) {
+                Player ToEndTrun = current.getPlayer();
+                if (current.isInvocation()) {
+                    Player Invocateur = current.getInvocator().getPlayer();
+                    // On reset une invocation controllé par un maitre ou un joueur
+                    if (Invocateur.getSlaveLeader() != null) {
+                        if (Invocateur.getSlaveLeader().controleinvo && Invocateur.getSlaveLeader().getFight() != null) {
+                            //RAF car par le controle
+                            ResetOneWindow(Invocateur.getSlaveLeader().getFight().getFighterByPerso(Invocateur.getSlaveLeader()), Invocateur.getSlaveLeader(), false);
+                        }
+                    } else {
+                        // Il n'as pas de maitre
+                        // On procède a l'envoie des stats de l'invocateur
+                        if (Invocateur.controleinvo && Invocateur.getFight() != null) {
+                            //RAF car par le controle
+                            ResetOneWindow(Invocateur.getFight().getFighterByPerso(Invocateur), Invocateur, false);
+                        }
+                    }
+
+                } else {
+                    // On reset un joueur controllé par un maitre
+                    if (ToEndTrun.getSlaveLeader() != null) {
+                        if (ToEndTrun.getSlaveLeader().oneWindows && ToEndTrun.getSlaveLeader().getFight() != null) {
+                            //RAF car par le controle
+                            ResetOneWindow(ToEndTrun.getSlaveLeader().getFight().getFighterByPerso(ToEndTrun.getSlaveLeader()), ToEndTrun.getSlaveLeader(), false);
+                        }
+                    }
+                }
+            }
         }
     }
 
     private void newTurn(Fighter current) {
         // Si empoisonn� (Cr�er une fonction applyEndTurnbuff si
         // d'autres effets existent)
-        for (SpellEffect SE : current.getBuffsByEffectID(131)) {
-            int pas = SE.getValue();
-            int val = -1;
-            try {
-                val = Integer.parseInt(SE.getArgs().split(";")[1]);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if(current == null){
+            current = getFighterByOrdreJeu();
+        }
 
-            if (val == -1)
-                continue;
+        try {
+            for (SpellEffect SE : current.getBuffsByEffectID(131)) {
+                int pas = SE.getFixvalue();
+                int val = -1;
+                try {
+                    val = Integer.parseInt(SE.getArgs().split(";")[1]);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-            int nbr = (int) Math.floor((double) getCurFighterUsedPa()
-                    / (double) pas);
-            int dgt = val * nbr;
-            // Si poison paralysant
-            if (SE.getSpell() == 200) {
-                int inte = SE.getCaster().getTotalStats().getEffect(Constant.STATS_ADD_INTE);
-                if (inte < 0)
-                    inte = 0;
+                if (val == -1)
+                    continue;
+
+                int nbr = (int) Math.floor((double) getCurFighterUsedPa()
+                        / (double) pas);
+                int dgt = val * nbr;
+
+                int stat = 0;
+                switch (SE.getSpell()){
+                    // Si poison paralysant stat intel
+                    case 200 :
+                    case 2143 :
+                        stat = SE.getCaster().getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+                        if (stat < 0)
+                            stat = 0;
+                        break;
+                    // Default dégat neutre
+                    default :
+                        stat = SE.getCaster().getTotalStats().getEffect(Constant.STATS_ADD_FORC);
+                        if (stat < 0)
+                            stat = 0;
+                        break;
+                }
+
+                // on applique le boost
                 int pdom = SE.getCaster().getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
                 if (pdom < 0)
                     pdom = 0;
-                // on applique le boost
-                dgt = ((100 + inte + pdom) / 100) * dgt;
-            }
-            if (current.hasBuff(184)) {
-                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 105, current.getId() + "", current.getId() + "," + current.getBuff(184).getValue());
-                dgt = dgt - current.getBuff(184).getValue();// R�duction physique
-            }
-            if (current.hasBuff(105)) {
-                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 105, current.getId() + "", current.getId() + "," + current.getBuff(105).getValue());
-                dgt = dgt - current.getBuff(105).getValue();// Immu
-            }
 
-            if (dgt <= 0)
-                continue;
-            if (dgt > current.getPdv())
-                dgt = current.getPdv();// va mourrir
+                dgt = (int) Math.round( ((1 + (stat/100.0D) + (pdom/100.0D) )) * dgt );
 
-            current.removePdv(current, dgt);
-            dgt = -(dgt);
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 100, SE.getCaster().getId() + "", current.getId() + "," + dgt);
-        }
-        ArrayList<Glyph> glyphs = new ArrayList<>();// Copie du tableau
-        glyphs.addAll(getAllGlyphs());
-        for (Glyph g : glyphs) {
-            if (getState() >= Constant.FIGHT_STATE_FINISHED)
-                return;
-            // Si dans le glyphe
-            int dist = PathFinding.getDistanceBetween(getMap(), current.getCell().getId(), g.getCell().getId());
-            if (dist <= g.getSize() && g.getSpell() == 476)// 476 a effet en fin de tour, alors le joueur est dans le glyphe
-                g.onTrapped(current);
-        }
+                if (current.hasBuff(184)) {
+                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 105, current.getId() + "", current.getId() + "," + current.getBuff(184).getFixvalue());
+                    dgt = dgt - current.getBuff(184).getFixvalue();// R�duction physique
+                }
+                if (current.hasBuff(105)) {
+                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 105, current.getId() + "", current.getId() + "," + current.getBuff(105).getFixvalue());
+                    dgt = dgt - current.getBuff(105).getFixvalue();// Immu
+                }
 
-        if (current.getPdv() <= 0)
-            onFighterDie(current, getInit0());
-
-        if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation()
-                && !current.isDouble() && !current.isCollector() && current.getTeam() == 0 || getType() == Constant.FIGHT_TYPE_DOPEUL
-                && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector() && current.getTeam() == 0) {
-            for (Entry<Integer, Challenge> c : getAllChallenges().entrySet()) {
-                if (c.getValue() == null)
+                if (dgt <= 0)
                     continue;
-                c.getValue().onPlayerEndTurn(current);
+                if (dgt > current.getPdv())
+                    dgt = current.getPdv();// va mourrir
+
+                current.removePdv(current, dgt);
+                dgt = -(dgt);
+                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 100, SE.getCaster().getId() + "", current.getId() + "," + dgt);
             }
-        }
-        setCurFighterUsedPa();
-        setCurFighterUsedPm();
-        setCurFighterPa(current.getTotalStats().getEffect(Constant.STATS_ADD_PA));
-        setCurFighterPm(current.getTotalStats().getEffect(Constant.STATS_ADD_PM));
-        current.refreshEndTurnBuff();
-        if (current.getPlayer() != null) {
-            if (current.getPlayer().isOnline()) {
+            ArrayList<Glyph> glyphs = new ArrayList<>();// Copie du tableau
+            glyphs.addAll(getAllGlyphs());
+            for (Glyph g : glyphs) {
+                if (getState() >= Constant.FIGHT_STATE_FINISHED)
+                    return;
+                // Si dans le glyphe
+                int dist = PathFinding.getDistanceBetween(getMap(), current.getCell().getId(), g.getCell().getId());
+                if (dist <= g.getSize() && g.getSpell() == 476)// 476 a effet en fin de tour, alors le joueur est dans le glyphe
+                    g.onTrapped(current);
+            }
+
+            if (current.getPdv() <= 0)
+                onFighterDie(current, getInit0());
+
+            if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation()
+                    && !current.isDouble() && !current.isCollector() && current.getTeam() == 0 || getType() == Constant.FIGHT_TYPE_DOPEUL
+                    && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector() && current.getTeam() == 0) {
+                for (Entry<Integer, Challenge> c : getAllChallenges().entrySet()) {
+                    if (c.getValue() == null)
+                        continue;
+                    c.getValue().onPlayerEndTurn(current);
+                }
+            }
+            setCurFighterUsedPa();
+            setCurFighterUsedPm();
+            setCurFighterPa(current.getTotalStats().getEffect(Constant.STATS_ADD_PA));
+            setCurFighterPm(current.getTotalStats().getEffect(Constant.STATS_ADD_PM));
+            current.refreshEndTurnBuff();
+            if (current.getPlayer() != null) {
+                if (current.getPlayer().isOnline()) {
                     SocketManager.GAME_SEND_STATS_PACKET(current.getPlayer());
+                }
             }
+
+            SocketManager.GAME_SEND_GTM_PACKET_TO_FIGHT(this, 7);
+            //SocketManager.GAME_SEND_GTU_PACKET_TO_FIGHT(this,7);
+            SocketManager.GAME_SEND_GTR_PACKET_TO_FIGHT(this, 7, current.getId());
+
+            // Timer d'une seconde � la fin du tour
+            this.startTurn();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("Error", "newTurn error " + e.getMessage() + " " + e.getLocalizedMessage());
+            this.startTurn();
         }
 
-        SocketManager.GAME_SEND_GTM_PACKET_TO_FIGHT(this, 7);
-        //SocketManager.GAME_SEND_GTU_PACKET_TO_FIGHT(this,7);
-        SocketManager.GAME_SEND_GTR_PACKET_TO_FIGHT(this, 7, current.getId());
-        // Timer d'une seconde � la fin du tour
-        this.startTurn();
     }
 
     public void playerPass(Player player) {
@@ -2305,7 +2348,7 @@ public class Fight {
                 return;
             }
 
-            if(this.fightdifficulty >= 4){
+            if(this.fightdifficulty >= 1){
                 Map<Integer, Fighter> tablefighter = this.getTeam0();
                 int testclass = 1;
                 for(Fighter fighter : tablefighter.values()){
@@ -2511,6 +2554,10 @@ public class Fight {
         SocketManager.GAME_SEND_FIGHT_PLAYER_JOIN(this, 7, f);
         SocketManager.GAME_SEND_MAP_FIGHT_GMS_PACKETS(this, getMap(), player);
         SocketManager.GAME_SEND_GDF_PACKET_TO_FIGHT(player, this.getMap().getCases());
+    }
+
+    public void setStartedTimerPass(boolean test){
+        this.startedTimerPass = test;
     }
 
     public void joinAsSpectator(Player p) {
@@ -2727,11 +2774,33 @@ public class Fight {
             return;
 
         Fighter caster = getFighterByPerso(perso);
-
         if (caster == null)
             return;
         if (current.getId() != caster.getId())// Si ce n'est pas a lui de jouer
             return;
+
+        if (current.isInvocation()) {
+            try {
+                if (current.getPlayer() != null) {
+                    Fighter lol = current.getInvocator();
+                    if(lol != null) {
+                        SocketManager.GAME_SEND_GA_PACKET(lol.getPlayer().getGameClient(), "", "0", "", "");
+                        lol.getPlayer().sendMessage("Une invocation ne peux pas utiliser le Corps a Corps");
+                    }
+                    else {
+                        SocketManager.GAME_SEND_GA_PACKET(current.getPlayer().getGameClient(), "", "0", "", "");
+                        current.getPlayer().sendMessage("Une invocation ne peux pas utiliser le Corps a Corps");
+                    }
+                }
+                this.setCurAction("");
+            }
+            catch (Exception e){
+                System.out.println(e);
+            }
+            return;
+        }
+
+
         if (!perso.canCac()) {
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 305, perso.getId() + "", "");// Echec Critique Cac
             endTurn(false, current);
@@ -2758,7 +2827,15 @@ public class Fight {
             int PACost = arme.getTemplate().getPACost();
 
             if (getCurFighterPa() < PACost) {
-                SocketManager.send(perso, "GA;0");
+                if (current.getPlayer() != null) {
+                    Fighter lol = current.getInvocator();
+                    if(lol != null) {
+                        SocketManager.GAME_SEND_GA_PACKET(lol.getPlayer().getGameClient(), "", "0", "", "");
+                    }
+                    else {
+                        SocketManager.GAME_SEND_GA_PACKET(current.getPlayer().getGameClient(), "", "0", "", "");
+                    }
+                }
                 SocketManager.GAME_SEND_Im_PACKET(perso, "1170;" + getCurFighterPa() + "~" + PACost);
                 return;
             }
@@ -2768,7 +2845,15 @@ public class Fight {
             int MinPO = arme.getTemplate().getPOmin();
 
             if (dist < MinPO || dist > MaxPO) {
-                SocketManager.send(perso, "GA;0");
+                if (current.getPlayer() != null) {
+                    Fighter lol = current.getInvocator();
+                    if(lol != null) {
+                        SocketManager.GAME_SEND_GA_PACKET(lol.getPlayer().getGameClient(), "", "0", "", "");
+                    }
+                    else {
+                        SocketManager.GAME_SEND_GA_PACKET(current.getPlayer().getGameClient(), "", "0", "", "");
+                    }
+                }
                 SocketManager.GAME_SEND_Im_PACKET(perso, "1171;" + MinPO + "~" + MaxPO + "~" + dist);
                 return;
             }
@@ -2777,7 +2862,7 @@ public class Fight {
 
             if (isEc) {
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 305, perso.getId() + "", "");// Echec Critique Cac
-                endTurn(false, current);
+                TimerWaiter.addNext(() -> this.endTurn(false, current), 200, TimeUnit.MILLISECONDS);
             } else {
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 303, perso.getId() + "", cellID + "");
                 boolean isCC = caster.testIfCC(arme.getTemplate().getTauxCC());
@@ -2807,8 +2892,11 @@ public class Fight {
                             this.getAllChallenges().values().stream().filter(challenge -> challenge != null)
                                     .forEach(challenge -> challenge.onFightersAttacked(cibles, caster, SE, -1, false));
                         }
+
                         SE.applyToFight(this, caster, cibles, true);
                     } catch(Exception e) {
+                        if (Logging.USE_LOG)
+                            Logging.getInstance().write("Error", "tryCaC error" + e.getMessage());
                         e.printStackTrace();
                     }
                 }
@@ -2853,7 +2941,7 @@ public class Fight {
         }
     }
 
-    public synchronized int tryCastSpell(Fighter fighter, SortStats spell, int cell) {
+    public synchronized int tryCastSpell(Fighter fighter, SpellGrade spell, int cell) {
         final Fighter current = this.getFighterByOrdreJeu();
 
         if (current == null || spell == null  || current != fighter)
@@ -2861,9 +2949,14 @@ public class Fight {
 
         Player player = fighter.getPlayer();
         GameCase Cell = getMap().getCase(cell);
-        setCurAction("casting");
+
         if (this.canCastSpell1(fighter, spell, Cell, -1)) {
             if (fighter.getPlayer() != null) {
+
+                if(System.currentTimeMillis() - player.getGameClient().readyDup < 400){
+                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur "+player.getName()+" vient d'utiliser la faille speedHack launch spell." );
+                }
+
                 if (fighter.getInvocator() != null) {
                     SocketManager.GAME_SEND_STATS_PACKET_TO_LEADER(fighter.getPlayer(), fighter.getInvocator().getPlayer()); // envoi des stats du lanceur
                 } else {
@@ -2879,7 +2972,7 @@ public class Fight {
             }
 
             if(fighter.hasBuff(285)){
-                if(spell.getSpellID() == fighter.getBuff(285).getValue()) {
+                if(spell.getSpellID() == fighter.getBuff(285).getFixvalue()) {
                     int value = Integer.parseInt(fighter.getBuff(285).getArgs().split(";")[2]);
                     valuePA -= value;
                 }
@@ -2926,17 +3019,17 @@ public class Fight {
                 fighter.addLaunchedSort(Cell.getFirstFighter(), spell, fighter);
 
             if ((isEc && spell.isEcEndTurn())) {
-                TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimerWaiter.DataType.FIGHT);
+                TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimeUnit.MILLISECONDS);
 
-                if (fighter.getMob() != null || fighter.isInvocation()) {
+                if (fighter.getMob() != null || (fighter.isInvocation() && fighter.getPlayer() == null) ) {
                     return 5;
                 } else {
                     endTurn(false, current);
                     return 5;
                 }
             }
-        } else if (fighter.getMob() != null || fighter.isInvocation()) {
-            TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimerWaiter.DataType.FIGHT);
+        } else if (fighter.getMob() != null || (fighter.isInvocation() && fighter.getPlayer() == null) ) {
+            TimerWaiter.addNext(() -> this.setCurAction(""), 300, TimeUnit.MILLISECONDS);
             return 10;
         }
 
@@ -2947,11 +3040,11 @@ public class Fight {
             if (fighter.getPlayer() != null) {
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 102, fighter.getId() + "", fighter.getId() + ",-0");
             }
-        }, 800, TimerWaiter.DataType.FIGHT);
+        }, 800, TimeUnit.MILLISECONDS);
         return 0;
     }
 
-    public boolean canCastSpell1(Fighter caster, SortStats spell, GameCase cell, int targetCell) {
+    public boolean canCastSpell1(Fighter caster, SpellGrade spell, GameCase cell, int targetCell) {
         final Fighter current = this.getFighterByOrdreJeu();
 
         if (current == null)
@@ -2984,7 +3077,7 @@ public class Fight {
         }
 
         if(caster.hasBuff(285)){
-            if(spell.getSpellID() == caster.getBuff(285).getValue()) {
+            if(spell.getSpellID() == caster.getBuff(285).getFixvalue()) {
                 int value = Integer.parseInt(caster.getBuff(285).getArgs().split(";")[2]);
                 usedPA -= value;
             }
@@ -2992,8 +3085,24 @@ public class Fight {
 
         if (getCurFighterPa() < usedPA) {
             if (player != null)
-                SocketManager.GAME_SEND_Im_PACKET(player, "1170;" + getCurFighterPa() + "~" + spell.getPACost());
+                SocketManager.GAME_SEND_Im_PACKET(player, "1175;" + getCurFighterPa() + "~" + spell.getPACost());
             return false;
+        }
+
+        if(spell.getStateRequire() != -1) {
+            if (!caster.haveState(spell.getStateRequire())) {
+                if (player != null)
+                    SocketManager.GAME_SEND_Im_PACKET(player, "1175;");
+                return false;
+            }
+        }
+
+        for(int stateId : spell.getStatesForbidden() ){
+            if (caster.haveState(stateId)) {
+                if (player != null)
+                    SocketManager.GAME_SEND_Im_PACKET(player, "1175;");
+                return false;
+            }
         }
 
         if (cell == null) {
@@ -3003,12 +3112,15 @@ public class Fight {
         }
 
         if (caster.getType() == 1 && player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-            int modi = player.getValueOfClassObject(spell.getSpellID(), 288);
+            int modi = player.getValueOfClassObject(spell.getSpellID(), Constant.STATS_SPELL_LINE_LAUNCH);
             boolean modif = modi == 1;
+
             if (spell.isLineLaunch() && !modif && !PathFinding.casesAreInSameLine(getMap(), casterCell, cell.getId(), 'z', 70)) {
                 SocketManager.GAME_SEND_Im_PACKET(player, "1173");
                 return false;
             }
+
+
         } else if (spell.isLineLaunch() && !PathFinding.casesAreInSameLine(getMap(), casterCell, cell.getId(), 'z', 70)) {
             if (player != null)
                 SocketManager.GAME_SEND_Im_PACKET(player, "1173");
@@ -3016,27 +3128,64 @@ public class Fight {
         }
 
         char dir = PathFinding.getDirBetweenTwoCase(casterCell, cell.getId(), getMap(), true);
-
         if (spell.getSpellID() == 67) {
             if (PathFinding.checkLoS(getMap(), PathFinding.GetCaseIDFromDirrection(casterCell, dir, getMap(), true), cell.getId(), null, true)) {
-                if (player != null)
+                if (player != null) {
+                    World.sendWebhookMessage(Constant.moderatorWebhook, player.getName() + " Utilise une faille LDV");
                     SocketManager.GAME_SEND_Im_PACKET(player, "1174");
+                }
                 return false;
             }
         }
 
         if (caster.getType() == 1 && player != null) {
             if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-                int modi = player.getValueOfClassObject(spell.getSpellID(), 289);
+                int modi = player.getValueOfClassObject(spell.getSpellID(), Constant.STATS_SPELL_LOS);
                 boolean modif = modi == 1;
-                if (spell.hasLDV() && !PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
+                if ( spell.hasLDV() && !modif  && !PathFinding.checkView(getMap(), casterCell, cell.getId()) ) {
+               // if ( spell.hasLDV() && !modif && !PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
+                    if(caster.isInvocation()){
+                        if(caster.getInvocator().getPlayer().getSlaveLeader() != null){
+                            SocketManager.GAME_SEND_Im_PACKET(caster.getInvocator().getPlayer().getSlaveLeader(), "1174");
+                        }
+                        SocketManager.GAME_SEND_Im_PACKET(caster.getInvocator().getPlayer(), "1174");
+                        World.sendWebhookMessage(Constant.moderatorWebhook, "Invocation **" + player.getName() +"** de **" + caster.getInvocator().getPlayer().getName() + "** utilise une faille LDV");
+                    }
+                    else{
+                        if(player.getSlaveLeader() != null){
+                            SocketManager.GAME_SEND_Im_PACKET(player.getSlaveLeader(), "1174");
+                        }
+                        World.sendWebhookMessage(Constant.moderatorWebhook, player.getName() + " Utilise une faille LDV");
+                        SocketManager.GAME_SEND_Im_PACKET(player, "1174");
+                    }
                     SocketManager.GAME_SEND_Im_PACKET(player, "1174");
                     return false;
                 }
             }
-        } else if (spell.hasLDV() && !PathFinding.checkLoS(getMap(), casterCell, cell.getId(), caster, false)) {
-            if (player != null)
+            else{
+                if (spell.hasLDV() && !PathFinding.checkView(getMap(), casterCell, cell.getId())) {
+                    if(caster.isInvocation()){
+                        World.sendWebhookMessage(Constant.moderatorWebhook, "Tentative de UseFaille LDV, Invocation **" + player.getName() +"** de **" + caster.getInvocator().getPlayer().getName() + "**");
+                    }
+                    else{
+                        World.sendWebhookMessage(Constant.moderatorWebhook, "Tentative de UseFaille LDV, **"+ player.getName() + "**");
+                    }
+                    SocketManager.GAME_SEND_Im_PACKET(player, "1174");
+                    return false;
+                }
+            }
+        }
+        else if (spell.hasLDV() && !PathFinding.checkView(getMap(), casterCell, cell.getId())) {
+
+            if (player != null) {
+                if(caster.isInvocation()){
+                    World.sendWebhookMessage(Constant.moderatorWebhook, "Tentative de UseFaille LDV, Invocation **" + player.getName() +"** de **" + caster.getInvocator().getPlayer().getName() + "**");
+                }
+                else{
+                    World.sendWebhookMessage(Constant.moderatorWebhook, "Tentative de UseFaille LDV, **"+ player.getName() + "**");
+                }
                 SocketManager.GAME_SEND_Im_PACKET(player, "1174");
+            }
             return false;
         }
 
@@ -3047,7 +3196,7 @@ public class Fight {
         // + porté
         if (caster.getType() == 1 && player != null) {
             if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-                int modi = player.getValueOfClassObject(spell.getSpellID(), 281);
+                int modi = player.getValueOfClassObject(spell.getSpellID(), Constant.STATS_SPELL_ADD_PO);
                 maxAlc = maxAlc + modi;
             }
         }
@@ -3055,32 +3204,26 @@ public class Fight {
         // porté modifiable
         if (caster.getType() == 1 && player != null) {
             if(player.getObjectsClassSpell().containsKey(spell.getSpellID())) {
-                int modi = player.getValueOfClassObject(spell.getSpellID(), 282);
+                int modi = player.getValueOfClassObject(spell.getSpellID(), Constant.STATS_SPELL_PO_MODIF);
                 boolean modif = modi == 1;
                 if (spell.isModifPO() || modif) {
-                    maxAlc += caster.getTotalStats().getEffect(117);
+                    maxAlc += caster.getTotalStats().getEffect(Constant.STATS_ADD_PO);
                     if (maxAlc <= minAlc)
                         maxAlc = minAlc + 1;
                 }
             }
             else{
                     if (spell.isModifPO()) {
-                        maxAlc += caster.getTotalStats().getEffect(117);
+                        maxAlc += caster.getTotalStats().getEffect(Constant.STATS_ADD_PO);
                         if (maxAlc <= minAlc)
                             maxAlc = minAlc + 1;
                     }
             }
         } else if (spell.isModifPO()) {
-            maxAlc += caster.getTotalStats().getEffect(117);
+            maxAlc += caster.getTotalStats().getEffect(Constant.STATS_ADD_PO);
             if (maxAlc <= minAlc)
                 maxAlc = minAlc + 1;
         }
-
-        /*if(spell.getSpellID() == 1265) {
-            System.out.println("Map PO 2 " + maxAlc);
-            System.out.println("Min PO 2 " + minAlc);
-            System.out.println("Distance " + dist);
-        }*/
 
         if (maxAlc < minAlc)
             maxAlc = minAlc;
@@ -3101,7 +3244,7 @@ public class Fight {
                 numLunch += player.getValueOfClassObject(spell.getSpellID(), 290);
 
         if(caster.hasBuff(290)){
-            if(spell.getSpellID() == caster.getBuff(290).getValue()) {
+            if(spell.getSpellID() == caster.getBuff(290).getFixvalue()) {
                 int value = Integer.parseInt(caster.getBuff(290).getArgs().split(";")[2]);
                 numLunch += value;
             }
@@ -3116,7 +3259,6 @@ public class Fight {
         if (caster.getType() == 1 && player != null)
             if(player.getObjectsClassSpell().containsKey(spell.getSpellID()))
                 numLunchT += player.getValueOfClassObject(spell.getSpellID(), 291);
-
 
         return !(numLunchT - LaunchedSpell.getNbLaunchTarget(caster, t, spell.getSpellID()) <= 0 && numLunchT > 0);
     }
@@ -3139,7 +3281,6 @@ public class Fight {
         final Fighter current = this.getFighterByOrdreJeu();
         if (current == null)
             return false;
-
 
         String path = GA.args;
         if (path.equals(""))
@@ -3179,17 +3320,13 @@ public class Fight {
             if (fighter.getPlayer() != null) {
                 Fighter lol = fighter.getInvocator();
                 if(lol != null) {
-                    Player Leader = lol.getPlayer().getSlaveLeader();
-                    if (Leader != null) {
-                         SocketManager.GAME_SEND_GA_PACKET(Leader.getGameClient(), "", "0", "", "");
-                     } else {
-                         SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
-                    }
+                    SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
                 }
                 else {
                     SocketManager.GAME_SEND_GA_PACKET(fighter.getPlayer().getGameClient(), "", "0", "", "");
                 }
             }
+
             this.setCurAction("");
             return false;
         }
@@ -3216,6 +3353,7 @@ public class Fight {
                     if(current.getPlayer().getSlaveLeader().oneWindows){
                         //On envoie aussi au leader si il en as un.
                         SocketManager.GAME_SEND_GA_PACKET(current.getPlayer().getSlaveLeader().getGameClient(), GA.id + "", "1", current.getId() + "", "a" + World.world.getCryptManager().cellID_To_Code(fighter.getCell().getId()) + newPath);
+
                     }
                 }
 
@@ -3291,10 +3429,8 @@ public class Fight {
         // Si c'est une invocation controllé
         if(fighter.getInvocator() != null & fighter.getMob() == null)
         {
-        //   System.out.println("alors que la Action id" +  GA.id);
             fighter.getInvocator().getPlayer().getGameClient().addAction(GA);
-           Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
-
+            Player Leader = fighter.getInvocator().getPlayer().getSlaveLeader();
             if(Leader != null){
                if(Leader.oneWindows){
                     Leader.getGameClient().addAction(GA);
@@ -3376,6 +3512,8 @@ public class Fight {
                             this.getTeam1().remove(entry.getId());
 
                     } catch (Exception e) {
+                        if (Logging.USE_LOG)
+                            Logging.getInstance().write("Error", "onFighterDie error" + e.getMessage());
                         e.printStackTrace();
                     }
                     SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 999, target.getId() + "", this.getGTL());
@@ -3400,6 +3538,8 @@ public class Fight {
                                 this.getOrderPlaying().remove(index);
                         } catch (Exception e) {
                             e.printStackTrace();
+                            if (Logging.USE_LOG)
+                                Logging.getInstance().write("Error", "onFighterDie2 error" + e.getMessage());
                         }
                     }
                     if (this.getTeam0().containsKey(fighter.getId()))
@@ -3410,6 +3550,7 @@ public class Fight {
                 }
             }
         }
+
         if (target.getMob() != null) {
             try {
                 if (target.isInvocation() && !target.isStatique) {
@@ -3447,6 +3588,8 @@ public class Fight {
                     }
                 }
             } catch (Exception e) {
+                if (Logging.USE_LOG)
+                    Logging.getInstance().write("Error", "onFighterDie3 error" + e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -3458,8 +3601,9 @@ public class Fight {
             this.getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> challenge.onMobDie(target, caster));
 
         new ArrayList<>(this.getAllGlyphs()).stream().filter(glyph -> glyph.getCaster().getId() == target.getId()).forEach(glyph -> {
-            SocketManager.GAME_SEND_GDZ_PACKET_TO_FIGHT(this, 7, "-", glyph.getCell().getId(), glyph.getSize(), 4);
-            SocketManager.GAME_SEND_GDC_PACKET_TO_FIGHT(this, 7, glyph.getCell().getId());
+            //SocketManager.GAME_SEND_GDZ_PACKET_TO_FIGHT(this, 7, "-", glyph.getCell().getId(), glyph.getSize(), 4);
+            //SocketManager.GAME_SEND_GDC_PACKET_TO_FIGHT(this, 7, glyph.getCell().getId());
+            glyph.disappear();
             this.getAllGlyphs().remove(glyph);
         });
 
@@ -3844,44 +3988,14 @@ public class Fight {
         }
 
         if(current.getPlayer() != null && !(current.hasLeft() || current.isDead() || current.getPlayer().passturn ) ) {
-            boolean leadercontrolinvo = false;
-            if(current.getPlayer().getSlaveLeader() !=null){
-                if( isInFight(current.getPlayer().getSlaveLeader())  ) {
-                    leadercontrolinvo = current.getPlayer().getSlaveLeader().controleinvo;
-                }
-            }
-
             if(current.isInvocation()) {
                 // Contrôle d'invocation
-                if (current.isControllable()) {
-                    initControlInvoc(false);
-                } else if (current.getPlayer().getCurrentCompagnon() != null && (current.getPlayer().controleinvo || leadercontrolinvo)) {
-                    initControlInvoc(true);
-                }
+                initControlInvoc();
             }
-
-            //OneWindow
             if (current.getPlayer().getSlaveLeader() != null ) {
-                if (isInFight(current.getPlayer().getSlaveLeader())) {
-                    if(current.getPlayer().getSlaveLeader().oneWindows || leadercontrolinvo) {
-                        initOneWindow(true);
-                    }
-                }
+                //OneWindow
+                initOneWindow();
             }
-            else {
-                if (!(current.getPlayer().PlayerList1.isEmpty())) {
-                    if (current.getPlayer().oneWindows) {
-                        initOneWindow(false);
-                    }
-                }
-                else{
-                    if (current.getPlayer().controleinvo) {
-                        initOneWindow(false);
-                    }
-                }
-            }
-
-
         }
 
         return true;
@@ -4043,6 +4157,8 @@ public class Fight {
                 }
 
                 if (Constant.FIGHT_TYPE_PVM == this.getType() && this.getMapOld().hasEndFightAction(this.getType()) ) {
+
+
                     for (Fighter fighter : winTeam) {
                         Player player = fighter.getPlayer();
                         if (player == null)
@@ -4059,6 +4175,27 @@ public class Fight {
                         } else {
                             player.setNeededEndFight(this.getType(), this.getMobGroup());
                         }
+
+                    }
+
+
+                }
+
+                if(Constant.FIGHT_TYPE_PVM == this.getType()){
+                    boolean isPlayerWin = false;
+                    for (Fighter fighter : winTeam) {
+                        Player player = fighter.getPlayer();
+                        if (player == null)
+                            continue;
+                        if (player.isMultiman()) {
+                            continue;
+                        }
+
+                        isPlayerWin = true;
+                    }
+
+                    if (isPlayerWin) {
+
                     }
                 }
 
@@ -4145,8 +4282,6 @@ public class Fight {
                         continue;
                     if(fighter.isMultiman())
                         continue;
-
-                    //System.gc();
 
                     this.onPlayerWin(fighter, looseTeam);
                 }
@@ -4373,6 +4508,8 @@ public class Fight {
             GameObject obj = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
             if (obj != null) {
                 Map<Integer, Integer> souls = new HashMap<>();
+                //Map<Integer, Integer> soulsdiff = new HashMap<>();
+                //int nbOfDiff = 0;
 
                 for (Fighter f : looseTeam) {
                     if (f.getMob() == null)
@@ -4384,11 +4521,20 @@ public class Fight {
                         souls.put(id, souls.get(id) + 1);
                     else
                         souls.put(id, 1);
+
+                   /* if( this.getdifficulty() > 0 ){
+                        nbOfDiff++;
+                    }*/
+
                 }
+                //soulsdiff.put(this.getdifficulty(),nbOfDiff);
+
                 if (!souls.isEmpty()) {
                     PetEntry pet = World.world.getPetsEntry(obj.getGuid());
-                    if (pet != null)
+                    if (pet != null) {
                         pet.eatSouls(player, souls);
+                        //pet.eatDiffs(player, soulsdiff);
+                    }
                 }
             }
         }
@@ -4518,7 +4664,7 @@ public class Fight {
                             TimerWaiter.addNext(() -> {
                                 Minotoror.sendPacketMap(player); // Retarde le paquet sinon les portes sont ferm�s. Le paquet de GameInformation doit faire chier ce p�d�
                                 player.setPdv(1);
-                            }, 3500, TimerWaiter.DataType.CLIENT);
+                            }, 3500, TimeUnit.MILLISECONDS);
                         } else {
                             player.setNeededEndFightAction(new Action(1001, player.getSavePosition(), "", null));
                             player.setPdv(1);
@@ -4729,7 +4875,7 @@ public class Fight {
                         maxLvl = fighter.getLvl();
                 }
 
-                this.setFullSoul(new SoulStone(Database.getStatics().getObjectData().getNextId(), 1, 7010, Constant.ITEM_POS_NO_EQUIPED, stats)); // Cr�e la pierre d'�me
+                this.setFullSoul(new SoulStone(Database.getStatics().getObjectData().getNextId(), 1, 7010, Constant.ITEM_POS_NO_EQUIPED, stats,fightdifficulty)); // Cr�e la pierre d'�me
                 winners.stream().filter(F -> !F.isInvocation() && F.haveState(Constant.ETAT_CAPT_AME)).forEach(F -> getCapturer().add(F));
 
                 if (this.getCapturer().size() > 0 && !SoulStone.isInArenaMap(this.getMapOld().getId()) && !this.getMapOld().isArena()) // S'il y a des captureurs
@@ -4870,10 +5016,13 @@ public class Fight {
                     challXp += c.getXp();
 
             for (Fighter entry : loosers) {
-                lvlLoosers += entry.getLvl();
+                if(!entry.isInvocation() && !entry.isDouble())
+                    lvlLoosers += entry.getLvl();
             }
             for (Fighter entry : winners) {
-                lvlWinners += entry.getLvl();
+                if(!entry.isInvocation() && !entry.isDouble())
+                    lvlWinners += entry.getLvl();
+
                 if (entry.getLvl() > lvlMaxLooser
                         && entry.getPlayer() != null)
                     lvlMaxLooser = entry.getLvl();
@@ -4929,7 +5078,7 @@ public class Fight {
             Collection<GameObject> dropsCollector = null;
             Couple<Integer, Integer> kamas;
             List<Integer> levels = new ArrayList<Integer>() ;
-            levels.add(1);
+
 
             if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                 int kamasCollector = (int) Math.ceil(collector.getKamas() / winners.size());
@@ -4941,7 +5090,7 @@ public class Fight {
                     if (!fighter.isInvocation() && fighter.getMob() != null && !fighter.isDouble()) {
                         minKamas += fighter.getMob().getTemplate().getMinKamas();
                         maxKamas += fighter.getMob().getTemplate().getMaxKamas();
-                        levels.add(fighter.getMob().getLevel());
+                        levels.add(fighter.getLvl());
 
                         for (Drop drop1 : fighter.getMob().getTemplate().getDrops()) {
                             switch (drop1.getAction()) {
@@ -4951,7 +5100,7 @@ public class Fight {
                                     dropsMeats.add(drop);
                                     break;
                                 default:
-                                    if (drop1.getCeil() <= totalProspecting && fighter.getMob() != null) {
+                                    if (fighter.getMob() != null) {
                                         drop = drop1.copy(fighter.getMob().getGrade());
                                         if(drop == null) break;
 
@@ -4960,51 +5109,18 @@ public class Fight {
                                             boolean IsAlreadyOnlist = false;
                                             for (Drop c : dropsPlayers) {
                                                 if (drop.getObjectId() == c.getObjectId() ) {
-                                                    c.setLocalPercent(drop.getLocalPercent()+ c.getLocalPercent() );
-                                                    //System.out.println(test.getName() + "On a boosté le drop " + c.getLocalPercent() );
+                                                    c.setLocalPercent( c.getLocalPercent()*2 );
                                                     IsAlreadyOnlist = true;
                                                     break;
                                                 }
                                             }
-
-                                            if(IsAlreadyOnlist){
-                                                //chancebase = 1.5;
-                                            }
-                                            else{
+                                            if(!IsAlreadyOnlist){
                                                 dropsPlayers.add(drop);
                                             }
                                         }
                                         else{
                                             dropsPlayers.add(drop);
                                         }
-                                    }
-                                    else {
-
-                                        drop = drop1.copy(fighter.getMob().getGrade());
-                                        if(drop == null) break;
-
-                                        ObjectTemplate test = World.world.getTemplateById(drop.getObjectId());
-                                        if(  ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,test.getType()) ){
-                                            boolean IsAlreadyOnlist = false;
-                                            for (Drop c : dropsPlayers) {
-                                                if (drop.getObjectId() == c.getObjectId() ) {
-                                                    c.setLocalPercent(drop.getLocalPercent()+ c.getLocalPercent() );
-                                                    IsAlreadyOnlist = true;
-                                                    break;
-                                                }
-                                            }
-
-                                            if(IsAlreadyOnlist){
-                                                //System.out.println(test.getName() + "On a boosté le drop");
-                                            }
-                                            else{
-                                                dropsPlayers.add(drop);
-                                            }
-                                        }
-                                        else{
-                                            dropsPlayers.add(drop);
-                                        }
-
                                     }
                                     break;
                             }
@@ -5018,8 +5134,18 @@ public class Fight {
                 kamas = new Couple<>(minKamas, maxKamas);
             }
 
+            int sum = 0;
+            for(int level : levels){
+                sum +=level;
+            }
+            if(levels.size() <= 0){
+                levels.add(1);
+            }
             int Maxlvlgroupe =  Collections.max(levels);
-
+            int lvlMoygroupe = Math.round( sum/levels.size() );
+            if(lvlMoygroupe>=200){
+                lvlMoygroupe = 200;
+            }
 
             // Sort fighter by prospecting.
             ArrayList<Fighter> temporary1 = new ArrayList<>();
@@ -5168,15 +5294,13 @@ public class Fight {
                     continue;
                 if(i.isDouble())
                     continue;
-
-                k++;
                 
                 Player player = i.getPlayer();
                 if(player != null) {
+                    k++;
                     if (!(playersclass.contains(player.getClasse()))) {
                         playersclass.add(player.getClasse());
                     }
-
                     if (!(playersip.contains(player.getAccount().getCurrentIp()))) {
                         playersip.add(player.getAccount().getCurrentIp());
                     }
@@ -5187,6 +5311,11 @@ public class Fight {
             if(Maxlvlmob>200){
                 Maxlvlmob=200;
             }
+
+            if(k ==0){
+                k =1;
+            }
+
             double lvlMoyenPlayer = lvlWinners /k;
             double BonuslvlMoyen = 1;
             if(lvlMoyenPlayer >= Maxlvlmob){
@@ -5237,17 +5366,62 @@ public class Fight {
                         //player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
                         //
 
-                        double limitation = 1.0;
+                        // Limitation non pertinente
+                        /*double limitation = 1.0,limitation2 = 1.0,limitation3 = 1.0;
 
-                        if(Maxlvlmob >= player.getLevel()) {
-                            //System.out.println(Maxlvlmob);
-                            limitation = player.getLevel() / Maxlvlmob;
+                        // premier limitation lvl moyen
+                        if(lvlMoygroupe >= player.getLevel()) {
+                            limitation = player.getLevel() / lvlMoygroupe;
                         }
                         else {
-                            limitation = Maxlvlmob / player.getLevel();
+                            limitation = lvlMoygroupe / player.getLevel();
                         }
-                        player.sendMessage("Vous recevez "+(limitation*100)+"% de l'xp attribué a cause de la différence de level");
-                        xpPlayer2 = Math.round(xpPlayer2*limitation);
+                        if(limitation <= 0.3) {
+                            limitation = 0.3;
+                        }
+                        if(limitation >= 0.8) {
+                            limitation = 1;
+                        }
+
+                        //seconde limitation lvl max
+                        if(Maxlvlmob >= player.getLevel()) {
+                            limitation2 = player.getLevel() / Maxlvlmob;
+                        }
+                        else {
+                            limitation2 = Maxlvlmob / player.getLevel();
+                        }
+                        if(limitation2 <= 0.3) {
+                            limitation2 = 0.3;
+                        }
+                        if(limitation2 >= 0.8) {
+                            limitation2 = 1;
+                        }
+
+                        // troisieme
+                        if(lvlLoosers >= player.getLevel()) {
+                            limitation3 = player.getLevel() / lvlLoosers;
+                        }
+                        else {
+                            limitation3 = lvlLoosers / player.getLevel();
+                        }
+                        if(limitation3 <= 0.3) {
+                            limitation3 = 0.3;
+                        }
+                        if(limitation3 >= 0.8) {
+                            limitation3 = 1;
+                        }
+
+                        double limitationfinal = (limitation * 33/100) + (limitation2 * 33/100) + (limitation3 * 33/100);
+                        if(limitationfinal>= 0.9){
+                            limitationfinal = 1.0;
+                        }
+                        if(limitationfinal <= 0.4){
+                            limitationfinal = 0.4;
+                        }
+                        player.sendMessage("Vous recevez "+(limitationfinal*100)+"% de l'xp attribué a cause de la différence de level");
+
+                        xpPlayer2 = Math.round(xpPlayer2*limitationfinal);*/
+
                         XP.set(xpPlayer2);
 
                         percentBonusFinal = ((int) Math.round((BonusPerdiffip*100)-100) + (int) Math.round((BonusPerdiffclasse*100)-100) +(int) Math.round((bonusVip*100)-100)   );
@@ -5311,17 +5485,22 @@ public class Fight {
                                         boost = 1.0;
                                     }
                                     if (ArrayUtils.contains(Constant.BOSS_ID, entry.getMob().getTemplate().getId()) && this.fightdifficulty == 3) {
-                                        temporary3.add(new Drop(12827, 0.1*boost, 0,true));
+                                        temporary3.add(new Drop(12827, 0.1*(boost*2), 0,true));
                                     }
                                     if (ArrayUtils.contains(Constant.BOSS_ID, entry.getMob().getTemplate().getId()) && this.fightdifficulty == 4) {
-                                        temporary3.add(new Drop(12780, 0.1*boost, 0,true));
+                                        temporary3.add(new Drop(12780, 0.1*(boost*2), 0,true));
+                                    }
+                                    if (this.fightdifficulty == 4) {
+                                        temporary3.add(new Drop(12885, 5*boost, 0,true));
                                     }
                                 }
 
                             }
                         }
                         catch (Exception e) {
-                            player.sendMessage(e.toString());
+                            if(player != null) {
+                                player.sendMessage(e.toString());
+                            }
                         }
 
                         Collections.shuffle(temporary3);
@@ -5335,7 +5514,7 @@ public class Fight {
                             Double chance = 0.0;
 
                             if (drop.isNoPPInfluence())
-                                chance = drop.getLocalPercent();
+                                chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * 1 * World.world.getConquestBonusNew(player) * challengeFactor * 1 * 1 * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
                             else
                                 chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonusNew(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP() * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
 
@@ -5347,17 +5526,47 @@ public class Fight {
                                         ok = true;
                                     break;
                             }
+
+
+                            /*if(player != null) {
+                                if (fightdifficulty == 3 && drop.getObjectId() == 12827) {
+                                    player.sendMessage("Vous aviez " + chance + "% de drop la monture sur ce boss");
+                                }
+                                if (fightdifficulty == 4 && drop.getObjectId() == 12780) {
+                                    player.sendMessage("Vous aviez " + chance + "% de drop la monture sur ce boss");
+                                }
+                            }*/
+
                             if (jet < chance || ok) {
                                 ObjectTemplate objectTemplate = World.world.getObjTemplate(drop.getObjectId());
 
                                 if (objectTemplate == null)
                                     continue;
 
+                                if(fightdifficulty == 4){
+                                    if(objectTemplate.getType() != Constant.ITEM_TYPE_DOFUS && objectTemplate.getId() != 12780 && objectTemplate.getId() != 12885 && objectTemplate.getType() != Constant.ITEM_TYPE_RUNE_FORGEMAGIE  )
+                                        continue;
+                                }
+
                                 quantity = 1;
+                                int minQuantity = quantity+fightdifficulty;
                                 int maxQuantity = Config.INSTANCE.getRATE_DROP() + (fightdifficulty);
 
-                                if( ArrayUtils.contains( Constant.FILTER_RESSOURCES, objectTemplate.getType() ) && (objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS) ) {
-                                    quantity = Formulas.getRandomValue(1, maxQuantity);
+
+                                /*minQuantity = Math.round(minQuantity * (4/k) );
+                                maxQuantity = Math.round(maxQuantity * (4/k) );*/
+
+
+                                if(fightdifficulty == 2 ){
+                                    minQuantity = Math.round(minQuantity);
+                                    maxQuantity = Math.round(maxQuantity*1.5f);
+                                }
+                                if(fightdifficulty == 3 ){
+                                    minQuantity = minQuantity;
+                                    maxQuantity = maxQuantity*2;
+                                }
+                                if( ArrayUtils.contains( Constant.FILTER_RESSOURCES, objectTemplate.getType() ) && (objectTemplate.getType() != Constant.ITEM_TYPE_CLEFS) && (objectTemplate.getId() != 12885) ) {
+                                    quantity = Formulas.getRandomValue(minQuantity, maxQuantity);
                                 }
 
                                 if( quantity ==1 && drop.getLocalPercent() >= 100) {
@@ -5594,6 +5803,8 @@ public class Fight {
                             }
                             catch( Exception e){
                                 target.sendMessage("Erreur :"+ e.toString());
+                                if (Logging.USE_LOG)
+                                    Logging.getInstance().write("getGE", "drop error" + e.getMessage() + " " + e.getLocalizedMessage());
                             }
 
 
@@ -5614,7 +5825,6 @@ public class Fight {
                                     newObj.getStats().addOneStat(995, - (mount.getId()));
                                     newObj.getTxtStat().put(996, player.getName());
                                     newObj.getTxtStat().put(997, mount.getName());
-                                    mount.setCastrated();
                                     mount.setCastrated();
                                 }
                             }
@@ -6101,7 +6311,10 @@ public class Fight {
             return packet.toString();
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("An error occurred when server went to give the 'GE' packet : " + e.getMessage() + " " + e.getLocalizedMessage());
+            logger.error("An error occurred when server went to give the 'GE' packet : " + e.getMessage() + " " + e.getLocalizedMessage());
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("Error", "Send fail : GE " + e.getMessage() + " " + e.getLocalizedMessage() );
+            //System.out.println("An error occurred when server went to give the 'GE' packet : " + e.getMessage() + " " + e.getLocalizedMessage());
         }
         return "";
     }
@@ -6234,6 +6447,8 @@ public class Fight {
             current = this.orderPlaying.get(this.curPlayer);
         } catch (Exception e) {
             e.printStackTrace();
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("Error", "getFighterByOrdreJeu error" + e.getMessage() + " " + e.getLocalizedMessage());
         }
         return current;
     }
@@ -6258,7 +6473,11 @@ public class Fight {
         if(this.turn != null && System.currentTimeMillis() - this.turn.getStartTime() >= 30000) return;
 
         SocketManager.GAME_SEND_GAS_PACKET_TO_FIGHT(this, 7, fighter.getId());
-        try { runnable.run(); } catch(Exception e) { e.printStackTrace(); }
+        try { runnable.run(); } catch(Exception e) {
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("Error", "cast error" + e.getMessage() + " " + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
         SocketManager.GAME_SEND_GAF_PACKET_TO_FIGHT(this, 7, 0, fighter.getId());
     }
 
@@ -6322,6 +6541,10 @@ public class Fight {
         return false;
     }
 
+    public int getTurnTotal() {
+        return turnTotal;
+    }
+
     public boolean isTraped() {
         return this.traped;
     }
@@ -6334,6 +6557,6 @@ public class Fight {
         if(this.isTraped())
             TimerWaiter.addNext(() -> {
                 this.setTraped(false);
-            },1000, TimerWaiter.DataType.FIGHT);
+            },1000, TimeUnit.MILLISECONDS);
     }
 }

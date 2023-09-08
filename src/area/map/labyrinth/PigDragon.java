@@ -44,28 +44,28 @@ public class PigDragon {
         initializeMap(9394, 417, 262, 231, 51);
         initializeMap(9395, 417, 262, 231, 51);
         if (PigDragon.outside == null) PigDragon.initializeExt();
-        TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+        TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES);
     }
 
     private static void checkOutside() {
         GameMap actual = World.world.getMap((short) 9375);
         if (actual.getCase(returnCell(actual, 413)).isLoS()) {
-            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES);
             return;
         }
         actual = World.world.getMap((short) 9377);
         if (actual.getCase(returnCell(actual, 36)).isLoS()) {
-            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES);
             return;
         }
         actual = World.world.getMap((short) 9381);
         if (actual.getCase(returnCell(actual, 216)).isLoS()) {
-            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES);
             return;
         }
         actual = World.world.getMap((short) 9387);
         if (actual.getCase(returnCell(actual, 262)).isLoS()) {
-            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(PigDragon::checkOutside, 5, TimeUnit.MINUTES);
             return;
         }
         PigDragon.initialize();

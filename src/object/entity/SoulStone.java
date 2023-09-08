@@ -1,7 +1,10 @@
 package object.entity;
 
+import game.world.World;
 import game.world.World.Couple;
+import kernel.Constant;
 import object.GameObject;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 
@@ -9,13 +12,13 @@ public class SoulStone extends GameObject {
 
     private ArrayList<Couple<Integer, Integer>> monsters;
 
-    public SoulStone(int id, int quantity, int template, int pos, String strStats) {
+    public SoulStone(int id, int quantity, int template, int pos, String strStats, int fightDiff) {
         super(id, template, quantity, pos, strStats, 0,0,-1);
         this.monsters = new ArrayList<>();
-        this.parseStringToStats(strStats);
+        this.parseStringToStats(strStats,fightDiff);
     }
 
-    public void parseStringToStats(String m) {
+    public void parseStringToStats(String m,int fightDiff) {
         if (!m.equalsIgnoreCase("")) {
             if (this.monsters == null)
                 this.monsters = new ArrayList<>();
@@ -24,7 +27,13 @@ public class SoulStone extends GameObject {
             for (String s : split) {
                 try {
                     int monstre = Integer.parseInt(s.split(",")[0]);
-                    int level = Integer.parseInt(s.split(",")[1]);
+                    int level = 1;
+                    if(fightDiff > 0) {
+                        level = World.world.getMonstre(monstre).getGrade(5).getLevel();
+                    }
+                    else{
+                        level = Integer.parseInt(s.split(",")[1]);
+                    }
                     Couple<Integer, Integer> couple = new Couple<Integer, Integer>(monstre, level);
                     this.monsters.add(couple);
                 } catch (Exception e) {
@@ -76,6 +85,9 @@ public class SoulStone extends GameObject {
     }
 
     public static boolean isInArenaMap(int id) {
-        return "10131,10132,10133,10134,10135,10136,10137,10138".contains(String.valueOf(id));
+        if(ArrayUtils.contains(Constant.ARENA_MAPID,id))
+            return true;
+
+        return false;
     }
 }

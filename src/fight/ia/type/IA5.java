@@ -11,7 +11,7 @@ import fight.ia.util.Function;
 public class IA5 extends AbstractIA  {
 
     public IA5(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA5");
     }
 
     @Override

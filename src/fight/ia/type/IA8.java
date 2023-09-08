@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,7 +12,7 @@ import fight.spells.Spell.SortStats;
 public class IA8 extends AbstractNeedSpell  {
 
     public IA8(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA8");
     }
 
     @Override
@@ -22,9 +22,7 @@ public class IA8 extends AbstractNeedSpell  {
             boolean action = false;
             int PA = 0, PM = this.fighter.getCurPm(this.fight), maxPo = 1, time = 100;
 
-            for(SortStats spellStats : this.buffs)
-                if(spellStats != null && spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter target = Function.getInstance().getNearestInvocnbrcasemax(this.fight, this.fighter, 0, maxPo);//2 = po min 1 + 1;
 

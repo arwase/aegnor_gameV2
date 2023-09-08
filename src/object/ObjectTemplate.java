@@ -6,6 +6,7 @@ import common.Formulas;
 import common.SocketManager;
 import database.Database;
 import entity.mount.Mount;
+import entity.pet.Pet;
 import entity.pet.PetEntry;
 import fight.spells.SpellEffect;
 import game.world.World;
@@ -36,6 +37,7 @@ public class ObjectTemplate {
     private int points, newPrice;
     private ArrayList<ObjectAction> onUseActions;
     private int boutique;
+    private int money;
 
     public String toString() {
         return id + "";
@@ -65,6 +67,7 @@ public class ObjectTemplate {
         this.points = points;
         this.newPrice = newPrice;
         this.boutique = boutique;
+        this.money=-1;
         if(armesInfos.isEmpty()) return;
         try {
             String[] infos = armesInfos.split(";");
@@ -126,6 +129,15 @@ public class ObjectTemplate {
     public String getStrTemplate() {
         return strTemplate;
     }
+
+    public int getNewPrice() {
+        return newPrice;
+    }
+
+    public void setNewPrice(int id) {
+        this.newPrice = id;
+    }
+
 
     public void setStrTemplate(String strTemplate) {
         this.strTemplate = strTemplate;
@@ -921,10 +933,6 @@ public class ObjectTemplate {
                     String max = stats[2];
                     String jet = stats[4];
                     String args = min + ";" + max + ";-1;-1;0;" + jet;
-                    if(this.getId() == 7176){
-                        System.out.println(statsTemplate);
-                        System.out.println(args);
-                    }
                     Effets.add(new SpellEffect(id, args, 0, -1));
                 }
             }
@@ -941,26 +949,65 @@ public class ObjectTemplate {
                     break;
             }
         }
-        System.out.println(Effets);
         return Effets;
     }
 
     public String parseItemTemplateStats() {
-        return getId() + ";" + getStrTemplate() + (this.newPrice > 0 ? ";" + this.newPrice : "");
+        if(this.money == -1) {
+            return getId() + ";" + getStrTemplate() + (this.newPrice > 0 ? ";" + this.newPrice : "");
+        }
+        else{
+            //return getId() + ";" + getStrTemplate() + ";" + this.money + ";" + (this.newPrice > 0 ? ";" + this.newPrice : "") +";;"; //TODO pas géré en 1.34.0
+            return getId() + ";" + getStrTemplate() + (this.newPrice > 0 ? ";" + this.newPrice : "");
+        }
     }
 
     public void applyAction(Player player, Player target, int objectId, short cellId) {
         if (World.world.getGameObject(objectId) == null) return;
         if (World.world.getGameObject(objectId).getTemplate().getType() == 85) {
-            if (!SoulStone.isInArenaMap(player.getCurMap().getId()))
+
+            if (!SoulStone.isInArenaMap(player.getCurMap().getId())){
+                player.sendMessage("This map is not an arena");
                 return;
+            }
 
             SoulStone soulStone = (SoulStone) World.world.getGameObject(objectId);
+            try {
+                player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), soulStone.parseGroupData(), "MiS=" + player.getId());
+                SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(objectId).getTemplate().getId());
+                player.removeItem(objectId, 1, true, true);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else if (World.world.getGameObject(objectId).getTemplate().getType() == Constant.ITEM_TYPE_POTION_FAMILIER){
+            String conditions = World.world.getGameObject(objectId).getTemplate().getConditions();
+            player = target != null ? target : player;
+            if( conditions.indexOf( (player.getObjetByPos(Constant.ITEM_POS_FAMILIER).getTemplate().getId()+"" )) == -1){
+                player.sendMessage("Vous n'avez pas votre familier d'équipé");
+                return;
+            }
+            if (player.getFight() != null) return;
+            GameObject obj = World.world.getGameObject(objectId);
 
-            player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), soulStone.parseGroupData(), "MiS=" + player.getId());
-            SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(objectId).getTemplate().getId());
-            player.removeItem(objectId, 1, true, true);
-        } else {
+            if (obj == null)
+                return;
+            GameObject pets = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
+            if (pets == null)
+                return;
+            PetEntry MyPets = World.world.getPetsEntry(pets.getGuid());
+            if (MyPets == null)
+                return;
+            try {
+                player.removeItem(objectId, 1, true, true);
+                MyPets.giveEpo(player);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else {
             for (ObjectAction action : this.getOnUseActions())
                 action.apply(player, target, objectId, cellId);
         }
@@ -1051,4 +1098,11 @@ public class ObjectTemplate {
         return boutique;
     }
 
+    public void setMoney(int id) {
+        this.money = id;
+    }
+
+    public int getMoney() {
+        return money;
+    }
 }

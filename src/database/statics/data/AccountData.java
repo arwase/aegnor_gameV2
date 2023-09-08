@@ -198,6 +198,21 @@ public class AccountData extends AbstractDAO<Account> {
         return false;
     }
 
+    public boolean delete(Account acc) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("DELETE FROM accounts WHERE id = ?");
+            p.setInt(1, acc.getId());
+            execute(p);
+            return true;
+        } catch (SQLException e) {
+            super.sendError("PlayerData delete", e);
+        } finally {
+            close(p);
+        }
+        return false;
+    }
+
     /** Points **/
     /** Points **/
     public int loadPoints(String user) {

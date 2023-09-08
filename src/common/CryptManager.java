@@ -138,8 +138,6 @@ public class CryptManager {
     }
 
     public String decryptMessage(String message, String key) {
-
-         //System.out.println(message);
          int  c = Integer.parseInt(Character.toString(message.charAt(1)), 16) * 2;
 
         StringBuilder str = new StringBuilder();

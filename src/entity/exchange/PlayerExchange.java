@@ -179,7 +179,18 @@ public class PlayerExchange extends Exchange {
             e.printStackTrace();
         }
 
-        //Gestion des Kamas
+        if( (this.player2.getKamas() + (-kamas2 + kamas1)) < 0){
+            this.cancel();
+            World.sendWebhookMessage(Constant.moderatorWebhook,"Tentative de dupplication de **" + (-kamas2 + kamas1) + " Kamas** de **" + this.player2.getName()  + "** vers **" + this.player1.getName() + "**" );
+            return;
+        }
+        if( (this.player1.getKamas() + (-kamas1 + kamas2)) < 0 ){
+            this.cancel();
+            World.sendWebhookMessage(Constant.moderatorWebhook,"Tentative de dupplication de **" + (-kamas2 + kamas1) + " Kamas** de **" + this.player1.getName()   + "** vers **" +  this.player2.getName()  + "**");
+            return;
+        }
+
+        // On donne
         this.player1.addKamas((-kamas1 + kamas2));
         this.player2.addKamas((-kamas2 + kamas1));
         for (Couple<Integer, Integer> couple : items1) // Les items du player vers le player2

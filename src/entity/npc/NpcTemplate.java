@@ -57,11 +57,24 @@ public class NpcTemplate {
         }
 
         if (!sales.equals("")) {
-            for (String obj : sales.split(",")) {
+            int money = -1;
+            String ObjetList = "";
+            if(sales.contains(";")){
+                String[] temp = sales.split(";");
+                ObjetList = temp[0];
+                money = Integer.parseInt(temp[1]);
+            }
+            else{
+                ObjetList = sales;
+            }
+
+            for (String obj : ObjetList.split(",")) {
                 try {
                     ObjectTemplate template = World.world.getObjTemplate(Integer.parseInt(obj));
-                    if (template != null)
+                    if (template != null){
                         this.sales.add(template);
+                        template.setMoney(money);
+                    }
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                     World.world.logger.error("#2# Erreur sur un item en vente sur le PNJ d'id : " + id);
@@ -238,6 +251,20 @@ public class NpcTemplate {
             for (Integer entry : this.initQuestions.values())
                 return entry;
         return this.initQuestions.get(id);
+    }
+
+    public int UsespecificMoney() {
+
+        boolean test = false;
+        int MoneyItem = -1;
+
+        if (this.sales.isEmpty()) return MoneyItem;
+        for (ObjectTemplate obj : this.sales){
+            if(obj.getMoney() != MoneyItem){
+                return obj.getMoney();
+            }
+        }
+        return MoneyItem;
     }
 
     public String getItemVendorList() {

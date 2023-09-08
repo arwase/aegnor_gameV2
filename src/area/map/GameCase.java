@@ -15,13 +15,13 @@ import game.world.World;
 import job.JobConstant;
 import job.maging.BreakingObject;
 import kernel.Constant;
-import lombok.var;
 import object.GameObject;
 import other.Action;
 import util.TimerWaiter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.floor;
 
@@ -73,6 +73,10 @@ public class GameCase {
         height = a + b;
     }
 
+
+    public Float getHeight() {
+        return height;
+    }
     public int getId() {
         return id;
     }
@@ -171,10 +175,36 @@ public class GameCase {
         return fighters;
     }
 
+    public static Coord getCaseCoordonnee(GameMap mapHandler, int cellID) {
+        int mapWidth = mapHandler.getW();
+
+        int row = (int) Math.floor(cellID / (mapWidth * 2 - 1));
+        int column = cellID - row * (mapWidth * 2 - 1);
+        int adjustedColumn = column % mapWidth;
+
+        int y = row - adjustedColumn;
+        int x = (cellID - (mapWidth - 1) * y) / mapWidth;
+
+        Coord coordinates = new Coord(x,y);
+        return coordinates;
+    }
+
     public Fighter getFirstFighter() {
         if(this.fighters != null) for(Fighter fighter : this.fighters) return fighter; // return this.fighters.get(0);o
         return null;
     }
+
+    public Fighter isEmpty() {
+        if(this.fighters != null) {
+            for (Fighter fighter : this.fighters) {
+                if(fighter != null && !fighter.isHide()) {
+                    return fighter; // return this.fighters.get(0);o
+                }
+            }
+        }
+        return null;
+    }
+
 
     public void addOnCellStopAction(int id, String args, String cond, GameMap map) {
         if (this.onCellStop == null)
@@ -866,7 +896,7 @@ public class GameCase {
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
-                }, this.getObject().getUseDuration(), TimerWaiter.DataType.MAP);
+                }, this.getObject().getUseDuration(), TimeUnit.MILLISECONDS);
                 break;
 
             case 44://Sauvegarder pos
@@ -901,7 +931,7 @@ public class GameCase {
                     if (player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
-                }, this.getObject().getUseDuration(), TimerWaiter.DataType.MAP);
+                }, this.getObject().getUseDuration(), TimeUnit.MILLISECONDS);
                 break;
 
             case 114://Utiliser (zaap)
@@ -1049,7 +1079,6 @@ public class GameCase {
                 player.setInHouse(house);
                 house.buyIt(player);
                 break;
-
             case 104://Ouvrir coffre priv�
                 Trunk trunk = Trunk.getTrunkIdByCoord(player.getCurMap().getId(), CcellID);
 
@@ -1180,4 +1209,18 @@ public class GameCase {
     public Boolean isActivate() {
         return activate;
     }
+
+    public static class Coord {
+        public int x;
+        public int y;
+        public int z;
+
+        public Coord(int x, int y) {
+            this.x = x;
+            this.y = y;
+            this.z = 0;
+        }
+
+    }
+
 }

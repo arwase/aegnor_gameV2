@@ -181,7 +181,7 @@ public class Trunk {
 
         if(house.getOwnerId() == player.getAccID() && this.getOwnerId() != player.getAccID())
             this.setOwnerId(player.getAccID());
-        if (this.getOwnerId() == player.getAccID() || (player.getGuild() != null && player.getGuild().getId() == house.getGuildId() && house.canDo(Constant.C_GNOCODE)) || player.getGroupe().getId() > 0) {
+        if (this.getOwnerId() == player.getAccID() || (player.getGuild() != null && player.getGuild().getId() == house.getGuildId() && house.canDo(Constant.C_GNOCODE)) || (player.getGroupe() != null && player.getGroupe().getId() > 0) ) {
             player.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_TRUNK, this));
             open(player, "-", true);
         } else if (player.getGuild() == null && house.canDo(Constant.C_OCANTOPEN))

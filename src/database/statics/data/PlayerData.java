@@ -73,16 +73,6 @@ public class PlayerData extends AbstractDAO<Player> {
                 if (perso.isShowSeller())
                     World.world.addSeller(perso);
 
-
-
-                LocalDateTime now = LocalDateTime.now();
-                LocalDate firstDate = now.toLocalDate();
-                LocalDate UnUsedDate = firstDate.plusMonths(-6);
-
-                String dateactuelle = perso.getAccount().getLastConnectionDate();
-                String[] table =   dateactuelle.split("~");
-                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
-
                 if(RS.getInt("vitalite") > 2091 || RS.getInt("force") > 465 || RS.getInt("sagesse") > 432 || RS.getInt("intelligence") > 465 || RS.getInt("chance") > 465 || RS.getInt("agilite") > 465  ){
                     Player player = perso;
                     short days = 0;
@@ -99,25 +89,27 @@ public class PlayerData extends AbstractDAO<Player> {
                     }
 
                     player.getAccount().setBanned(true);
-                    //Database.getStatics().getAccountData().updateBannedTime(player.getAccount(), System.currentTimeMillis() + 86400000 * days);
-
                     if (player.getFight() == null) {
                         if (player.getGameClient() != null)
                             player.getGameClient().kick();
                     } else {
                         SocketManager.send(player, "Im1201;" + player.getName());
                     }
-                    //System.out.println("You've kick and ban the player " + player.getName() + "(Acc: " + player.getAccount().getName() + ") for " + (days == 0 ? "unlimited" : days) + " day(s).");
-
-                    //ExchangeClient.INSTANCE.send("SB" + IP);
                 }
 
+                //if(Config.INSTANCE.getAUTO_CLEAN()) {
+                    LocalDateTime now = LocalDateTime.now();
+                    LocalDate firstDate = now.toLocalDate();
+                    LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
+                    String dateactuelle = perso.getAccount().getLastConnectionDate();
+                    String[] table = dateactuelle.split("~");
+                    LocalDate lastConnection = LocalDate.parse(table[0] + "-" + table[1] + "-" + table[2]);
 
-                if(lastConnection.isBefore(UnUsedDate) ){
-                    System.out.println( "Le perso " + RS.getString("name") + " doit être supprimé car le compte n'est plus utilisé depuis plus de 6 mois :" + lastConnection +" avant " + UnUsedDate);
-                    perso.getAccount().deletePlayer(perso.getId());
-                }
-                //
+                    if (lastConnection.isBefore(UnUsedDate)) {
+                        System.out.println("Le perso " + RS.getString("name") + " doit être supprimé car le compte n'est plus utilisé depuis plus de 6 mois :" + lastConnection + " avant " + UnUsedDate);
+                        perso.getAccount().deletePlayer(perso.getId());
+                    }
+                //}
             }
         } catch (SQLException e) {
             super.sendError("PlayerData load", e);
@@ -284,7 +276,7 @@ public class PlayerData extends AbstractDAO<Player> {
                 for(String id : perso.getStoreItemsIDSplitByChar(",").split(","))
                     Database.getStatics().getObjectData().delete(Integer.parseInt(id));
             if (perso.getMount() != null)
-                Database.getStatics().getMountData().update(perso.getMount());
+                Database.getStatics().getMountData().delete(perso.getMount().getId());
             return true;
         } catch (SQLException e) {
             super.sendError("PlayerData delete", e);

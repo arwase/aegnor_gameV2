@@ -1,17 +1,17 @@
 package fight.spells;
 
 import fight.Fighter;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 import java.util.Map;
 
 public class LaunchedSpell {
 
     private Fighter target = null;
-    private SortStats spellStats;
+    private SpellGrade spellStats;
     private int cooldown = 0;
 
-    public LaunchedSpell(Fighter t, SortStats SS, Fighter caster) {
+    public LaunchedSpell(Fighter t, SpellGrade SS, Fighter caster) {
         this.target = t;
         this.spellStats = SS;
         if (caster.getType() == 1

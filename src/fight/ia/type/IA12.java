@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -15,7 +15,7 @@ public class IA12 extends AbstractNeedSpell  {
     private boolean boost = false;
 
     public IA12(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA12");
     }
 
     @Override
@@ -27,9 +27,7 @@ public class IA12 extends AbstractNeedSpell  {
 
             if (this.fighter.getMob().getPa() < PA) this.boost = true;
 
-            for (SortStats spellStats : this.highests)
-                if (spellStats != null && spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter target = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 3);
 

@@ -18,13 +18,14 @@ public class WorldPub extends Updatable {
 
     @Override
     public void update() {
-        if(!WorldPub.pubs.isEmpty()) {
-            if (this.verify()) {
+        if (this.verify()) {
+            if(!WorldPub.pubs.isEmpty()) {
                 String pub = WorldPub.pubs.get(Formulas.getRandomValue(0, WorldPub.pubs.size() - 1));
                 SocketManager.GAME_SEND_MESSAGE_TO_ALL("(Message Auto) : " + pub, "046380");
-                TimerWaiter.update();
             }
+            //TimerWaiter.purge();
         }
+
     }
 
     @Override

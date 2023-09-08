@@ -27,8 +27,8 @@ import fight.Fight;
 import fight.Fighter;
 import fight.arena.DeathMatch;
 import fight.arena.TeamMatch;
-import fight.spells.Spell;
 import fight.spells.SpellEffect;
+import fight.spells.SpellGrade;
 import game.GameClient;
 import game.GameServer;
 import game.action.ExchangeAction;
@@ -39,25 +39,22 @@ import guild.GuildMember;
 import job.Job;
 import job.JobAction;
 import job.JobStat;
-import kernel.Config;
-import kernel.Constant;
-import kernel.Main;
-import kernel.Reboot;
+import kernel.*;
 import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
 import org.apache.commons.lang3.ArrayUtils;
-import other.Action;
-import other.Dopeul;
-import other.Sets;
-import other.Titre;
+import other.*;
 import quest.Quest;
 import quest.QuestPlayer;
 import util.TimerWaiter;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -158,7 +155,7 @@ public class Player {
     //Zaap
     private ArrayList<Short> _zaaps = new ArrayList<Short>();
     //Sort
-    private Map<Integer, Spell.SortStats> _sorts = new HashMap<Integer, Spell.SortStats>();
+    private Map<Integer, SpellGrade> _sorts = new HashMap<Integer, SpellGrade>();
     private Map<Integer, Character> _sortsPlaces = new HashMap<Integer, Character>();
     //Titre
     private byte _title = 0;
@@ -195,7 +192,7 @@ public class Player {
     //FullMorph Stats
     private boolean _morphMode = false;
     private int _morphId;
-    private Map<Integer, Spell.SortStats> _saveSorts = new HashMap<Integer, Spell.SortStats>();
+    private Map<Integer, SpellGrade> _saveSorts = new HashMap<Integer, SpellGrade>();
     private Map<Integer, Character> _saveSortsPlaces = new HashMap<Integer, Character>();
     private int _saveSpellPts;
     private int pa = 0,
@@ -636,8 +633,8 @@ public class Player {
         account = null;
         restriction = null;
         int i = 0;
-        for (Entry<Integer, Spell.SortStats> entry : mobModelo.getSpells().entrySet()) {
-            Spell.SortStats st = entry.getValue();
+        for (Entry<Integer, SpellGrade> entry : mobModelo.getSpells().entrySet()) {
+            SpellGrade st = entry.getValue();
             if (st == null) {
                 continue;
             }
@@ -1212,7 +1209,7 @@ public class Player {
         Database.getStatics().getPlayerData().updateTitles(this.getId(), _allTitle);
     }
 
-    public void setSpells(Map<Integer, Spell.SortStats> spells) {
+    public void setSpells(Map<Integer, SpellGrade> spells) {
         _sorts.clear();
         _sortsPlaces.clear();
         _sorts = spells;
@@ -1257,7 +1254,7 @@ public class Player {
                 return "";
             for (int key : _saveSorts.keySet()) {
                 //3;1;a,4;3;b
-                Spell.SortStats SS = _saveSorts.get(key);
+                SpellGrade SS = _saveSorts.get(key);
                 if (SS == null)
                     continue;
                 sorts.append(SS.getSpellID()).append(";").append(SS.getLevel()).append(";");
@@ -1272,7 +1269,7 @@ public class Player {
                 return "";
             for (int key : _sorts.keySet()) {
                 //3;1;a,4;3;b
-                Spell.SortStats SS = _sorts.get(key);
+                SpellGrade SS = _sorts.get(key);
                 if (SS == null)
                     continue;
                 sorts.append(SS.getSpellID()).append(";").append(SS.getLevel()).append(";");
@@ -1654,7 +1651,7 @@ public class Player {
     }
 
     public void boostSpellIncarnation() {
-        for (Entry<Integer, Spell.SortStats> i : _sorts.entrySet()) {
+        for (Entry<Integer, SpellGrade> i : _sorts.entrySet()) {
             if (getSortStatBySortIfHas(i.getValue().getSpell().getSpellID()) == null)
                 continue;
             if (learnSpell(i.getValue().getSpell().getSpellID(), i.getValue().getLevel() + 1, true, false, false))
@@ -1824,8 +1821,8 @@ public class Player {
     public String parseSpellList() {
         StringBuilder packet = new StringBuilder();
         packet.append("SL");
-        for (Iterator<Spell.SortStats> i = _sorts.values().iterator(); i.hasNext(); ) {
-            Spell.SortStats SS = i.next();
+        for (Iterator<SpellGrade> i = _sorts.values().iterator(); i.hasNext(); ) {
+            SpellGrade SS = i.next();
             packet.append(SS.getSpellID()).append("~").append(SS.getLevel()).append("~").append(_sortsPlaces.get(SS.getSpellID())).append(";");
         }
         return packet.toString();
@@ -1845,7 +1842,7 @@ public class Player {
                     _sortsPlaces.remove(key);
     }
 
-    public Spell.SortStats getSortStatBySortIfHas(int spellID) {
+    public SpellGrade getSortStatBySortIfHas(int spellID) {
         return _sorts.get(spellID);
     }
 
@@ -2034,10 +2031,16 @@ public class Player {
 
         if (this.getCurMap().getSubArea() != null) {
             if (this.getCurMap().getSubArea().getId() == 319 || this.getCurMap().getSubArea().getId() == 210)
-                TimerWaiter.addNext(() -> Minotoror.sendPacketMap(this), 3, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+                TimerWaiter.addNext(() -> Minotoror.sendPacketMap(this), 3, TimeUnit.SECONDS);
             else if (this.getCurMap().getSubArea().getId() == 200)
-                TimerWaiter.addNext(() -> PigDragon.sendPacketMap(this), 3, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+                TimerWaiter.addNext(() -> PigDragon.sendPacketMap(this), 3, TimeUnit.SECONDS);
         }
+
+        if(this.getCurMap().getId() == 13000 && this.level >= 150){
+            this.sendMessage("Vous avez atteint le level maximum pour rester sur cette map");
+            this.teleport((short) 7411, 311);
+        }
+
         if (this.getEnergy() == 0) this.setGhost();
     }
 
@@ -2475,10 +2478,10 @@ public class Player {
         if (this.fight != null)
             if (this.fight.getFighterByPerso(this) != null)
                 for (SpellEffect entry : this.fight.getFighterByPerso(this).getFightBuff())
-                    stats.addOneStat(entry.getEffectID(), entry.getValue());
+                    stats.addOneStat(entry.getEffectID(), entry.getFixvalue());
 
         for (Entry<Integer, SpellEffect> entry : buffs.entrySet())
-            stats.addOneStat(entry.getValue().getEffectID(), entry.getValue().getValue());
+            stats.addOneStat(entry.getValue().getEffectID(), entry.getValue().getFixvalue());
         return stats;
     }
 
@@ -2570,15 +2573,15 @@ public class Player {
         total = Stats.cumulStat(total, this.getStuffStats());
         total = Stats.cumulStat(total, this.getDonsStats());
         int pods = total.getEffect(Constant.STATS_ADD_PODS);
-        pods += total.getEffect(Constant.STATS_ADD_FORC) * 25;
+        pods += total.getEffect(Constant.STATS_ADD_FORC) * 15;
         for (JobStat SM : _metiers.values()) {
-            pods += SM.get_lvl() * 5 * Config.INSTANCE.getRATE_JOB();
+            pods += SM.get_lvl() * Config.INSTANCE.getRATE_JOB();
             if (SM.get_lvl() == 100)
-                pods += 5000;
+                pods += 1000;
         }
         if (pods < 1000)
             pods = 1000;
-        return pods+7500;
+        return pods+5000;
     }
 
     public void refreshLife(boolean refresh) {
@@ -2912,6 +2915,8 @@ public class Player {
         this.setPdv(this.getMaxPdv());
         if (this.getLevel() == 100)
             this.getStats().addOneStat(Constant.STATS_ADD_PA, 1);
+        if (this.getLevel() == 200)
+            this.getStats().addOneStat(Constant.STATS_ADD_PM, 1);
         Constant.onLevelUpSpells(this, this.getLevel());
         if (addXp)
             this.exp = World.world.getExpLevel(this.getLevel()).perso;
@@ -2919,6 +2924,11 @@ public class Player {
             SocketManager.GAME_SEND_STATS_PACKET(this);
             SocketManager.GAME_SEND_SPELL_LIST(this);
         }
+        if(this.getCurMap().getId() == 13000 && this.level >= 150){
+            this.sendMessage("Vous avez atteint le level maximum pour rester sur cette map");
+            this.teleport((short) 7411, 311);
+        }
+
         return true;
     }
     public boolean NerfSpell(int spellID)
@@ -3055,7 +3065,38 @@ public class Player {
     }
 
     public void addKamas(long l) {
-        kamas += l;
+        if(l < 0 ){
+            if( ( kamas + l) < 0 ) {
+                if (Logging.USE_LOG) {
+                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                    String str = "";
+                    int i = 0;
+                    for (StackTraceElement caller : stackTrace ) {
+                        i++;
+                        str += "["+ i +"] :" + "De " + caller.getMethodName() + "/" + caller.getClassName() + " && ";
+                        if(i > 4)
+                            break;
+                    }
+                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur "+ this.getName() +" à payé "  + l + " Kamas alors qu'il en avait que " + this.getKamas() + " appelé par " + str );
+                }
+
+                if( this.getBankKamas() >= (kamas - l) ) {
+                    this.setBankKamas(this.getBankKamas() - (kamas - l));
+                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur " + this.getName() + " à payé " + ((kamas - l)) + " Kamas de sa banque qui en comptait "+ this.getBankKamas() + " pour compléter la faille");
+                }
+                else{
+                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur "+ this.getName() +" à payé "  + this.getBankKamas() + " Kamas qui restait de sa banque pour compléter la faille");
+                    this.setBankKamas(0);
+                }
+                kamas = 0;
+            }
+            else{
+                kamas += l;
+            }
+        }
+        else{
+            kamas += l;
+        }
     }
 
     public GameObject getSimilarItem(GameObject exGameObject) {
@@ -3359,13 +3400,15 @@ public class Player {
     public void verifEquiped() {
         if (this.getMorphMode())
             return;
+
         GameObject arme = this.getObjetByPos(Constant.ITEM_POS_ARME);
         GameObject bouclier = this.getObjetByPos(Constant.ITEM_POS_BOUCLIER);
         if (arme != null) {
-            if (arme.getTemplate().isTwoHanded() && bouclier != null && bouclier.getTemplate().getId() != 11621 ) {
+            if (arme.getTemplate().isTwoHanded() && bouclier != null && !(ArrayUtils.contains(Constant.SHIELD_HANDLING_EXCEPTIONS ,bouclier.getTemplate().getId()) ) ) {
                 this.unequipedObjet(arme);
                 SocketManager.GAME_SEND_Im_PACKET(this, "119|44");
-            } else if (!arme.getTemplate().getConditions().equalsIgnoreCase("")
+            }
+            else if (!arme.getTemplate().getConditions().equalsIgnoreCase("")
                     && !World.world.getConditionManager().validConditions(this, arme.getTemplate().getConditions())) {
                 this.unequipedObjet(arme);
                 SocketManager.GAME_SEND_Im_PACKET(this, "119|44");
@@ -3521,197 +3564,228 @@ public class Player {
 
     public void teleport(short newMapID, int newCellID) {
         if (this.getFight() != null) return;
-        GameClient client = this.getGameClient();
+
+        GameClient client = this.account.getGameClient();
         if (client == null)
             return;
 
-        GameMap map = World.world.getMap(newMapID);
-        if (map == null) {
-            GameServer.a("Map " + newMapID + " null ");
-            return;
-        }
 
-        if (map.getCase(newCellID) == null) {
-            GameServer.a("Cell " + newCellID + " null on map " + newMapID);
-            return;
-        }
+            GameMap map = World.world.getMap(newMapID);
+            if (map == null) {
+                GameServer.a("Map " + newMapID + " null ");
+                return;
+            }
 
-        if (newMapID == this.curMap.getId()) {
+            if (map.getCase(newCellID) == null) {
+                GameServer.a("Cell " + newCellID + " null on map " + newMapID);
+                return;
+            }
+
+            if (newMapID == this.curMap.getId()) {
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.curMap, this.getId());
+                this.curCell.removePlayer(this);
+                this.curCell = curMap.getCase(newCellID);
+                this.curMap.addPlayer(this);
+                SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.curMap, this);
+                return;
+            }
+            this.setAway(false);
+
+            boolean fullmorph = false;
+            if (Constant.isInMorphDonjon(this.curMap.getId()))
+                if (!Constant.isInMorphDonjon(newMapID))
+                    fullmorph = true;
+
+            SocketManager.GAME_SEND_GA2_PACKET(client, this.getId());
             SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.curMap, this.getId());
-            this.curCell.removePlayer(this);
-            this.curCell = curMap.getCase(newCellID);
-            this.curMap.addPlayer(this);
-            SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(this.curMap, this);
-            return;
-        }
-        this.setAway(false);
-        boolean fullmorph = false;
-        if (Constant.isInMorphDonjon(this.curMap.getId()))
-            if (!Constant.isInMorphDonjon(newMapID))
-                fullmorph = true;
 
-        SocketManager.GAME_SEND_GA2_PACKET(client, this.getId());
-        SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.curMap, this.getId());
 
-        if (this.getMount() != null)
-            if (this.getMount().getFatigue() >= 220)
-                this.getMount().setEnergy(this.getMount().getEnergy() - 1);
+            if (this.getMount() != null)
+                if (this.getMount().getFatigue() >= 220)
+                    this.getMount().setEnergy(this.getMount().getEnergy() - 1);
 
-        if (this.curCell.getPlayers().contains(this))
-            this.curCell.removePlayer(this);
-        this.curMap = map;
-        this.curCell = this.curMap.getCase(newCellID);
-        // Verification de la Map
-        // Verifier la validit� du mountpark
+            if (this.curCell.getPlayers().contains(this))
+                this.curCell.removePlayer(this);
 
-        if (this.curMap.getMountPark() != null
-                && this.curMap.getMountPark().getOwner() > 0
-                && this.curMap.getMountPark().getGuild() == null) {
+            this.curMap = map;
+            this.curCell = this.curMap.getCase(newCellID);
+            // Verification de la Map
+            // Verifier la validit� du mountpark
 
-            //if (World.world.getGuild( this.curMap.getMountPark().getGuild().getId() ) == null) {// Ne devrait  pas  arriver
+            if (this.curMap.getMountPark() != null
+                    && this.curMap.getMountPark().getOwner() > 0
+                    && this.curMap.getMountPark().getGuild() == null) {
+
+                //if (World.world.getGuild( this.curMap.getMountPark().getGuild().getId() ) == null) {// Ne devrait  pas  arriver
                 //GameServer.a();
-                System.out.println("Mountpark sur la map " + this.curMap.getId() + " réinitialisée car Propriétaire ou Guilde plus existante " );
-                this.curMap.getMountPark().setData(0,-1,this.curMap.getMountPark().getPriceBase(),"","","","");
+                //System.out.println("Mountpark sur la map " + this.curMap.getId() + " réinitialisée car Propriétaire ou Guilde plus existante ");
+                this.curMap.getMountPark().setData(0, -1, this.curMap.getMountPark().getPriceBase(), "", "", "", "");
                 //Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
-            //}
-        }
+                //}
+            }
 
-        // Verifier la validit� du Collector
-        Collector col = Collector.getCollectorByMapId(this.curMap.getId());
-        if (col != null) {
-            if (World.world.getGuild(col.getGuildId()) == null)// Ne devrait pas arriver
+            // Verifier la validit� du Collector
+            Collector col = Collector.getCollectorByMapId(this.curMap.getId());
+            if (col != null) {
+                if (World.world.getGuild(col.getGuildId()) == null)// Ne devrait pas arriver
+                {
+                    Collector.removeCollector(col.getGuildId());
+                }
+            }
+
+            if (this.isInAreaNotSubscribe()) {
+                if (!this.isInPrivateArea)
+                    SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this.getGameClient(), 'S');
+                this.isInPrivateArea = true;
+            } else {
+                this.isInPrivateArea = false;
+            }
+
+        try {
+            SocketManager.GAME_SEND_MAPDATA(client, newMapID, this.curMap.getDate(), this.curMap.getKey());
+            this.curMap.addPlayer(this);
+
+            if (fullmorph)
+                this.unsetFullMorph();
+
+            if (this.follower != null && !this.follower.isEmpty())// On met a jour la Map des personnages qui nous suivent
             {
-                GameServer.a("La guilde " + col.getGuildId() + " n'existe pas");
-                Collector.removeCollector(col.getGuildId());
+                for (Player t : this.follower.values()) {
+                    if (t.isOnline())
+                        SocketManager.GAME_SEND_FLAG_PACKET(t, this);
+                    else
+                        this.follower.remove(t.getId());
+                }
+            }
+
+            if (this.getInHouse() != null)
+                if (this.getInHouse().getMapId() == this.curMap.getId())
+                    this.setInHouse(null);
+
+            if (map.getSubArea() != null) {
+                if (map.getSubArea().getId() == 200) {
+                    TimerWaiter.addNext(() -> PigDragon.sendPacketMap(this), 1000, TimeUnit.MILLISECONDS);
+                } else if (map.getSubArea().getId() == 210 || map.getSubArea().getId() == 319) {
+                    TimerWaiter.addNext(() -> Minotoror.sendPacketMap(this), 1000, TimeUnit.MILLISECONDS);
+                }
             }
         }
+        catch (Exception e){
+            //e.printStackTrace();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
 
-        if (this.isInAreaNotSubscribe()) {
-            if (!this.isInPrivateArea)
-                SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this.getGameClient(), 'S');
-            this.isInPrivateArea = true;
-        } else {
-            this.isInPrivateArea = false;
-        }
+            System.out.println(e);
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("error", "tp error 1 " + e.getMessage() + " " + pw);
 
-        SocketManager.GAME_SEND_MAPDATA(client, newMapID, this.curMap.getDate(), this.curMap.getKey());
-        this.curMap.addPlayer(this);
-
-        if (fullmorph)
-            this.unsetFullMorph();
-
-        if (this.follower != null && !this.follower.isEmpty())// On met a jour la Map des personnages qui nous suivent
-        {
-            for (Player t : this.follower.values()) {
-                if (t.isOnline())
-                    SocketManager.GAME_SEND_FLAG_PACKET(t, this);
-                else
-                    this.follower.remove(t.getId());
-            }
-        }
-
-        if (this.getInHouse() != null)
-            if (this.getInHouse().getMapId() == this.curMap.getId())
-                this.setInHouse(null);
-
-        if (map.getSubArea() != null) {
-            if (map.getSubArea().getId() == 200) {
-                TimerWaiter.addNext(() -> PigDragon.sendPacketMap(this), 1000, TimerWaiter.DataType.MAP);
-            } else if (map.getSubArea().getId() == 210 || map.getSubArea().getId() == 319) {
-                TimerWaiter.addNext(() -> Minotoror.sendPacketMap(this), 1000, TimerWaiter.DataType.MAP);
-            }
+            return;
         }
     }
 
     public void teleport(GameMap map, int cell) {
-        if (this.getFight() != null) return;
-        GameClient PW = null;
-        if (account.getGameClient() != null) {
-            PW = account.getGameClient();
-        }
-        if (map == null) {
-           // GameServer.a("Map voulu null");
-            return;
-        }
-        if (map.getCase(cell) == null) {
-            //GameServer.a();
-            return;
-        }
-        if (!cantTP()) {
-            if (this.getCurMap().getSubArea() != null
-                    && map.getSubArea() != null) {
-                if (this.getCurMap().getSubArea().getId() == 165
-                        && map.getSubArea().getId() == 165) {
-                    if (this.hasItemTemplate(997, 1)) {
-                        this.removeByTemplateID(997, 1);
-                    } else {
-                        SocketManager.GAME_SEND_Im_PACKET(this, "14");
-                        return;
+
+            if (this.getFight() != null) return;
+            GameClient PW = null;
+            if (account.getGameClient() != null) {
+                PW = account.getGameClient();
+            }
+            if (map == null) {
+                // GameServer.a("Map voulu null");
+                return;
+            }
+            if (map.getCase(cell) == null) {
+                //GameServer.a();
+                return;
+            }
+            if (!cantTP()) {
+                if (this.getCurMap().getSubArea() != null
+                        && map.getSubArea() != null) {
+                    if (this.getCurMap().getSubArea().getId() == 165
+                            && map.getSubArea().getId() == 165) {
+                        if (this.hasItemTemplate(997, 1)) {
+                            this.removeByTemplateID(997, 1);
+                        } else {
+                            SocketManager.GAME_SEND_Im_PACKET(this, "14");
+                            return;
+                        }
                     }
                 }
             }
-        }
 
-        boolean fullmorph = false;
-        if (Constant.isInMorphDonjon(curMap.getId()))
-            if (!Constant.isInMorphDonjon(map.getId()))
-                fullmorph = true;
+            boolean fullmorph = false;
+            if (Constant.isInMorphDonjon(curMap.getId()))
+                if (!Constant.isInMorphDonjon(map.getId()))
+                    fullmorph = true;
 
-        if (map.getId() == curMap.getId()) {
-            SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(curMap, this.getId());
+            if (map.getId() == curMap.getId()) {
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(curMap, this.getId());
+                curCell.removePlayer(this);
+                curCell = curMap.getCase(cell);
+                curMap.addPlayer(this);
+                SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(curMap, this);
+                if (fullmorph)
+                    this.unsetFullMorph();
+                return;
+            }
+            if (PW != null) {
+                SocketManager.GAME_SEND_GA2_PACKET(PW, this.getId());
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(curMap, this.getId());
+            }
+
+        try {
+
+            if (this.getMount() != null)
+                if (this.getMount().getFatigue() >= 220)
+                    this.getMount().setEnergy(this.getMount().getEnergy() - 1);
             curCell.removePlayer(this);
+            curMap = map;
             curCell = curMap.getCase(cell);
-            curMap.addPlayer(this);
-            SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(curMap, this);
-            if (fullmorph)
-                this.unsetFullMorph();
+            // Verification de la Map
+            // Verifier la validit� du mountpark
+            if (curMap.getMountPark() != null
+                    && curMap.getMountPark().getOwner() > 0
+                    && curMap.getMountPark().getGuild().getId() != -1) {
+                if (World.world.getGuild(curMap.getMountPark().getGuild().getId()) == null)// Ne devrait  pas  arriver
+                {
+                    GameServer.a("LA guilde " + curMap.getMountPark().getGuild().getId() + " semble ne pas exister");
+                    //FIXME : Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
+                }
+            }
+            // Verifier la validit� du Collector
+            if (Collector.getCollectorByMapId(curMap.getId()) != null) {
+                if (World.world.getGuild(Collector.getCollectorByMapId(curMap.getId()).getGuildId()) == null)// Ne devrait pas arriver
+                {
+                    GameServer.a("LA guilde " + Collector.getCollectorByMapId(curMap.getId()).getGuildId() + " semble ne pas exister");
+                    Collector.removeCollector(Collector.getCollectorByMapId(curMap.getId()).getGuildId());
+                }
+            }
+
+            if (PW != null) {
+                SocketManager.GAME_SEND_MAPDATA(PW, map.getId(), curMap.getDate(), curMap.getKey());
+                curMap.addPlayer(this);
+                if (fullmorph)
+                    this.unsetFullMorph();
+            }
+
+            if (!follower.isEmpty())// On met a jour la Map des personnages qui nous suivent
+            {
+                for (Player t : follower.values()) {
+                    if (t.isOnline())
+                        SocketManager.GAME_SEND_FLAG_PACKET(t, this);
+                    else
+                        follower.remove(t.getId());
+                }
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            if (Logging.USE_LOG)
+                Logging.getInstance().write("error", "tp error 2 " + e.getMessage() + " " + e.getLocalizedMessage());
+
             return;
-        }
-        if (PW != null) {
-            SocketManager.GAME_SEND_GA2_PACKET(PW, this.getId());
-            SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(curMap, this.getId());
-        }
-        if (this.getMount() != null)
-            if (this.getMount().getFatigue() >= 220)
-                this.getMount().setEnergy(this.getMount().getEnergy() - 1);
-        curCell.removePlayer(this);
-        curMap = map;
-        curCell = curMap.getCase(cell);
-        // Verification de la Map
-        // Verifier la validit� du mountpark
-        if (curMap.getMountPark() != null
-                && curMap.getMountPark().getOwner() > 0
-                && curMap.getMountPark().getGuild().getId() != -1) {
-            if (World.world.getGuild(curMap.getMountPark().getGuild().getId()) == null)// Ne devrait  pas  arriver
-            {
-                GameServer.a("LA guilde " +curMap.getMountPark().getGuild().getId() + " semble ne pas exister");
-                //FIXME : Map.MountPark.removeMountPark(curMap.getMountPark().getGuild().getId());
-            }
-        }
-        // Verifier la validit� du Collector
-        if (Collector.getCollectorByMapId(curMap.getId()) != null) {
-            if (World.world.getGuild(Collector.getCollectorByMapId(curMap.getId()).getGuildId()) == null)// Ne devrait pas arriver
-            {
-                GameServer.a("LA guilde " +Collector.getCollectorByMapId(curMap.getId()).getGuildId() + " semble ne pas exister");
-                Collector.removeCollector(Collector.getCollectorByMapId(curMap.getId()).getGuildId());
-            }
-        }
 
-        if (PW != null) {
-            SocketManager.GAME_SEND_MAPDATA(PW, map.getId(), curMap.getDate(), curMap.getKey());
-            curMap.addPlayer(this);
-            if (fullmorph)
-                this.unsetFullMorph();
-        }
-
-        if (!follower.isEmpty())// On met a jour la Map des personnages qui nous suivent
-        {
-            for (Player t : follower.values()) {
-                if (t.isOnline())
-                    SocketManager.GAME_SEND_FLAG_PACKET(t, this);
-                else
-                    follower.remove(t.getId());
-            }
         }
     }
 
@@ -4083,7 +4157,7 @@ public class Player {
 
         SocketManager.GAME_SEND_ECK_PACKET(this, 16, packet.toString());
 
-        TimerWaiter.addNext(() -> mountPark.getEtable().stream().filter(mount -> mount != null && mount.getSize() == 50 && mount.getOwner() == this.getId()).forEach(mount -> SocketManager.GAME_SEND_Ee_PACKET_WAIT(this, '~', mount.parse())), 500, TimerWaiter.DataType.CLIENT);
+        TimerWaiter.addNext(() -> mountPark.getEtable().stream().filter(mount -> mount != null && mount.getSize() == 50 && mount.getOwner() == this.getId()).forEach(mount -> SocketManager.GAME_SEND_Ee_PACKET_WAIT(this, '~', mount.parse())), 500, TimeUnit.MILLISECONDS);
     }
 
     public void fullPDV() {
@@ -4642,16 +4716,171 @@ public class Player {
         }
     }
 
+    public synchronized void checkDoubleStuff() {
+        boolean usingBug = false;
+        byte posCoiffe = 0, posCape = 0, posFami = 0, posAnn1 = 0, posAnn2 = 0, posCeinture = 0,
+                posBottes = 0, posAmulette = 0, posBouclier = 0, posDofusOne = 0, posDofusTwo = 0, posDofusThree = 0,
+                posDofusFour = 0, posDofusFive = 0, posDofusSix = 0, posArme = 0;
+
+        for (GameObject obj : this.objects.values()) {
+            if (obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED)
+                continue;
+
+            if (obj.getPosition() == Constant.ITEM_POS_COIFFE) {
+                posCoiffe++;
+                if (posCoiffe > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_CAPE) {
+                posCape++;
+                if (posCape > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_FAMILIER) {
+                posFami++;
+                if (posFami > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_ANNEAU1) {
+                posAnn1++;
+                if (posAnn1 > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_ANNEAU2) {
+                posAnn2++;
+                if (posAnn2 > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_CEINTURE) {
+                posCeinture++;
+                if (posCeinture > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_BOTTES) {
+                posBottes++;
+                if (posBottes > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_AMULETTE) {
+                posAmulette++;
+                if (posAmulette > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_BOUCLIER) {
+                posBouclier++;
+                if (posBouclier > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS1) {
+                posDofusOne++;
+                if (posDofusOne > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS2) {
+                posDofusTwo++;
+                if (posDofusTwo > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS3) {
+                posDofusThree++;
+                if (posDofusThree > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS4) {
+                posDofusFour++;
+                if (posDofusFour > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS5) {
+                posDofusFive++;
+                if (posDofusFive > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_DOFUS6) {
+                posDofusSix++;
+                if (posDofusSix > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+
+            if (obj.getPosition() == Constant.ITEM_POS_ARME) {
+                posArme++;
+                if (posArme > 1) {
+                    obj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                    usingBug = true;
+                }
+            }
+        }
+
+        if (usingBug) {
+            World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur **" + this.getName() + "** utilise une faille critique. Double stuff sur même case. à vérifier et bannir immédiatement !" );
+        }
+
+        this.verifEquiped();
+        if (this.isOnMount() && this.getObjetByPos(Constant.ITEM_POS_FAMILIER) != null)
+            this.unequipedObjet(this.getObjetByPos(Constant.ITEM_POS_FAMILIER));
+    }
+
     public void useZaap(short id) {
         if (this.getExchangeAction() == null || this.getExchangeAction().getType() != ExchangeAction.IN_ZAAPING)
             return;//S'il n'a pas ouvert l'interface Zaap(hack?)
+
         if (fight != null)
             return;//Si il combat
+
         if (!_zaaps.contains(id))
             return;//S'il n'a pas le zaap demand�(ne devrais pas arriver)
+
         int cost = Formulas.calculZaapCost(curMap, World.world.getMap(id));
-        if (kamas < cost)
-            return;//S'il n'a pas les kamas (verif cot� client)
+        if (kamas < cost || curMap == World.world.getMap(id) )
+            return; //S'il n'a pas les kamas (verif cot� client)
+
+        if (cost < 0)
+            return;
+
         short mapID = id;
         int SubAreaID = curMap.getSubArea().getArea().getSuperArea();
         int cellID = World.world.getZaapCellIdByMapId(id);
@@ -4688,25 +4917,40 @@ public class Player {
     public void usePrisme(String packet) {
         if (this.getExchangeAction() == null || this.getExchangeAction().getType() != ExchangeAction.IN_PRISM)
             return;
+
         int celdaID = 340;
         short MapID = 7411;
+        boolean canGo = false;
+
         for (Prism Prisme : World.world.AllPrisme()) {
             if (Prisme.getMap() == Short.valueOf(packet.substring(2))) {
                 celdaID = Prisme.getCell();
                 MapID = Prisme.getMap();
+                canGo = true;
                 break;
             }
         }
+
+        if (!canGo) {
+            World.sendWebhookMessage(Constant.moderatorWebhook,"**" + this.getName() + "** a tenté d'utiliser une faille lié au TP PRISME. (ID PERSO: **" + this.getId() + "**)" );
+            this.send("Im182");
+            return;
+        }
+
         int costo = Formulas.calculZaapCost(curMap, World.world.getMap(MapID));
         if (MapID == curMap.getId())
             costo = 0;
-        if (kamas < costo) {
-            SocketManager.GAME_SEND_MESSAGE(this, "Vous n'avez pas sufisamment de Kamas pour réaliser cette action.");
+
+        if (kamas < costo || costo < 0) {
+            SocketManager.GAME_SEND_MESSAGE(this, "Vous n'avez pas suffisamment de Kamas pour réaliser cette action.");
             return;
         }
+
         kamas -= costo;
         SocketManager.GAME_SEND_STATS_PACKET(this);
-        this.teleport(Short.valueOf(packet.substring(2)), celdaID);
+        this.teleport(MapID, celdaID);
+
+
         SocketManager.SEND_Ww_CLOSE_Prisme(this);
         this.setExchangeAction(null);
     }
@@ -4794,10 +5038,11 @@ public class Player {
 
     public boolean hasItemTemplate(int i, int q) {
         for (GameObject obj : objects.values()) {
-            if (obj.getPosition() != Constant.ITEM_POS_NO_EQUIPED)
-                continue;
+            /*if (obj.getPosition() != Constant.ITEM_POS_NO_EQUIPED)
+                continue;*/
             if (obj.getTemplate().getId() != i)
                 continue;
+
             if (obj.getQuantity() >= q)
                 return true;
         }
@@ -6098,7 +6343,7 @@ public class Player {
             Database.getStatics().getPlayerData().update(getAccount().getCurrentPlayer());
             SocketManager.GAME_SEND_EV_PACKET(getGameClient());
             setAway(false);
-        }, 5, TimeUnit.MINUTES, TimerWaiter.DataType.CLIENT);
+        }, 5, TimeUnit.MINUTES);
     }
 
     public long getTimeTaverne() {
@@ -6165,21 +6410,19 @@ public class Player {
     }
 
     public GameClient getGameClient() {
-        if(this.getAccount()!= null){
+        if(this.getAccount() != null){
             return this.getAccount().getGameClient();
         }
-        else{
-           if(this.getFight().getFighterByPerso(this).isInvocation()){
-               return this.getFight().getFighterByPerso(this).getInvocator().getPlayer().getGameClient();
-           }
-           else{
-               if(this.getSlaveLeader() != null){
-                   return this.getSlaveLeader().getGameClient();
-               }
-               else{
-                   return this.getAccount().getGameClient();
-               }
-           }
+        else {
+          if (this.getFight().getFighterByPerso(this).isInvocation()) {
+                    return this.getFight().getFighterByPerso(this).getInvocator().getPlayer().getGameClient();
+          } else {
+                    if (this.getSlaveLeader() != null) {
+                        return this.getSlaveLeader().getGameClient();
+                    } else {
+                        return this.getAccount().getGameClient();
+                    }
+          }
         }
 
     }
@@ -6673,7 +6916,7 @@ public class Player {
 
     public String stringListeSorts() {
         final StringBuilder str = new StringBuilder();
-        for (Spell.SortStats hp : _sorts.values()) {
+        for (SpellGrade hp : _sorts.values()) {
             if (hp.getSpell() == null) {
                 continue;
             }

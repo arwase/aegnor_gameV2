@@ -12,7 +12,7 @@ import fight.spells.Spell;
 public class IA50 extends AbstractNeedSpell  {
 
     public IA50(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA50");
     }
 
     @Override
@@ -22,9 +22,7 @@ public class IA50 extends AbstractNeedSpell  {
             boolean action = false;
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for(Spell.SortStats spellStats : this.highests)
-                if(spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter L = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
             Fighter C = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
@@ -35,7 +33,7 @@ public class IA50 extends AbstractNeedSpell  {
 
             if(this.fighter.getCurPa(this.fight) > 0 && !this.fighter.haveInvocation()) {
                 if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
-                    time = 2000;
+                    time = 1000;
                     action = true;
                 }
             }

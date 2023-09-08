@@ -4,6 +4,8 @@ object Config {
 
     val startTime = System.currentTimeMillis()
 
+    var LOG = ConfigReader.data[ConfigReader.mode.log]
+    var AUTO_CLEAN = ConfigReader.data[ConfigReader.mode.autoClean]
     var AZURIOM = ConfigReader.data[ConfigReader.mode.azuriom]
     var LINUX = ConfigReader.data[ConfigReader.mode.linux]
     var HALLOWEEN = ConfigReader.data[ConfigReader.mode.halloween]
@@ -23,7 +25,7 @@ object Config {
     var TIME_PER_EVENT: Short = ConfigReader.data[ConfigReader.options.event.timePerEvent].toShort()
 
     var NAME: String = "Aegnor"
-    var url: String = "http://127.0.0.1/"
+    var url: String = "https://aegnor.arwase.fr"
     var startMessage = "Bienvenue sur le serveur $NAME !"
     var colorMessage = "B9121B"
 

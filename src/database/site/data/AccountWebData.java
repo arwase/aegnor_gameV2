@@ -88,6 +88,20 @@ public class AccountWebData extends AbstractDAO<AccountWeb> {
         }
     }
 
+    public boolean delete(int accountID) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("DELETE from dofus129_in_game_web_account_relations WHERE dofus_id = " + accountID);
+            p.execute();
+
+            return true;
+        } catch (SQLException e) {
+            super.sendError("PlayerData delete", e);
+        } finally {
+            close(p);
+        }
+        return false;
+    }
 
     /** Points **/
     public int loadPoints(int user) {

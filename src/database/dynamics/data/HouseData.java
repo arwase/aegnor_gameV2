@@ -88,7 +88,10 @@ public class HouseData extends AbstractDAO<House> {
                     house.setGuildId(0);
                     house.setAccess(0);
                     house.setKey("-");
-                    house.setGuildRightsWithParse(0);                }
+                    house.setGuildRightsWithParse(0);
+                    World.world.houseToClear.add(house);
+
+                }
                 else{
                     house.setOwnerId(owner);
                     house.setSale(sale);

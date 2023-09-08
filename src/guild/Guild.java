@@ -4,7 +4,7 @@ import area.map.entity.House;
 import client.Player;
 import database.Database;
 import entity.Collector;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import game.world.World;
 import kernel.Constant;
 
@@ -19,7 +19,7 @@ public class Guild {
     private String name = "", emblem = "", announce = "";
     private int lvl, capital = 0, nbCollectors = 0;
     private Map<Integer, GuildMember> members = new TreeMap<>();
-    private Map<Integer, SortStats> spells = new HashMap<>(); // <Id, Level>
+    private Map<Integer, SpellGrade> spells = new HashMap<>(); // <Id, Level>
     private Map<Integer, Integer> stats = new HashMap<>(); // <Effect, Quantity>
 
     public Guild(String name, String emblem) {
@@ -88,7 +88,7 @@ public class Guild {
         this.capital = nbr;
     }
 
-    public Map<Integer, SortStats> getSpells() {
+    public Map<Integer, SpellGrade> getSpells() {
         return this.spells;
     }
 
@@ -101,14 +101,14 @@ public class Guild {
     }
 
     public void boostSpell(int id) {
-        SortStats SS = this.spells.get(id);
+        SpellGrade SS = this.spells.get(id);
         if (SS != null && SS.getLevel() == 5)
             return;
         this.spells.put(id, ((SS == null) ? World.world.getSort(id).getStatsByLevel(1) : World.world.getSort(id).getStatsByLevel(SS.getLevel() + 1)));
     }
 
     public boolean unBoostSpell(int id) {
-        SortStats SS = this.spells.get(id);
+        SpellGrade SS = this.spells.get(id);
         if (SS != null) {
             this.capital += 5 * SS.getLevel();
             this.spells.put(id, null);
@@ -185,7 +185,7 @@ public class Guild {
         StringBuilder toReturn = new StringBuilder();
         boolean isFirst = true;
 
-        for (Entry<Integer, SortStats> curSpell : this.spells.entrySet()) {
+        for (Entry<Integer, SpellGrade> curSpell : this.spells.entrySet()) {
             if (!isFirst)
                 toReturn.append("|");
             toReturn.append(curSpell.getKey()).append(";").append(((curSpell.getValue() == null) ? 0 : curSpell.getValue().getLevel()));

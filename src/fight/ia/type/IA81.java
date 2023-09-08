@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class IA81 extends AbstractNeedSpell  {
 
     public IA81(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA81");
     }
 
     @Override
@@ -27,19 +27,13 @@ public class IA81 extends AbstractNeedSpell  {
             boolean action = false;
 
             // MAX PO DAMMAGE
-            for(Spell.SortStats spellStats : this.highests)
-                if (spellStats.getMaxPO() > maxPoDammage)
-                    maxPoDammage = spellStats.getMaxPO();
+            maxPoDammage = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             // MAX PO SOUTIEN
-            for(Spell.SortStats spellStats : this.buffs)
-               if (spellStats.getMaxPO() > maxPoDammage)
-                   MaxPoBuff = spellStats.getMaxPO();
+            MaxPoBuff = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.buffs);
 
             // MAX PO HEAL
-            for(Spell.SortStats spellStats : this.heals)
-                if (spellStats.getMaxPO() > maxPoDammage)
-                    maxPoHeal = spellStats.getMaxPO();
+            maxPoHeal =  Function.getInstance().getMaxPoUsableSpell(this.fighter, this.heals);
 
             ArrayList<Fighter> AllyToHeal = Function.getInstance().getAlliesToHeal(this.fight, this.fighter,80);
             Fighter AllyToBuff = Function.getInstance().getAllyToBuff(this.fight, this.fighter);

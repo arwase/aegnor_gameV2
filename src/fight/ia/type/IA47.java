@@ -11,7 +11,7 @@ import fight.ia.util.Function;
 public class IA47 extends AbstractNeedSpell  {
 
     public IA47(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA47");
     }
 
     @Override

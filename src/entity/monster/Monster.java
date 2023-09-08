@@ -9,7 +9,7 @@ import entity.monster.boss.MaitreCorbac;
 import fight.Fight;
 import fight.Fighter;
 import fight.spells.Spell;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import fight.spells.SpellEffect;
 import game.world.World;
 import game.world.World.Drop;
@@ -116,20 +116,15 @@ public class Monster {
             }
         }
 
-        /*if(grades.get(6) == null) {
-            //System.out.println("On génére les grade diff du monstre");
-            grades.put(6, generateGradeSix());
-        }
-        else{
-            System.out.println("Monstre spécifique :" + name + " , On ignore (Invo ou autre)");
-        }*/
     }
 
-    public void setInfos(int gfxId, int align, String colors,
+    public void setInfos(int id,String name,int gfxId, int align, String colors,
                          String thisGrades, String thisSpells, String thisStats,
                          String thisStatsInfos, String thisPdvs, String thisPoints,
                          String thisInit, int minKamas, int maxKamas, String thisXp, int ia,
                          boolean capturable, int aggroDistance,int type) {
+        this.id = id;
+        this.name = name;
         this.gfxId = gfxId;
         this.align = align;
         this.colors = colors;
@@ -140,60 +135,72 @@ public class Monster {
         this.aggroDistance = aggroDistance;
         this.type = type;
         int G = 1;
+
         grades.clear();
-        for (int n = 0; n < 12; n++) {
+        String[] spellsList = thisSpells.split("\\|");
+        String[] PdvMAXlist = thisPdvs.split("\\|");
+        String[] initlist = thisInit.split("\\|");
+        String[] Pointslist =  thisPoints.split("\\|");
+        String[] XPlist =  thisXp.split("\\|");
+
+        int sizeSpellList = spellsList.length;
+        int sizePdvMAXList = PdvMAXlist.length;
+        int sizeinitList = initlist.length;
+        int sizePointsList = Pointslist.length;
+        int sizeXPList = XPlist.length;
+
+        int nbGrade = (thisGrades.split("\\|")).length;
+        for (int n = 0; n < nbGrade; n++) {
             try {
                 //Grades
                 String grade = thisGrades.split("\\|")[n];
                 String[] infos = grade.split("@");
+                if(infos.length > 1){}else{
+                    continue;
+                }
                 int level = Integer.parseInt(infos[0]);
                 String resists = infos[1];
                 //Stats
                 String stats = thisStats.split("\\|")[n];
                 //Spells
-                String spells = thisSpells.split("\\|")[n];
-                if (spells.equals("-1"))
-                    spells = "";
+                String spells = "";
                 //PDVMax//init
                 int pdvmax = 1;
                 int init = 1;
-
-                try {
-                    pdvmax = Integer.parseInt(thisPdvs.split("\\|")[n]);
-                    init = Integer.parseInt(thisInit.split("\\|")[n]);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    World.world.logger.error("#4# Erreur lors du chargement du monstre (template) : "
-                            + id);
-                }
                 //PA / PM
                 int PA = 3;
                 int PM = 3;
                 int xp = 10;
 
-                try {
-                    String[] pts = thisPoints.split("\\|")[n].split(";");
-                    try {
-                        PA = Integer.parseInt(pts[0]);
-                        PM = Integer.parseInt(pts[1]);
-                        xp = Integer.parseInt(thisXp.split("\\|")[n]);
-                    } catch (Exception e1) {
-                        World.world.logger.error("#5# Erreur lors du chargement du monstre (template) : "
-                                + id);
-                        e1.printStackTrace();
-                    }
-                } catch (Exception e) {
-                    World.world.logger.error("#6# Erreur lors du chargement du monstre (template) : "
-                            + id);
-                    e.printStackTrace();
+                if(n < sizeSpellList) {
+                    spells = spellsList[n];
+                    if (spells.equals("-1"))
+                        spells = "";
                 }
+
+                if(PdvMAXlist.length > n+1) {
+                    pdvmax = Integer.parseInt(PdvMAXlist[n]);
+                }
+                if(initlist.length > n+1) {
+                    pdvmax = Integer.parseInt(initlist[n]);
+                }
+
+                if(Pointslist.length > n+1 ){
+                    String[] pts = Pointslist[n].split(";");
+                    PA = Integer.parseInt(pts[0]);
+                    PM = Integer.parseInt(pts[1]);
+                }
+
+                if(XPlist.length > n+1) {
+                    xp = Integer.parseInt(XPlist[n]);
+                }
+
                 grades.put(G, new MobGrade(this, G, level, PA, PM, resists, stats, thisStatsInfos, spells, pdvmax, init, xp, n));
                 G++;
             } catch (Exception e) {
                 // ok pour les dopeuls
-
                 //e.printStackTrace();
-                System.out.println("Erreur avec le monstre : " + this.id);
+                System.out.println("Erreur avec le monstre : " + this.id +" - " + e.getMessage());
             }
         }
     }
@@ -910,7 +917,6 @@ public class Monster {
         public MobGroup(int id, int cellId, String groupData) {
             this.id = id;
             this.align = Constant.ALIGNEMENT_NEUTRE;
-
             this.cellId = cellId;
             this.isFix = true;
             int guid = -1;
@@ -932,14 +938,19 @@ public class Monster {
                             star = true;
                         if (MG.level >= min && MG.level <= max)
                             mgs.add(MG);
+
+                        if(min >= m.getGrade(5).getLevel() ){
+                            mgs.add(m.getGrade(5));
+                            break;
+                        }
                     }
+
                     if (mgs.isEmpty())
                         continue;
                     //On prend un grade au hasard entre 0 et size -1 parmis les mobs possibles
-                    int size = mgs.size() - 1;
-                    if(size > 4)
-                        size = 4;
-                    this.mobs.put(guid, mgs.get(Formulas.getRandomValue(0, size )));
+                    this.mobs.put(guid, mgs.get(Formulas.getRandomValue(0, mgs.size() - 1 )));
+
+
                     if (m.getAggroDistance() > this.aggroDistance)
                         this.aggroDistance = m.getAggroDistance();
                     guid--;
@@ -947,6 +958,8 @@ public class Monster {
                     e.printStackTrace();
                 }
             }
+
+
             this.orientation = (Formulas.getRandomValue(0, 3) * 2) + 1;
             this.starBonus = (short) (star ? 0 : -1);
         }
@@ -969,7 +982,7 @@ public class Monster {
                     //on ajoute a la liste les grades possibles
                     MobGrade mg2 = mgs.getCopy();
                     mg2.modifStatbyLvl(lvl,0);
-                    mg2.baseXp = lvl*1000;
+                    mg2.baseXp = mgs.baseXp;
                     this.isHotomani = true;
                     //On prend un grade au hasard entre 0 et size -1 parmis les mobs possibles
                     this.mobs.put(guid, mg2);
@@ -1184,7 +1197,7 @@ public class Monster {
         private GameCase fightCell;
         private ArrayList<SpellEffect> fightBuffs = new ArrayList<SpellEffect>();
         public Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
-        private Map<Integer, SortStats> spells = new HashMap<Integer, SortStats>();
+        private Map<Integer, SpellGrade> spells = new HashMap<Integer, SpellGrade>();
         public ArrayList<Integer> statsInfos = new ArrayList<Integer>();
 
         public MobGrade(Monster template, int grade, int level, int pa, int pm, String resists, String stats, String statsInfos, String allSpells, int pdvMax, int aInit, int xp, int n) {
@@ -1250,6 +1263,7 @@ public class Monster {
                         id = Integer.parseInt(spellInfo[0]);
                         lvl = Integer.parseInt(spellInfo[1]);
                     } catch (Exception e) {
+                        System.out.println("#1# Erreur lors du chargement du grade du monstre (template) : " + template.getId());
                         e.printStackTrace();
                         continue;
                     }
@@ -1257,7 +1271,7 @@ public class Monster {
                     if (id == 0 || lvl == 0) continue;
                     Spell spell = World.world.getSort(id);
                     if (spell == null) continue;
-                    SortStats spellStats = spell.getStatsByLevel(lvl);
+                    SpellGrade spellStats = spell.getStatsByLevel(lvl);
                     if (spellStats == null) continue;
                     this.spells.put(id, spellStats);
                 }
@@ -1297,7 +1311,7 @@ public class Monster {
                          int pdvMax, int pa, int pm,
                          Map<Integer, Integer> stats,
                          ArrayList<Integer> statsInfos,
-                         Map<Integer, SortStats> spells, int xp, int n, int init) {
+                         Map<Integer, SpellGrade> spells, int xp, int n, int init) {
             this.size = 100 + n * pSize;
             this.template = template;
             this.grade = grade;
@@ -1332,57 +1346,6 @@ public class Monster {
 
             switch (fightDiff) {
                 case 1:
-                   /* //int diff = getDiffbyLvl(stats,this.getTemplate());
-
-                    // Calcul pour avoir les nouvelles valeurs
-                    int lvlMin = this.getTemplate().getGrade(1).getLevel();
-                    int lvlMax = this.getTemplate().getGrade(5).getLevel();
-                    float lvlmoyen = (lvlMax - lvlMin)/4;
-                    newLvl = Math.round(this.level + (lvlmoyen*5));
-                    // Cal
-                    int pdvMin = this.getTemplate().getGrade(1).pdv;
-                    int pdvMax =this.getTemplate().getGrade(5).pdv;
-                    float pdvmoyen = (pdvMax - pdvMin)/4;
-                    newPdv = Math.round(this.pdv + (pdvmoyen*5));
-
-                    int paMin = this.getTemplate().getGrade(1).pa;
-                    int paMax =this.getTemplate().getGrade(5).pa;
-                    float pamoyen = 0;
-                    if(paMax > paMin){
-                        pamoyen = (paMax - paMin)/4;
-                    }
-                    else{
-                        pamoyen = ((1+paMax) - paMin)/4;
-                    }
-                    newPa = Math.round(this.pa + (pamoyen*5));
-
-                    int pmMin = this.getTemplate().getGrade(1).pa;
-                    int pmMax =this.getTemplate().getGrade(5).pa;
-                    float pmmoyen = 0;
-                    if(paMax > paMin){
-                        pmmoyen = (pmMax - pmMin)/4;
-                    }
-                    else{
-                        pmmoyen = ((1+pmMax) - pmMin)/4;
-                    }
-                    newPm = Math.round(this.pa + (pmmoyen*5));
-
-                    // String[] resist = resists.split(";"), stat = stats.split(","), statInfos = statsInfos.split(";");
-
-                    newStats.forEach((key, value) -> {
-                        int StatsMinOne = this.stats.get(key);
-                        int Diff = value - StatsMinOne;
-                        if(Diff <= 0){
-                            Diff = 5;
-                        }
-                        int NewValue = value + (Diff*5);
-                        value = NewValue;
-
-                    });
-
-                    */
-
-
                     int lvlMin = MG4.getLevel();
                     int lvlMax = MG5.getLevel();
 
@@ -1407,8 +1370,11 @@ public class Monster {
                     break;
                 case 2:
                 case 3:
+                case 4:
                     this.level = MG5.getLevel() + fightDiff*50 ;
                     this.size = 100 + fightDiff*15 ;
+                    int XPMG7 = MG5.baseXp + (MG5.baseXp - MG1.baseXp) + (fightDiff*50 * 100);
+                    this.baseXp = XPMG7;
                     break;
             }
 
@@ -1425,7 +1391,7 @@ public class Monster {
                 return;
             String spells = "";
 
-            for (Entry<Integer, SortStats> entry : this.spells.entrySet()) {
+            for (Entry<Integer, SpellGrade> entry : this.spells.entrySet()) {
                 spells += (spells.isEmpty() ? entry.getKey() + ","
                         + entry.getValue().getLevel() : ";" + entry.getKey()
                         + "," + entry.getValue().getLevel());
@@ -1531,7 +1497,7 @@ public class Monster {
             return new Stats(this.stats);
         }
 
-        public Map<Integer, SortStats> getSpells() {
+        public Map<Integer, SpellGrade> getSpells() {
             return this.spells;
         }
 
@@ -1577,7 +1543,7 @@ public class Monster {
             int leveldepartMonstre = this.level;
 
             this.level = leveldepartMonstre + newlvl;
-            this.size = 160;
+            this.size = 100 + 4 * 15;
 
         }
 

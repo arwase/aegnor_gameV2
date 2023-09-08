@@ -4,12 +4,14 @@ import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.AbstractDAO;
 import entity.monster.Monster;
 import fight.spells.Spell;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellEffect;
+import fight.spells.SpellGrade;
 import game.world.World;
 import kernel.Main;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class SpellData extends AbstractDAO<Spell> {
     public SpellData(HikariDataSource dataSource) {
@@ -26,56 +28,54 @@ public class SpellData extends AbstractDAO<Spell> {
     }
 
     public void load() {
-        Result result = null;
+        Result result = null,result2 = null,result3=null;
         try {
-            result = getData("SELECT  * from sorts");
+            result = getData("SELECT  * from spells");
             ResultSet RS = result.resultSet;
             boolean modif = false;
             while (RS.next()) {
                 int id = RS.getInt("id");
-
+                Spell spell = null;
                 if (World.world.getSort(id) != null) {
-                    Spell spell = World.world.getSort(id);
-                    spell.setInfos(RS.getInt("sprite"), RS.getString("spriteInfos"), RS.getString("effectTarget"), RS.getInt("type"), RS.getInt("duration"));
-                    SortStats l1 = parseSortStats(id, 1, RS.getString("lvl1"));
-                    SortStats l2 = parseSortStats(id, 2, RS.getString("lvl2"));
-                    SortStats l3 = parseSortStats(id, 3, RS.getString("lvl3"));
-                    SortStats l4 = parseSortStats(id, 4, RS.getString("lvl4"));
-                    SortStats l5 = null;
-                    if (!RS.getString("lvl5").equalsIgnoreCase("-1"))
-                        l5 = parseSortStats(id, 5, RS.getString("lvl5"));
-                    SortStats l6 = null;
-                    if (!RS.getString("lvl6").equalsIgnoreCase("-1"))
-                        l6 = parseSortStats(id, 6, RS.getString("lvl6"));
-                    spell.getSortsStats().clear();
-
-                    spell.addSortStats(1, l1);
-                    spell.addSortStats(2, l2);
-                    spell.addSortStats(3, l3);
-                    spell.addSortStats(4, l4);
-                    spell.addSortStats(5, l5);
-                    spell.addSortStats(6, l6);
+                    spell = World.world.getSort(id);
+                    spell.setInfos(RS.getInt("sprite"), RS.getString("spriteinfo"), RS.getInt("type"), RS.getInt("duration"));
                     modif = true;
-                } else {
-                    Spell sort = new Spell(id, RS.getString("nom"), RS.getInt("sprite"), RS.getString("spriteInfos"), RS.getString("effectTarget"), RS.getInt("type"), RS.getInt("duration"));
-                    SortStats l1 = parseSortStats(id, 1, RS.getString("lvl1"));
-                    SortStats l2 = parseSortStats(id, 2, RS.getString("lvl2"));
-                    SortStats l3 = parseSortStats(id, 3, RS.getString("lvl3"));
-                    SortStats l4 = parseSortStats(id, 4, RS.getString("lvl4"));
-                    SortStats l5 = null;
-                    if (!RS.getString("lvl5").equalsIgnoreCase("-1"))
-                        l5 = parseSortStats(id, 5, RS.getString("lvl5"));
-                    SortStats l6 = null;
-                    if (!RS.getString("lvl6").equalsIgnoreCase("-1"))
-                        l6 = parseSortStats(id, 6, RS.getString("lvl6"));
-                    sort.addSortStats(1, l1);
-                    sort.addSortStats(2, l2);
-                    sort.addSortStats(3, l3);
-                    sort.addSortStats(4, l4);
-                    sort.addSortStats(5, l5);
-                    sort.addSortStats(6, l6);
-                    World.world.addSort(sort);
                 }
+                else {
+                    spell = new Spell(id, RS.getString("name"), RS.getInt("sprite"), RS.getString("spriteinfo"), RS.getInt("type"), RS.getInt("duration"));
+                    World.world.addSort(spell);
+                }
+                spell.getSortsStats().clear();
+
+                result2 = getData("SELECT  * from spells_grade where spellID="+id);
+                ResultSet RS2 = result2.resultSet;
+                while (RS2.next()) {
+                    int spellid = RS2.getInt("spellID");
+                    int gradeid = RS2.getInt("gradeID");
+                    String[] sForbiddenStates = RS2.getString("statesForbidden").split(";");
+                    ArrayList<Integer> ForbiddenStates= new ArrayList<>();
+                    for (String forbiddenState : sForbiddenStates) {
+                        ForbiddenStates.add(Integer.parseInt(forbiddenState));
+                    }
+
+                    SpellGrade spellgrade = new SpellGrade(spellid,gradeid,RS2.getInt("paCost"),RS2.getInt("poMin"),RS2.getInt("poMax"),RS2.getInt("ratioCC"),RS2.getInt("ratioEC"),RS2.getBoolean("isLine"),RS2.getBoolean("needLOS"),RS2.getBoolean("needEmptyC"),RS2.getBoolean("isPoModif"),RS2.getInt("maxByTurn"),RS2.getInt("maxByTarget"),RS2.getInt("CD"),RS2.getInt("lvlLearn"),RS2.getBoolean("endTurn"),ForbiddenStates,RS2.getInt("stateNeed"));
+
+                    result3 = getData("SELECT  * from spells_effect where spellID="+id+" and gradeID="+gradeid);
+                    ResultSet RS3 = result3.resultSet;
+                    while (RS3.next()) {
+                        boolean isCCeffect = RS3.getBoolean("isCCeffect");
+                        SpellEffect se = new SpellEffect(RS3.getInt("effectID"),RS3.getInt("min"),RS3.getInt("max"),RS3.getInt("args"),RS3.getInt("turn"),RS3.getInt("chance"),RS3.getString("jet"),RS3.getString("area"),RS3.getString("onHit"),RS3.getInt("effectTarget"),RS3.getInt("spellID"));
+                        if(isCCeffect)
+                            spellgrade.addCCSpellEffect(se);
+                        else
+                            spellgrade.addSpellEffect(se);
+                    }
+                    close(result3);
+                    spellgrade.setTypeSwitchSpellEffects();
+                    spell.addSortStats(gradeid,spellgrade);
+                }
+
+                close(result2);
             }
             if (modif)
                 for (Monster monster : World.world.getMonstres())
@@ -88,39 +88,4 @@ public class SpellData extends AbstractDAO<Spell> {
         }
     }
 
-    private SortStats parseSortStats(int id, int lvl, String str) {
-        try {
-            String[] stat = str.split(",");
-            String effets = stat[0], CCeffets = stat[1];
-            int PACOST = 6;
-
-            try {
-                PACOST = Integer.parseInt(stat[2].trim());
-            } catch (NumberFormatException ignored) {}
-
-            int POm = Integer.parseInt(stat[3].trim());
-            int POM = Integer.parseInt(stat[4].trim());
-            int TCC = Integer.parseInt(stat[5].trim());
-            int TEC = Integer.parseInt(stat[6].trim());
-
-            boolean line = stat[7].trim().equalsIgnoreCase("true");
-            boolean LDV = stat[8].trim().equalsIgnoreCase("true");
-            boolean emptyCell = stat[9].trim().equalsIgnoreCase("true");
-            boolean MODPO = stat[10].trim().equalsIgnoreCase("true");
-
-            int MaxByTurn = Integer.parseInt(stat[12].trim());
-            int MaxByTarget = Integer.parseInt(stat[13].trim());
-            int CoolDown = Integer.parseInt(stat[14].trim());
-
-            String type = stat[15].trim();
-
-            int level = Integer.parseInt(stat[stat.length - 2].trim());
-            boolean endTurn = stat[19].trim().equalsIgnoreCase("true");
-
-            return new SortStats(id, lvl, PACOST, POm, POM, TCC, TEC, line, LDV, emptyCell, MODPO, MaxByTurn, MaxByTarget, CoolDown, level, endTurn, effets, CCeffets, type);
-        } catch (Exception e) {
-            super.sendError("SortData parseSortStats", e);
-            return null;
-        }
-    }
 }

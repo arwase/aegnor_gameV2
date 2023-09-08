@@ -1,5 +1,6 @@
 package game;
 
+import ch.qos.logback.core.net.server.Client;
 import client.Account;
 import client.Player;
 import com.sun.istack.NotNull;
@@ -10,11 +11,13 @@ import kernel.Config;
 import kernel.Constant;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IdleStatus;
+import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.textline.LineDelimiter;
 import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import org.slf4j.Logger;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -33,7 +36,8 @@ public class GameServer {
 
     private final static @NotNull
     ArrayList<Account> waitingClients = new ArrayList<>();
-    private final static @NotNull Logger log = LoggerFactory.getLogger(GameServer.class);
+    private final static @NotNull Logger log = (Logger) LoggerFactory.getLogger(GameServer.class);
+
     private final @NotNull IoAcceptor acceptor;
 
    // static {
@@ -47,12 +51,14 @@ public class GameServer {
         acceptor.setHandler(new GameHandler());
     }
 
-    public static String getServerTime() {
 
+
+    public static String getServerTime() {
         return "BT" + (new Date().getTime() + 3600000 * 2);
     }
 
     public boolean start() {
+        log.setLevel(Level.ALL);
         if (acceptor.isActive()) {
             log.warn("Error already start but try to launch again");
             return false;
@@ -72,7 +78,7 @@ public class GameServer {
         if (!acceptor.isActive()) {
             acceptor.getManagedSessions().values().stream()
                     .filter(session -> session.isConnected() || !session.isClosing())
-                    .forEach(session -> session.close(true));
+                    .forEach(session -> session.closeNow());
             acceptor.dispose();
             acceptor.unbind();
         }
@@ -82,8 +88,8 @@ public class GameServer {
 
     public static List<GameClient> getClients() {
         return INSTANCE.acceptor.getManagedSessions().values().stream()
-                .filter(session -> session.getAttachment() != null)
-                .map(session -> (GameClient) session.getAttachment())
+                .filter(session -> session.getAttribute("client") != null)
+                .map(session -> (GameClient) session.getAttribute("client"))
                 .collect(Collectors.toList());
     }
 
@@ -127,5 +133,14 @@ public class GameServer {
                 player.getGameClient().kick();
             }
         }
+
+        for (Account client : waitingClients){
+            client.getGameClient().kick();
+        }
+
     }
+
+
+
+
 }

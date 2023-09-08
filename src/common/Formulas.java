@@ -74,7 +74,7 @@ public class Formulas {
      * Les stats qui ne sont pas specifie dans le tableaux order seront mis a la fin par ordre croissant selon leur stat ID
      *
      * @author Sarazar928Ghost Kevin#6537
-     * @param Stats de l'objet
+     * Stats de l'objet
      * @return Stats sort by order
      */
     public static String sortStatsByOrder(final String strStats) {
@@ -335,25 +335,46 @@ public class Formulas {
         }
     }
 
-    public static int getMiddleJet(String jet)//1d5+6 ! con de ta mère tu fait quoi a 0d0+10000 ??
+    public static int getMiddleJet(SpellEffect ss)//Corrigé pour 0d0+XXXX
     {
-        try {
-            int num = 0;
-            int des = Integer.parseInt(jet.split("d")[0]);
-            int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
-            int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
+        String jet = ss.getJet();
+        int num = 0;
 
-            if(des > 0 ) {
-                num += ((1 + faces) / 2) * des;//on calcule moyenne
-                num += add;
+        if(jet.equals("")){
+            if(ss.getMinValue() == ss.getMaxValue())
+                num = ss.getMinValue();
+            else if(ss.getMinValue() > ss.getMaxValue() )
+                num = ss.getMinValue() ;
+            else if(ss.getMinValue() < ss.getMaxValue()){
+                num = Math.round(ss.getMinValue()+ss.getMaxValue()/2);
             }
-            else{ // AJOUT : Si valeur fixe
-                num = add;
+            else{
+                num = ss.getMinValue();
             }
             return num;
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
-            return 0;
+        }
+        else if (jet.equals("0d0*")) {
+            String[] test = jet.split("\\+");
+            num = Integer.parseInt(test[1]);
+            return num ;
+        }
+        else {
+            try {
+                int des = Integer.parseInt(jet.split("d")[0]);
+                int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
+                int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
+
+                if (des > 0) {
+                    num += ((1 + faces) / 2) * des;//on calcule moyenne
+                    num += add;
+                } else { // AJOUT : Si valeur fixe
+                    num = add;
+                }
+                return num;
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                return num;
+            }
         }
     }
 
@@ -375,15 +396,8 @@ public class Formulas {
         return esquive;
     }
 
-    public static int calculFinalHeal(Player caster, int jet) {
-        int statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
-        int soins = caster.getTotalStats().getEffect(Constant.STATS_ADD_SOIN);
-        if (statC < 0)
-            statC = 0;
-        return jet * (100 + statC) / 100 + soins;
-    }
 
-    public static int calculFinalHealCac(Fighter healer, int rank, boolean isCac) {
+    public static int calculFinalHeal(Fighter healer, int rank, boolean isCac, int spellId) {
         int intel = healer.getTotalStats().getEffect(126);
         int heals = healer.getTotalStats().getEffect(178) - healer.getTotalStats().getEffect(179);
         if (intel < 0)
@@ -391,6 +405,17 @@ public class Formulas {
         float adic = 90; // petit bonus 100 normalement
         if (isCac)
             adic = 100;
+
+        // On le met ici !
+        if(!isCac) {
+            if (healer.hasBuff(284)) {
+                if (spellId == healer.getBuff(284).getFixvalue()) {
+                    int value = healer.getBuff(284).getMaxValue();
+                    heals += value;
+                }
+            }
+        }
+
         return (int) (rank * ((100.00 + intel) / adic) + heals);
     }
 
@@ -599,6 +624,23 @@ public class Formulas {
                                          int spellid) {
         // if (target.hasBuff(788) && target.getBuff(788).getValue() == 101)
 
+        if(!isCaC){
+            //Si le sort est boost� par un buff sp�cifique
+            for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
+                if (SE.getFixvalue() == spellid) {
+                    int add = -1;
+                    try {
+                        add = Integer.parseInt(SE.getArgs().split(";")[2]);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    if (add <= 0)
+                        continue;
+                    jet += add;
+                }
+            }
+        }
+
         float i = 0;//Bonus maitrise
         float j = 100; //Bonus de Classe
         float a = 1;//Calcul
@@ -651,7 +693,7 @@ public class Formulas {
                 //on ajout les dom Physique
                 domC += caster.getTotalStats().getEffect(142);
                 //Ajout de la resist Physique
-                resfT = target.getTotalStats().getEffect(184);
+                resfT += target.getTotalStats().getEffect(184);
                 break;
             case Constant.ELEMENT_EAU://chance
                 statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_CHAN);
@@ -663,7 +705,7 @@ public class Formulas {
                     resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_EAU);
                 }
                 //Ajout de la resist Magique
-                resfT = target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(183);
                 break;
             case Constant.ELEMENT_FEU://intell
                 statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
@@ -675,7 +717,7 @@ public class Formulas {
                     resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_FEU);
                 }
                 //Ajout de la resist Magique
-                resfT = target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(183);
                 break;
             case Constant.ELEMENT_AIR://agilit�
                 statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
@@ -687,7 +729,7 @@ public class Formulas {
                     resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_AIR);
                 }
                 //Ajout de la resist Magique
-                resfT = target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(183);
 
                 break;
         }
@@ -735,8 +777,14 @@ public class Formulas {
             a = (((100 + i) / 100) * (j / 100));
         }
 
+
+
         num = a * mulT * (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100))
                 + domC;//d�gats bruts
+
+        if (num < 0){
+            num = 0;
+        }
 
         //Poisons
         if (spellid != -1) {
@@ -746,13 +794,13 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
-                        int value = (int) num - target.getBuff(105).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(105).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
-                        int value = (int) num - target.getBuff(184).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(184).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
@@ -763,13 +811,13 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
-                        int value = (int) num - target.getBuff(105).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(105).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
-                        int value = (int) num - target.getBuff(184).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(184).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
@@ -779,13 +827,13 @@ public class Formulas {
                     statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getValue(), 105);
-                        int value = (int) num - target.getBuff(105).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(105).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     if (target.hasBuff(184) && spellid != 71) {
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getValue(), 105);
-                        int value = (int) num - target.getBuff(184).getValue();
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(184).getFixvalue(), 105);
+                        int value = (int) num - target.getBuff(184).getFixvalue();
                         return value > 0 ? value : 0 ;
                     }
                     //return (int) num;
@@ -831,15 +879,28 @@ public class Formulas {
 
         if (!isHeal)
             num -= resfT;//resis fixe
+
+
         //d�gats finaux
         if (num < 1)
             num = 0;
+
+        // Stat dégats finaux
+        if (!isHeal && num > 0 ) {
+            int finaldmg = caster.getTotalStats().getEffect(Constant.STATS_ADD_FINALDMG);
+            if (finaldmg < 0) {
+                finaldmg = Math.abs(finaldmg);
+                num = Math.round(num - (num * ((double)finaldmg / 100.0 )));
+            } else {
+                num = Math.round(num + (num * ((double)finaldmg / 100.0 )));
+            }
+        }
 
         //Perte de 10% des PDV MAX par points de degat 10 PDV = 1PDV max en moins
         if (target.getPlayer() != null)
             target.removePdvMax((int) Math.floor(num / 10));
 
-        // D�but Formule pour les MOBs
+        // D�but Formule pour les MOBs -- OSEF CA
         if (caster.getPlayer() == null && !caster.isCollector()) {
             if (caster.getMob().getTemplate().getId() == 116)//Sacrifi� Dommage = PDV*2
             {
@@ -856,8 +917,9 @@ public class Formulas {
     }
 
     public static int calculZaapCost(GameMap map1, GameMap map2) {
-        return 10 * (Math.abs(map2.getX() - map1.getX())
-                + Math.abs(map2.getY() - map1.getY()) - 1);
+        int cost =  Math.abs(10 * (Math.abs(map2.getX() - map1.getX())
+                + Math.abs(map2.getY() - map1.getY()) - 1));
+        return cost;
     }
 
     private static int getArmorResist(Fighter target, int statID) {
@@ -917,7 +979,7 @@ public class Formulas {
                     carac = fighter.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
                     break;
             }
-            int value = SE.getValue();
+            int value = SE.getFixvalue();
             int a = value * (100 + intell / 2 + carac / 2)
                     / 100;
             armor += a;
@@ -940,7 +1002,7 @@ public class Formulas {
                     carac = target.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
                     break;
             }
-            int value = SE.getValue();
+            int value = SE.getFixvalue();
             int a = value * (100 + intell / 2 + carac / 2)
                     / 100;
             armor += a;

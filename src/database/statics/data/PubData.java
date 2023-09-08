@@ -19,7 +19,7 @@ public class PubData extends AbstractDAO<Object> {
 	public void load(Object obj) {
         Result result = null;
         try {
-            result = getData("SELECT * FROM `pubs` WHERE `server` LIKE '" + Config.INSTANCE.getSERVER_ID() + "|';");
+            result = getData("SELECT * FROM `pubs` WHERE `server` LIKE " + Config.INSTANCE.getSERVER_ID() + ";");
             ResultSet RS = result.resultSet;
             while (RS.next())
                 WorldPub.pubs.add(RS.getString("data"));

@@ -10,7 +10,7 @@ import fight.ia.AbstractIA;
 public class Blank extends AbstractIA {
 
     public Blank(Fight fight, Fighter fighter) {
-        super(fight, fighter, (byte) 1);
+        super(fight, fighter, (byte) 1,"IABlank");
     }
 
     @Override

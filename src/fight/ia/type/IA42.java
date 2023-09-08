@@ -14,7 +14,7 @@ public class IA42 extends AbstractNeedSpell  {
     private boolean boost = false, heal = false;
 
     public IA42(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA42");
     }
 
     @Override
@@ -23,9 +23,7 @@ public class IA42 extends AbstractNeedSpell  {
             int time = 100, maxPo = 1;
             boolean action = false;
 
-            for(Spell.SortStats spellStats : this.buffs)
-                if(spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter L = Function.getInstance().getNearestinvocateurnbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
             if(L != null) if(L.isHide()) L = null;

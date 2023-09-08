@@ -149,7 +149,7 @@ public class InteractiveDoor {
 
         if(ok) {
             this.open();
-            TimerWaiter.addNext(this::close, this.time, TimeUnit.SECONDS, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(this::close, this.time, TimeUnit.SECONDS);
         }
         return ok;
     }

@@ -6,7 +6,7 @@ import client.Player;
 import client.other.Stats;
 import entity.monster.Monster;
 import entity.mount.Mount;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import game.world.World;
 import object.ObjectTemplate;
 import org.apache.commons.lang3.ArrayUtils;
@@ -17,6 +17,8 @@ import java.util.*;
 public class Constant {
     //DEBUG
     public static final int DEBUG_MAP_LIMIT = 30000;
+    //DEBUG
+    public static final int AUTO_CLEAN_MONTH = -6;
     //Fight
     public static final int TIME_START_FIGHT = 45000;
     public static final int TIME_BY_TURN = 30000;
@@ -77,6 +79,8 @@ public class Constant {
     public static final int ITEM_POS_DOFUS6 = 14;
     public static final int ITEM_POS_BOUCLIER = 15;
     public static final int ITEM_POS_DRAGODINDE = 16;
+    // ON PLACE LES WEBHOOK URL !
+    public static String moderatorWebhook = "https://discord.com/api/webhooks/1142009964920066128/ysIHq1oBg_v4GKXcD63H_Ja-YTNY_nGUy82-LBD859KBrAx7ioS6xRnV8DZYnU0vfpmT";
 
     public static String GetNameByPos(int pos) {
         String equipement="";
@@ -415,13 +419,25 @@ public class Constant {
     public static final int MONSTRES_LES_ARCHIMONSTRES = 78;
     public static final int MONSTRES_TO_VERIF = 79;
 
-    public static int[] BOSS_ID = {58,85,86,107,113,121,147,173,180,225,226,230,232,251,252,257,289,295,374,375,377,382,404,423,430,457,478,568,605,612,669,670,673,675,677,681,780,792,797,799,800,827,854,926,939,940,943,1015,1027,1045,1051,1071,1072,1085,1086,1087,1159,1170,1184,1185,1186,1187,1188,1195};
+    public static int[] BOSS_ID = {58,85,86,107,113,121,147,173,180,226,230,232,251,257,289,295,382,404,423,430,457,478,568,605,612,669,670,780,792,797,799,800,827,854,865,866,926,939,940,943,1015,1027,1045,1051,1071,1072,1085,1086,1087,1159,1170,1184,1185,1186,1187,1188,1195};
     public static int[] BOSS_HOTOMANI_ID = {58,85,86,107,113,121,147,173,180,225,226,230,232,251,252,257,289,295,374,375,377,382,404,423,430,457,478,568,605,612,669,670,673,675,677,681,780,792,797,799,800,827,854,926,939,940,943,1015,1027,1045,1051,1071,1072,1085,1086,1087,1159,1170,1184,1185,1186,1187,1188,1195};
 
-    public static int[] EXCEPTION_GLADIATROOL_BOSS = {251,295,404,423,450,1159};
-    public static int[] EXCEPTION_GLADIATROOL_ARCHI = {251,404,423,450,1159};
-    public static int[] EXCEPTION_GLADIATROOL_MONSTRES = {258,260,251,404,424,450,1090,1091,1092,1094};
-    public static int[] GLADIATROOL_MAPID = {12012,12023,12001,12006,12007,12008,12004,12009};
+    public static int[] EXCEPTION_HOTOMANI_BOSS = {251,295,404,423,450,1159,865,866,1195,1170};
+    public static int[] EXCEPTION_HOTOMANI_ARCHI = {251,404,423,450,1159};
+    public static int[] EXCEPTION_HOTOMANI_MONSTRES = {258,260,251,404,424,450,1090,1091,1092,1094,1088};
+
+    public static int[] HOTOMANI_MAPID = {12012,12023,12001,12006,12007,12008,12004,12009};
+    public static int[] HOTOMANIDJ_MAPID = {12010,12017,12000,12015,12014,12028};
+
+    //public static int[] GLADIATROOL_MAPID = {12012,12023,12001,12006,12007,12008,12004,12009};
+    public static int[] ARENA_MAPID = {10131,10132,10133,10134,10135,10136,10137,10138};
+
+    // Bouclier exception arme a deux main
+    public static int[] SHIELD_HANDLING_EXCEPTIONS = {11621,11714};
+
+   // Dégat de poussé
+   public static final String DO_POU_DOMMAGE = "1d8+8";
+
 
     //Alignement
     public static final int ALIGNEMENT_NEUTRE = -1;
@@ -453,23 +469,34 @@ public class Constant {
     public static final int SEX_MALE = 0;
     public static final int SEX_FEMALE = 1;
     //GamePlay
-    public static final int MAX_EFFECTS_ID = 1500;
+    public static final int MAX_EFFECTS_ID = 2500;
+
     //Buff a v�rifier en d�but de tour
     public static final int[] BEGIN_TURN_BUFF = {91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 108};
+
     //Buff des Armes
     public static final int[] ARMES_EFFECT_IDS = {91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 108};
     //Buff a ne pas booster en cas de CC
     public static final int[] NO_BOOST_CC_IDS = {101};
     //Panoplie de Classe
-    public static final int[] BUFF_SET_CLASSE = {281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292};
+    public static final int[] BUFF_SET_CLASSE = {281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293};
     //Invocation Statiques
     public static final int[] STATIC_INVOCATIONS = {282, 556, 2750, 7000};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    //Arbre et Cawotte s'tout :p
-    //Verif d'Etat au lancement d'un sort {spellID,stateID}, � completer avant d'activer
-    public static final int[][] STATE_REQUIRED = {{699, Constant.ETAT_SAOUL}, {690, Constant.ETAT_SAOUL}};
+
     //Buff d�clench� en cas de frappe
     public static final int[] ON_HIT_BUFFS = {9, 79, 107, 788, 606, 607, 608, 609, 611};
 
+    public static final int[] SPELLEFFECT_DAMMAGE = {5,8,82,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,130,131,141,671,672,776,275,276,277,278,279};
+    public static final int[] SPELLEFFECT_DEBUFF = {77,84,101,116,122,127,132,140,144,145,152,153,154,155,156,157,162,163,168,169,171,177,179,186,215,216,217,218,219,245,246,247,248,249,266,267,268,269,270,271,320,781,172};
+    public static final int[] SPELLEFFECT_BUFF = {9,78,79,105,106,107,110,111,112,114,115,117,118,119,120,121,123,124,125,126,128,138,142,150,160,161,164,165,176,178,182,183,184,202,210,211,212,213,214,220,240,241,242,243,244,265,284,285,287,290,293,765,782,787,788,950,951,135,136,606,607,608,609,610,611};
+    public static final int[] SPELLEFFECT_HEAL = {81,90,108,143,786};
+    public static final int[] SPELLEFFECT_INVO = {180,181,185,200,405,780,201};
+    public static final int[] SPELLEFFECT_MOUVEMENT = {4,6,50,51,783,784};
+    public static final int[] SPELLEFFECT_USELESS = {149,666,333,750,751,109};
+    public static final int[] SPELLEFFECT_TRAP = {400,401,402,1000,1001,1002};
 
+    public static final int[] IS_DIRECTDAMMAGE_EFFECT = {82,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,109,275,276,277,278,279,670,671,672};
+    public static final int[] NONEEDTARGET_EFFECT = {4,180,181,185,200,400,401,402,780,50,51,120,109,783};
 
     //Effects
     public static final int STATS_ADD_PM2 = 78;
@@ -556,6 +583,33 @@ public class Constant {
     public static final int STATS_ADD_R_PVP_AIR = 262;
     public static final int STATS_ADD_R_PVP_FEU = 263;
     public static final int STATS_ADD_R_PVP_NEU = 264;
+    public static final int STATS_ADD_ERO=1009;
+    public static final int STATS_REM_ERO=1010;
+    public static final int STATS_ADD_R_ERO=1011;
+    public static final int STATS_REM_R_ERO=1012;
+    public static final int STATS_REM_PA3 = 2100;
+    public static final int STATS_REM_RENVOI = 2111;
+    public static final int STATS_REM_INVO = 2112;
+    public static final int STATS_REM_TRAPDOM = 2113;
+    public static final int STATS_REM_TRAPPER = 2114;
+    public static final int STATS_ADD_FINALDMG = 2008;
+    public static final int STATS_REM_FINALDMG = 2009;
+
+    // Buff de Sort Classe
+    public static final int STATS_SPELL_ADD_PO = 281;
+    public static final int STATS_SPELL_PO_MODIF = 282;
+    public static final int STATS_SPELL_ADD_DOM = 283;
+    public static final int STATS_SPELL_ADD_HEAL = 284;
+    public static final int STATS_SPELL_REM_PA = 285;
+    public static final int STATS_SPELL_REM_DELAY = 286;
+    public static final int STATS_SPELL_ADD_CRIT = 287;
+    public static final int STATS_SPELL_LINE_LAUNCH = 288;
+    public static final int STATS_SPELL_LOS = 289;
+    public static final int STATS_SPELL_ADD_LAUNCH = 290;
+    public static final int STATS_SPELL_ADD_PER_TARGET = 291;
+    public static final int STATS_SPELL_FIXE_DURATION_DELAY = 292;
+    public static final int STATS_SPELL_ADD_BASE_DAMAGE = 293;
+    public static final int STATS_SPELL_REM_PO = 294;
     public static final int STATS_PO_MODIFIABLE_SPELL = 282; //11a#idSpell en Hexa#0#0#0d0+idSpell
     public static final int STATS_ADD_DO_SPELL = 283; //11b#0#0#+Do en Hexa#0d0+idSpell
     public static final int STATS_REDUCE_SPELL_DELAY = 286; //11e#0#0#+Nb Delais Reduit en Hexa#0d0+idSpell
@@ -597,6 +651,7 @@ public class Constant {
     public static final int STATS_TURN = 811;
     public static final int STATS_EXCHANGE_IN = 983;
     public static final int STATS_CHANGE_BY = 985;
+    public static final int STATS_OWNER_1 = 987;//#4
     public static final int STATS_BUILD_BY = 988;
     public static final int STATS_NAME_TRAQUE = 989;
     public static final int STATS_GRADE_TRAQUE = 961;
@@ -615,13 +670,18 @@ public class Constant {
 
     public static final int STATS_NAME_DJ = 814;
     //public static final int MIMIBIOTE = 915;
-    public static final int STATS_OWNER_1 = 987;//#4
     public static final int STATS_SIGNATURE = 988;
     public static final int ERR_STATS_XP = 1000;
     public static final int COMPATIBLE_AVEC = 1003;
     public static final int APPARAT_ITEM = 915;
     public static final int APPARAT_NAME2 = 916;
     public static final int APPARAT_NAME = 969;
+
+
+
+
+
+
     //ZAAPI <alignID,{mapID,mapID,...,mapID}>
     public static Map<Integer, String> ZAAPI = new HashMap<Integer, String>();
     //ZAAP <mapID,cellID>
@@ -945,8 +1005,8 @@ public class Constant {
         return start;
     }
 
-    public static HashMap<Integer, SortStats> getStartSorts(int classID) {
-        HashMap<Integer, SortStats> start = new HashMap<Integer, SortStats>();
+    public static HashMap<Integer, SpellGrade> getStartSorts(int classID) {
+        HashMap<Integer, SpellGrade> start = new HashMap<Integer, SpellGrade>();
         switch (classID) {
             case CLASS_FECA:
                 start.put(3, World.world.getSort(3).getStatsByLevel(1));//Attaque Naturelle
@@ -1012,8 +1072,8 @@ public class Constant {
         return start;
     }
 
-    public static HashMap<Integer, SortStats> getSortsByClasse(int classID, int level) {
-        HashMap<Integer, SortStats> start = new HashMap<Integer, SortStats>();
+    public static HashMap<Integer, SpellGrade> getSortsByClasse(int classID, int level) {
+        HashMap<Integer, SpellGrade> start = new HashMap<Integer, SpellGrade>();
         switch (classID) {
             case CLASS_FECA:
                 if(level > 0) {
@@ -2549,6 +2609,10 @@ public class Constant {
                 return 2;
             case 3500:
             case 3501:
+            case 1072:
+            case 1073:
+            case 1078:
+            case 1077:
             case 949://Karkargo
                 return 0;//Blanc
             //case 476://Blop
@@ -3216,7 +3280,7 @@ public class Constant {
     }
 
     public static boolean isValidPlaceForItem(ObjectTemplate template, int place) {
-        if (template.getType() == 41 && place == ITEM_POS_DRAGODINDE)
+        if (template.getType() == ITEM_TYPE_POISSON && place == ITEM_POS_DRAGODINDE)
             return true;
 
         switch (template.getType()) {
@@ -3224,7 +3288,7 @@ public class Constant {
                 if (place == ITEM_POS_AMULETTE)
                     return true;
                 break;
-            case 113:
+            case ITEM_TYPE_OBJET_VIVANT:
                 if ((template.getId() == 9233) && (place == 7))
                     return true;
                 if ((template.getId() == 9234) && (place == 6))
@@ -3235,7 +3299,7 @@ public class Constant {
                         && ((place == 2) || (place == 4)))
                     return true;
                 break;
-            case 114: // tourmenteurs
+            case ITEM_TYPE_ARME_MAGIQUE: // tourmenteurs
                 if (place == 1) // CaC
                     return true;
                 break;
@@ -4564,4 +4628,34 @@ public class Constant {
         }
         return ok;
     }
+
+    public static final int DISPLAY_WIDTH = 742;
+    public static final int DISPLAY_HEIGHT = 432;
+    public static final int CELL_WIDTH = 53;
+    public static final int CELL_HEIGHT = 27;
+    public static final double CELL_HALF_WIDTH = 26.5;
+    public static final double CELL_HALF_HEIGHT = 13.5;
+    public static final int LEVEL_HEIGHT = 20;
+    public static final int HALF_LEVEL_HEIGHT = 10;
+    public static final int DEFAULT_MAP_WIDTH = 15;
+    public static final int DEFAULT_MAP_HEIGHT = 17;
+    public static final int MAX_DEPTH_IN_MAP = 100000;
+    public static final double[][][] CELL_COORD = {
+            {},
+            {{-26.5, 0}, {0, -13.5}, {26.5, 0}, {0, 13.5}},
+            {{-26.5, -20}, {0, -13.5}, {26.5, 0}, {0, 13.5}},
+            {{-26.5, 0}, {0, -33.5}, {26.5, 0}, {0, 13.5}},
+            {{-26.5, -20}, {0, -33.5}, {26.5, 0}, {0, 13.5}},
+            {{-26.5, 0}, {0, -13.5}, {26.5, -20}, {0, 13.5}},
+            {{-26.5, -20}, {0, -13.5}, {26.5, -20}, {0, 13.5}},
+            {{-26.5, 0}, {0, -33.5}, {26.5, -20}, {0, 13.5}},
+            {{-26.5, -20}, {0, -33.5}, {26.5, -20}, {0, 13.5}},
+            {{-26.5, 0}, {0, -13.5}, {26.5, 0}, {0, -6.5}},
+            {{-26.5, -20}, {0, -13.5}, {26.5, 0}, {0, -6.5}},
+            {{-26.5, 0}, {0, -33.5}, {26.5, 0}, {0, -6.5}},
+            {{-26.5, -20}, {0, -33.5}, {26.5, 0}, {0, -6.5}},
+            {{-26.5, 0}, {0, -13.5}, {26.5, -20}, {0, -6.5}},
+            {{-26.5, -20}, {0, -13.5}, {26.5, -20}, {0, -6.5}},
+            {{-26.5, 0}, {0, -33.5}, {26.5, -20}, {0, -6.5}}
+    };
 }

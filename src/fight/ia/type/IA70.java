@@ -6,6 +6,7 @@ import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.Spell;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 24/01/2017.
@@ -13,7 +14,7 @@ import fight.spells.Spell;
 public class IA70 extends AbstractNeedSpell {
 
     public IA70(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA70");
     }
 
     @Override
@@ -27,10 +28,10 @@ public class IA70 extends AbstractNeedSpell {
             int time = 100;
             boolean action = false;
 
-            Spell.SortStats sanction = this.fighter.getMob().getSpells().get(627);
-            Spell.SortStats lien = this.fighter.getMob().getSpells().get(628);
-            Spell.SortStats invocation = this.fighter.getMob().getSpells().get(629);
-            Spell.SortStats carapce = this.fighter.getMob().getSpells().get(630);
+            SpellGrade sanction = this.fighter.getMob().getSpells().get(627);
+            SpellGrade lien = this.fighter.getMob().getSpells().get(628);
+            SpellGrade invocation = this.fighter.getMob().getSpells().get(629);
+            SpellGrade carapce = this.fighter.getMob().getSpells().get(630);
 
             if(!this.fighter.haveInvocation()) {
                 int cell = PathFinding.getAvailableCellArround(this.fight, this.fighter.getCell().getId(), null);

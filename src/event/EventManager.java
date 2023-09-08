@@ -85,7 +85,7 @@ public class EventManager extends Updatable {
             this.state = State.PROCESSED;
         } else if(this.moveAllPlayersToEventMap(true)) {
             this.lastTime = System.currentTimeMillis();
-            TimerWaiter.addNext(() -> this.current.perform(), 0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+            TimerWaiter.addNext(() -> this.current.perform(), 0, TimeUnit.SECONDS);
         }
     }
 
@@ -175,7 +175,7 @@ public class EventManager extends Updatable {
                     this.count = 0;
                     this.lastTime = System.currentTimeMillis();
                     this.state = State.INITIALIZE;
-                    TimerWaiter.addNext(this::startNewEvent, 0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+                    TimerWaiter.addNext(this::startNewEvent, 0, TimeUnit.SECONDS);
                 } else if (result == 60 || result == 30 || result == 15 || result == 5) {
                     World.world.sendMessageToAll("(<b>Infos</b>) : Un <b>événement</b> va démarrer dans " + result + " minutes.");
                 }

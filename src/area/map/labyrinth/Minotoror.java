@@ -562,7 +562,7 @@ public class Minotoror {
         if (map.getCase(cellId).isWalkable(false)) // Elle est d�j� ouverte
             return;
         open(map, (short) cellId);
-        TimerWaiter.addNext(() -> close(map, (short) cellId), time, TimeUnit.MINUTES, TimerWaiter.DataType.MAP);
+        TimerWaiter.addNext(() -> close(map, (short) cellId), time, TimeUnit.MINUTES);
     }
 
     private static void open(GameMap map, short cellId) {

@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractIA;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import kernel.Constant;
 
 /**
@@ -13,7 +13,7 @@ import kernel.Constant;
 public class IA10 extends AbstractIA  {
 
     public IA10(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA10");
     }
 
     @Override
@@ -23,7 +23,7 @@ public class IA10 extends AbstractIA  {
             if (target == null) return;
 
             int value = Function.getInstance().moveToAttackIfPossible(fight, this.fighter), cellId = value - (value / 1000) * 1000;
-            SortStats spellStats = this.fighter.getMob().getSpells().get(value / 1000);
+            SpellGrade spellStats = this.fighter.getMob().getSpells().get(value / 1000);
 
             if (cellId != -1) {
                 if (fight.canCastSpell1(this.fighter, spellStats, this.fighter.getCell(), cellId))

@@ -70,6 +70,8 @@ object ConfigReader {
     }
 
     object mode : PropertyGroup() {
+        val log by booleanType
+        val autoClean by booleanType
         val linux by booleanType
         val azuriom by booleanType
         val halloween by booleanType

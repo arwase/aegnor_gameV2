@@ -12,11 +12,11 @@ import kernel.Constant;
  */
 public class IA18 extends AbstractIA  {
 
-    boolean kPair=false, kImpair=false, hasGlyphed=false;
+    //boolean kPair=false, kImpair=false, hasGlyphed=false;
 
     public IA18(Fight fight, Fighter fighter, byte count)
     {
-        super(fight,fighter,count);
+        super(fight,fighter,count,"IA18");
     }
 
     @Override
@@ -25,8 +25,12 @@ public class IA18 extends AbstractIA  {
         if(!this.stop&&this.fighter.canPlay()&&this.count>0)
         {
             Fighter kimbo=null;
+            Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for(Fighter fighter : this.fight.getFighters(3))
+
+
+
+            /*for(Fighter fighter : this.fight.getFighters(3))
             {
                 if(fighter.getMob()!=null)
                 {
@@ -82,7 +86,7 @@ public class IA18 extends AbstractIA  {
             else
             {
                 this.stop=true;
-            }
+            }*/
 
             addNext(this::decrementCount,1000);
         }

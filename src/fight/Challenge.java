@@ -6,6 +6,7 @@ import common.PathFinding;
 import common.SocketManager;
 import fight.spells.Spell;
 import fight.spells.SpellEffect;
+import fight.spells.SpellGrade;
 import game.GameClient;
 
 import java.util.ArrayList;
@@ -648,7 +649,7 @@ public class Challenge {
         }
     }
 
-    public void onPlayerSpell(Fighter fighter, Spell.SortStats spellStats) {
+    public void onPlayerSpell(Fighter fighter, SpellGrade spellStats) {
         if (!challengeAlive)
             return;
         if (fighter.getPlayer() == null)

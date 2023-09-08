@@ -64,6 +64,11 @@ public class PetEntry {
         return this.isEupeoh;
     }
 
+    public void setIsEupeoh(boolean EPO) {
+        this.isEupeoh = EPO;
+    }
+
+
     public String parseLastEatDate() {
         String hexDate = "#";
         DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -125,6 +130,11 @@ public class PetEntry {
             else if (entry.getKey() == Integer.parseInt("b2", 16)
                     || entry.getKey() == Integer.parseInt("70", 16)) // soin et dommages
                 cumul = cumul + (8 * entry.getValue());
+            else if (entry.getKey() == Integer.parseInt("7d8", 16))// % do Finaux
+                cumul = cumul + (10 * entry.getValue());
+            else if (entry.getKey() == Integer.parseInt("6f", 16)
+                    || entry.getKey() == Integer.parseInt("80", 16)) // PA et PM
+                cumul = cumul + (100 * entry.getValue());
             else
                 cumul = cumul + (entry.getValue());
 
@@ -183,6 +193,33 @@ public class PetEntry {
         if (pets == null)
             return;
 
+        //Update du petsEntry
+        this.lastEatDate = System.currentTimeMillis();
+        this.corpulence = 0;
+        if (statsID != 0)
+            this.quaEat++;
+        else
+            return;
+        if (this.quaEat >= 1) {
+            //Update de l'item
+
+            if ((this.getIsEupeoh() ? pets.getMax() * 1.5 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +50% le jet maximum
+            {
+                if (obj.getStats().getEffects().containsKey(statsID)) {
+                    int value = obj.getStats().getEffects().get(statsID)
+                            + World.world.getPets(World.world.getGameObject(this.objectId).getTemplate().getId()).getGain();
+                    if (value > this.getMaxStat())
+                        value = this.getMaxStat();
+                    obj.getStats().getEffects().remove(statsID);
+                    obj.getStats().addOneStat(statsID, value);
+                } else
+                    obj.getStats().addOneStat(statsID, pets.getGain());
+            }
+            this.quaEat = 0;
+        }
+        SocketManager.GAME_SEND_Im_PACKET(p, "032");
+
+        /*
         if (this.corpulence <= 0)//Si il est maigrichon (X repas rat�s) on peu le nourrir plusieurs fois
         {
             //Update du petsEntry
@@ -254,7 +291,8 @@ public class PetEntry {
                 return;
             if (this.quaEat >= 1) {
                 //Update de l'item
-                if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
+
+                if ((this.getIsEupeoh() ? pets.getMax() * 1.5 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +50% le jet maximum
                 {
                     if (obj.getStats().getEffects().containsKey(statsID)) {
                         int value = obj.getStats().getEffects().get(statsID)
@@ -269,7 +307,7 @@ public class PetEntry {
                 this.quaEat = 0;
             }
             SocketManager.GAME_SEND_Im_PACKET(p, "032");
-        }
+        }*/
 
         if (this.pdv <= 0) {
             this.pdv = 0;
@@ -306,50 +344,52 @@ public class PetEntry {
         if (obj == null)
             return;
         Pet pet = World.world.getPets(obj.getTemplate().getId());
-        if (pet == null || pet.getType() != 1)
+        if (pet == null || (pet.getType() != 1))
             return;
         //Ajout a l'item les SoulStats tu�s
         try {
-            for (Entry<Integer, Integer> entry : souls.entrySet()) {
-                int soul = entry.getKey();
-                int count = entry.getValue();
-                if (pet.canEat(-1, -1, soul)) {
-                    int statsID = pet.statsIdByEat(-1, -1, soul);
-                    if (statsID == 0)
-                        return;
-                    int soulCount = (obj.getSoulStat().get(soul) != null ? obj.getSoulStat().get(soul) : 0);
-                    if (soulCount > 0) {
-                        obj.getSoulStat().remove(soul);
-                        obj.getSoulStat().put(soul, count + soulCount);
-                    } else {
-                        obj.getSoulStat().put(soul, count);
+
+                for (Entry<Integer, Integer> entry : souls.entrySet()) {
+                    int soul = entry.getKey();
+                    int count = entry.getValue();
+                    if (pet.canEat(-1, -1, soul)) {
+                        int statsID = pet.statsIdByEat(-1, -1, soul);
+                        if (statsID == 0)
+                            return;
+                        int soulCount = (obj.getSoulStat().get(soul) != null ? obj.getSoulStat().get(soul) : 0);
+                        if (soulCount > 0) {
+                            obj.getSoulStat().remove(soul);
+                            obj.getSoulStat().put(soul, count + soulCount);
+                        } else {
+                            obj.getSoulStat().put(soul, count);
+                        }
                     }
                 }
-            }
-            //Re-Calcul des points gagn�s
-            for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ent : pet.getMonsters().entrySet()) {
-                for (Map<Integer, Integer> entry : ent.getValue()) {
-                    for (Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
-                        if (pet.getNumbMonster(ent.getKey(), monsterEntry.getKey()) != 0) {
-                            int pts = 0;
-                            for (Entry<Integer, Integer> list : obj.getSoulStat().entrySet())
-                                pts += ((int) Math.floor(list.getValue() / pet.getNumbMonster(ent.getKey(), list.getKey())) * pet.getGain());
+                //Re-Calcul des points gagn�s
+                for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ent : pet.getMonsters().entrySet()) {
+                    for (Map<Integer, Integer> entry : ent.getValue()) {
+                        for (Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
+                            if (pet.getNumbMonster(ent.getKey(), monsterEntry.getKey()) != 0) {
+                                int pts = 0;
+                                for (Entry<Integer, Integer> list : obj.getSoulStat().entrySet())
+                                    pts += ((int) Math.floor(list.getValue() / pet.getNumbMonster(ent.getKey(), list.getKey())) * pet.getGain());
 
-                            if (pts > 0) {
-                                if (pts > this.getMaxStat())
-                                    pts = this.getMaxStat();
-                                if (obj.getStats().getEffects().containsKey(ent.getKey())) {
-                                    int nbr = obj.getStats().getEffects().get(ent.getKey());
-                                    if(nbr - pts > 0)
-                                        pts += (nbr - pts);
-                                    obj.getStats().getEffects().remove(ent.getKey());
+                                if (pts > 0) {
+                                    if (pts > this.getMaxStat())
+                                        pts = this.getMaxStat();
+                                    if (obj.getStats().getEffects().containsKey(ent.getKey())) {
+                                        int nbr = obj.getStats().getEffects().get(ent.getKey());
+                                        if (nbr - pts > 0)
+                                            pts += (nbr - pts);
+                                        obj.getStats().getEffects().remove(ent.getKey());
+                                    }
+                                    obj.getStats().getEffects().put(ent.getKey(), pts);
                                 }
-                                obj.getStats().getEffects().put(ent.getKey(), pts);
                             }
                         }
                     }
                 }
-            }
+
         } catch(Exception e) {
             e.printStackTrace();
             //System.out.println("Error : " + e.getMessage());
@@ -474,6 +514,8 @@ public class PetEntry {
             return;
         if (this.isEupeoh)
             return;
+
+        this.setIsEupeoh(true);
         obj.getTxtStat().put(Constant.STATS_PETS_EPO, Integer.toHexString(1));
         SocketManager.GAME_SEND_Im_PACKET(p, "032");
         SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(p, obj);

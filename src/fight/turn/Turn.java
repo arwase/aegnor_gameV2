@@ -17,7 +17,7 @@ public class Turn implements Runnable {
     public Turn(Fight fight, Fighter fighter) {
         this.fight = fight;
         this.fighter = fighter;
-        TimerWaiter.addNext(this, Constant.TIME_BY_TURN + 2000, TimeUnit.MILLISECONDS, TimerWaiter.DataType.FIGHT);
+        TimerWaiter.addNext(this, Constant.TIME_BY_TURN + 2000, TimeUnit.MILLISECONDS);
         this.start = System.currentTimeMillis();
     }
 

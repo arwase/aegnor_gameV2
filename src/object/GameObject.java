@@ -53,13 +53,7 @@ public class GameObject {
         this.rarity = rarity;
         this.mimibiote = mimibiote;
         this.Stats = new Stats();
-        if(this.template.getType() == Constant.ITEM_TYPE_DOFUS) {
-            this.Stats = this.getTemplate().generateNewStatsFromTemplate(this.getTemplate().getStrTemplate(), false, rarity);
-            this.setModification();
-        }
-        else {
-            this.parseStringToStats(strStats, true);
-        }
+        this.parseStringToStats(strStats, true);
     }
 
     public GameObject(int Guid) {
@@ -88,7 +82,7 @@ public class GameObject {
         this.mimibiote = mimibiote;
     }
 
-    private static ArrayList<SpellEffect> getEffectTemplate(String statsTemplate) {
+    /*private static ArrayList<SpellEffect> getEffectTemplate(String statsTemplate) {
         ArrayList<SpellEffect> Effets = new ArrayList<SpellEffect>();
         if (statsTemplate.equals(""))
             return Effets;
@@ -121,7 +115,7 @@ public class GameObject {
             }
         }
         return Effets;
-    }
+    }*/
 
     public static GameObject getCloneObjet(GameObject obj, int qua) {
         Map<Integer, Integer> maps = new HashMap<>();
@@ -428,7 +422,13 @@ public class GameObject {
 
                     if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER &&  this.getTemplate().getType() != Constant.ITEM_TYPE_FANTOME_FAMILIER  &&  this.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL ) {
                         if(poidligne <= poidmax) {
-                            Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                            try {
+                                Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
+                            }
+                            catch (Exception e){
+                                e.printStackTrace();
+                                System.out.println("Stats id = " + id + " la valeur " + stats[1] + " du coup ca bug item " + this.getTemplate().getName() + " guid " + this.getGuid() );
+                            }
                         }
                         else {
                             if(statMax >= Integer.parseInt(stats[1], 16) ) {
@@ -1836,8 +1836,11 @@ public class GameObject {
                 rarity = 2;
                 break;
             case 2 :
-            case 3 :
                 rarity = 3;
+                break;
+            case 3 :
+            case 4 :
+                rarity = 4;
                 break;
             default:
                 rarity = 1;
@@ -1893,23 +1896,17 @@ public class GameObject {
     public boolean isSameStats(GameObject other) {
 
         if(this.getEffects().size() == 0 && other.getEffects().size() == 0)
-        {
-            return true;
-        }
+        {return true;}
         else if(this.getEffects().size() != other.getEffects().size()){
             return false;
         }
         else {
             for (int i = 0; i < this.getEffects().size(); i++ ){
                 if( this.getEffects().get(i).getEffectID() != other.getEffects().get(i).getEffectID() ){
-                    System.out.println(this.getEffects().get(i).getEffectID() ) ;
-                    System.out.println(other.getEffects().get(i).getEffectID()) ;
                     return false;
                 }
                 else{
                     if(!this.getEffects().get(i).getArgs().equals(other.getEffects().get(i).getArgs())){
-                        System.out.println(this.getEffects().get(i).getArgs() ) ;
-                        System.out.println(other.getEffects().get(i).getArgs()) ;
                         return false;
                     }
                 }

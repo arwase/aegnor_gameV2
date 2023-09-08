@@ -7,6 +7,7 @@ import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.Spell;
+import fight.spells.SpellGrade;
 
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import java.util.ArrayList;
@@ -19,7 +20,7 @@ import java.util.Map;
 public class IA78 extends AbstractNeedSpell  {
 
     public IA78(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA78");
     }
 
     @Override
@@ -30,13 +31,13 @@ public class IA78 extends AbstractNeedSpell  {
             int time = 100, maxPo = 1, minPo = 1; // on set des variables un peu inutile
             boolean action = false; // En vrai on s'en fou (enfaite non c'est pour le timer des spell mais on va s'arranger) qu'il a déjà tapper dans le tour de reflexion ou non, on devrait cumuler les actions
 
-            Map<Spell, Spell.SortStats> spellsdegatStat = new HashMap<>();
+            Map<Spell, SpellGrade> spellsdegatStat = new HashMap<>();
 
             // Sur tous les sors on prend la PO Max ! ici ca sera 20, Un peu inutile en soi car faudrait l'associé a la PO Min
-            for(Spell.SortStats spellStats : this.highests){
+            for(SpellGrade spellStats : this.highests){
                 if(spellStats.getMaxPO() > maxPo){
                     // On prend que les sorts qui tape le reste on s'en fou de la PO
-                    if(spellStats.getSpell().getType() ==0) {
+                    if(spellStats.getTypeSwitchSpellEffects() ==0) {
                         maxPo = spellStats.getMaxPO();
                         spellsdegatStat.put(spellStats.getSpell() , spellStats );
                     }
@@ -64,7 +65,7 @@ public class IA78 extends AbstractNeedSpell  {
                         if(this.fighter.getCurPm(this.fight) > 0) {
                             int value = Function.getInstance().movecacIfPossible(this.fight, this.fighter, C);
                             if(value != 0) {
-                                time = 2000;
+                                time = value;
                                 action = true;
                             }
                         }
@@ -124,7 +125,7 @@ public class IA78 extends AbstractNeedSpell  {
                     // Dans l'idée faudrait tester si on peut attirer avant donc la c'est que fin de tour
             // On boucle dans les sorts
             if(!action) {
-                for (Spell.SortStats spellstat : spellsdegatStat.values()) {
+                for (SpellGrade spellstat : spellsdegatStat.values()) {
                     // On boucle sur le nombre de fois
                     Map<Integer, Fighter> EnnemiesInRangeNoMove = Function.getInstance().getXEnnemiesinRange(this.fight, this.fighter, spellstat.getMinPO(), spellstat.getMaxPO(), spellstat.getMaxLaunchbyTurn());
 

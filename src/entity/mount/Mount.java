@@ -17,6 +17,7 @@ import util.TimerWaiter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Mount {
 
@@ -64,7 +65,12 @@ public class Mount {
 	public Mount(int color, int owner, boolean savage) {
 		this.id = Database.getStatics().getMountData().getNextId();
 		this.color = color;
-		this.sex = Formulas.getRandomValue(0, 1);
+		if(color == 90 || color == 91){
+			this.sex = 0;
+		}
+		else {
+			this.sex = Formulas.getRandomValue(0, 1);
+		}
 		this.level = 5;
 		this.exp = 4000;
 		this.name = "SansNom";
@@ -112,7 +118,7 @@ public class Mount {
 			this.capacitys.add(Formulas.getRandomValue(1, 8));
 
 		// Ajout d'1% de chance pour que la DD soit Camé
-		if(Formulas.getRandomValue(0, 100) == 0)
+		if(Formulas.getRandomValue(1, 100) == 1)
 			this.capacitys.add(9);
 
 		if(!father.getCapacitys().isEmpty() || !mother.getCapacitys().isEmpty()) {
@@ -275,7 +281,8 @@ public class Mount {
 				}
 			}
 			catch (Exception e){
-				System.out.println(e);
+				e.printStackTrace();
+				//System.out.println(e);
 			}
 
             this.aumReproduction();
@@ -816,7 +823,7 @@ public class Mount {
             SocketManager.SEND_GDE_FRAME_OBJECT_EXTERNAL(map, finalCell + ";4");
             if(finalAction != 0)
                 SocketManager.GAME_SEND_eUK_PACKET_TO_MAP(map, ID, finalAction);
-        }, action == 4 ? 2500 : 1500, TimerWaiter.DataType.MAP);
+        }, action == 4 ? 2500 : 1500, TimeUnit.MILLISECONDS);
 	}
 
 	public synchronized void moveMountsAuto(char direction, int cellules, boolean remove)
@@ -955,7 +962,7 @@ public class Mount {
 				TimerWaiter.addNext(() -> {
 					SocketManager.SEND_GDE_FRAME_OBJECT_EXTERNAL(map, finalCell + ";4");
 					if (finalAction != 0) SocketManager.GAME_SEND_eUK_PACKET_TO_MAP(map, id, finalAction);
-				}, 2000, TimerWaiter.DataType.MAP);
+				}, 2000, TimeUnit.MILLISECONDS);
         }
     }
 

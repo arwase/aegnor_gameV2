@@ -5,6 +5,7 @@ import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.Spell;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,7 +13,7 @@ import fight.spells.Spell;
 public class IA35 extends AbstractNeedSpell  {
 
     public IA35(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA35");
     }
 
     @Override
@@ -22,9 +23,7 @@ public class IA35 extends AbstractNeedSpell  {
             boolean action = false;
             Fighter nearestEnnemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for(Spell.SortStats S : this.highests)
-                if(S.getMaxPO() > maxPo)
-                    maxPo = S.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter ennemy1 = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
             Fighter ennemyforInvo = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, 50);// pomax +1;

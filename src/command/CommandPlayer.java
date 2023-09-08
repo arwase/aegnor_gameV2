@@ -1,6 +1,7 @@
 package command;
 
 import area.map.GameMap;
+import area.map.labyrinth.PigDragon;
 import client.Player;
 import client.other.Party;
 import common.SocketManager;
@@ -24,6 +25,7 @@ import object.GameObject;
 import object.ObjectTemplate;
 import object.entity.Fragment;
 import org.apache.commons.lang3.ArrayUtils;
+import util.TimerWaiter;
 import util.lang.Lang;
 
 import javax.swing.Timer;
@@ -31,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class CommandPlayer {
 
@@ -98,7 +101,7 @@ public class CommandPlayer {
                             if (z.getParty() != null) {
                                 SocketManager.GAME_SEND_GROUP_INVITATION_ERROR(player.getGameClient(), "a" + z.getName());
                                 SocketManager.GAME_SEND_MESSAGE(z,"<b>(Warning)</b> Vous ne pouvez pas rejoindre le groupe de "+ player.getName()+ " car vous avez déjà un groupe");
-                                SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning)</b> "+ z.getName()+ " ne peut pas vous rejoindre car il est déjà dans un groupe");
+                                        SocketManager.GAME_SEND_MESSAGE(player,"<b>(Warning)</b> "+ z.getName()+ " ne peut pas vous rejoindre car il est déjà dans un groupe");
 
                                 continue;
                             }
@@ -273,7 +276,6 @@ public class CommandPlayer {
             }
             else if(command(msg, "fightdeblo")) {//180min
                 if (player.getFight() == null){
-
                     player.sendMessage("Vous n'êtes pas en combat");
                     return true;
                 }
@@ -284,35 +286,48 @@ public class CommandPlayer {
                     int lol2 = playerFight.getFighterByOrdreJeu().getTeam();
 
                     if(lol2 == 0) {
-                        player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getPlayer().getName() +" pour débloquer le combat");
-                        playerFight.getStartTurn();
+                        if(playerFight.getFighterByOrdreJeu().getPlayer() != null) {
+                            player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getPlayer().getName() + " pour débloquer le combat");
+                        }
+                        else{
+                            player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() + " pour débloquer le combat");
+                        }
+                            playerFight.setCurAction("");
+                            if (fighter.getPlayer() != null) {
+                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(playerFight, 7, 102, fighter.getId() + "", fighter.getId() + ",-0");
+                            }
+                            playerFight.endTurn(false, fighter);
                     }
                     else{
-                        player.sendMessage("On attends 10 sec pour voir si c'est toujours le monstre qui jouer");
-                        Fighter  monstrequijoue = playerFight.getFighterByOrdreJeu();
+                        if(playerFight.startedTimerPass){
+                            player.sendMessage("Un passe tour a déjà été enclanché");
+                            return true;
+                        }
+                        player.sendMessage("Le tour passera automatiquement si l'adversaire joue toujours dans 30 sec");
+                        Fighter monstrequijoue = playerFight.getFighterByOrdreJeu();
+                        int Turn = playerFight.getTurnTotal();
+                        playerFight.startedTimerPass = true;
 
-                        Timer timer = new Timer(10000, new ActionListener() {
-                            public void actionPerformed(ActionEvent e) {
-
-                                if ( monstrequijoue == playerFight.getFighterByOrdreJeu() ) {
-                                    if(playerFight.getFighterByOrdreJeu().getMob() != null) {
-                                        player.sendMessage("Le monstre " + playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() + " passe son tour");
-                                    }
-                                    else if(playerFight.getFighterByOrdreJeu().getCollector() != null)
-                                    {
-                                        player.sendMessage("Le Percepteur " + playerFight.getFighterByOrdreJeu().getCollector().getFullName() + " passe son tour");
-                                    }
-                                    playerFight.getStartTurn();
-                                } else {
-                                    player.sendMessage("Le monstre ne joue plus, le combat n'était pas bloqué");
+                        TimerWaiter.addNext(() -> {
+                            if ( monstrequijoue == playerFight.getFighterByOrdreJeu() && Turn == playerFight.getTurnTotal() ) {
+                                if(playerFight.getFighterByOrdreJeu().getMob() != null) {
+                                    player.sendMessage("Le monstre " + playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() + " passe son tour");
                                 }
+                                else if(playerFight.getFighterByOrdreJeu().getCollector() != null)
+                                {
+                                    player.sendMessage("Le Percepteur " + playerFight.getFighterByOrdreJeu().getCollector().getFullName() + " passe son tour");
+                                }
+                                if(monstrequijoue.getPlayer() != null){
+                                    monstrequijoue.getPlayer().sendMessage(player + " a passé ton tour car il semblait buggé, si c'est un abus publie ce message sur discord")  ;
+                                }
+                                playerFight.setCurAction("");
+                                playerFight.endTurn(false, monstrequijoue);
+                            } else {
+                                player.sendMessage("Le combat n'était pas bloqué "+ Turn+"/"+playerFight.getTurnTotal());
 
                             }
-                        });
-
-                        timer.setRepeats(false);
-                        timer.start();
-
+                            playerFight.setStartedTimerPass(false);
+                        }, 32, TimeUnit.SECONDS);
                     }
                     return true;
                 }
@@ -327,7 +342,10 @@ public class CommandPlayer {
                 }
             }
             else if(command(msg, "sellitem")) {
-
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
                 if(player.getGroupe().getId() <= 0){
                     player.sendMessage("Commande désactivé");
                     return false;
@@ -392,7 +410,8 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "openfragment") || command(msg, "ofrag")) {
-                if(player.getFight() != null){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
                 }
                 if(player.getExchangeAction() != null) GameClient.leaveExchange(player);
@@ -486,12 +505,20 @@ public class CommandPlayer {
                 player.sendMessage(message);
                 return true;
             }
-            else if(command(msg, "shop")){
-                    if(  player.getGroupe().getId() >= 1 &&  player.getGroupe().getId() < 6 ) {
-                        player.teleport((short) 10114, 282);
-                    }else {
-                        player.sendMessage("Cette commande n'existe plus");
-                    }
+            else if(command(msg, "shop") || command(msg, "boutique")){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
+
+                // TODO a décommenter une fois qu'on a cibler les tricheur
+               /* if (player.getExchangeAction() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande, tu es déja en échange");
+                    return true;
+                }*/
+
+                 Boutique.open(player);
+
                 return true;
             }
             else if(command(msg, "parcho")) {
@@ -601,12 +628,21 @@ public class CommandPlayer {
                      return true;
                  if (player.getFight() != null)
                      return true;
-
+                if (player.getLevel() >= 150) {
+                    player.sendMessage("Vous êtes trop haut niveau pour aller sur cette map");
+                    return true;
+                }
                  player.teleport((short) 13000, 222);
                  return true;
              }
             else if(command(msg, "hdv")) {
                 if(player.getExchangeAction() != null) GameClient.leaveExchange(player);
+
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
+
                 if (player.getDeshonor() >= 5) {
                     SocketManager.GAME_SEND_Im_PACKET(player, "183");
                     return true;
@@ -722,7 +758,8 @@ public class CommandPlayer {
                  return true;
              }
             else if(command(msg, "getmaster")) {
-                if(player.getFight() != null){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
                 }
                 if(!player.PlayerList1.isEmpty()){
@@ -732,7 +769,8 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "getslave")) {
-                if(player.getFight() != null){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
                 }
                 if(!player.PlayerList1.isEmpty()){
@@ -742,7 +780,8 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "resetmaitre")) {
-                if(player.getFight() != null){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
                 }
                 if(!player.PlayerList1.isEmpty()){
@@ -757,8 +796,10 @@ public class CommandPlayer {
             else if (command(msg, "deblo")) {
                 if (player.cantTP())
                     return true;
-                if (player.getFight() != null)
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat, Utilisez .fightdeblo");
                     return true;
+                }
                 if (player.getCurCell().isWalkable(true)) {
                     player.sendMessage(Lang.get(player, 7));
                     return true;
@@ -769,8 +810,10 @@ public class CommandPlayer {
             else if(command(msg, "astrub")){
                 if (player.isInPrison())
                     return true;
-                if (player.getFight() != null)
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
+                }
 
                 player.teleport((short) 7411, 311);
                 return true;
@@ -778,8 +821,10 @@ public class CommandPlayer {
             else if(command(msg, "incarnam")){
                 if (player.isInPrison())
                     return true;
-                if (player.getFight() != null)
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
+                }
 
                 player.teleport((short) 10295, 340);
                 return true;
@@ -812,6 +857,10 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "groupe")){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
                 for (Player z : World.world.getOnlinePlayers()) {
                     if(z != player){
 
@@ -867,11 +916,11 @@ public class CommandPlayer {
                 //player.sendMessage("Le groupe ï¿½ ï¿½tï¿½ crï¿½ï¿½ avec " + player.getAccount().getName() + " comme chef");
                 return true;
             }
-            else if(command(msg, "boutique")) {
-                Boutique.open(player);
-                return true;
-            }
             else if(command(msg, "tp")){
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
                 if(player.getParty() != null)
                 {
                     List<Player> Players = player.getParty().getPlayers();
@@ -916,9 +965,14 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "banque")) {
+
                 int cost =0;
                 if(player.getExchangeAction() != null){
                     player.sendMessage("Vous ne pouvez pas ouvrir votre banque pendant un échange/craft.");
+                    return true;
+                }
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
                 }
 
@@ -964,18 +1018,20 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "refreshMobs") || command(msg, "rmobs")) {
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
                 if(player.getAccount().getVip() == 1) {
-
-                    if(ArrayUtils.contains(Constant.GLADIATROOL_MAPID,player.getCurMap().getId())){
+                    if(ArrayUtils.contains(Constant.HOTOMANI_MAPID,player.getCurMap().getId())){
                         player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
                         return true;
                     }
-
-                    if(player.getCurMap().haveMobFix() || player.getCurMap().getId()==10131
-                            || player.getCurMap().getId()==10132 || player.getCurMap().getId()==10133
-                            || player.getCurMap().getId()==10134 || player.getCurMap().getId()==10135
-                            || player.getCurMap().getId()==10136 || player.getCurMap().getId()==10137
-                            || player.getCurMap().getId()==10138){
+                    if(ArrayUtils.contains(Constant.HOTOMANIDJ_MAPID,player.getCurMap().getId())){
+                        player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
+                        return true;
+                    }
+                    if(player.getCurMap().haveMobFix() || ArrayUtils.contains(Constant.ARENA_MAPID,player.getCurMap().getId())){
                         player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
                     }
                     else{
@@ -989,8 +1045,10 @@ public class CommandPlayer {
                 return true;
             }
             else if(command(msg, "zaap")) {
-                if (player.getFight() != null)
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
                     return true;
+                }
                 if (player.isInPrison())
                     return true;
 
@@ -1290,7 +1348,7 @@ public class CommandPlayer {
                 return EventManager.getInstance().subscribe(player) == 1;
             }
             else {
-                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 17));
+                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 16));
                 return true;
             }
         }

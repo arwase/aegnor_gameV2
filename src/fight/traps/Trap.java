@@ -5,8 +5,8 @@ import common.PathFinding;
 import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.Spell.SortStats;
 import fight.spells.SpellEffect;
+import fight.spells.SpellGrade;
 import kernel.Constant;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class Trap {
     private final GameCase cell;
     private final byte size;
     private final int spell;
-    private final SortStats trapSpell;
+    private final SpellGrade trapSpell;
     private final Fight fight;
     private final byte color;
     private boolean isUnHide = false;
@@ -26,7 +26,7 @@ public class Trap {
     private final  byte level;
     private final short animationSpell;
 
-    public Trap(Fight fight, Fighter caster, GameCase cell, byte size, SortStats trapSpell, int spell, byte level) {
+    public Trap(Fight fight, Fighter caster, GameCase cell, byte size, SpellGrade trapSpell, int spell, byte level) {
         this.fight = fight;
         this.caster = caster;
         this.cell = cell;
@@ -111,6 +111,7 @@ public class Trap {
         fakeCaster.setCell(this.cell);
         final GameCase gc = this.getSize() > 0 ? this.cell : target.getCell();
         this.trapSpell.applySpellEffectToFight(this.fight, fakeCaster, gc, false, true);
+
         this.fight.verifIfTeamAllDead();
     }
 
@@ -120,7 +121,7 @@ public class Trap {
 
     public static void doTraps(final Fight fight, final Fighter fighter) {
         if(fighter.isDead()) return;
-        final List<Trap> traps = new ArrayList<>(fight.getAllTraps());
+        final List<Trap> traps = new ArrayList<Trap>(fight.getAllTraps());
         final short currentCell = (short) fighter.getCell().getId();
         short idTrapPushing = -1;
         for (short i = 0; i < traps.size(); ++i) {
@@ -156,7 +157,7 @@ public class Trap {
 
     public int getSpellID() { return spell;}
 
-    public SortStats getTrapSpell() { return trapSpell;
+    public SpellGrade getTrapSpell() { return trapSpell;
     }
 }
 

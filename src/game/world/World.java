@@ -30,14 +30,12 @@ import exchange.transfer.DataQueue;
 import fight.spells.Spell;
 import game.GameServer;
 import guild.Guild;
+import guild.GuildMember;
 import hdv.Hdv;
 import hdv.HdvEntry;
 import job.Job;
 import command.AzuriomCommands;
-import kernel.Boutique;
-import kernel.Config;
-import kernel.Constant;
-import kernel.Main;
+import kernel.*;
 import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
@@ -47,14 +45,21 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.LoggerFactory;
+import other.AegnorBot;
 import other.Sets;
 import other.Titre;
+import quest.QuestPlayer;
 import util.TimerWaiter;
 import util.lang.Lang;
 
+import javax.security.auth.login.LoginException;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -112,6 +117,9 @@ public class World {
     private Map<Integer, area.map.entity.Tutorial> Tutorial = new HashMap<>();
     private Map<Short, Long> delayCollectors = new HashMap<>();
     private Map<Integer, Classe> Classes = new HashMap<>();
+    public ArrayList<House> houseToClear = new ArrayList<>();
+    public AegnorBot bot = new AegnorBot();
+
 
     private boolean timerStart = false;
     private Timer timer;
@@ -314,8 +322,11 @@ public class World {
         if (gameObject != null) {
             objects.put(gameObject.getGuid(), gameObject);
             if (saveSQL){
-                gameObject.modification = 0;
+                //gameObject.modification = 0;
                 Database.getStatics().getObjectData().insert(gameObject);
+            }
+            else{
+                gameObject.modification = -1;
             }
         }
     }
@@ -387,12 +398,24 @@ public class World {
      * end region *
      */
 
-    public void createWorld() {
+    public void createWorld() throws LoginException {
         logger.info("Loading of data..");
         long time = System.currentTimeMillis();
 
+        Logger minaLogger = (Logger) LoggerFactory.getLogger("org.apache.mina");
+        if(minaLogger!=null)
+        {
+            minaLogger.setLevel(Level.ERROR);
+        }
+
         Database.getStatics().getServerData().loggedZero();
         logger.debug("The reset of the logged players were done successfully.");
+
+        Logger hikariLogger = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari");
+        if(hikariLogger!=null)
+        {
+            hikariLogger.setLevel(Level.ERROR);
+        }
 
         Database.getStatics().getWorldEntityData().load(null);
         logger.debug("The max id of all entities were done successfully.");
@@ -501,6 +524,7 @@ public class World {
         Database.getDynamics().getDropData().load();
         logger.debug("The drops were loaded successfully.");
 
+
         logger.debug("The mounts were loaded successfully.");
 
         Database.getDynamics().getAnimationData().load();
@@ -520,6 +544,14 @@ public class World {
 
         clearInactiveGuilds();
         logger.debug("Nettoyage des guildes vides ou inactives terminé.");
+
+        if(Config.INSTANCE.getAUTO_CLEAN()){
+            clearInactiveAccounts();
+
+            logger.debug("Nettoyage des comptes vides ou inactifs terminé.");
+            //TODO Supprimer les comptes inactifs
+            //TODO Supprimer les liens web des compte supprimés
+        }
 
         Database.getStatics().getTitleData().load();
         logger.debug("The titles were loaded successfully.");
@@ -547,6 +579,8 @@ public class World {
         logger.debug("The statics trunks were loaded successfully.");
         Database.getDynamics().getTrunkData().load();
         logger.debug("The dynamics trunks were loaded successfully.");
+
+        clearInactiveHousesTrunk();
 
         Database.getDynamics().getZaapData().load();
         logger.debug("The zaaps were loaded successfully.");
@@ -592,13 +626,79 @@ public class World {
         + new SimpleDateFormat("dd/MM/yyyy - HH:mm:ss", Locale.FRANCE).format(new Date()) + " in "
                 + new SimpleDateFormat("mm", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " min "
                 + new SimpleDateFormat("ss", Locale.FRANCE).format((System.currentTimeMillis() - time)) + " s.");
-        logger.setLevel(Level.ERROR);
+
 
         if(Config.INSTANCE.getAZURIOM()) {
             logger.debug("Initialisation Connection with Azuriom.");
             new AzuriomCommands(2333).start();
         }
 
+
+        bot.start();
+        logger.debug("Initialisation Connection with Discord.");
+
+        if(Config.INSTANCE.getLOG()){
+            logger.setLevel(Level.ALL);
+        }
+        else{
+            logger.setLevel(Level.DEBUG);
+        }
+
+
+
+    }
+
+    private void clearInactiveHousesTrunk() {
+        if(!houseToClear.isEmpty()) {
+            for (House house : houseToClear) {
+                for (Trunk trunk : Trunk.getTrunksByHouse(house)) {
+                    for(Integer itemID : trunk.getObject().keySet()){
+                        World.world.removeGameObject(itemID);
+                    }
+                    trunk.getObject().clear();
+                    trunk.setKamas(0);//Retrait kamas
+                    trunk.setKey("-");//ResetPass
+                    trunk.setOwnerId(0);//ResetOwner
+                    Database.getDynamics().getTrunkData().update(trunk);
+                }
+            }
+        }
+    }
+
+    private void clearInactiveAccounts() {
+        int i = 0;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate firstDate = now.toLocalDate();
+        LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
+        Map<Integer, Account> Test = accounts;
+        ArrayList<Integer> ids = new ArrayList<>();
+
+        for (Entry<Integer, Account> account : Test.entrySet()){
+            Account account1 = account.getValue();
+            Boolean isInactifAccount = true;
+            if(!account1.getPlayers().isEmpty()){
+                break;
+            }
+
+            if(isInactifAccount){
+                String dateactuelle = account1.getLastConnectionDate();
+                String[] table =   dateactuelle.split("~");
+                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
+                if(lastConnection.isAfter(UnUsedDate) ){
+                    break;
+                }
+            }
+
+            if(isInactifAccount) {
+                System.out.println("Nettoyage du compte " + account1.getName() );
+                for ( GameObject curObj : account1.getBank()) {
+                    World.world.removeGameObject(curObj.getGuid());
+                }
+
+                Database.getSites().getAccountWebData().delete(account1.getId());
+                removeAccount(account1.getId());
+            }
+        }
     }
 
     public void addExtraMonster(int idMob, String superArea,
@@ -870,13 +970,17 @@ public class World {
                 int curMaxRight = 0;
                 Player leader = null;
 
-                for (Player newLeader : player.getGuild().getPlayers())
-                    if (newLeader != player && newLeader.getGuildMember().getRights() < curMaxRight)
+                for (Player newLeader : player.getGuild().getPlayers()) {
+                    if (newLeader != player && newLeader.getGuildMember().getRights() < curMaxRight) {
                         leader = newLeader;
+                    }
+                }
 
+                GuildMember toChange = leader.getGuildMember();
                 player.getGuild().removeMember(player);
-                if(leader != null)
-                    leader.getGuildMember().setRank(1);
+                if(leader != null) {
+                    toChange.setAllRights(1,(byte)-1,1,leader);
+                }
             } else {
                 player.getGuild().removeMember(player);
             }
@@ -888,8 +992,14 @@ public class World {
                 wife.setWife(0);
             }
         }
+
+        Map<Integer,QuestPlayer> qps = player.getQuestPerso();
+        for(QuestPlayer qp : qps.values()){
+            qp.removeQuestPlayer();
+        }
+
         player.remove();
-        unloadPerso(player.getId());
+        SuppressPerso(player.getId());
         players.remove(player.getId());
     }
 
@@ -1223,7 +1333,24 @@ public class World {
         if (!toRem.getItems().isEmpty())
             for (Entry<Integer, GameObject> curObj : toRem.getItems().entrySet())
                 objects.remove(curObj.getKey());
+    }
 
+    public void SuppressPerso(int g) {
+        Player toRem = players.get(g);
+        if (!toRem.getItems().isEmpty()) {
+            for (Entry<Integer, GameObject> curObj : toRem.getItems().entrySet()) {
+                if(curObj.getValue().getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+                    World.world.removePets(curObj.getKey());
+                }
+                World.world.removeGameObject(curObj.getKey());
+            }
+        }
+
+        if(!toRem.getStoreItems().isEmpty()){
+            for (Entry<Integer, Integer> curObj : toRem.getStoreItems().entrySet()) {
+                World.world.removeGameObject(curObj.getKey());
+            }
+        }
     }
 
     public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit, int rarity, int mimibiote) {
@@ -1234,7 +1361,7 @@ public class World {
         if (template == 8378) {
             return new Fragment(id, stats);
         } else if (getObjTemplate(template).getType() == 85) {
-            return new SoulStone(id, qua, template, pos, stats);
+            return new SoulStone(id, qua, template, pos, stats,0);
         } else if (getObjTemplate(template).getType() == 24 && (Constant.isCertificatDopeuls(getObjTemplate(template).getId()) || getObjTemplate(template).getId() == 6653)) {
             try {
                 Map<Integer, String> txtStat = new HashMap<>();
@@ -1454,7 +1581,7 @@ public class World {
         int i = 0;
         LocalDateTime now = LocalDateTime.now();
         LocalDate firstDate = now.toLocalDate();
-        LocalDate UnUsedDate = firstDate.plusMonths(-6);
+        LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
         Map<Integer, Guild> Test = Guildes;
         ArrayList<Integer> ids = new ArrayList<>();
 
@@ -1608,6 +1735,15 @@ public class World {
     public PetEntry removePetsEntry(int guid) {
         return PetsEntry.remove(guid);
     }
+
+    public void removePets(int guid) {
+        PetEntry pet = World.world.getPetsEntry(guid);
+        if(pet != null) {
+            World.world.removePetsEntry(guid);
+            Database.getStatics().getPetData().delete(guid);
+        }
+    }
+
 
     public String getChallengeFromConditions(boolean sevEnn,
                                                     boolean sevAll, boolean bothSex, boolean EvenEnn, boolean MoreEnn,
@@ -1802,6 +1938,7 @@ public class World {
         int compteur = 0, i;
         ArrayList<String> toReturn = new ArrayList<>();
         String chal;
+        //toReturn.add("31,20,20,5");
         while (compteur < 100 && toReturn.size() < nombreChal) {
             compteur++;
             i = Formulas.getRandomValue(1, challenges.split(";").length);
@@ -2482,11 +2619,40 @@ public class World {
         return temple;
     }
 
+    public static void sendWebhookMessage(String webhookUrl, String message) {
+        try {
+            URL url = new URL(webhookUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+            connection.addRequestProperty("User-Agent","Aegnor Webhook 1.0");
+
+            String jsonMessage = "{\"content\":\"" + message + "\"}";
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonMessage.getBytes("utf-8");
+                os.write(input, 0, input.length);
+            }
+
+            int responseCode = connection.getResponseCode();
+            if(responseCode != 204){
+                if (Logging.USE_LOG) {
+                    Logging.getInstance().write("WebHookFail", message + " | Webhook Response Code:" + responseCode);
+                }
+            }
+            connection.disconnect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public void sendMessageToAll(String message) {
         TimerWaiter.addNext(() -> World.world.getOnlinePlayers().stream()
                         .filter(player -> player != null && player.getGameClient() != null && player.isOnline())
                         .forEach(player -> player.sendMessage(message)),
-                10, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+                10, TimeUnit.SECONDS);
     }
 
     public ArrayList<ObjectTemplate> getPotentialBlackItem(int level,int fightdifficulty) {
@@ -2631,7 +2797,6 @@ public class World {
             // ok
         }
 
-        System.out.println( "Timer ?" + isTimerStart());
 
         if (OffOn == 1 && isTimerStart() )// demande de demarer le reboot
         {
@@ -2703,7 +2868,7 @@ public class World {
         ArrayList<Monster> arrayMonstre = new ArrayList<>();
         ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
         getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
-                && !(ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_MONSTRES, monster.getId())) && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+                && !(ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_HOTOMANI_MONSTRES, monster.getId())) && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
 
         for(Monster mob : arrayMonstre){
             arrayMobgrade.add(mob.getGrade(5));
@@ -2714,7 +2879,7 @@ public class World {
     public ArrayList<Monster.MobGrade> getArchiMobgradeBetweenLvl(int min, int max){
         ArrayList<Monster> arrayMonstre = new ArrayList<>();
         ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
-        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.MONSTRE_TYPE_ARCHI, monster.getType())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_ARCHI, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.MONSTRE_TYPE_ARCHI, monster.getType())) && !(ArrayUtils.contains(Constant.EXCEPTION_HOTOMANI_ARCHI, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
                 && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
 
         for(Monster mob : arrayMonstre){
@@ -2726,7 +2891,7 @@ public class World {
     public ArrayList<Monster.MobGrade> getBossMobgradeBetweenLvl(int min, int max){
         ArrayList<Monster> arrayMonstre = new ArrayList<>();
         ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
-        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_BOSS, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
+        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_HOTOMANI_BOSS, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
                 && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
 
         for(Monster mob : arrayMonstre){
@@ -2738,6 +2903,12 @@ public class World {
     public int getLvlMax(Monster monstre){
         int levelmoyen = monstre.getGrade(5).getLevel();
         return levelmoyen;
+    }
+
+    public void removeAccount(int guid) {
+            accounts.remove(guid);
+
+
     }
 
     public static class Drop {

@@ -15,7 +15,7 @@ public class IA49 extends AbstractNeedSpell  {
     private boolean boost = false;
 
     public IA49(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA49");
     }
 
     @Override
@@ -27,9 +27,7 @@ public class IA49 extends AbstractNeedSpell  {
             Fighter E = Function.getInstance().getNearestAllnbrcasemax(this.fight, this.fighter, 0, 100);
             if(this.attack >= 1) E = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for(Spell.SortStats spellStats : this.highests)
-                if(spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter L = Function.getInstance().getNearestAllnbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
             Fighter C = Function.getInstance().getNearestAllnbrcasemax(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;

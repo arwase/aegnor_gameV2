@@ -52,7 +52,7 @@ public class EventSmiley extends Event {
                 wait(2500);
                 ok = !ok;
             }
-        }, 0, TimeUnit.SECONDS, TimerWaiter.DataType.CLIENT);
+        }, 0, TimeUnit.SECONDS);
     }
 
     @Override

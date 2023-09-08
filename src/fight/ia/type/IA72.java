@@ -13,7 +13,7 @@ public class IA72 extends AbstractNeedSpell  {
     private byte attack = 0;
 
     public IA72(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA72");
     }
 
     @Override
@@ -23,9 +23,7 @@ public class IA72 extends AbstractNeedSpell  {
             boolean action = false;
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for(Spell.SortStats spellStats : this.highests)
-                if(spellStats.getMaxPO() > maxPo)
-                    maxPo = spellStats.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter C = Function.getInstance().getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
             Fighter L = Function.getInstance().getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
@@ -40,7 +38,6 @@ public class IA72 extends AbstractNeedSpell  {
             if(this.fighter.getCurPa(this.fight) > 0 && !action )
             {
                 int value = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
-                System.out.println("la " + value);
                 if(value != -1) {
                     time = 800;
                     action = true;

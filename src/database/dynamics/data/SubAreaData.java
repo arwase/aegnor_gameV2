@@ -50,7 +50,6 @@ public class SubAreaData extends AbstractDAO<SubArea> {
                 SubArea SA = World.world.getSubArea(id);
 
                 if(SA == null) {
-                    System.out.println("Error null subarea" + id);
                     continue;
                 }
                 SA.setAlignement(alignement);

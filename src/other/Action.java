@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 public class Action {
 
@@ -336,7 +337,7 @@ public class Action {
                     }
                 } catch (Exception e) {
                     // Pas ok, mais il y a trop de dialogue de PNJ bugg� pour laisser cette erreur flood.
-                    // e.printStackTrace();
+                    e.printStackTrace();
                     return true;
                 }
                 break;
@@ -1177,7 +1178,7 @@ public class Action {
                             SocketManager.send(player, "TC" + tuto.getId() + "|7001010000");
                             player.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_TUTORIAL, tuto));
                             player.setAway(true);
-                        }, 1500, TimerWaiter.DataType.CLIENT);
+                        }, 1500, TimeUnit.MILLISECONDS);
                         return true;
                     }
                     SocketManager.GAME_SEND_Im_PACKET(player, "182");
@@ -3659,7 +3660,7 @@ public class Action {
                             PigDragon.close(newMap, PigDragon.getUpCell(newMap));
                             PigDragon.open(newMap, PigDragon.getRightCell(newMap));
                             PigDragon.open(newMap, PigDragon.getLeftCell(newMap));
-                        }, 1000, TimerWaiter.DataType.MAP);
+                        }, 1000, TimeUnit.MILLISECONDS);
                     } else if (idCurCase == 262 || idCurCase == 320 || idCurCase == 144 || idCurCase == 216 || idCurCase == 231 || idCurCase == 274) // A gauche ou a droite
                     {
                         player.teleportLaby(newMapID, newCellID);
@@ -3670,7 +3671,7 @@ public class Action {
                             PigDragon.close(newMap, PigDragon.getRightCell(newMap));
                             PigDragon.open(newMap, PigDragon.getUpCell(newMap));
                             PigDragon.open(newMap, PigDragon.getDownCell(newMap));
-                        }, 1000, TimerWaiter.DataType.MAP);
+                        }, 1000, TimeUnit.MILLISECONDS);
                     } else {
                         SocketManager.GAME_SEND_MESSAGE(player, "Cette porte n'est pas fonctionnelle. Veuillez reporter la map et la porte sur le forum.");
                         return true;
@@ -4497,20 +4498,18 @@ public class Action {
                             //On t�l�porte, on supprime apr�s
 
                             player.teleport(newMapID, newCellID);
-                            //player.removeByTemplateID(ObjetNeed, 1);
                             SocketManager.GAME_SEND_MESSAGE(player, "'Je sais ca fait chère! Mais si vous venez à bout des monstres, vous pourrez peut-être en récupérer une partie' vous lance l'assistant avant de disparaitre dans les escaliers.", "009900");
 
                             long actualkamas = player.getKamas();
                             player.setKamas(actualkamas-cout);
-                            //SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu " +cout +" kamas pour pouvoir entrer dans l'antre .", "009900");
-                            SocketManager.GAME_SEND_MESSAGE(player, "Tu n'as rien perdu car le donjon est encore en béta .", "009900");
-                            //SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu 1 " +World.world.getObjectsTemplates().get(ObjetNeed).getName() +" .", "009900");
-                            //SocketManager.GAME_SEND_Ow_PACKET(player);
+
+                            SocketManager.GAME_SEND_MESSAGE(player, "Tu as perdu " +cout +" kamas pour pouvoir entrer dans l'antre .", "009900");
+                            SocketManager.GAME_SEND_Ow_PACKET(player);
                         } else if (player.getCurMap().getId() != MapNeed) {
                             //Le perso n'est pas sur la bonne map
                             SocketManager.GAME_SEND_MESSAGE(player, "Vous n'êtes pas sur la bonne map du donjon pour être téléporter.", "009900");
                         } else if(player.getKamas() < cout) {
-                            //Le perso ne poss�de pas l'item
+                            //Le perso ne poss�de pas les kamas
                             SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas l'argent necessaire ("+cout+" kamas) pour affronter les monstres légendaires.", "009900");
                         } else {
                           //Le perso ne poss�de pas l'item

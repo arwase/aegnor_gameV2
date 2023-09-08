@@ -408,6 +408,16 @@ public class Account {
             World.world.removePlayer(this.getPlayers().get(guid));
     }
 
+    public void deleteAccount(int guid) {
+        if (this.getPlayers().containsKey(guid))
+            World.world.removePlayer(this.getPlayers().get(guid));
+    }
+
+    public void deleteAccount() {
+         World.world.removeAccount(this.id);
+    }
+
+
     public void sendOnline() {
         for (int id : this.friends) {
             Player player = World.world.getPlayer(id);
@@ -646,8 +656,6 @@ public class Account {
             player.getParty().leave(player);
         if (player.getMount() != null)
             Database.getStatics().getMountData().update(player.getMount());
-
-
 
         if (player.getFight() != null) {
             if (player.getFight().playerDisconnect(player, false)) {

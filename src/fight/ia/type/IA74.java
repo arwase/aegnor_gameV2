@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 import java.util.ArrayList;
 
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 public class IA74 extends AbstractNeedSpell  {
 
     public IA74(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA74");
     }
 
     @Override
@@ -24,7 +24,7 @@ public class IA74 extends AbstractNeedSpell  {
             boolean action = false;
             Fighter E = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            ArrayList<SortStats> spells = new ArrayList<SortStats>();
+            ArrayList<SpellGrade> spells = new ArrayList<>();
             spells.addAll(this.fighter.getMob().getSpells().values());
 
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);

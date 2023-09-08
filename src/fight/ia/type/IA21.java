@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,7 +12,7 @@ import fight.spells.Spell.SortStats;
 public class IA21 extends AbstractNeedSpell  {
 
     public IA21(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA21");
     }
 
     @Override
@@ -23,10 +23,7 @@ public class IA21 extends AbstractNeedSpell  {
         @SuppressWarnings("unused")
         Fighter E = Function.getNearestEnnemy2(this.fight, this.fighter);
 
-        //System.out.println("Debut de l'IA 27 " );
-        for(SortStats spellStats : this.highests)
-            if(spellStats != null && spellStats.getMaxPO() > maxPo)
-                maxPo = spellStats.getMaxPO();
+        maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
         Fighter firstEnnemy = Function.getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 1, maxPo + 1);
         Fighter secondEnnemy = Function.getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 0, 2);

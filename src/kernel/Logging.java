@@ -7,6 +7,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -17,11 +19,7 @@ public class Logging {
     private ArrayList<Log> logs = new ArrayList<>();
 
 
-    public static final Logger objects = LoggerFactory.getLogger("Object");
-    public static final Logger globalMessage = LoggerFactory.getLogger("GlobalMessage");
-    public static final Logger command = LoggerFactory.getLogger("Command");
-    public static final Logger tchat = LoggerFactory.getLogger("Tchat");
-    public static final Logger craft = LoggerFactory.getLogger("Craft");
+
 
     public static Logging getInstance() {
         return singleton;
@@ -56,9 +54,12 @@ public class Logging {
             }
         }
 
-        final String date = Calendar.getInstance().get(Calendar.YEAR) + "-"
-                + Calendar.getInstance().get(Calendar.MONTH) + "-"
-                + Calendar.getInstance().get(Calendar.DAY_OF_MONTH);
+        // Get the current date
+        LocalDate currentDate = LocalDate.now();
+        // Define the desired date format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        // Format the current date using the formatter
+        final String date = currentDate.format(formatter);
 
         try {
             this.logs.add(new Log(name, date));

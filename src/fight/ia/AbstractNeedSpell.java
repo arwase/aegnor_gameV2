@@ -2,7 +2,7 @@ package fight.ia;
 
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 import fight.spells.SpellEffect;
 import game.world.World;
 import guild.Guild;
@@ -18,14 +18,14 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractNeedSpell extends AbstractIA {
 
-    protected List<SortStats> buffs, glyphs, invocations, cacs, highests, moveable, heals;
+    protected List<SpellGrade> buffs, glyphs, invocations, cacs, highests, moveable, heals;
 
-    public AbstractNeedSpell(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+    public AbstractNeedSpell(Fight fight, Fighter fighter, byte count,String IA) {
+        super(fight, fighter, count,IA+" - NeedSpell");
 
         if(fighter.isCollector())
         {
-            Map<String, List<SortStats>> spellPerco = getPercoSpells(fighter);
+            Map<String, List<SpellGrade>> spellPerco = getPercoSpells(fighter);
             if(spellPerco != null) {
                 this.buffs = spellPerco.get("BUFF");
                 this.heals = spellPerco.get("BUFF");
@@ -47,28 +47,28 @@ public abstract class AbstractNeedSpell extends AbstractIA {
         }
     }
 
-    private static List<SortStats> getListSpellOf(Fighter fighter, String type) {
-        final List<SortStats> spells = new ArrayList<>();
-            for (SortStats spell : fighter.getMob().getSpells().values()) {
+    private static List<SpellGrade> getListSpellOf(Fighter fighter, String type) {
+        final List<SpellGrade> spells = new ArrayList<>();
+            for (SpellGrade spell : fighter.getMob().getSpells().values()) {
                 if (spells.contains(spell)) continue;
                 switch (type) {
                     case "BUFF":
-                        if (spell.getSpell().getType() == 1) spells.add(spell);
+                        if (spell.getTypeSwitchSpellEffects() == 1) spells.add(spell);
                         break;
                     case "DEPLACEMENT":
-                        if (spell.getSpell().getType() == 5) spells.add(spell);
+                        if (spell.getTypeSwitchSpellEffects() == 5) spells.add(spell);
                         break;
                     case "HEAL":
-                        if (spell.getSpell().getType() == 3) spells.add(spell);
+                        if (spell.getTypeSwitchSpellEffects() == 3) spells.add(spell);
                         break;
                     case "GLYPH":
-                        if (spell.getSpell().getType() == 4) spells.add(spell);
+                        if (spell.getTypeSwitchSpellEffects() == 4) spells.add(spell);
                         break;
                     case "INVOCATION":
-                        spells.addAll(spell.getEffects().stream().filter(spellEffect -> spellEffect.getEffectID() == 181).map(spellEffect -> spell).collect(Collectors.toList()));
+                        if (spell.getTypeSwitchSpellEffects() == 2) spells.add(spell);
                         break;
                     case "CAC":
-                        if (spell.getSpell().getType() == 0) {
+                        if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
                             for (SpellEffect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
@@ -77,7 +77,7 @@ public abstract class AbstractNeedSpell extends AbstractIA {
                         }
                         break;
                     case "HIGHEST":
-                        if (spell.getSpell().getType() == 0) {
+                        if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
                             for (SpellEffect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
@@ -91,19 +91,19 @@ public abstract class AbstractNeedSpell extends AbstractIA {
         return spells;
     }
 
-    private Map<String, List<SortStats>> getPercoSpells(Fighter fighter) {
+    private Map<String, List<SpellGrade>> getPercoSpells(Fighter fighter) {
         Guild guild = World.world.getGuild(fighter.getCollector().getGuildId());
         if(guild != null)
         {
-            Map<Integer, SortStats> spellsPerco = guild.getSpells();
-            Map<String, List<SortStats>> spellsExploit = new HashMap<>();
-            List<SortStats> spellBuff = new ArrayList<SortStats>();
-            List<SortStats> spellHighest = new ArrayList<SortStats>();
-            List<SortStats> spellGlyph = new ArrayList<SortStats>();
-            List<SortStats> spellInvocation = new ArrayList<SortStats>();
-            List<SortStats> spellMove = new ArrayList<>();
-            List<SortStats> spellCac = new ArrayList<SortStats>();
-            for(SortStats spell :  spellsPerco.values())
+            Map<Integer, SpellGrade> spellsPerco = guild.getSpells();
+            Map<String, List<SpellGrade>> spellsExploit = new HashMap<>();
+            List<SpellGrade> spellBuff = new ArrayList<>();
+            List<SpellGrade> spellHighest = new ArrayList<>();
+            List<SpellGrade> spellGlyph = new ArrayList<>();
+            List<SpellGrade> spellInvocation = new ArrayList<>();
+            List<SpellGrade> spellMove = new ArrayList<>();
+            List<SpellGrade> spellCac = new ArrayList<>();
+            for(SpellGrade spell :  spellsPerco.values())
             {
                 if(spell != null) {
                     if (spell.getLevel() > 0) {

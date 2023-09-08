@@ -4,7 +4,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.Spell.SortStats;
+import fight.spells.SpellGrade;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -12,7 +12,7 @@ import fight.spells.Spell.SortStats;
 public class IA30 extends AbstractNeedSpell {
 
     public IA30(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA30");
     }
 
     @Override
@@ -22,9 +22,7 @@ public class IA30 extends AbstractNeedSpell {
             boolean action = false;
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            for (SortStats S : this.highests)
-                if (S != null && S.getMaxPO() > maxPo)
-                    maxPo = S.getMaxPO();
+            maxPo = Function.getInstance().getMaxPoUsableSpell(this.fighter, this.highests);
 
             Fighter longestEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 1, maxPo + 1);// pomax +1;
             Fighter nearestEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 2);//2 = po min 1 + 1;
@@ -46,6 +44,13 @@ public class IA30 extends AbstractNeedSpell {
 
             if (this.fighter.getCurPa(this.fight) > 0 && this.fighter.nbInvocation() < 2) {
                 if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
+                    time = 600;
+                    action = true;
+                }
+            }
+
+            if (this.fighter.getCurPa(this.fight) > 0) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,ennemy)) {
                     time = 600;
                     action = true;
                 }

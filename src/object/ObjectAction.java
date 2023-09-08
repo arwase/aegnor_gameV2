@@ -51,7 +51,7 @@ public class ObjectAction {
         Player player = target != null ? target : player0;
 
         if (World.world.getGameObject(objet) == null) {
-            SocketManager.GAME_SEND_MESSAGE(player, "Error object null. Merci de prévenir un administrateur est d'indiquer le message.");
+            SocketManager.GAME_SEND_MESSAGE(player, "Error object null. Merci de prévenir un administrateur et d'indiquer le message.");
             return;
         }
 

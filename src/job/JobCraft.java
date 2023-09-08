@@ -2,38 +2,29 @@ package job;
 
 import client.Player;
 import common.SocketManager;
+import util.TimerWaiter;
+
+import java.util.concurrent.TimeUnit;
 
 public class JobCraft {
 
     public Player player;
-    public Thread thread;
     public JobAction jobAction;
     private int time = 0;
     private boolean itsOk = true;
+    private final static short CRAFT_TIME = 200;
 
     public JobCraft(JobAction jobAction, Player player) {
         this.jobAction = jobAction;
         this.player = player;
 
-        this.thread = new Thread(() -> {
-            try { Thread.sleep(150); } catch(Exception ignored) {
-                ignored.printStackTrace();
-            }
-            try {
-                if (itsOk)
-                {
-                    jobAction.craft(false, -1);
-                }
-            }
-            catch(Exception e)
-            {
-                e.printStackTrace();
-                System.out.println(e.getMessage());
-            }
-            try { Thread.sleep(150); } catch(Exception ignored) { }
+        TimerWaiter.addNext(() -> {
+            if (itsOk) jobAction.craft(false, -1);
+        }, CRAFT_TIME, TimeUnit.MILLISECONDS);
+
+        TimerWaiter.addNext(() -> {
             if (!itsOk) repeat(time+1, time, player);
-        });
-        this.thread.start();
+        }, CRAFT_TIME, TimeUnit.MILLISECONDS);
     }
 
     public void setAction(int time) {
@@ -42,9 +33,10 @@ public class JobCraft {
         this.itsOk = false;
     }
 
+
+
     public void repeat(final int time1, final int time2, final Player player) {
         this.player.sendMessage("La création est instantannée, cela peut créer un bug de l'interface");
-
         this.jobAction.player = player;
         this.jobAction.isRepeat = true;
         boolean isOneShotCraft = false;
@@ -61,10 +53,9 @@ public class JobCraft {
                 isOneShotCraft = true;
         }
 
-        if (time2 <= 0 || isOneShotCraft) this.end();
+        if (time2 <= 0 || isOneShotCraft && !this.jobAction.isMagging() ) this.end();
         else {
-            try { Thread.sleep(150); } catch(Exception ignored) { }
-            this.repeat(time1, (time2 - 1), player);
+            TimerWaiter.addNext(() -> this.repeat(time1, (time2 - 1), player), CRAFT_TIME, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -73,9 +64,11 @@ public class JobCraft {
         if (!this.jobAction.data.isEmpty())
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK_FM(this.jobAction.player, 'O', "+", this.jobAction.data);
 
-        this.jobAction.ingredients.clear();
+        if(this.jobAction.isMagging()) {
+            this.jobAction.ingredients.clear();
+        }
         this.jobAction.isRepeat = false;
-        this.jobAction.setJobCraft(null);
-        this.thread.interrupt();
+        //this.jobAction.setJobCraft(null);
+
     }
 }

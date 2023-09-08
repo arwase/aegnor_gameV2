@@ -22,6 +22,7 @@ import fight.arena.TeamMatch;
 import game.scheduler.Updatable;
 import game.world.World;
 import kernel.*;
+import lombok.var;
 import object.GameObject;
 import other.Action;
 import util.TimerWaiter;
@@ -48,7 +49,6 @@ public class GameMap {
                         if(data != null) {
 
                             if (time - respawnGroup.lastTime > Long.parseLong(data.get("timer"))) {
-                                System.out.println("Groupe a respawn :"+ data);
                                 respawnGroup.map.addStaticGroup(respawnGroup.cell, data.get("groupData"), true);
                                 this.groups.remove(respawnGroup);
                             }
@@ -78,7 +78,8 @@ public class GameMap {
                         if (map.getMountPark() != null) map.getMountPark().startMoveMounts();
                     }
                     World.world.getCollectors().values().forEach(Collector::moveOnMap);
-                }, 0, TimeUnit.SECONDS, TimerWaiter.DataType.MAP);
+                    World.world.bot.refreshActivity();
+                }, 0, TimeUnit.SECONDS);
 
                 NpcMovable.moveAll();
             }
@@ -1194,8 +1195,8 @@ public class GameMap {
         group.setStarBonus(200);
         SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
         this.nextObjectId--;
-        if (timer)
-            group.startCondTimer();
+        /*if (timer)
+            group.startCondTimer();*/
 
     }
 
@@ -1308,17 +1309,18 @@ public class GameMap {
             cellID = this.getRandomFreeCellId();
 
         Monster.MobGroup group = new Monster.MobGroup(this.nextObjectId, cellID, groupData);
-        group.setStarBonus(200);
+
         if (group.getMobs().isEmpty())
             return;
+
+        group.setStarBonus(200);
         this.mobGroups.put(this.nextObjectId, group);
         group.setCondition(condition);
         group.setIsFix(false);
-        group.setStarBonus(200);
         SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
         this.nextObjectId--;
-        if (timer)
-            group.startCondTimer();
+        /*if (timer)
+            group.startCondTimer();*/
     }
 
     public void onMapMonstersSetStarsOnTime() {
@@ -2241,10 +2243,17 @@ public class GameMap {
 
     public void onPlayerArriveOnCell(Player player, int id) {
         GameCase cell = this.getCase(id);
-
-
         if (cell == null)
             return;
+
+        byte cof = (byte) (player.isOnMount() ? 2 : 1);
+        if(player != null && player.getGameClient() != null)
+            if (player.getGroupe() == null && player.getGameClient().depla != 0 && System.currentTimeMillis() - player.getGameClient().depla < (300 / cof)) {
+                World.sendWebhookMessage(Constant.moderatorWebhook, "Le joueur **" + player.getName() + "** vient d'utiliser la faille speedHack Walk et a été déconnecté.");
+                //player.getGameClient().disconnect();
+                return;
+            }
+
         synchronized (cell) {
             GameObject obj = cell.getDroppedItem(true);
             if (obj != null && !Main.INSTANCE.getMapAsBlocked()) {

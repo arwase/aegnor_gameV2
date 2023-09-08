@@ -8,6 +8,7 @@ import game.world.World;
 import util.TimerWaiter;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 public class Bandit {
     private static Bandit bandits;
@@ -68,7 +69,7 @@ public class Bandit {
     public static void run() {
         Bandit bandit = getBandits();
         if (bandit.isPop) {
-            TimerWaiter.addNext(() -> run(), 1000 * 60 * 60, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(() -> run(), 1000 * 60 * 60, TimeUnit.MILLISECONDS);
         } else {
             long time = bandit.getTime();
             long actuel = System.currentTimeMillis();
@@ -80,7 +81,7 @@ public class Bandit {
                 if (time + timeRandom <= actuel) {
                     pop(bandit, actuel);
                 } else {
-                    TimerWaiter.addNext(() -> run(), 1000 * 60 * 60, TimerWaiter.DataType.MAP);
+                    TimerWaiter.addNext(() -> run(), 1000 * 60 * 60, TimeUnit.MILLISECONDS);
                 }
             }
         }
@@ -109,7 +110,7 @@ public class Bandit {
             Database.getDynamics().getGangsterData().update(bandit);
         } catch (Exception e) {
             e.printStackTrace();
-            TimerWaiter.addNext(() -> pop(bandit, actuel), 60000, TimerWaiter.DataType.MAP);
+            TimerWaiter.addNext(() -> pop(bandit, actuel), 60000,TimeUnit.MILLISECONDS);
         }
     }
 

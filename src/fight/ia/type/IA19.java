@@ -6,6 +6,8 @@ import fight.Fighter;
 import fight.ia.AbstractIA;
 import fight.ia.util.Function;
 
+import java.util.ArrayList;
+
 /**
  * Created by Locos on 04/10/2015.
  */
@@ -14,27 +16,18 @@ public class IA19 extends AbstractIA  {
     private boolean tp = false;
 
     public IA19(Fight fight, Fighter fighter, byte count) {
-        super(fight, fighter, count);
+        super(fight, fighter, count,"IA19");
     }
 
     @Override
     public void apply() {
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
-            Fighter friend = Function.getInstance().getNearestFriend(this.fight, this.fighter);
+            Fighter friend = Function.getInstance().getAllyClosestToEnnemy(this.fight, this.fighter);
+            Fighter friend2 = Function.getInstance().getNearestFriend(this.fight, this.fighter);
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
 
-            int dist1 = PathFinding.getDirBetweenTwoCase(friend.getCell().getId(), ennemy.getCell().getId(), this.fight.getMap(), true);
-            int dist2 = PathFinding.getDirBetweenTwoCase(this.fighter.getCell().getId(), ennemy.getCell().getId(), this.fight.getMap(), true);
-
-            for (Fighter t : this.fight.getFighters(3)) {
-                if (t != null && t.getTeam() == this.fighter.getTeam()) {
-                    int tDist = PathFinding.getDistanceBetweenTwoCase(this.fight.getMap(), t.getCell(), ennemy.getCell());
-                    if (dist2 > tDist && dist1 > tDist) {
-                        dist1 = tDist;
-                        friend = t;
-                    }
-                }
-            }
+            int dist1 = PathFinding.getDistanceBetween(this.fight.getMap(), friend.getCell().getId(), ennemy.getCell().getId());
+            int dist2 = PathFinding.getDistanceBetween(this.fight.getMap(), this.fighter.getCell().getId(), ennemy.getCell().getId());
 
             boolean needTp = dist2 > dist1;
 
@@ -57,7 +50,7 @@ public class IA19 extends AbstractIA  {
                 }
             }
 
-            if (!Function.getInstance().HealIfPossiblefriend(fight, this.fighter, friend)) {
+            if (!Function.getInstance().HealIfPossiblefriend(fight, this.fighter, friend2)) {
                 Function.getInstance().attackIfPossibleTynril(this.fight, this.fighter, ennemy);
             }
             this.addNext(this::decrementCount, 1000);
