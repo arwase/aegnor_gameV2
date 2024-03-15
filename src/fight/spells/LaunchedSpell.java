@@ -1,9 +1,6 @@
 package fight.spells;
 
 import fight.Fighter;
-import fight.spells.SpellGrade;
-
-import java.util.Map;
 
 public class LaunchedSpell {
 
@@ -51,18 +48,18 @@ public class LaunchedSpell {
         return nb;
     }
 
-    public static int haveEffectTarget(Map<Integer, Fighter> f, Fighter target, int id) {
+    /*public static int haveEffectTarget(Map<Integer, Fighter> f, Fighter target, int id) {
         if (target == null) return 0;
         int nb = 0;
         for(Fighter m : f.values())
             if(m != null)
                 for (LaunchedSpell S : m.getLaunchedSorts())
                     if (S.target != null && S.target.getId() == target.getId())
-                        for(SpellEffect e : S.spellStats.getEffects())
+                        for(Effect e : S.spellStats.getEffects())
                             if(e.getEffectID() == id)
                                 nb++;
         return nb;
-    }
+    }*/
 
     public Fighter getTarget() {
         return this.target;

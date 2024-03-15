@@ -12,7 +12,8 @@ import database.Database;
 import dynamic.Noel;
 import entity.Prism;
 import entity.pet.PetEntry;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import game.action.ExchangeAction;
 import game.world.World;
 import guild.Guild;
@@ -180,37 +181,37 @@ public class ObjectAction {
                                 case 1://Vitalit�.
                                     for (int i = 0; i < val; i++) {
                                         player.boostStat(11, false);
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_VITA, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_VITA, 1);
                                     }
                                     break;
                                 case 2://Sagesse.
                                     for (int i = 0; i < val; i++) {
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_SAGE, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_SAGE, 1);
                                         player.boostStat(12, false);
                                     }
                                     break;
                                 case 3://Force.
                                     for (int i = 0; i < val; i++) {
                                         player.boostStat(10, false);
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_FORC, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_FORC, 1);
                                     }
                                     break;
                                 case 4://Intelligence.
                                     for (int i = 0; i < val; i++) {
                                         player.boostStat(15, false);
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_INTE, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_INTE, 1);
                                     }
                                     break;
                                 case 5://Chance.
                                     for (int i = 0; i < val; i++) {
                                         player.boostStat(13, false);
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_CHAN, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_CHAN, 1);
                                     }
                                     break;
                                 case 6://Agilit�.
                                     for (int i = 0; i < val; i++) {
                                         player.boostStat(14, false);
-                                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_AGIL, 1);
+                                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_AGIL, 1);
                                     }
                                     break;
                                 case 7://Point de Sort.
@@ -681,7 +682,7 @@ public class ObjectAction {
 
                         boolean containNeutre = false;
 
-                        for(SpellEffect effect : gameObject.getEffects())
+                        for(Effect effect : gameObject.getEffects())
                             if(effect.getEffectID() == 100 || effect.getEffectID() == 95)
                                 containNeutre = true;
 
@@ -882,7 +883,14 @@ public class ObjectAction {
                 return false;
             case 10914://Cadeau nowel 3
                 return false;
-
+            case 12839://Gemme Spirituel emballée
+                int templateid =  Constant.getRandomGemmesSpritiuels();
+                GameObject obj = World.world.getObjTemplate(templateid).createNewItem(1, false,0);
+                if (player.addObjet(obj, true))
+                    World.world.addGameObject(obj,true);
+                SocketManager.GAME_SEND_Ow_PACKET(player);
+                SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + templateid);
+                return true;
         }
         return false;
     }

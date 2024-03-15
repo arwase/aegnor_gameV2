@@ -2,8 +2,8 @@ package fight.ia;
 
 import fight.Fight;
 import fight.Fighter;
+import fight.spells.Effect;
 import fight.spells.SpellGrade;
-import fight.spells.SpellEffect;
 import game.world.World;
 import guild.Guild;
 
@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -70,7 +69,7 @@ public abstract class AbstractNeedSpell extends AbstractIA {
                     case "CAC":
                         if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
-                            for (SpellEffect spellEffect : spell.getEffects())
+                            for (Effect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
                                     effect = true;
                             if (!effect && spell.getMaxPO() < 3) spells.add(spell);
@@ -79,7 +78,7 @@ public abstract class AbstractNeedSpell extends AbstractIA {
                     case "HIGHEST":
                         if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
-                            for (SpellEffect spellEffect : spell.getEffects())
+                            for (Effect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
                                     effect = true;
                             if (effect && spell.getSpellID() != 805) continue;

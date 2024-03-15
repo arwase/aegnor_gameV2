@@ -4,8 +4,7 @@ import client.Player;
 import common.Formulas;
 import common.PathFinding;
 import common.SocketManager;
-import fight.spells.Spell;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
 import fight.spells.SpellGrade;
 import game.GameClient;
 
@@ -237,7 +236,7 @@ public class Challenge {
     }
 
     public void onFightersAttacked(ArrayList<Fighter> targets, Fighter caster,
-                                   SpellEffect SE, int spell, boolean isTrap) {
+                                   Effect SE, int spell, boolean isTrap) {
         int effectID = SE.getEffectID();
         if (!challengeAlive)
             return;

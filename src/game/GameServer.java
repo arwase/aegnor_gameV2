@@ -1,6 +1,7 @@
 package game;
 
-import ch.qos.logback.core.net.server.Client;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import client.Account;
 import client.Player;
 import com.sun.istack.NotNull;
@@ -8,16 +9,12 @@ import database.Database;
 import exchange.ExchangeClient;
 import game.world.World;
 import kernel.Config;
-import kernel.Constant;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.session.IdleStatus;
-import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.textline.LineDelimiter;
 import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -46,7 +43,9 @@ public class GameServer {
 
     private GameServer(){
         acceptor = new NioSocketAcceptor();
-        acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(StandardCharsets.UTF_8, LineDelimiter.NUL, new LineDelimiter("\n\0"))));
+        TextLineCodecFactory line = new TextLineCodecFactory(StandardCharsets.UTF_8, LineDelimiter.NUL, new LineDelimiter("\n\0"));
+        line.setDecoderMaxLineLength(16384);
+        acceptor.getFilterChain().addLast("codec",  new ProtocolCodecFilter(line));
         acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 60 * 10 /*10 Minutes*/);
         acceptor.setHandler(new GameHandler());
     }
@@ -124,7 +123,12 @@ public class GameServer {
     }
 
     public void kickAll(boolean kickGm) {
+
+
+
+
         for (Player player : World.world.getOnlinePlayers()) {
+
             if (player != null && player.getGameClient() != null) {
                 if (player.getGroupe() != null && !player.getGroupe().isPlayer() && kickGm)
                     continue;

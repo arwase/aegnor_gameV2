@@ -3,9 +3,9 @@ package dynamic;
 import client.Player;
 import entity.Collector;
 import fight.Fighter;
+import fight.spells.EffectConstant;
 import game.world.World;
 import kernel.Config;
-import kernel.Constant;
 
 import java.util.ArrayList;
 
@@ -24,7 +24,7 @@ public class FormuleOfficiel {
                 if (lvlWinners <= 0)
                     return 0;
 
-                double sagesse = fighter.getLvl() * 0.5 + fighter.getPlayer().getTotalStats().getEffect(Constant.STATS_ADD_SAGE),
+                double sagesse = fighter.getLvl() * 0.5 + fighter.getPlayer().getTotalStats().getEffect(EffectConstant.STATS_ADD_SAGE),
                         nvGrpMonster = ((double) lvlMax / (double) lvlMin),
                         bonus = 1.0,
                         rapport = ((double) lvlLoosers / (double) lvlWinners);
@@ -115,7 +115,7 @@ public class FormuleOfficiel {
 
             double sagesse = World.world.getGuild(collector.getGuildId()).getLvl()
                     * 0.5
-                    + World.world.getGuild(collector.getGuildId()).getStats(Constant.STATS_ADD_SAGE), nvGrpMonster = ((double) lvlMax / (double) lvlMin), bonus = 1.0, rapport = ((double) lvlLoosers / (double) lvlWinners);
+                    + World.world.getGuild(collector.getGuildId()).getStats(EffectConstant.STATS_ADD_SAGE), nvGrpMonster = ((double) lvlMax / (double) lvlMin), bonus = 1.0, rapport = ((double) lvlLoosers / (double) lvlWinners);
 
             if (winners.size() == 1)
                 rapport = 0.6;
@@ -212,7 +212,7 @@ public class FormuleOfficiel {
 
 
                 double sagesse = fighter.getLvl() * 0.5 + (fighter.getPlayer().getTotalStats()
-                        .getEffect(Constant.STATS_ADD_SAGE) / 2) , nvGrpMonster = ((double) lvlMax / (double) lvlMin),rapport = ((double) lvlLoosers / (double) lvlWinners),
+                        .getEffect(EffectConstant.STATS_ADD_SAGE) / 2) , nvGrpMonster = ((double) lvlMax / (double) lvlMin),rapport = ((double) lvlLoosers / (double) lvlWinners),
                         bonus = 1.0;
 
                 if (winners.size() == 1)

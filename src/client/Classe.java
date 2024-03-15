@@ -1,6 +1,6 @@
 package client;
 
-import kernel.Constant;
+import fight.spells.EffectConstant;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -104,22 +104,22 @@ public class Classe
         ArrayList<BoostStat> boosts = new ArrayList<BoostStat>();
 
         switch (statID) {
-            case Constant.STATS_ADD_VITA :
+            case EffectConstant.STATS_ADD_VITA :
                 boosts = this._boostVita;
                 break;
-            case Constant.STATS_ADD_FORC :
+            case EffectConstant.STATS_ADD_FORC :
                 boosts =this._boostForce;
                 break;
-            case Constant.STATS_ADD_INTE :
+            case EffectConstant.STATS_ADD_INTE :
                 boosts =this._boostIntel;
                 break;
-            case Constant.STATS_ADD_AGIL :
+            case EffectConstant.STATS_ADD_AGIL :
                 boosts =this._boostAgi;
                 break;
-            case Constant.STATS_ADD_CHAN :
+            case EffectConstant.STATS_ADD_CHAN :
                 boosts =this._boostChance;
                 break;
-            case Constant.STATS_ADD_SAGE :
+            case EffectConstant.STATS_ADD_SAGE :
                 boosts =this._boostSage;
                 break;
             default :

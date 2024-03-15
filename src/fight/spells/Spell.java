@@ -1,21 +1,7 @@
 package fight.spells;
 
-import area.map.GameCase;
-import common.Formulas;
-import common.PathFinding;
-import fight.Challenge;
-import fight.Fight;
-import fight.Fighter;
-import game.GameServer;
-import game.world.World;
-import kernel.Constant;
-import kernel.Main;
-
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 public class Spell {
 
@@ -38,7 +24,8 @@ public class Spell {
         this.spriteID = aspriteID;
         this.spriteInfos = aspriteInfos;
         this.duration = duration;
-       /* if (ET.equalsIgnoreCase("0")) {
+        this.type = type;
+       /* if (ET.equalsIgnoreCase("0")) s{
             effectTargets.add(0);
             CCeffectTargets.add(0);
         } else {

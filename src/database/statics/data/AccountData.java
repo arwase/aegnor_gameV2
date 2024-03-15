@@ -1,12 +1,13 @@
 package database.statics.data;
 
 import ch.qos.logback.classic.Level;
+import client.Account;
 import client.AccountWeb;
 import client.Player;
 import com.zaxxer.hikari.HikariDataSource;
-import client.Account;
 import database.Database;
 import database.statics.AbstractDAO;
+import fight.spells.EffectConstant;
 import game.world.World;
 import kernel.Config;
 import kernel.Constant;
@@ -318,12 +319,12 @@ public class AccountData extends AbstractDAO<Account> {
 
                 HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
-                stats.put(Constant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(Constant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(Constant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(Constant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(Constant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(Constant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
                 Player player = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
 
                 if(p != null)

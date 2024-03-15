@@ -14,6 +14,7 @@ import entity.mount.Mount;
 import entity.npc.Npc;
 import fight.Fight;
 import fight.Fighter;
+import fight.spells.EffectConstant;
 import fight.spells.LaunchedSpell;
 import game.GameClient;
 import game.GameServer;
@@ -992,18 +993,23 @@ public class SocketManager {
 
     public static void GAME_SEND_GA_PACKET(GameClient out, String actionID,
                                            String s0, String s1, String s2) {
-
         String packet = "GA" + actionID + ";" + s0;
         if (!s1.equals(""))
             packet += ";" + s1;
         if (!s2.equals(""))
             packet += ";" + s2;
 
-        if(out.getPlayer().getSlaveLeader() != null && s0 == "0") {
-            send(out.getPlayer().getSlaveLeader().getGameClient(), packet);
-        }
-        send(out, packet);
 
+        if(out.getPlayer() != null) {
+            if (out.getPlayer().getSlaveLeader() != null && s0 == "0") {
+                send(out.getPlayer().getSlaveLeader().getGameClient(), packet);
+            }
+
+            send(out, packet);
+        }
+        else{
+            out.kick();
+        }
     }
 
     public static void GAME_SEND_GA_PACKET_TO_FIGHT(Fight fight, int teams,
@@ -1125,7 +1131,7 @@ public class SocketManager {
                                                     int mType, int cible, int value, String mParam2, String mParam3,
                                                     String mParam4, int turn, int spellID) {
         StringBuilder packet = new StringBuilder();
-        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID).append(";").append(cible);
+        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID);
         for (Fighter f : fight.getFighters(teams)) {
             if (f.hasLeft() || f.getPlayer() == null)
                 continue;
@@ -1151,10 +1157,10 @@ public class SocketManager {
 
 
     public static void GAME_SEND_FIGHT_GIE_TO_FIGHT(Fight fight, int teams,
-                                                    int mType, int cible, int value, String mParam2, String mParam3,
+                                                    int mType, int cible, String value, String mParam2, String mParam3,
                                                     String mParam4, int turn, int spellID, int casterID) {
         StringBuilder packet = new StringBuilder();
-        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(""+value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID).append(";").append(casterID+"");
+        packet.append("GIE").append(mType).append(";").append(cible).append(";").append(value).append(";").append(mParam2).append(";").append(mParam3).append(";").append(mParam4).append(";").append(turn).append(";").append(spellID).append(";").append(casterID+"");
         for (Fighter f : fight.getFighters(teams)) {
             if (f.hasLeft() || f.getPlayer() == null)
                 continue;
@@ -1163,6 +1169,7 @@ public class SocketManager {
         }
 
     }
+
 
 
     public static void GAME_SEND_MAP_FIGHT_GMS_PACKETS_TO_FIGHT(Fight fight,
@@ -3053,7 +3060,7 @@ public class SocketManager {
 
     public static void GAME_SEND_XC_PACKET(Fighter current, Player master) {
         int nbInvoc = current.nbrInvoc;
-        int nbInvocMax = current.getPlayer().getTotalStats().getEffect(Constant.STATS_CREATURE);
+        int nbInvocMax = current.getPlayer().getTotalStats().getEffect(EffectConstant.STATS_CREATURE);
         String packet = "XC" + nbInvoc + "," + nbInvocMax + "|";
         ArrayList<Fighter> listAllie = current.getFight().getFighters(current.getTeam2());
         for(Entry<Integer, Fighter> entry : current.getFight().getTeam(current.getTeam2()).entrySet())

@@ -18,7 +18,11 @@ public class Boutique {
     }
 
     public static void open(Player player) {
-        player.boutique = true;
+        if(player.getExchangeAction() != null){
+            player.sendMessage("Tu ne peux pas accéder a la boutique, tu es déjà en échange");
+            return;
+        }
+        //player.boutique = true;
         player.setExchangeAction(new ExchangeAction<>(ExchangeAction.TRADING_WITH_BOUTIQUE, 0));
         SocketManager.send(player, "ECK20|1");
         SocketManager.send(player, "EY" + packet);

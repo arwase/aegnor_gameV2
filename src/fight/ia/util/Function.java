@@ -7,10 +7,7 @@ import common.PathFinding;
 import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.LaunchedSpell;
-import fight.spells.Spell;
-import fight.spells.SpellGrade;
-import fight.spells.SpellEffect;
+import fight.spells.*;
 import fight.traps.Glyph;
 import game.action.GameAction;
 import game.world.World;
@@ -1068,7 +1065,7 @@ public class Function {
             boolean effet4 = false;
             boolean effet6 = false;
 
-            for(SpellEffect f : S.getValue().getEffects())
+            for(Effect f : S.getValue().getEffects())
             {
                 if(f.getEffectID() == 4)
                     effet4 = true;
@@ -1364,7 +1361,7 @@ public class Function {
     {
         if (fight == null || fighter == null)
             return false;
-        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(Constant.STATS_CREATURE))
+        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(EffectConstant.STATS_CREATURE))
             return false;
         Fighter nearest = getNearestEnnemy(fight, fighter);
         if (nearest == null)
@@ -1392,7 +1389,7 @@ public class Function {
     {
         if (fight == null || fighter == null)
             return false;
-        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(Constant.STATS_CREATURE))
+        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(EffectConstant.STATS_CREATURE))
             return false;
         Fighter nearest = getNearestEnnemy(fight, fighter);
         if (nearest == null)
@@ -1454,7 +1451,7 @@ public class Function {
         if (fight == null || fighter == null)
             return false;
 
-        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(Constant.STATS_CREATURE))
+        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(EffectConstant.STATS_CREATURE))
             return false;
 
         Fighter nearest = Cible;
@@ -1531,7 +1528,7 @@ public class Function {
         for (Map.Entry<Integer, SpellGrade> SS : fighter.getMob().getSpells().entrySet()) {
             if (!fight.canCastSpell1(fighter, SS.getValue(), fight.getMap().getCase(nearestCell), -1))
                 continue;
-            for (SpellEffect SE : SS.getValue().getEffects())
+            for (Effect SE : SS.getValue().getEffects())
                 if (SE.getEffectID() == 181)
                     return SS.getValue();
         }
@@ -1556,7 +1553,7 @@ public class Function {
             if (!fight.canCastSpell1(fighter, SS, fight.getMap().getCase(nearestCell), -1))
                 continue;
 
-            for (SpellEffect SE : SS.getEffects())
+            for (Effect SE : SS.getEffects())
             {
                 if (SE.getEffectID() == 181)
                 {
@@ -1831,7 +1828,7 @@ public class Function {
             return false;
         }
         for(SpellGrade spell : fighter.getMob().getSpells().values()) {
-            for(SpellEffect spellEffect : spell.getEffects())
+            for(Effect spellEffect : spell.getEffects())
             {
                 if(spellEffect.getEffectID() == 132)
                 {
@@ -2389,9 +2386,8 @@ public class Function {
             return 0;
         for(SpellGrade s : launcher.getMob().getSpells().values())
         {
-            ArrayList<SpellEffect> effects = s.getEffects();
             boolean isAttackSpell = false;
-            for(SpellEffect spellEffect : effects) {
+            for(Effect spellEffect : s.getEffects()) {
                 if (damageID.contains(spellEffect.getEffectID())) {
                     isAttackSpell = true;
                     break;
@@ -3698,19 +3694,19 @@ public class Function {
                 if(fighter.getMob().getTemplate().getId() == 1090 || fighter.getMob().getTemplate().getId() == 1091 || fighter.getMob().getTemplate().getId() == 1092)
                 {
                     int cellid = getNearestFreeCell(fight, fighter);
-                    if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1090 & fighter.haveState(Constant.ETAT_ENCRE_PRIMAIRE))
+                    if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1090 & fighter.haveState(EffectConstant.ETAT_ENCRE_PRIMAIRE))
                     {
                         int attack2 = fight.tryCastSpell(fighter, SS, cellid);
                         if (attack2 == 0)
                             return SS.getSpell().getDuration();
                     }
-                    else if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1091 & fighter.haveState(Constant.ETAT_ENCRE_SECONDAIRE))
+                    else if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1091 & fighter.haveState(EffectConstant.ETAT_ENCRE_SECONDAIRE))
                     {
                         int attack2 = fight.tryCastSpell(fighter, SS, cellid);
                         if (attack2 == 0)
                             return SS.getSpell().getDuration();
                     }
-                    else if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1092 & fighter.haveState(Constant.ETAT_ENCRE_TERTIDIAIRE))
+                    else if(fighter.isMob() & fighter.getMob().getTemplate().getId() == 1092 & fighter.haveState(EffectConstant.ETAT_ENCRE_TERTIDIAIRE))
                     {
                         int attack2 = fight.tryCastSpell(fighter, SS, cellid);
                         if (attack2 == 0)
@@ -4372,7 +4368,7 @@ public class Function {
         if (fight == null)
             return 0;
         int inf = 0;
-        for (SpellEffect SE : SS.getEffects())
+        for (Effect SE : SS.getEffects())
         {
 
             switch (SE.getEffectID())
@@ -4731,7 +4727,7 @@ public class Function {
                 int curTarget = 0;
                 int cellsnb = 0;
                 ArrayList<GameCase> cells = new ArrayList<>();
-                for (SpellEffect se : spell.getEffects()) {
+                for (Effect se : spell.getEffects()) {
                     ArrayList<GameCase> celltemp = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), launchCell, se.getAreaEffect());
                     if(celltemp.size() > cellsnb){
                         cells = celltemp;
@@ -4768,7 +4764,7 @@ public class Function {
     {
 
         int inf = 0;
-        for (SpellEffect SE : ss.getEffects())
+        for (Effect SE : ss.getEffects())
         {
             if (SE.getEffectID() != 108)
                 continue;//return 0; // TOTALEMENT DEBILE, SI LE HEAL FAIT PLUSIEURS CHOSE
@@ -4782,7 +4778,7 @@ public class Function {
     public static int calculInfluence(SpellGrade ss, Fighter C, Fighter T)
     {
         int infTot = 0;
-        for (SpellEffect SE : ss.getEffects())
+        for (Effect SE : ss.getEffects())
         {
             int inf = 0;
             switch (SE.getEffectID())
@@ -4901,7 +4897,7 @@ public class Function {
                     maxPo = S.getMaxPO();
 
                     if(S.isModifPO())
-                        maxPo = maxPo + fighter.getBuffValue(Constant.STATS_ADD_PO) - fighter.getBuffValue(Constant.STATS_REM_PO);
+                        maxPo = maxPo + fighter.getBuffValue(EffectConstant.STATS_ADD_PO) - fighter.getBuffValue(EffectConstant.STATS_REM_PO);
 
                 }
             }

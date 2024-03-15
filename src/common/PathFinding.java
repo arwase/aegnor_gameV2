@@ -1953,7 +1953,7 @@ public class PathFinding {
                 if (i != null)
                     cibles.add(i);
                 break;
-            case Constant.ITEM_TYPE_BATON:
+            case Constant.ITEM_TYPE_BATON: // TODO : a reprendre marche pas avec les batons distances
                 int dist = PathFinding.getDistanceBetween(fight.getMap(), cell.getId(), castCellID);
                 int newCell = PathFinding.getCaseIDFromDirrection(castCellID, c, fight.getMap());
 
@@ -2068,22 +2068,6 @@ public class PathFinding {
                     cases.addAll(drawCircleBorder(i, cellID, map));
                     i += 1;
                 }
-                /*for (int a = 0; a < taille; a++) {
-                    char[] dirs = {'b', 'd', 'f', 'h'};
-                    ArrayList<GameCase> cases2 = new ArrayList<GameCase>();// on �vite les
-                    // modifications
-                    // concurrentes
-                    cases2.addAll(cases);
-                    for (GameCase aCell : cases2) {
-                        for (char d : dirs) {
-                            GameCase cell = map.getCase(PathFinding.GetCaseIDFromDirrection(aCell.getId(), d, map, true));
-                            if (cell == null)
-                                continue;
-                            if (!cases.contains(cell))
-                                cases.add(cell);
-                        }
-                    }
-                }*/
                 break;
             case 'X':// Croix
                 cases.add(map.getCase(cellID));

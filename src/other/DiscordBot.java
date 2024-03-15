@@ -28,22 +28,18 @@ import util.lang.Lang;
 import javax.security.auth.login.LoginException;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
 
-public class AegnorBot extends ListenerAdapter {
-    private String token = "MTE0MTc4Njk2OTg1NzMzOTQ1Mw.G5uD-E.1Vp_idvgaDql6swhKQRg-slgTeJ-0EYM58VG1o";
+public class DiscordBot extends ListenerAdapter {
+    private String token = Config.INSTANCE.getDISCORD_KEY();
     private JDA jda;
-    private String targetChannelId = "1141997189183328386";
+    private String targetChannelId = Config.INSTANCE.getDISCORD_CHANNEL_COMMAND();
 
-
-    public AegnorBot() { }
+    public DiscordBot() { }
 
     public void start() throws LoginException {
-
-
         jda =JDABuilder.createDefault(token)
                 .enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT) // Enable MESSAGE_CONTENT intent
                 .addEventListeners(this)
@@ -67,8 +63,8 @@ public class AegnorBot extends ListenerAdapter {
                         "Aegnor [Retro] - "+nbOfPlayer)
 
         );
-
     }
+
     private static String getFormattedTime() {
         long uptime = System.currentTimeMillis() - Config.INSTANCE.getStartTime();
 
@@ -422,19 +418,21 @@ public class AegnorBot extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        // On ignore les messages des Bots
         if (event.getAuthor().isBot()) {
             return;
         }
 
+        // On recupère le message et l'ID du channel ou il a été posté
         String command = event.getMessage().getContentRaw();
         String channelId = event.getChannel().getId();
 
+        // On verifie que le message est envoyer sur le bon channel
         if (channelId.equals(targetChannelId)) {
-            analyseCommand(event.getMessage().getContentRaw(), event);
+            analyseCommand(command, event);
         }
 
     }
-
 
 
     public void notifyPrivateDiscord(String message) {

@@ -6,12 +6,9 @@ import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
 import fight.spells.Spell;
-import fight.spells.SpellEffect;
 import fight.spells.SpellGrade;
 import game.world.World;
-import kernel.Constant;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Glyph {
@@ -73,9 +70,7 @@ public class Glyph {
 
     public void onTrapped(Fighter target) {
             Spell spell = World.world.getSort(this.spell);
-
-            for(SpellEffect integer : this.trapSpell.getEffects()) //Utile ???
-                System.out.println(integer.getEffectID() +" - "+ integer.getEffectTarget());
+            
 
             String str = this.spell + "," + this.cell.getId() + ", 0, 1, 1," + this.caster.getId();
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 307, target.getId() + "", str);
@@ -98,7 +93,7 @@ public class Glyph {
         StringBuilder str2 = new StringBuilder();
         str.append("GDZ");
         str2.append("GDC");
-        if(!(this.area.substring(1).equals("C"))) {
+        if(!(this.area.substring(0,1).equals("C"))) {
             for (GameCase zonecell : zonecells) {
                 if(zonecell.isWalkable(false)) {
                     str.append("+" + zonecell.getId()).append(";0;").append(this.color).append("|");
@@ -122,7 +117,7 @@ public class Glyph {
         str.append("GDZ");
         str2.append("GDC");
 
-        if(!(this.area.substring(1).equals("C"))) {
+        if(!(this.area.substring(0,1).equals("C"))) {
             for (GameCase zonecell : zonecells) {
                 str.append("-"+zonecell.getId()).append(";0;").append(this.color).append("|");
                 str2.append(zonecell.getId()).append("|");

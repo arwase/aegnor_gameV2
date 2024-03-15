@@ -5,10 +5,9 @@ import client.other.Stats;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
-import entity.mount.Mount;
-import entity.pet.Pet;
 import entity.pet.PetEntry;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import game.world.World;
 import kernel.Constant;
 import object.entity.SoulStone;
@@ -114,6 +113,7 @@ public class ObjectTemplate {
             bonusCC = Integer.parseInt(infos[5]);
             isTwoHanded = infos[6].equals("1");
         } catch (Exception e) {
+            System.out.println(name + " erreur");
             e.printStackTrace();
         }
     }
@@ -295,7 +295,7 @@ public class ObjectTemplate {
                 txtStat.put(Constant.STATS_PETS_EPO, actualStat.get(Constant.STATS_PETS_EPO));
             if (actualStat.containsKey(Constant.STATS_PETS_REPAS))
                 txtStat.put(Constant.STATS_PETS_REPAS, actualStat.get(Constant.STATS_PETS_REPAS));
-            item = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, obj.getStats(), new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), txtStat, 0, 0, -1);
+            item = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, obj.getStats(), new ArrayList<Effect>(), new HashMap<Integer, Integer>(), txtStat, 0, 0, -1);
             World.world.removePetsEntry(obj.getGuid());
             Database.getStatics().getPetData().delete(obj.getGuid());
         }
@@ -333,7 +333,6 @@ public class ObjectTemplate {
         //return object;
     }
 
-
     public GameObject createNewBenediction(int turn) {
         int id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
@@ -362,7 +361,7 @@ public class ObjectTemplate {
         GameObject item = null;
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, turn);
-        item = new GameObject(id, getId(), 1, Constant.ITEM_POS_BONBON, stats, new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), new HashMap<Integer, String>(), 0, 0, -1);
+        item = new GameObject(id, getId(), 1, Constant.ITEM_POS_BONBON, stats, new ArrayList<Effect>(), new HashMap<Integer, Integer>(), new HashMap<Integer, String>(), 0, 0, -1);
         return item;
     }
 
@@ -372,7 +371,7 @@ public class ObjectTemplate {
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, turn);
         stats.addOneStat(148, 0);
-        item = new GameObject(id, getId(), 1, Constant.ITEM_POS_PNJ_SUIVEUR, stats, new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), new HashMap<Integer, String>(), 0, 0, -1);
+        item = new GameObject(id, getId(), 1, Constant.ITEM_POS_PNJ_SUIVEUR, stats, new ArrayList<Effect>(), new HashMap<Integer, Integer>(), new HashMap<Integer, String>(), 0, 0, -1);
         return item;
     }
     private final Integer[] ItemsRarityAllowed = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,20,21,22,23,81,82};
@@ -388,9 +387,9 @@ public class ObjectTemplate {
         if (getType() == Constant.ITEM_TYPE_QUETES && (Constant.isCertificatDopeuls(getId()) || getId() == 6653)) {
             Map<Integer, String> txtStat = new HashMap<Integer, String>();
             txtStat.put(Constant.STATS_DATE, System.currentTimeMillis() + "");
-            item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), txtStat, 0,0, -1);
+            item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<Effect>(), new HashMap<Integer, Integer>(), txtStat, 0,0, -1);
         } else if (this.getId() == 10207) {
-            item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), Dopeul.generateStatsTrousseau(), 0,0, -1);
+            item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<Effect>(), new HashMap<Integer, Integer>(), Dopeul.generateStatsTrousseau(), 0,0, -1);
         } else if (getType() == Constant.ITEM_TYPE_FAMILIER) {
             item = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, (useMax ? generateNewStatsFromTemplate(World.world.getPets(this.getId()).getJet(), false, 0) : new Stats(false, null)), new ArrayList<>(), new HashMap<>(), World.world.getPets(getId()).generateNewtxtStatsForPets(), 0,0, -1);
             //Ajouter du Pets_data SQL et World
@@ -400,6 +399,8 @@ public class ObjectTemplate {
 
         } else if(getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
             item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(getStrTemplate(), useMax, 0), getEffectTemplate(getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
+        } else if(getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS || getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI ) {
+            item = new SoulStone(id, qua, getId(), Constant.ITEM_POS_NO_EQUIPED, getStrTemplate());
         } else {
             if (getType() == Constant.ITEM_TYPE_OBJET_ELEVAGE) {
                 item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), getStringResistance(getStrTemplate()), 0,0,-1);
@@ -473,7 +474,7 @@ public class ObjectTemplate {
                 World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
                 Database.getStatics().getPetData().add(id, time, this.getId());
             } else if(this.getType() == Constant.ITEM_TYPE_CERTIF_MONTURE) {
-                item = new GameObject(id, this.getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(this.getStrTemplate(), useMax,0), getEffectTemplate(this.getStrTemplate()), new HashMap<>(), new HashMap<>(), 0,0,-1);
+                item = new GameObject(id, this.getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(this.getStrTemplate(), useMax,0), getEffectTemplate(this.getStrTemplate()), new HashMap<>() , new HashMap<>(), 0,0,-1);
             } else {
                 if (this.getType() == Constant.ITEM_TYPE_OBJET_ELEVAGE) {
                     item = new GameObject(id, this.getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<>(), new HashMap<>(), getStringResistance(getStrTemplate()), 0,0,-1);
@@ -703,6 +704,7 @@ public class ObjectTemplate {
     }
 
     private Map<Integer, String> getStringResistance(String statsTemplate) {
+
         Map<Integer, String> Stat = new HashMap<Integer, String>();
         String[] splitted = statsTemplate.split(",");
 
@@ -751,7 +753,7 @@ public class ObjectTemplate {
                 e.printStackTrace();
             }
             boolean PositiveStat = true;
-            if(ArrayUtils.contains(Constant.STATS_NEGATIVE,statID)){
+            if(ArrayUtils.contains(EffectConstant.STATS_NEGATIVE,statID)){
                 PositiveStat = false;
             }
 
@@ -915,8 +917,8 @@ public class ObjectTemplate {
         return itemStats;
     }
 
-    private ArrayList<SpellEffect> getEffectTemplate(String statsTemplate) {
-        ArrayList<SpellEffect> Effets = new ArrayList<SpellEffect>();
+    private ArrayList<Effect> getEffectTemplate(String statsTemplate) {
+        ArrayList<Effect> Effets = new ArrayList<Effect>();
         if (statsTemplate.equals(""))
             return Effets;
 
@@ -926,16 +928,17 @@ public class ObjectTemplate {
 
             String[] stats = s.split("#");
             int statID = Integer.parseInt(stats[0], 16);
-            for (int a : Constant.ARMES_EFFECT_IDS) {
-                if (a == statID) {
-                    int id = statID;
-                    String min = stats[1];
-                    String max = stats[2];
-                    String jet = stats[4];
-                    String args = min + ";" + max + ";-1;-1;0;" + jet;
-                    Effets.add(new SpellEffect(id, args, 0, -1));
-                }
+
+            if(ArrayUtils.contains(Constant.ARMES_EFFECT_IDS,statID)){
+                int min = Integer.parseInt(stats[1],16);
+                int max = Integer.parseInt(stats[2],16);
+                String jet = stats[4];
+                int weaponType = this.getType();
+                int weaponId = this.getId();
+                Effets.add(new Effect(statID,weaponId,weaponType,jet,min,max));
             }
+
+            // Mais c'est de la merde ca ! ca sert a quoi si c'est tous la meme chose ?
             switch (statID) {
                 case 110:
                 case 139:
@@ -943,9 +946,11 @@ public class ObjectTemplate {
                 case 614:
                     String min = stats[1];
                     String max = stats[2];
-                    String jet = stats[4];
+                    String jet = "";
+                    if(stats.length >= 5)
+                        jet = stats[4];
                     String args = min + ";" + max + ";-1;-1;0;" + jet;
-                    Effets.add(new SpellEffect(statID, args, 0, -1));
+                    Effets.add(new Effect(statID, args, 0, -1));
                     break;
             }
         }

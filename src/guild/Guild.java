@@ -4,9 +4,9 @@ import area.map.entity.House;
 import client.Player;
 import database.Database;
 import entity.Collector;
+import fight.spells.EffectConstant;
 import fight.spells.SpellGrade;
 import game.world.World;
-import kernel.Constant;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -146,6 +146,11 @@ public class Guild {
         return players;
     }
 
+    public Collection<GuildMember> getMembers() {
+        Collection<GuildMember> players =  this.members.values();
+        return players;
+    }
+
     public GuildMember getMember(int id) {
         GuildMember guildMember = this.members.get(id);
         if(guildMember == null)
@@ -239,7 +244,7 @@ public class Guild {
     }
 
     public String parseQuestionTaxCollector() {
-        return "1" + ';' + getName() + ',' + getStats(Constant.STATS_ADD_PODS) + ',' + getStats(Constant.STATS_ADD_PROS) + ',' + getStats(Constant.STATS_ADD_SAGE) + ',' + getNbCollectors();
+        return "1" + ';' + getName() + ',' + getStats(EffectConstant.STATS_ADD_PODS) + ',' + getStats(EffectConstant.STATS_ADD_PROS) + ',' + getStats(EffectConstant.STATS_ADD_SAGE) + ',' + getNbCollectors();
     }
 
     public String parseMembersToGM() {

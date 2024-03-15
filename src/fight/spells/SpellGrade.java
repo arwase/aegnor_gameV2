@@ -2,19 +2,14 @@ package fight.spells;
 
 import area.map.GameCase;
 import common.Formulas;
-import common.PathFinding;
-import fight.Challenge;
 import fight.Fight;
 import fight.Fighter;
 import game.world.World;
 import kernel.Constant;
-import kernel.Main;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class SpellGrade {
 
@@ -34,8 +29,9 @@ public class SpellGrade {
     private int coolDown;
     private int reqLevel;
     private boolean isEcEndTurn;
-    private ArrayList<SpellEffect> effects = new ArrayList<>();
-    private ArrayList<SpellEffect> CCeffects  = new ArrayList<>();
+    //private ArrayList<Effect> effects = new ArrayList<>();
+    //private ArrayList<Effect> CCeffects  = new ArrayList<>();
+    private ArrayList<Effect> effectsSpell  = new ArrayList<>();
     private ArrayList<Integer> statesForbidden;
     private int stateRequire;
     private int type=0;
@@ -61,13 +57,17 @@ public class SpellGrade {
         this.stateRequire = stateNeed;
     }
 
-    public void addSpellEffect(SpellEffect sp){
+    /*public void addEffect(Effect sp){
         this.effects.add(sp);
+    }*/
+
+    public void addEffectSpell(Effect se) {
+        this.effectsSpell.add(se);
     }
 
-    public void addCCSpellEffect(SpellEffect sp){
+    /*public void addCCEffect(Effect sp){
         this.CCeffects.add(sp);
-    }
+    }*/
 
     public int getSpellID() {
         return spellID;
@@ -153,13 +153,13 @@ public class SpellGrade {
         return isEcEndTurn;
     }
 
-    public ArrayList<SpellEffect> getEffects() {
-        return effects;
+    public ArrayList<Effect> getEffects() {
+        return effectsSpell;
     }
 
-    public ArrayList<SpellEffect> getCCeffects() {
+  /* public ArrayList<Effect> getCCeffects() {
         return CCeffects;
-    }
+    }*/
 
     public int getTypeSwitchSpellEffects() {
         /*String stype = "";
@@ -186,70 +186,72 @@ public class SpellGrade {
     public void setTypeSwitchSpellEffects() {
         int majorType = 0;
         int[] tableau = new int[7];
-        for(SpellEffect effect : this.getEffects()) {
-            // Effet de buff
+        if(this.getSpell().getType() == -1) {
 
-            if(Arrays.stream(Constant.SPELLEFFECT_BUFF).anyMatch(value -> value == effect.getEffectID())){
-                if(effect.getEffectID() == 950 || effect.getEffectID() == 951) {
-                    tableau[1] += 6000;
+            for (Effect effect : this.getEffects()) {
+                // Effet de buff
+
+                if (Arrays.stream(Constant.SPELLEFFECT_BUFF).anyMatch(value -> value == effect.getEffectID())) {
+                    if (effect.getEffectID() == 950 || effect.getEffectID() == 951) {
+                        tableau[1] += 6000;
+                    }
+                    tableau[1] += 10 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_DEBUFF).anyMatch(value -> value == effect.getEffectID())) {
+                    if (effect.getEffectID() == 140) {
+                        tableau[0] += 1000;
+                    }
+                    tableau[0] += 10 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_DAMMAGE).anyMatch(value -> value == effect.getEffectID())) {
+                    if (effect.getEffectID() == 141) {
+                        tableau[0] += 10000;
+                    }
+                    tableau[0] += 10 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_HEAL).anyMatch(value -> value == effect.getEffectID())) {
+                    tableau[3] += 10 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_INVO).anyMatch(value -> value == effect.getEffectID())) {
+                    tableau[2] += 15000 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_MOUVEMENT).anyMatch(value -> value == effect.getEffectID())) {
+                    tableau[5] += 10000 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_TRAP).anyMatch(value -> value == effect.getEffectID())) {
+                    tableau[4] += 5000 + Formulas.getMiddleJet(effect);
+                    continue;
+                } else if (Arrays.stream(Constant.SPELLEFFECT_USELESS).anyMatch(value -> value == effect.getEffectID())) {
+                    tableau[6] += 0;
+                    continue;
+                } else {
+                    System.out.println(effect.getEffectID() + " pas pris en compte dans le calcul car pas typé");
+                    continue;
                 }
-                tableau[1] += 10+Formulas.getMiddleJet(effect);
-                continue;
             }
-            else if(Arrays.stream(Constant.SPELLEFFECT_DEBUFF).anyMatch(value -> value == effect.getEffectID())){
-                tableau[0] += 10+Formulas.getMiddleJet(effect);
-                continue;
-            }
-            else if(Arrays.stream(Constant.SPELLEFFECT_DAMMAGE).anyMatch(value -> value == effect.getEffectID())){
-                if(effect.getEffectID() == 141) {
-                    tableau[0] += 10000;
+
+            int idMaxValue = -1;
+            int maxValue = Integer.MIN_VALUE;
+
+            for (int id = 0; id < 7; id++) {
+                if (tableau[id] > maxValue) {
+                    maxValue = tableau[id];
+                    idMaxValue = id;
                 }
-                tableau[0] += 10 + Formulas.getMiddleJet(effect);
-                continue;
             }
-            else if(Arrays.stream(Constant.SPELLEFFECT_HEAL).anyMatch(value -> value == effect.getEffectID())){
-                tableau[3] += 10+Formulas.getMiddleJet(effect);
-                continue;
-            }
-            else if(Arrays.stream(Constant.SPELLEFFECT_INVO).anyMatch(value -> value == effect.getEffectID())){
-                tableau[2] += 15000+Formulas.getMiddleJet(effect);
-                continue;
-            }
-            else if(Arrays.stream(Constant.SPELLEFFECT_MOUVEMENT).anyMatch(value -> value == effect.getEffectID())){
-                tableau[5] += 10000+Formulas.getMiddleJet(effect);
-                continue;
-            }
-            else if(Arrays.stream(Constant.SPELLEFFECT_TRAP).anyMatch(value -> value == effect.getEffectID())){
-                tableau[4] += 5000+Formulas.getMiddleJet(effect);
-                continue;
-            }
-            else if(Arrays.stream(Constant.SPELLEFFECT_USELESS).anyMatch(value -> value == effect.getEffectID())){
-                tableau[6] += 0;
-                continue;
-            }
-            else{
-                System.out.println(effect.getEffectID() + " pas pris en compte dans le calcul car pas typé");
-                continue;
-            }
+            majorType = idMaxValue;
+
+            this.type = majorType;
         }
-
-        int idMaxValue = -1;
-        int maxValue = Integer.MIN_VALUE;
-
-        for (int id = 0; id < 7; id++) {
-            if (tableau[id] > maxValue) {
-                maxValue = tableau[id];
-                idMaxValue = id;
-            }
+        else{
+            this.type = this.getSpell().getType();
         }
-        majorType =idMaxValue;
-
-        this.type = majorType;
     }
 
-    public void applySpellEffectToFight(Fight fight, Fighter perso,
+    /*public void applySpellEffectToFight(Fight fight, Fighter perso,
                                         GameCase cell, boolean isCC, boolean isTrap) {
-        ArrayList<SpellEffect> effets;
+        ArrayList<Effect> effets;
+
         if (isCC)
             effets = CCeffects;
         else
@@ -272,14 +274,14 @@ public class SpellGrade {
         int curMin = 0;
         int num = 0;
 
+
         for (SpellEffect SE : effets) {
             try {
                 if (fight.getState() >= Constant.FIGHT_STATE_FINISHED)
                     return;
                 if (SE.getChance() != 0 && SE.getChance() != 100)// Si pas 100%
                 {
-                    if (jetChance <= curMin
-                            || jetChance >= (SE.getChance() + curMin)) {
+                    if (jetChance <= curMin || jetChance >= (SE.getChance() + curMin)) {
                         curMin += SE.getChance();
                         num++;
                         continue;
@@ -381,13 +383,31 @@ public class SpellGrade {
                         c.getValue().onFightersAttacked(cibles, perso, SE, this.getSpellID(), isTrap);
                     }
                 }
+
                 SE.applyToFight(fight, perso, cell, cibles);
+                // Si c'est une transpo et qu'il reste des effets on rajoute la nouvelle cellule d'arrivée et on enleve la cellule de départ'
+                if(SE.getEffectID() == 8 ){
+                    cell = cibles.get(0).getCell();
+                }
 
                 num++;
             } catch(Exception e) {
                 e.printStackTrace();
             }
         }
+    }*/
+
+    public void applySpellEffectToFight(Fight fight, Fighter perso,
+                                        GameCase cell, boolean isCC, boolean isTrap) {
+
+        // On rempli avec tous les effets du sortGrade on exclura les CC plus tard
+        List<Effect> effets = new ArrayList<Effect>();
+        effets.addAll(effectsSpell);
+
+        Effect.applyAllEffectFromList(fight,effets,isCC,perso,cell);
+
     }
+
+
 
 }

@@ -8,7 +8,8 @@ import common.PathFinding;
 import common.SocketManager;
 import database.Database;
 import entity.monster.Monster;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import game.action.ExchangeAction;
 import game.action.GameAction;
 import game.world.World;
@@ -756,6 +757,7 @@ public class JobAction {
     }
     public int lastDigit(int number) { return Math.abs(number) % 10; }
 
+    // TODO : Changé le Fm surtout les cas d'echec quand impossible ca fait moche de pas remettre les items en gros juste rajouté (EmKO+6313970|...)
     private synchronized void craftMaging(boolean isReapeat, int repeat) {
         // On commence le fm
         //Definition des variables
@@ -874,8 +876,7 @@ public class JobAction {
                         || ing.getTemplate().getPACost() > 0) && type != Constant.ITEM_TYPE_FAMILIER && type != Constant.ITEM_TYPE_BOUCLIER && ing.getPosition() == -1 && ing.getObvijevanPos() == 0) { // Si c'est un obj avec des stats ou avec des PA d'utilisation
                     objectFm = ing;
 
-                    SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK_FM(this.player.getGameClient(), 'O', "+", objectFm.getGuid()
-                            + "|" + 1); // On envoie un packet de validation au joueur il me semble
+                    //SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK_FM(this.player.getGameClient(), 'O', "+", objectFm.getGuid()  + "|" + 1); // On envoie un packet de validation au joueur il me semble pas besoin cette merde
                     deleteID = idIngredient; // On récupÃ¨re l'id de l'ingrédient pour le supprimer plus tard
                     GameObject newObj = GameObject.getCloneObjet(objectFm, 1); // Crï¿½ation d'un clone avec un nouveau identifiant
                     if (objectFm.getQuantity() > 1) { // S'il y avait plus d'un objet
@@ -984,8 +985,6 @@ public class JobAction {
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
             objectFm = newObj;
             int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
-
-
 
             if(guid == -1) { // Don't exist
                     guid = newObj.setId();
@@ -1407,7 +1406,7 @@ public class JobAction {
 
                 // La c'est les contraintes de métier ETC
                 if (lvlJob < (int) Math.floor(objTemplate.getLevel() / 2)) {
-                    this.player.sendMessage("Ton métier n'est pas suffisant pour améliorer cet objet ! Ressaie quand tu sera niveau " +  (int) Math.floor(objTemplate.getLevel() / 2)+1 );
+                    this.player.sendMessage("Ton métier n'est pas suffisant pour améliorer cet objet ! Ressaie quand tu sera niveau " +  ((int) Math.floor(objTemplate.getLevel() / 2)+1) );
                     canFM = false; // On rate le FM si le mï¿½tier n'est pas suffidant
                 }
                 //System.out.println( statMax + " pour " + statJetFutur + " Jet actuel " + statJetActuel);
@@ -1447,7 +1446,11 @@ public class JobAction {
                     World.world.addGameObject(objectFm, true);
                     this.player.addObjet(objectFm);
 
+
                     int nbRunes = this.ingredients.get(idRune);
+
+                    this.ingredients.clear(); // ON RAFRAICHIT LES INGREDIENTS (enleve)
+
                     if (nbRunes > 0) // On remet la rune
                         this.modifIngredient(this.player, idRune, nbRunes); // Rajout des runes moins une
 
@@ -1498,24 +1501,25 @@ public class JobAction {
                     objectFm.addTxtStat(Constant.STATS_CHANGE_BY, this.player.getName()+"");
                 }
                 if (lvlElementRune > 0 && lvlQuaStatsRune == 0) {
-                    for (SpellEffect effect : objectFm.getEffects()) {
+                    for (Effect effect : objectFm.getEffects()) {
                         if (effect.getEffectID() != 100)
                             continue;
-                        String[] infos = effect.getArgs().split(";");
+
+                        //String[] infos = effect.getArgs().split(";");
+
                         try {
-                            int min = Integer.parseInt(infos[0], 16);
-                            int max = Integer.parseInt(infos[1], 16);
+                            int min = effect.getArgs1();
+                            int max = effect.getArgs2();
                             int newMin = (min * coef) / 100;
                             int newMax = (max * coef) / 100;
                             if (newMin == 0)
                                 newMin = 1;
-                            String newRange = "1d" + (newMax - newMin + 1) + "+"
-                                    + (newMin - 1);
-                            String newArgs = Integer.toHexString(newMin) + ";"
-                                    + Integer.toHexString(newMax) + ";-1;-1;0;"
-                                    + newRange;
+                            String newRange = "1d" + (newMax - newMin + 1) + "+" + (newMin - 1);
+
                             //System.out.println(objectFm.getGuid() );
-                            effect.setArgs(newArgs);
+                            effect.setArgs1(newMin);
+                            effect.setArgs2(newMax);
+                            effect.setJet(newRange);
                             effect.setEffectID(statsID);
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -2165,79 +2169,79 @@ public class JobAction {
     public static double getPwrPerEffet(int effect) {
         double r = 0.0;
         switch (effect) {
-            case Constant.STATS_ADD_PA:
-            case Constant.STATS_ADD_PA2:
-            case Constant.STATS_MULTIPLY_DOMMAGE:
+            case EffectConstant.STATS_ADD_PA:
+            case EffectConstant.STATS_ADD_PA2:
+            case EffectConstant.STATS_MULTIPLY_DOMMAGE:
                 r = 100.0;
                 break;
-            case Constant.STATS_ADD_PM2:
-            case Constant.STATS_ADD_PM:
+            case EffectConstant.STATS_ADD_PM2:
+            case EffectConstant.STATS_ADD_PM:
                 r = 90.0;
                 break;
-            case Constant.STATS_ADD_PO:
+            case EffectConstant.STATS_ADD_PO:
                 r = 51.0;
                 break;
-            case Constant.STATS_ADD_CC:
-            case Constant.STATS_CREATURE:
+            case EffectConstant.STATS_ADD_CC:
+            case EffectConstant.STATS_CREATURE:
                 r = 30.0;
                 break;
-            case Constant.STATS_ADD_FORC:
-            case Constant.STATS_ADD_AGIL:
-            case Constant.STATS_ADD_CHAN:
-            case Constant.STATS_ADD_INTE:
-            case Constant.STATS_ADD_EC:
-            case Constant.STATS_ADD_AFLEE:
-            case Constant.STATS_ADD_MFLEE:
+            case EffectConstant.STATS_ADD_FORC:
+            case EffectConstant.STATS_ADD_AGIL:
+            case EffectConstant.STATS_ADD_CHAN:
+            case EffectConstant.STATS_ADD_INTE:
+            case EffectConstant.STATS_ADD_EC:
+            case EffectConstant.STATS_ADD_AFLEE:
+            case EffectConstant.STATS_ADD_MFLEE:
                 r = 1.0;
                 break;
-            case Constant.STATS_ADD_DOMA:
-            case Constant.STATS_ADD_DOMA2:
-            case Constant.STATS_RETDOM:
-            case Constant.STATS_ADD_SOIN:
+            case EffectConstant.STATS_ADD_DOMA:
+            case EffectConstant.STATS_ADD_DOMA2:
+            case EffectConstant.STATS_RETDOM:
+            case EffectConstant.STATS_ADD_SOIN:
                 r = 20.0;
                 break;
-            case Constant.STATS_TRAPDOM:
+            case EffectConstant.STATS_TRAPDOM:
                 r = 15.0;
                 break;
-            case Constant.STATS_TRAPPER:
-            case Constant.STATS_ADD_PERDOM:
-            case Constant.STATS_ADD_PDOM:
+            case EffectConstant.STATS_TRAPPER:
+            case EffectConstant.STATS_ADD_PERDOM:
+            case EffectConstant.STATS_ADD_PDOM:
                 r = 2.0;
                 break;
-            case Constant.STATS_ADD_VIE:
-            case Constant.STATS_ADD_VITA:
+            case EffectConstant.STATS_ADD_VIE:
+            case EffectConstant.STATS_ADD_VITA:
                 r = 0.25;
                 break;
-            case Constant.STATS_ADD_INIT:
-            case Constant.STATS_ADD_PODS:
+            case EffectConstant.STATS_ADD_INIT:
+            case EffectConstant.STATS_ADD_PODS:
                 r = 0.1;
                 break;
-            case Constant.STATS_ADD_SAGE:
-            case Constant.STATS_ADD_PROS:
+            case EffectConstant.STATS_ADD_SAGE:
+            case EffectConstant.STATS_ADD_PROS:
                 r = 3.0;
                 break;
-            case Constant.STATS_ADD_RP_TER:
-            case Constant.STATS_ADD_RP_FEU:
-            case Constant.STATS_ADD_RP_NEU:
-            case Constant.STATS_ADD_RP_AIR:
-            case Constant.STATS_ADD_RP_EAU:
-            case Constant.STATS_ADD_RP_PVP_TER:
-            case Constant.STATS_ADD_RP_PVP_NEU:
-            case Constant.STATS_ADD_RP_PVP_EAU:
-            case Constant.STATS_ADD_RP_PVP_AIR:
-            case Constant.STATS_ADD_RP_PVP_FEU:
+            case EffectConstant.STATS_ADD_RP_TER:
+            case EffectConstant.STATS_ADD_RP_FEU:
+            case EffectConstant.STATS_ADD_RP_NEU:
+            case EffectConstant.STATS_ADD_RP_AIR:
+            case EffectConstant.STATS_ADD_RP_EAU:
+            case EffectConstant.STATS_ADD_RP_PVP_TER:
+            case EffectConstant.STATS_ADD_RP_PVP_NEU:
+            case EffectConstant.STATS_ADD_RP_PVP_EAU:
+            case EffectConstant.STATS_ADD_RP_PVP_AIR:
+            case EffectConstant.STATS_ADD_RP_PVP_FEU:
                 r = 6.0;
                 break;
-            case Constant.STATS_ADD_R_TER:
-            case Constant.STATS_ADD_R_EAU:
-            case Constant.STATS_ADD_R_AIR:
-            case Constant.STATS_ADD_R_FEU:
-            case Constant.STATS_ADD_R_NEU:
-            case Constant.STATS_ADD_R_PVP_TER:
-            case Constant.STATS_ADD_R_PVP_EAU:
-            case Constant.STATS_ADD_R_PVP_AIR:
-            case Constant.STATS_ADD_R_PVP_FEU:
-            case Constant.STATS_ADD_R_PVP_NEU:
+            case EffectConstant.STATS_ADD_R_TER:
+            case EffectConstant.STATS_ADD_R_EAU:
+            case EffectConstant.STATS_ADD_R_AIR:
+            case EffectConstant.STATS_ADD_R_FEU:
+            case EffectConstant.STATS_ADD_R_NEU:
+            case EffectConstant.STATS_ADD_R_PVP_TER:
+            case EffectConstant.STATS_ADD_R_PVP_EAU:
+            case EffectConstant.STATS_ADD_R_PVP_AIR:
+            case EffectConstant.STATS_ADD_R_PVP_FEU:
+            case EffectConstant.STATS_ADD_R_PVP_NEU:
                 r = 2.0;
                 break;
         }
@@ -2249,136 +2253,136 @@ public class JobAction {
     public static String getEffetName(int effect) {
         String r = "";
         switch (effect) {
-            case Constant.STATS_ADD_PA:
-            case Constant.STATS_ADD_PA2:
+            case EffectConstant.STATS_ADD_PA:
+            case EffectConstant.STATS_ADD_PA2:
                 r = "PA";
                 break;
-            case Constant.STATS_ADD_PM2:
-            case Constant.STATS_ADD_PM:
+            case EffectConstant.STATS_ADD_PM2:
+            case EffectConstant.STATS_ADD_PM:
                 r = "PM";
                 break;
-            case Constant.STATS_ADD_PO:
+            case EffectConstant.STATS_ADD_PO:
                 r = "PO";
                 break;
-            case Constant.STATS_ADD_CC:
+            case EffectConstant.STATS_ADD_CC:
                 r = "CC";
                 break;
-            case Constant.STATS_CREATURE:
+            case EffectConstant.STATS_CREATURE:
                 r = "Créature invocable";
                 break;
-            case Constant.STATS_ADD_FORC:
+            case EffectConstant.STATS_ADD_FORC:
                 r = "Force";
                 break;
-            case Constant.STATS_ADD_AGIL:
+            case EffectConstant.STATS_ADD_AGIL:
                 r = "Agilité";
                 break;
-            case Constant.STATS_ADD_CHAN:
+            case EffectConstant.STATS_ADD_CHAN:
                 r = "Chance";
                 break;
-            case Constant.STATS_ADD_INTE:
+            case EffectConstant.STATS_ADD_INTE:
                 r = "Intelligence";
                 break;
-            case Constant.STATS_ADD_EC:
+            case EffectConstant.STATS_ADD_EC:
                 r = "Echec Critique";
                 break;
-            case Constant.STATS_ADD_AFLEE:
+            case EffectConstant.STATS_ADD_AFLEE:
                 r = "% Esquive PA";
                 break;
-            case Constant.STATS_ADD_MFLEE:
+            case EffectConstant.STATS_ADD_MFLEE:
                 r = "% Esquive PM";
                 break;
-            case Constant.STATS_ADD_DOMA:
-            case Constant.STATS_ADD_DOMA2:
-            case Constant.STATS_RETDOM:
+            case EffectConstant.STATS_ADD_DOMA:
+            case EffectConstant.STATS_ADD_DOMA2:
+            case EffectConstant.STATS_RETDOM:
                 r = "Dommage";
                 break;
-            case Constant.STATS_ADD_SOIN:
+            case EffectConstant.STATS_ADD_SOIN:
                 r = "Soin";
                 break;
-            case Constant.STATS_TRAPDOM:
+            case EffectConstant.STATS_TRAPDOM:
                 r = "Dommage piège";
                 break;
-            case Constant.STATS_TRAPPER:
+            case EffectConstant.STATS_TRAPPER:
                 r = "% Dommage piège";
                 break;
-            case Constant.STATS_ADD_PERDOM:
-            case Constant.STATS_ADD_PDOM:
+            case EffectConstant.STATS_ADD_PERDOM:
+            case EffectConstant.STATS_ADD_PDOM:
                 r = "% Dommage";
                 break;
-            case Constant.STATS_ADD_VIE:
-            case Constant.STATS_ADD_VITA:
+            case EffectConstant.STATS_ADD_VIE:
+            case EffectConstant.STATS_ADD_VITA:
                 r = "Vitalité";
                 break;
-            case Constant.STATS_ADD_INIT:
+            case EffectConstant.STATS_ADD_INIT:
                 r = "Initiative";
                 break;
-            case Constant.STATS_ADD_PODS:
+            case EffectConstant.STATS_ADD_PODS:
                 r = "Pods";
                 break;
-            case Constant.STATS_ADD_SAGE:
+            case EffectConstant.STATS_ADD_SAGE:
                 r = "Sagesse";
                 break;
-            case Constant.STATS_ADD_PROS:
+            case EffectConstant.STATS_ADD_PROS:
                 r = "Prospection";
                 break;
-            case Constant.STATS_ADD_RP_TER:
+            case EffectConstant.STATS_ADD_RP_TER:
                 r = "% Résistance Terre";
                 break;
-            case Constant.STATS_ADD_RP_FEU:
+            case EffectConstant.STATS_ADD_RP_FEU:
                 r = "% Résistance Feu";
                 break;
-            case Constant.STATS_ADD_RP_NEU:
+            case EffectConstant.STATS_ADD_RP_NEU:
                 r = "% Résistance Neutre";
                 break;
-            case Constant.STATS_ADD_RP_AIR:
+            case EffectConstant.STATS_ADD_RP_AIR:
                 r = "% Résistance Air";
                 break;
-            case Constant.STATS_ADD_RP_EAU:
+            case EffectConstant.STATS_ADD_RP_EAU:
                 r = "% Résistance Eau";
                 break;
-            case Constant.STATS_ADD_RP_PVP_TER:
+            case EffectConstant.STATS_ADD_RP_PVP_TER:
                 r = "% Résistance Terre contre combattants";
                 break;
-            case Constant.STATS_ADD_RP_PVP_NEU:
+            case EffectConstant.STATS_ADD_RP_PVP_NEU:
                 r = "% Résistance Neutre contre combattants";
                 break;
-            case Constant.STATS_ADD_RP_PVP_EAU:
+            case EffectConstant.STATS_ADD_RP_PVP_EAU:
                 r = "% Résistance Eau contre combattants";
                 break;
-            case Constant.STATS_ADD_RP_PVP_AIR:
+            case EffectConstant.STATS_ADD_RP_PVP_AIR:
                 r = "% Résistance Air contre combattants";
                 break;
-            case Constant.STATS_ADD_RP_PVP_FEU:
+            case EffectConstant.STATS_ADD_RP_PVP_FEU:
                 r = "% Résistance Feu contre combattants";
                 break;
-            case Constant.STATS_ADD_R_TER:
+            case EffectConstant.STATS_ADD_R_TER:
                 r = "Résistance fixe Terre";
                 break;
-            case Constant.STATS_ADD_R_EAU:
+            case EffectConstant.STATS_ADD_R_EAU:
                 r = "Résistance fixe Eau";
                 break;
-            case Constant.STATS_ADD_R_AIR:
+            case EffectConstant.STATS_ADD_R_AIR:
                 r = "Résistance fixe Air";
                 break;
-            case Constant.STATS_ADD_R_FEU:
+            case EffectConstant.STATS_ADD_R_FEU:
                 r = "Résistance fixe Feu";
                 break;
-            case Constant.STATS_ADD_R_NEU:
+            case EffectConstant.STATS_ADD_R_NEU:
                 r = "Résistance fixe Neutre";
                 break;
-            case Constant.STATS_ADD_R_PVP_TER:
+            case EffectConstant.STATS_ADD_R_PVP_TER:
                 r = "Résistance fixe Terre contre combattants";
                 break;
-            case Constant.STATS_ADD_R_PVP_EAU:
+            case EffectConstant.STATS_ADD_R_PVP_EAU:
                 r = "Résistance fixe Eau contre combattants";
                 break;
-            case Constant.STATS_ADD_R_PVP_AIR:
+            case EffectConstant.STATS_ADD_R_PVP_AIR:
                 r = "Résistance fixe Air contre combattants";
                 break;
-            case Constant.STATS_ADD_R_PVP_FEU:
+            case EffectConstant.STATS_ADD_R_PVP_FEU:
                 r = "Résistance fixe Feu contre combattants";
                 break;
-            case Constant.STATS_ADD_R_PVP_NEU:
+            case EffectConstant.STATS_ADD_R_PVP_NEU:
                 r = "Résistance fixe Neutre contre combattants";
                 break;
         }
@@ -2388,46 +2392,46 @@ public class JobAction {
 
 
     // Nul a chier cette fonction, on va utiliser le poid max d'une ligne
-    public static double getOverPerEffet(int effect) {
+   /* public static double getOverPerEffet(int effect) {
         double r = 0.0;
         switch (effect) {
-            case Constant.STATS_ADD_PA:
-            case Constant.STATS_ADD_EC:
-            case Constant.STATS_ADD_PM:
-            case Constant.STATS_ADD_AFLEE:
-            case Constant.STATS_ADD_MFLEE:
-            case Constant.STATS_ADD_PA2:
-            case Constant.STATS_ADD_PO:
-            case Constant.STATS_MULTIPLY_DOMMAGE:
+            case EffectConstant.STATS_ADD_PA:
+            case EffectConstant.STATS_ADD_EC:
+            case EffectConstant.STATS_ADD_PM:
+            case EffectConstant.STATS_ADD_AFLEE:
+            case EffectConstant.STATS_ADD_MFLEE:
+            case EffectConstant.STATS_ADD_PA2:
+            case EffectConstant.STATS_ADD_PO:
+            case EffectConstant.STATS_MULTIPLY_DOMMAGE:
                 r = 0.0;
                 break;
-            case Constant.STATS_ADD_PM2:
-            case Constant.STATS_ADD_VITA:
-            case Constant.STATS_ADD_PODS:
-            case Constant.STATS_ADD_VIE:
+            case EffectConstant.STATS_ADD_PM2:
+            case EffectConstant.STATS_ADD_VITA:
+            case EffectConstant.STATS_ADD_PODS:
+            case EffectConstant.STATS_ADD_VIE:
                 r = 404.0;
                 break;
-            case Constant.STATS_ADD_CC:
-            case Constant.STATS_CREATURE:
+            case EffectConstant.STATS_ADD_CC:
+            case EffectConstant.STATS_CREATURE:
                 r = 3.0;
                 break;
-            case Constant.STATS_ADD_FORC:
-            case Constant.STATS_ADD_CHAN:
-            case Constant.STATS_ADD_INTE:
-            case Constant.STATS_ADD_AGIL:
+            case EffectConstant.STATS_ADD_FORC:
+            case EffectConstant.STATS_ADD_CHAN:
+            case EffectConstant.STATS_ADD_INTE:
+            case EffectConstant.STATS_ADD_AGIL:
                 r = 101.0;
                 break;
-            case Constant.STATS_ADD_DOMA:
-            case Constant.STATS_ADD_DOMA2:
-            case Constant.STATS_ADD_SOIN:
-            case Constant.STATS_RETDOM:
+            case EffectConstant.STATS_ADD_DOMA:
+            case EffectConstant.STATS_ADD_DOMA2:
+            case EffectConstant.STATS_ADD_SOIN:
+            case EffectConstant.STATS_RETDOM:
                 r = 5.0;
                 break;
-            case Constant.STATS_ADD_SAGE:
-            case Constant.STATS_ADD_PROS:
+            case EffectConstant.STATS_ADD_SAGE:
+            case EffectConstant.STATS_ADD_PROS:
                 r = 33.0;
                 break;
-            case Constant.STATS_ADD_PERDOM:
+            case EffectConstant.STATS_ADD_PERDOM:
             case Constant.STATS_ADD_PDOM:
             case Constant.STATS_TRAPPER:
             case Constant.STATS_ADD_R_FEU:
@@ -2442,7 +2446,7 @@ public class JobAction {
             case Constant.STATS_ADD_R_PVP_TER:
                 r = 50.0;
                 break;
-            case Constant.STATS_ADD_INIT:
+            case EffectConstant.STATS_ADD_INIT:
                 r = 1010.0;
                 break;
             case Constant.STATS_ADD_RP_TER:
@@ -2464,7 +2468,7 @@ public class JobAction {
         //System.out.println("LE poid trouvé "+r);
         return r;
     }
-
+    */
     public static int getBaseMaxJet(int templateID, String statsModif) {
         ObjectTemplate t = World.world.getObjTemplate(templateID);
         String[] splitted = t.getStrTemplate().split(",");

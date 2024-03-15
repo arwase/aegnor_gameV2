@@ -77,6 +77,19 @@ object ConfigReader {
         val halloween by booleanType
         val christmas by booleanType
         val heroic by booleanType
+        val discordBot by booleanType
+        val discordWebhooks by booleanType
+    }
+
+    object discord : PropertyGroup() {
+        val key by stringType
+        object channelId : PropertyGroup() {
+            val log by stringType
+            val command by stringType
+            val faille by stringType
+            val event by stringType
+            val info by stringType
+        }
     }
 
     object options : PropertyGroup() {

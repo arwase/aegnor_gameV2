@@ -72,22 +72,36 @@ public class PetEntry {
     public String parseLastEatDate() {
         String hexDate = "#";
         DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String date = formatter.format(this.lastEatDate);
+        try {
+            String date = formatter.format(this.lastEatDate);
+            String[] split = date.split("\\s");
+            String[] split0 = split[0].split("-");
+            hexDate += Integer.toHexString(Integer.parseInt(split0[0])) + "#";
+            int mois = Integer.parseInt(split0[1]) - 1;
+            int jour = Integer.parseInt(split0[2]);
+            hexDate += Integer.toHexString(Integer.parseInt((mois < 10 ? "0" + mois : mois)
+                    + "" + (jour < 10 ? "0" + jour : jour)))
+                    + "#";
 
-        String[] split = date.split("\\s");
+            String[] split1 = split[1].split(":");
+            String heure = split1[0] + split1[1];
+            hexDate += Integer.toHexString(Integer.parseInt(heure));
+        }
+        catch(Exception e){
+            String date = formatter.format(System.currentTimeMillis());
+            String[] split = date.split("\\s");
+            String[] split0 = split[0].split("-");
+            hexDate += Integer.toHexString(Integer.parseInt(split0[0])) + "#";
+            int mois = Integer.parseInt(split0[1]) - 1;
+            int jour = Integer.parseInt(split0[2]);
+            hexDate += Integer.toHexString(Integer.parseInt((mois < 10 ? "0" + mois : mois)
+                    + "" + (jour < 10 ? "0" + jour : jour)))
+                    + "#";
 
-        String[] split0 = split[0].split("-");
-        hexDate += Integer.toHexString(Integer.parseInt(split0[0])) + "#";
-        int mois = Integer.parseInt(split0[1]) - 1;
-        int jour = Integer.parseInt(split0[2]);
-        hexDate += Integer.toHexString(Integer.parseInt((mois < 10 ? "0" + mois : mois)
-                + "" + (jour < 10 ? "0" + jour : jour)))
-                + "#";
-
-        String[] split1 = split[1].split(":");
-        String heure = split1[0] + split1[1];
-        hexDate += Integer.toHexString(Integer.parseInt(heure));
-
+            String[] split1 = split[1].split(":");
+            String heure = split1[0] + split1[1];
+            hexDate += Integer.toHexString(Integer.parseInt(heure));
+        }
         return hexDate;
     }
 

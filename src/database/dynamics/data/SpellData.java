@@ -3,9 +3,7 @@ package database.dynamics.data;
 import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.AbstractDAO;
 import entity.monster.Monster;
-import fight.spells.Spell;
-import fight.spells.SpellEffect;
-import fight.spells.SpellGrade;
+import fight.spells.*;
 import game.world.World;
 import kernel.Main;
 
@@ -64,11 +62,19 @@ public class SpellData extends AbstractDAO<Spell> {
                     ResultSet RS3 = result3.resultSet;
                     while (RS3.next()) {
                         boolean isCCeffect = RS3.getBoolean("isCCeffect");
-                        SpellEffect se = new SpellEffect(RS3.getInt("effectID"),RS3.getInt("min"),RS3.getInt("max"),RS3.getInt("args"),RS3.getInt("turn"),RS3.getInt("chance"),RS3.getString("jet"),RS3.getString("area"),RS3.getString("onHit"),RS3.getInt("effectTarget"),RS3.getInt("spellID"));
+                        //SpellEffect se = new SpellEffect(RS3.getInt("effectID"),RS3.getInt("min"),RS3.getInt("max"),RS3.getInt("args"),RS3.getInt("turn"),RS3.getInt("chance"),RS3.getString("jet"),RS3.getString("area"),RS3.getString("onHit"),RS3.getInt("effectTarget"),RS3.getInt("spellID"));
+                        Effect se2 = null;
                         if(isCCeffect)
+                            se2 = new Effect(RS3.getInt("effectID"),spellid,gradeid,RS3.getInt("min"),RS3.getInt("max"),RS3.getInt("args"),RS3.getString("area"),RS3.getInt("chance"),RS3.getInt("turn"),true,RS3.getString("jet"),RS3.getInt("effectTarget"),RS3.getString("onHit"));
+                        else
+                            se2 = new Effect(RS3.getInt("effectID"),spellid,gradeid,RS3.getInt("min"),RS3.getInt("max"),RS3.getInt("args"),RS3.getString("area"),RS3.getInt("chance"),RS3.getInt("turn"),false,RS3.getString("jet"),RS3.getInt("effectTarget"),RS3.getString("onHit"));
+
+                        /*if(isCCeffect)
                             spellgrade.addCCSpellEffect(se);
                         else
-                            spellgrade.addSpellEffect(se);
+                            spellgrade.addSpellEffect(se);*/
+
+                        spellgrade.addEffectSpell(se2);
                     }
                     close(result3);
                     spellgrade.setTypeSwitchSpellEffects();

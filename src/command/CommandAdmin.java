@@ -23,6 +23,8 @@ import entity.pet.PetEntry;
 import exchange.ExchangeClient;
 import fight.Challenge;
 import fight.Fight;
+import fight.spells.Spell;
+import fight.spells.SpellGrade;
 import game.GameClient;
 import game.GameServer;
 import game.action.ExchangeAction;
@@ -41,11 +43,8 @@ import quest.QuestPlayer;
 import quest.QuestStep;
 import util.lang.Lang;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class CommandAdmin extends AdminUser {
 
@@ -62,7 +61,9 @@ public class CommandAdmin extends AdminUser {
 
         try {
             Group groupe = this.getPlayer().getGroupe();
+
             if (groupe == null) {
+                World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"Tentative de lancement de commande admin en jeu '"+ msg+"' .",this.getPlayer() );
                 this.getClient().kick();
                 return;
             }
@@ -70,7 +71,7 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Commande invalide !");
                 return;
             }
-
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_LOG(),"Lancement de commande admin en jeu '"+ msg+"' .",this.getPlayer() );
             this.command(command, infos, msg);
         } catch (Exception e) {
             System.out.println("Erreur " +msg + " " + e.getMessage() );
@@ -1144,7 +1145,45 @@ public class CommandAdmin extends AdminUser {
                 map.delAllDropItem();
             this.sendMessage("Tous les objets sur toutes les maps ont été supprimés.");
             return;
-        } else if (command.equalsIgnoreCase("ERASEMAP")) {
+        }
+        else if (command.equalsIgnoreCase("SETSPELLTYPE")) {
+            int spellid = -1;
+            int typetoSet = -1;
+            if (infos.length >= 2)//Si un nom de perso est specifie
+            {
+                try {
+                    spellid = Short.parseShort(infos[1]);
+                } catch (Exception e) {
+                    String str = "Pas de spellID renseigné.";
+                    this.sendMessage(str);
+                    return;
+                }
+
+                try {
+                   typetoSet = Short.parseShort(infos[2]);
+                }
+                catch (Exception e) {
+                    String str = "Pas de type valide renseigné.";
+                    this.sendMessage(str);
+                    return;
+                }
+
+
+                this.sendMessage("Le sort ID :"+spellid+" a été passé en type :" + typetoSet);
+            }
+            else{
+                String str = "Pas de spellID ou type renseigné.";
+                this.sendMessage(str);
+                return;
+            }
+            Spell target = World.world.getSort(spellid);
+            target.setType(typetoSet);
+            for(SpellGrade sg : target.getSortsStats().values()){
+               sg.setTypeSwitchSpellEffects();
+            }
+            return;
+        }
+        else if (command.equalsIgnoreCase("ERASEMAP")) {
             this.getPlayer().getCurMap().delAllDropItem();
             this.sendMessage("Les objets de la map ont été supprimés.");
             return;
@@ -1697,12 +1736,43 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             if (Database.getStatics().getBanIpData().delete(perso.getAccount().getCurrentIp())) {
+                String ip = perso.getAccount().getCurrentIp();
+                for (Account a : World.world.getAccounts() ){
+                    if(a.getLastIP().equals(ip)){
+                        a.setBanned(false);
+                        Database.getStatics().getAccountData().update(a);
+                        this.sendMessage("Le compte '"+a.getName()+"' a été débanni.");
+                    }
+                }
+
                 perso.getAccount().setBanned(false);
-                this.sendMessage("L'IP a ete debanni.");
+                this.sendMessage("L'IP '"+ip+"' a ete debanni.");
                 return;
             }
             return;
-        } else if (command.equalsIgnoreCase("UNBAN")) {
+        }
+        else if (command.equalsIgnoreCase("UNBANIPBYIP")) {
+            String ip = null;
+            try {
+                ip = infos[1];
+            } catch (Exception e) {
+                // ok
+            }
+
+            if (Database.getStatics().getBanIpData().delete(ip)) {
+                for (Account a : World.world.getAccounts() ){
+                    if(a.getLastIP().equals(ip)){
+                        a.setBanned(false);
+                        this.sendMessage("Le compte '"+a.getName()+"' a été débanni.");
+                    }
+                }
+
+                this.sendMessage("L'IP '"+ip+"' a ete debanni.");
+                return;
+            }
+            return;
+        }
+        else if (command.equalsIgnoreCase("UNBAN")) {
             Player P = World.world.getPlayerByName(infos[1]);
             if (P == null) {
                 this.sendMessage("Personnage non trouve.");
@@ -2226,6 +2296,7 @@ public class CommandAdmin extends AdminUser {
                 // ok
             }
 
+            World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO()," Un reboot a été programmé dans "+time+ " minutes.",this.getPlayer() );
             if (OffOn == 1 && this.isTimerStart())// demande de demarer le reboot
             {
                 this.sendMessage("Un reboot est déjà programmé.");

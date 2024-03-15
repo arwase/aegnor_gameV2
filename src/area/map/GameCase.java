@@ -141,9 +141,16 @@ public class GameCase {
     }
 
     public void removePlayer(Player player) {
-        if (this.players != null) {
-            if(this.players.contains(player))
-                this.players.remove(player);
+        if (this.players != null && player != null) {
+            if(this.players.contains(player)){
+                try {
+                    this.players.remove(player);
+                }
+                catch (Exception e){
+                    System.out.println( "Error lors du retrait du champion " + e);
+                }
+            }
+
             if (this.players.isEmpty()) this.players = null;
         }
     }
@@ -192,6 +199,17 @@ public class GameCase {
     public Fighter getFirstFighter() {
         if(this.fighters != null) for(Fighter fighter : this.fighters) return fighter; // return this.fighters.get(0);o
         return null;
+    }
+
+    public static ArrayList<Fighter> getTargets(ArrayList<GameCase> cells) {
+        ArrayList<Fighter> cibles = new ArrayList<Fighter>();
+        for (GameCase aCell : cells) {
+            if (aCell == null) continue;
+            Fighter f = aCell.getFirstFighter();
+            if (f == null) continue;
+            cibles.add(f);
+        }
+        return cibles;
     }
 
     public Fighter isEmpty() {
@@ -1097,7 +1115,10 @@ public class GameCase {
                     Database.getDynamics().getTrunkData().update(player, player.getInHouse());
                 }
 
-                trunk.enter(player);
+                trunk = Trunk.getTrunkIdByCoord(player.getCurMap().getId(), CcellID);
+
+                if(trunk != null)
+                    trunk.enter(player);
                 break;
             case 105://V�rouiller coffre
                 Trunk t = Trunk.getTrunkIdByCoord(player.getCurMap().getId(), CcellID);

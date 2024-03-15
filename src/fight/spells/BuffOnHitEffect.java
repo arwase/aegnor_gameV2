@@ -3,47 +3,36 @@ package fight.spells;
 import fight.Fight;
 import fight.Fighter;
 
-import java.util.ArrayList;
-
-public class BuffOnHitEffect extends SpellEffect{
+public class BuffOnHitEffect extends Effect{
 
     public static final int TYPE_DIRECT = 0;
     public static final int TYPE_ON_HIT = 1;
 
 
     private int buffType;
-    private ArrayList<Integer> onHitConditions; // Nouvel attribut
-    private SpellEffect onHitEffectBuff; // Nouvel attribut
-    private int duration; // Nouveau paramètre
+    private int[] onHitConditions; // Nouvel attribut
+    private Effect onHitEffectBuff; // Nouvel attribut
     private boolean debuffable = true;
+    private int impactedTarget = 0;
 
-    public BuffOnHitEffect(int id, int value2, int turns2, Fighter aCaster, int aspell, int customDuration, int buffType, String onHitConditions,SpellEffect OnHitEffectBuff, boolean debuff) {
-        super(id, value2, turns2, aCaster, aspell);
 
-        this.debuffable = debuff;
-        this.duration = customDuration;
-        this.buffType = buffType;
-        this.onHitConditions = new ArrayList<>();
-        for(String sEffect : onHitConditions.split(",") ){
-            this.onHitConditions.add(Integer.parseInt(sEffect));
-        }
-        this.onHitEffectBuff = OnHitEffectBuff;
+    public BuffOnHitEffect(int id, int duration, int args1, int args2, int args3, int chance, Fighter caster, int spellID, Effect buffToAddOnHit, int onHitConditions, int impactedTarget) {
+        super(id, duration, args1, args2,args3, chance,caster,spellID);
+        this.buffType = TYPE_ON_HIT;
+        this.onHitConditions = EffectConstant.ALL_TRIGGERS.get(onHitConditions);
 
+        // Ca c'est le sort de boost a déclancher si la condition est remplie
+        this.onHitEffectBuff = buffToAddOnHit;
+        this.impactedTarget = impactedTarget;
     }
 
-    public BuffOnHitEffect(int id, int value2, int turns2, Fighter aCaster, int aspell, int customDuration, boolean debuff) {
-        super(id, value2, turns2, aCaster, aspell);
-        this.debuffable = debuff;
-        this.duration = customDuration;
-        this.buffType = TYPE_DIRECT;
-    }
 
-    public SpellEffect getSpellEffectToApply(){
+    public Effect getSpellEffectToApply(){
         return this.onHitEffectBuff;
     }
 
     // Ajoutez des méthodes spécifiques aux effets de buff si nécessaire
-    public ArrayList<Integer> getBuffOnHitConditions(){
+    public int[] getBuffOnHitConditions(){
         return this.onHitConditions;
     }
 
@@ -51,11 +40,15 @@ public class BuffOnHitEffect extends SpellEffect{
         return buffType;
     }
 
+    public int getImpactedTarget() {
+        return impactedTarget;
+    }
+
     public void setBuffType(int buffType) {
         this.buffType = buffType;
     }
 
-    public int getDuration() {
+    /*public int getDuration() {
         return duration;
     }
 
@@ -66,7 +59,7 @@ public class BuffOnHitEffect extends SpellEffect{
     public int decrementDuration() {
         duration -= 1;
         return duration;
-    }
+    }*/
 
 
     public void applyOnHitBuffsEffect(Fighter target, Fighter caster, Fight fight, int elementId) {

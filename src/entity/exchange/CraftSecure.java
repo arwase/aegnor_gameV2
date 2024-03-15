@@ -64,7 +64,6 @@ public class CraftSecure extends PlayerExchange {
         this.player1.addKamas(payKamas + (success ? payIfSuccessKamas : 0));
         this.player2.addKamas(-payKamas - (success ? payIfSuccessKamas : 0));
 
-
         if (success) this.giveObjects(this.payItems, this.payItemsIfSuccess);
         else this.giveObjects(this.payItems);
 

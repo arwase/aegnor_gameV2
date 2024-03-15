@@ -11,6 +11,8 @@ object Config {
     var HALLOWEEN = ConfigReader.data[ConfigReader.mode.halloween]
     var NOEL = ConfigReader.data[ConfigReader.mode.christmas]
     var HEROIC = ConfigReader.data[ConfigReader.mode.heroic]
+    var DISCORD_BOT = ConfigReader.data[ConfigReader.mode.discordBot]
+    var DISCORD_WH = ConfigReader.data[ConfigReader.mode.discordWebhooks]
     var TEAM_MATCH = ConfigReader.data[ConfigReader.options.teamMatch]
     var DEATH_MATCH = ConfigReader.data[ConfigReader.options.deathMatch]
     var AUTO_EVENT = ConfigReader.data[ConfigReader.options.event.active]
@@ -38,6 +40,14 @@ object Config {
     var RATE_XP = ConfigReader.data[ConfigReader.rate.xp]
     var RATE_FM = ConfigReader.data[ConfigReader.rate.fm]
     var PERCENT_EXO = ConfigReader.data[ConfigReader.rate.percent_exo]
+
+    var DISCORD_KEY = ConfigReader.data[ConfigReader.discord.key]
+    var DISCORD_CHANNEL_COMMAND = ConfigReader.data[ConfigReader.discord.channelId.command]
+
+    var DISCORD_CHANNEL_EVENT = ConfigReader.data[ConfigReader.discord.channelId.event]
+    var DISCORD_CHANNEL_LOG = ConfigReader.data[ConfigReader.discord.channelId.log]
+    var DISCORD_CHANNEL_INFO = ConfigReader.data[ConfigReader.discord.channelId.info]
+    var DISCORD_CHANNEL_FAILLE = ConfigReader.data[ConfigReader.discord.channelId.faille]
 
     var PRIX_CHANGEMENT_CLASSE = ConfigReader.data[ConfigReader.prix.prix_changement_classe]
     var PRIX_CHANGEMENT_COULEUR = ConfigReader.data[ConfigReader.prix.prix_changement_couleur]

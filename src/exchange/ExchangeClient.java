@@ -73,7 +73,7 @@ public class ExchangeClient {
 
     public void stop() {
         if(ioSession != null)
-            ioSession.close(true);
+            ioSession.closeNow();
         if (connectFuture != null)
             connectFuture.cancel();
         connectFuture = null;

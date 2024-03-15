@@ -5,7 +5,7 @@ import common.PathFinding;
 import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
 import fight.spells.SpellGrade;
 import kernel.Constant;
 
@@ -19,24 +19,24 @@ public class Trap {
     private final int spell;
     private final SpellGrade trapSpell;
     private final Fight fight;
-    private final byte color;
+    private final int color;
     private boolean isUnHide = false;
     private byte teamUnHide = -1;
     private boolean isPushing = false;
     private final  byte level;
     private final short animationSpell;
 
-    public Trap(Fight fight, Fighter caster, GameCase cell, byte size, SpellGrade trapSpell, int spell, byte level) {
+    public Trap(Fight fight, Fighter caster, GameCase cell, byte size, SpellGrade trapSpell, int spell, byte level, int color) {
         this.fight = fight;
         this.caster = caster;
         this.cell = cell;
         this.spell = spell;
         this.size = size;
         this.trapSpell = trapSpell;
-        this.color = (byte) Constant.getTrapsColor(spell);
+        this.color = color;
         this.level = level;
         this.animationSpell = Constant.getTrapsAnimation(spell);
-        for(final SpellEffect se : trapSpell.getEffects())
+        for(final Effect se : trapSpell.getEffects())
             if(se.getEffectID() == 5)
             {
                 this.isPushing = true;
@@ -69,7 +69,7 @@ public class Trap {
         this.teamUnHide = (byte) f.getTeam();
     }
 
-    public byte getColor() {
+    public int getColor() {
         return this.color;
     }
 

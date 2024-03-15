@@ -2,6 +2,7 @@ package client.other;
 
 import client.Player;
 import entity.monster.Monster;
+import fight.spells.EffectConstant;
 import guild.Guild;
 import kernel.Constant;
 
@@ -20,12 +21,12 @@ public class Stats {
 
     public Stats(boolean addBases, Player player) {
         if (addBases) {
-            this.effects.put(Constant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
-            this.effects.put(Constant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
-            this.effects.put(Constant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
-            this.effects.put(Constant.STATS_ADD_PODS, 5000);
-            this.effects.put(Constant.STATS_CREATURE, 1);
-            this.effects.put(Constant.STATS_ADD_INIT, 1);
+            this.effects.put(EffectConstant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
+            this.effects.put(EffectConstant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
+            this.effects.put(EffectConstant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
+            this.effects.put(EffectConstant.STATS_ADD_PODS, 5000);
+            this.effects.put(EffectConstant.STATS_CREATURE, 1);
+            this.effects.put(EffectConstant.STATS_ADD_INIT, 1);
         }
     }
 
@@ -34,31 +35,31 @@ public class Stats {
 
         this.effects = stats;
         if (addBases) {
-            this.effects.put(Constant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
-            this.effects.put(Constant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
-            this.effects.put(Constant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
-            this.effects.put(Constant.STATS_ADD_PODS, 5000);
-            this.effects.put(Constant.STATS_CREATURE, 1);
-            this.effects.put(Constant.STATS_ADD_INIT, 1);
+            this.effects.put(EffectConstant.STATS_ADD_PA, player.getLevel() < 100 ? 6 : 7);
+            this.effects.put(EffectConstant.STATS_ADD_PM, player.getLevel() == 200 ? 4 : 3);
+            this.effects.put(EffectConstant.STATS_ADD_PROS, player.getClasse() == Constant.CLASS_ENUTROF ? 120 : 100);
+            this.effects.put(EffectConstant.STATS_ADD_PODS, 5000);
+            this.effects.put(EffectConstant.STATS_CREATURE, 1);
+            this.effects.put(EffectConstant.STATS_ADD_INIT, 1);
         }
     }
 
     public Stats(Monster.MobGrade monster)
     {
-        this.effects.put(Constant.STATS_ADD_PA, monster.getPa());
-        this.effects.put(Constant.STATS_ADD_PM, monster.getPm());
-        this.effects.put(Constant.STATS_ADD_VITA, monster.getPdv());
-        this.effects.put(Constant.STATS_ADD_INIT, monster.getInit());
+        this.effects.put(EffectConstant.STATS_ADD_PA, monster.getPa());
+        this.effects.put(EffectConstant.STATS_ADD_PM, monster.getPm());
+        this.effects.put(EffectConstant.STATS_ADD_VITA, monster.getPdv());
+        this.effects.put(EffectConstant.STATS_ADD_INIT, monster.getInit());
         this.effects.putAll(monster.getStats().getEffects());
     }
 
     public Stats(boolean a) { // Parchotage
-        this.effects.put(Constant.STATS_ADD_VITA, 0);
-        this.effects.put(Constant.STATS_ADD_SAGE, 0);
-        this.effects.put(Constant.STATS_ADD_INTE, 0);
-        this.effects.put(Constant.STATS_ADD_FORC, 0);
-        this.effects.put(Constant.STATS_ADD_CHAN, 0);
-        this.effects.put(Constant.STATS_ADD_AGIL, 0);
+        this.effects.put(EffectConstant.STATS_ADD_VITA, 0);
+        this.effects.put(EffectConstant.STATS_ADD_SAGE, 0);
+        this.effects.put(EffectConstant.STATS_ADD_INTE, 0);
+        this.effects.put(EffectConstant.STATS_ADD_FORC, 0);
+        this.effects.put(EffectConstant.STATS_ADD_CHAN, 0);
+        this.effects.put(EffectConstant.STATS_ADD_AGIL, 0);
     }
     public Stats() {
         this.effects = new HashMap<Integer, Integer>();
@@ -66,19 +67,19 @@ public class Stats {
 
     public Stats(Guild guild) { // Stats collector in fight
         if(guild != null) {
-            this.effects.put(Constant.STATS_ADD_SAGE, guild.getStats(Constant.STATS_ADD_SAGE));
-            this.effects.put(Constant.STATS_ADD_FORC, guild.getLvl());
-            this.effects.put(Constant.STATS_ADD_INTE, guild.getLvl());
-            this.effects.put(Constant.STATS_ADD_CHAN, guild.getLvl());
-            this.effects.put(Constant.STATS_ADD_AGIL, guild.getLvl());
+            this.effects.put(EffectConstant.STATS_ADD_SAGE, guild.getStats(EffectConstant.STATS_ADD_SAGE));
+            this.effects.put(EffectConstant.STATS_ADD_FORC, guild.getLvl());
+            this.effects.put(EffectConstant.STATS_ADD_INTE, guild.getLvl());
+            this.effects.put(EffectConstant.STATS_ADD_CHAN, guild.getLvl());
+            this.effects.put(EffectConstant.STATS_ADD_AGIL, guild.getLvl());
             int floor = (int) Math.floor(guild.getLvl() / 2);
-            this.effects.put(Constant.STATS_ADD_RP_NEU, floor);
-            this.effects.put(Constant.STATS_ADD_RP_FEU, floor);
-            this.effects.put(Constant.STATS_ADD_RP_EAU, floor);
-            this.effects.put(Constant.STATS_ADD_RP_AIR, floor);
-            this.effects.put(Constant.STATS_ADD_RP_TER, floor);
-            this.effects.put(Constant.STATS_ADD_AFLEE, floor);
-            this.effects.put(Constant.STATS_ADD_MFLEE, floor);
+            this.effects.put(EffectConstant.STATS_ADD_RP_NEU, floor);
+            this.effects.put(EffectConstant.STATS_ADD_RP_FEU, floor);
+            this.effects.put(EffectConstant.STATS_ADD_RP_EAU, floor);
+            this.effects.put(EffectConstant.STATS_ADD_RP_AIR, floor);
+            this.effects.put(EffectConstant.STATS_ADD_RP_TER, floor);
+            this.effects.put(EffectConstant.STATS_ADD_AFLEE, floor);
+            this.effects.put(EffectConstant.STATS_ADD_MFLEE, floor);
         }
     }
 
@@ -91,7 +92,7 @@ public class Stats {
     }
 
     public int addOneStat(int id, int val) {
-        if (id == 121) id = Constant.STATS_ADD_DOMA;
+        if (id == 121) id = EffectConstant.STATS_ADD_DOMA;
             if (this.effects.get(id) == null || this.effects.get(id) == 0) {
                 this.effects.put(id, val);
             } else {
@@ -158,128 +159,128 @@ public class Stats {
             val = this.effects.get(id);
 
         switch (id) {
-            case Constant.STATS_ADD_AFLEE:
-                if (this.effects.get(Constant.STATS_REM_AFLEE) != null)
-                    val -= getEffect(Constant.STATS_REM_AFLEE);
-                if (this.effects.get(Constant.STATS_ADD_SAGE) != null)
-                    val += getEffect(Constant.STATS_ADD_SAGE) / 4;
+            case EffectConstant.STATS_ADD_AFLEE:
+                if (this.effects.get(EffectConstant.STATS_REM_AFLEE) != null)
+                    val -= getEffect(EffectConstant.STATS_REM_AFLEE);
+                if (this.effects.get(EffectConstant.STATS_ADD_SAGE) != null)
+                    val += getEffect(EffectConstant.STATS_ADD_SAGE) / 4;
                 break;
-            case Constant.STATS_ADD_MFLEE:
-                if (this.effects.get(Constant.STATS_REM_MFLEE) != null)
-                    val -= getEffect(Constant.STATS_REM_MFLEE);
-                if (this.effects.get(Constant.STATS_ADD_SAGE) != null)
-                    val += getEffect(Constant.STATS_ADD_SAGE) / 4;
+            case EffectConstant.STATS_ADD_MFLEE:
+                if (this.effects.get(EffectConstant.STATS_REM_MFLEE) != null)
+                    val -= getEffect(EffectConstant.STATS_REM_MFLEE);
+                if (this.effects.get(EffectConstant.STATS_ADD_SAGE) != null)
+                    val += getEffect(EffectConstant.STATS_ADD_SAGE) / 4;
                 break;
-            case Constant.STATS_ADD_INIT:
-                if (this.effects.get(Constant.STATS_REM_INIT) != null)
-                    val -= this.effects.get(Constant.STATS_REM_INIT);
+            case EffectConstant.STATS_ADD_INIT:
+                if (this.effects.get(EffectConstant.STATS_REM_INIT) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_INIT);
                 break;
-            case Constant.STATS_ADD_AGIL:
-                if (this.effects.get(Constant.STATS_REM_AGIL) != null)
-                    val -= this.effects.get(Constant.STATS_REM_AGIL);
+            case EffectConstant.STATS_ADD_AGIL:
+                if (this.effects.get(EffectConstant.STATS_REM_AGIL) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_AGIL);
                 break;
-            case Constant.STATS_ADD_FORC:
-                if (this.effects.get(Constant.STATS_REM_FORC) != null)
-                    val -= this.effects.get(Constant.STATS_REM_FORC);
+            case EffectConstant.STATS_ADD_FORC:
+                if (this.effects.get(EffectConstant.STATS_REM_FORC) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_FORC);
                 break;
-            case Constant.STATS_ADD_CHAN:
-                if (this.effects.get(Constant.STATS_REM_CHAN) != null)
-                    val -= this.effects.get(Constant.STATS_REM_CHAN);
+            case EffectConstant.STATS_ADD_CHAN:
+                if (this.effects.get(EffectConstant.STATS_REM_CHAN) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_CHAN);
                 break;
-            case Constant.STATS_ADD_INTE:
-                if (this.effects.get(Constant.STATS_REM_INTE) != null)
-                    val -= this.effects.get(Constant.STATS_REM_INTE);
+            case EffectConstant.STATS_ADD_INTE:
+                if (this.effects.get(EffectConstant.STATS_REM_INTE) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_INTE);
                 break;
-            case Constant.STATS_ADD_PA:
-                if (this.effects.get(Constant.STATS_ADD_PA2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_PA2);
-                if (this.effects.get(Constant.STATS_REM_PA) != null)
-                    val -= this.effects.get(Constant.STATS_REM_PA);
-                if (this.effects.get(Constant.STATS_REM_PA2) != null)//Non esquivable
-                    val -= this.effects.get(Constant.STATS_REM_PA2);
+            case EffectConstant.STATS_ADD_PA:
+                if (this.effects.get(EffectConstant.STATS_ADD_PA2) != null)
+                    val += this.effects.get(EffectConstant.STATS_ADD_PA2);
+                if (this.effects.get(EffectConstant.STATS_REM_PA) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_PA);
+                if (this.effects.get(EffectConstant.STATS_REM_PA2) != null)//Non esquivable
+                    val -= this.effects.get(EffectConstant.STATS_REM_PA2);
                 break;
-            case Constant.STATS_ADD_PM:
-                if (this.effects.get(Constant.STATS_ADD_PM2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_PM2);
-                if (this.effects.get(Constant.STATS_REM_PM) != null)
-                    val -= this.effects.get(Constant.STATS_REM_PM);
-                if (this.effects.get(Constant.STATS_REM_PM2) != null)//Non esquivable
-                    val -= this.effects.get(Constant.STATS_REM_PM2);
+            case EffectConstant.STATS_ADD_PM:
+                if (this.effects.get(EffectConstant.STATS_ADD_PM2) != null)
+                    val += this.effects.get(EffectConstant.STATS_ADD_PM2);
+                if (this.effects.get(EffectConstant.STATS_REM_PM) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_PM);
+                if (this.effects.get(EffectConstant.STATS_REM_PM2) != null)//Non esquivable
+                    val -= this.effects.get(EffectConstant.STATS_REM_PM2);
                 break;
-            case Constant.STATS_ADD_PO:
-                if (this.effects.get(Constant.STATS_REM_PO) != null)
-                    val -= this.effects.get(Constant.STATS_REM_PO);
+            case EffectConstant.STATS_ADD_PO:
+                if (this.effects.get(EffectConstant.STATS_REM_PO) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_PO);
                 break;
-            case Constant.STATS_ADD_VITA:
-                if (this.effects.get(Constant.STATS_REM_VITA) != null)
-                    val -= this.effects.get(Constant.STATS_REM_VITA);
+            case EffectConstant.STATS_ADD_VITA:
+                if (this.effects.get(EffectConstant.STATS_REM_VITA) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_VITA);
                 break;
-            case Constant.STATS_ADD_VIE:
-                val = Constant.STATS_ADD_VIE;
+            case EffectConstant.STATS_ADD_VIE:
+                val = EffectConstant.STATS_ADD_VIE;
                 break;
-            case Constant.STATS_ADD_DOMA:
-                if (this.effects.get(Constant.STATS_REM_DOMA) != null)
-                    val -= this.effects.get(Constant.STATS_REM_DOMA);
+            case EffectConstant.STATS_ADD_DOMA:
+                if (this.effects.get(EffectConstant.STATS_REM_DOMA) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_DOMA);
                 break;
-            case Constant.STATS_ADD_DOMA2:
-                if (this.effects.get(Constant.STATS_ADD_DOMA2) != null)
-                    val += this.effects.get(Constant.STATS_ADD_DOMA2);
+            case EffectConstant.STATS_ADD_DOMA2:
+                if (this.effects.get(EffectConstant.STATS_ADD_DOMA2) != null)
+                    val += this.effects.get(EffectConstant.STATS_ADD_DOMA2);
                 break;
-            case Constant.STATS_ADD_PODS:
-                if (this.effects.get(Constant.STATS_REM_PODS) != null)
-                    val -= this.effects.get(Constant.STATS_REM_PODS);
+            case EffectConstant.STATS_ADD_PODS:
+                if (this.effects.get(EffectConstant.STATS_REM_PODS) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_PODS);
                 break;
-            case Constant.STATS_ADD_PROS:
-                if (this.effects.get(Constant.STATS_REM_PROS) != null)
-                    val -= this.effects.get(Constant.STATS_REM_PROS);
+            case EffectConstant.STATS_ADD_PROS:
+                if (this.effects.get(EffectConstant.STATS_REM_PROS) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_PROS);
                 break;
-            case Constant.STATS_ADD_R_TER:
-                if (this.effects.get(Constant.STATS_REM_R_TER) != null)
-                    val -= this.effects.get(Constant.STATS_REM_R_TER);
+            case EffectConstant.STATS_ADD_R_TER:
+                if (this.effects.get(EffectConstant.STATS_REM_R_TER) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_R_TER);
                 break;
-            case Constant.STATS_ADD_R_EAU:
-                if (this.effects.get(Constant.STATS_REM_R_EAU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_R_EAU);
+            case EffectConstant.STATS_ADD_R_EAU:
+                if (this.effects.get(EffectConstant.STATS_REM_R_EAU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_R_EAU);
                 break;
-            case Constant.STATS_ADD_R_AIR:
-                if (this.effects.get(Constant.STATS_REM_R_AIR) != null)
-                    val -= this.effects.get(Constant.STATS_REM_R_AIR);
+            case EffectConstant.STATS_ADD_R_AIR:
+                if (this.effects.get(EffectConstant.STATS_REM_R_AIR) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_R_AIR);
                 break;
-            case Constant.STATS_ADD_R_FEU:
-                if (this.effects.get(Constant.STATS_REM_R_FEU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_R_FEU);
+            case EffectConstant.STATS_ADD_R_FEU:
+                if (this.effects.get(EffectConstant.STATS_REM_R_FEU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_R_FEU);
                 break;
-            case Constant.STATS_ADD_R_NEU:
-                if (this.effects.get(Constant.STATS_REM_R_NEU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_R_NEU);
+            case EffectConstant.STATS_ADD_R_NEU:
+                if (this.effects.get(EffectConstant.STATS_REM_R_NEU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_R_NEU);
                 break;
-            case Constant.STATS_ADD_RP_TER:
-                if (this.effects.get(Constant.STATS_REM_RP_TER) != null)
-                    val -= this.effects.get(Constant.STATS_REM_RP_TER);
+            case EffectConstant.STATS_ADD_RP_TER:
+                if (this.effects.get(EffectConstant.STATS_REM_RP_TER) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RP_TER);
                 break;
-            case Constant.STATS_ADD_RP_EAU:
-                if (this.effects.get(Constant.STATS_REM_RP_EAU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_RP_EAU);
+            case EffectConstant.STATS_ADD_RP_EAU:
+                if (this.effects.get(EffectConstant.STATS_REM_RP_EAU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RP_EAU);
                 break;
-            case Constant.STATS_ADD_RP_AIR:
-                if (this.effects.get(Constant.STATS_REM_RP_AIR) != null)
-                    val -= this.effects.get(Constant.STATS_REM_RP_AIR);
+            case EffectConstant.STATS_ADD_RP_AIR:
+                if (this.effects.get(EffectConstant.STATS_REM_RP_AIR) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RP_AIR);
                 break;
-            case Constant.STATS_ADD_RP_FEU:
-                if (this.effects.get(Constant.STATS_REM_RP_FEU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_RP_FEU);
+            case EffectConstant.STATS_ADD_RP_FEU:
+                if (this.effects.get(EffectConstant.STATS_REM_RP_FEU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RP_FEU);
                 break;
-            case Constant.STATS_ADD_RP_NEU:
-                if (this.effects.get(Constant.STATS_REM_RP_NEU) != null)
-                    val -= this.effects.get(Constant.STATS_REM_RP_NEU);
+            case EffectConstant.STATS_ADD_RP_NEU:
+                if (this.effects.get(EffectConstant.STATS_REM_RP_NEU) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RP_NEU);
                 break;
-            case Constant.STATS_ADD_FINALDMG:
-                if (this.effects.get(Constant.STATS_REM_FINALDMG) != null)
-                    val -= this.effects.get(Constant.STATS_REM_FINALDMG);
+            case EffectConstant.STATS_ADD_FINALDMG:
+                if (this.effects.get(EffectConstant.STATS_REM_FINALDMG) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_FINALDMG);
                 break;
-            case Constant.STATS_ADD_MAITRISE:
-                if (this.effects.get(Constant.STATS_ADD_MAITRISE) != null)
-                    val = this.effects.get(Constant.STATS_ADD_MAITRISE);
+            case EffectConstant.STATS_ADD_MAITRISE:
+                if (this.effects.get(EffectConstant.STATS_ADD_MAITRISE) != null)
+                    val = this.effects.get(EffectConstant.STATS_ADD_MAITRISE);
                 break;
         }
         return val;

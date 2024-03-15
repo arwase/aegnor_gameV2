@@ -4,7 +4,8 @@ import area.map.GameMap;
 import client.Player;
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import game.world.World.Couple;
 import guild.GuildMember;
 import kernel.Config;
@@ -51,20 +52,20 @@ public class Formulas {
 
     private final static short[] order = new short[] {
 
-            Constant.STATS_ADD_PA,
-            Constant.STATS_ADD_PM,
-            Constant.STATS_ADD_PO,
-            Constant.STATS_ADD_VITA,
-            Constant.STATS_ADD_AGIL,
-            Constant.STATS_ADD_CHAN,
-            Constant.STATS_ADD_FORC,
-            Constant.STATS_ADD_INTE,
-            Constant.STATS_ADD_SAGE,
-            Constant.STATS_ADD_CC,
-            Constant.STATS_ADD_DOMA,
-            Constant.STATS_ADD_PERDOM,
-            Constant.STATS_MULTIPLY_DOMMAGE,
-            Constant.STATS_ADD_INIT,
+            EffectConstant.STATS_ADD_PA,
+            EffectConstant.STATS_ADD_PM,
+            EffectConstant.STATS_ADD_PO,
+            EffectConstant.STATS_ADD_VITA,
+            EffectConstant.STATS_ADD_AGIL,
+            EffectConstant.STATS_ADD_CHAN,
+            EffectConstant.STATS_ADD_FORC,
+            EffectConstant.STATS_ADD_INTE,
+            EffectConstant.STATS_ADD_SAGE,
+            EffectConstant.STATS_ADD_CC,
+            EffectConstant.STATS_ADD_DOMA,
+            EffectConstant.STATS_ADD_PERDOM,
+            EffectConstant.STATS_MULTIPLY_DOMMAGE,
+            EffectConstant.STATS_ADD_INIT,
 
 
     };
@@ -279,7 +280,7 @@ public class Formulas {
     public static int getRandomJet(String jet, Fighter caster)//1d5+6
     {
         assert caster != null;
-        if(caster.hasBuff(781))
+        if(caster.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE))
         {
             return Formulas.getMinJet(jet);
         }
@@ -305,6 +306,36 @@ public class Formulas {
             } catch (NumberFormatException e) {
                 e.printStackTrace();
                 return -1;
+            }
+        }
+    }
+
+    public static int getRandomJet(int min,int max, Fighter caster, Fighter target)//1d5+6
+    {
+        // Pour les valeurs fixes
+        if(max == -1){
+            return min;
+        }
+        if(max <= min)
+            return min;
+
+        // Gestion
+        if(caster != null && caster.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE)){
+            return min;
+        }
+        else {
+            if(target != null && target.hasBuff(EffectConstant.EFFECTID_MAXIMUMDAMAGE)){
+                return max;
+            }
+
+            try {
+                // je trouve ca plus simple
+                Random random = new Random();
+                return random.nextInt(max - min) + min;
+
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                return min;
             }
         }
     }
@@ -335,21 +366,21 @@ public class Formulas {
         }
     }
 
-    public static int getMiddleJet(SpellEffect ss)//Corrigé pour 0d0+XXXX
+    public static int getMiddleJet(Effect ss)//Corrigé pour 0d0+XXXX
     {
         String jet = ss.getJet();
         int num = 0;
 
         if(jet.equals("")){
-            if(ss.getMinValue() == ss.getMaxValue())
-                num = ss.getMinValue();
-            else if(ss.getMinValue() > ss.getMaxValue() )
-                num = ss.getMinValue() ;
-            else if(ss.getMinValue() < ss.getMaxValue()){
-                num = Math.round(ss.getMinValue()+ss.getMaxValue()/2);
+            if(ss.getArgs1() == ss.getArgs2())
+                num = ss.getArgs1();
+            else if(ss.getArgs1() > ss.getArgs2() )
+                num = ss.getArgs1() ;
+            else if(ss.getArgs1() < ss.getArgs2()){
+                num = Math.round(ss.getArgs1()+ss.getArgs2()/2);
             }
             else{
-                num = ss.getMinValue();
+                num = ss.getArgs1();
             }
             return num;
         }
@@ -379,8 +410,8 @@ public class Formulas {
     }
 
     public static int getTacleChance(Fighter fight, Fighter fighter) {
-        int agiTacleur = fight.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
-        int agiEnemi = fighter.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
+        int agiTacleur = fight.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
+        int agiEnemi = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
         if(fighter.isInvocation()){
             if(fighter.getMob() != null && fighter.getMob().getTemplate() != null) {
                 if(ArrayUtils.contains(Constant.STATIC_INVOCATIONS,fighter.getMob().getTemplate().getId())){
@@ -398,19 +429,19 @@ public class Formulas {
 
 
     public static int calculFinalHeal(Fighter healer, int rank, boolean isCac, int spellId) {
-        int intel = healer.getTotalStats().getEffect(126);
-        int heals = healer.getTotalStats().getEffect(178) - healer.getTotalStats().getEffect(179);
+        int intel = healer.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
+        int heals = healer.getTotalStats().getEffect(EffectConstant.STATS_ADD_SOIN) - healer.getTotalStats().getEffect(EffectConstant.STATS_REM_SOIN);
         if (intel < 0)
             intel = 0;
-        float adic = 90; // petit bonus 100 normalement
+        float adic = 90; // TODO : petit bonus 100 normalement (ca boost un peu les heal)
         if (isCac)
             adic = 100;
 
         // On le met ici !
         if(!isCac) {
-            if (healer.hasBuff(284)) {
-                if (spellId == healer.getBuff(284).getFixvalue()) {
-                    int value = healer.getBuff(284).getMaxValue();
+            if (healer.hasBuff(EffectConstant.STATS_SPELL_ADD_HEAL)) {
+                if (spellId == healer.getBuff(EffectConstant.STATS_SPELL_ADD_HEAL).getFixvalue()) {
+                    int value = healer.getBuff(EffectConstant.STATS_SPELL_ADD_HEAL).getArgs2();
                     heals += value;
                 }
             }
@@ -614,10 +645,13 @@ public class Formulas {
         return base * Config.INSTANCE.getRATE_HONOR();
     }
 
-    public static int calculFinalDommage(Fight fight, Fighter caster, Fighter target, int statID, int jet, boolean isHeal, boolean isCaC, int spellid) {
-        int value = calculFinalDommagee(fight, caster, target, statID, jet, isHeal, isCaC, spellid);
-        return value > 0 ? value : 0;
+    public static String removeLastChar(String s) {
+        return (s == null || s.length() == 0)
+                ? null
+                : (s.substring(0, s.length() - 1));
     }
+
+
 
     public static int calculFinalDommagee(Fight fight, Fighter caster,
                                          Fighter target, int statID, int jet, boolean isHeal, boolean isCaC,
@@ -626,11 +660,11 @@ public class Formulas {
 
         if(!isCaC){
             //Si le sort est boost� par un buff sp�cifique
-            for (SpellEffect SE : caster.getBuffsByEffectID(293)) {
-                if (SE.getFixvalue() == spellid) {
+            for (Effect SE : caster.getBuffsByEffectID(EffectConstant.STATS_SPELL_ADD_BASE_DAMAGE)) {
+                if (SE.getArgs1() == spellid) {
                     int add = -1;
                     try {
-                        add = Integer.parseInt(SE.getArgs().split(";")[2]);
+                        add = SE.getArgs3();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -648,15 +682,15 @@ public class Formulas {
         float statC = 0, domC = 0, perdomC = 0, resfT = 0, respT = 0, mulT = 1;
         int multiplier = 0;
         if (!isHeal) {
-            domC = caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA);
-            domC +=	caster.getTotalStats().getEffect(Constant.STATS_ADD_DOMA2);
+            domC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_DOMA);
+            domC +=	caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_DOMA2);
 
-            perdomC = caster.getTotalStats().getEffect(Constant.STATS_ADD_PERDOM);
-            multiplier = caster.getTotalStats().getEffect(Constant.STATS_MULTIPLY_DOMMAGE);
-            if (caster.hasBuff(114))
-                mulT = caster.getBuffValue(114);
+            perdomC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_PERDOM);
+            multiplier = caster.getTotalStats().getEffect(EffectConstant.STATS_MULTIPLY_DOMMAGE);
+            if (caster.hasBuff(EffectConstant.STATS_MULTIPLY_DOMMAGE))
+                mulT = caster.getBuffValue(EffectConstant.STATS_MULTIPLY_DOMMAGE);
         } else {
-            domC = caster.getTotalStats().getEffect(Constant.STATS_ADD_SOIN);
+            domC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_SOIN);
         }
 
         switch (statID) {
@@ -668,68 +702,68 @@ public class Formulas {
                 mulT = 1;
                 break;
             case Constant.ELEMENT_NEUTRE://neutre
-                statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
-                resfT = target.getTotalStats().getEffect(Constant.STATS_ADD_R_NEU);
-                respT = target.getTotalStats().getEffect(Constant.STATS_ADD_RP_NEU);
+                statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_NEU);
+                respT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_NEU);
                 if (caster.getPlayer() != null)//Si c'est un joueur
                 {
-                    respT += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_NEU);
-                    resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_NEU);
+                    respT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU);
+                    resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_NEU);
                 }
                 //on ajoute les dom Physique
-                domC += caster.getTotalStats().getEffect(142);
+                domC += caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_PDOM);
                 //Ajout de la resist Physique
-                resfT = target.getTotalStats().getEffect(184);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_PRED);
                 break;
             case Constant.ELEMENT_TERRE://force
-                statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
-                resfT = target.getTotalStats().getEffect(Constant.STATS_ADD_R_TER);
-                respT = target.getTotalStats().getEffect(Constant.STATS_ADD_RP_TER);
+                statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_TER);
+                respT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_TER);
                 if (caster.getPlayer() != null)//Si c'est un joueur
                 {
-                    respT += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_TER);
-                    resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_TER);
+                    respT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_TER);
+                    resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_TER);
                 }
                 //on ajout les dom Physique
-                domC += caster.getTotalStats().getEffect(142);
+                domC += caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_PDOM);
                 //Ajout de la resist Physique
-                resfT += target.getTotalStats().getEffect(184);
+                resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_PRED);
                 break;
             case Constant.ELEMENT_EAU://chance
-                statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_CHAN);
-                resfT = target.getTotalStats().getEffect(Constant.STATS_ADD_R_EAU);
-                respT = target.getTotalStats().getEffect(Constant.STATS_ADD_RP_EAU);
+                statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_EAU);
+                respT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_EAU);
                 if (caster.getPlayer() != null)//Si c'est un joueur
                 {
-                    respT += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_EAU);
-                    resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_EAU);
+                    respT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU);
+                    resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_EAU);
                 }
                 //Ajout de la resist Magique
-                resfT += target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_MRED);
                 break;
             case Constant.ELEMENT_FEU://intell
-                statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
-                resfT = target.getTotalStats().getEffect(Constant.STATS_ADD_R_FEU);
-                respT = target.getTotalStats().getEffect(Constant.STATS_ADD_RP_FEU);
+                statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_FEU);
+                respT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_FEU);
                 if (caster.getPlayer() != null)//Si c'est un joueur
                 {
-                    respT += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_FEU);
-                    resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_FEU);
+                    respT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU);
+                    resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_FEU);
                 }
                 //Ajout de la resist Magique
-                resfT += target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_MRED);
                 break;
             case Constant.ELEMENT_AIR://agilit�
-                statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
-                resfT = target.getTotalStats().getEffect(Constant.STATS_ADD_R_AIR);
-                respT = target.getTotalStats().getEffect(Constant.STATS_ADD_RP_AIR);
+                statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
+                resfT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_AIR);
+                respT = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_AIR);
                 if (caster.getPlayer() != null)//Si c'est un joueur
                 {
-                    respT += target.getTotalStats().getEffect(Constant.STATS_ADD_RP_PVP_AIR);
-                    resfT += target.getTotalStats().getEffect(Constant.STATS_ADD_R_PVP_AIR);
+                    respT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR);
+                    resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_AIR);
                 }
                 //Ajout de la resist Magique
-                resfT += target.getTotalStats().getEffect(183);
+                resfT += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_MRED);
 
                 break;
         }
@@ -791,7 +825,7 @@ public class Formulas {
             switch (spellid) {
 
                 case 66:
-                    statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
+                    statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
                         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
@@ -808,7 +842,7 @@ public class Formulas {
                 case 71:
                 case 196:
                 case 219:
-                    statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
+                    statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
                         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
@@ -824,7 +858,7 @@ public class Formulas {
                     break;
                 case 181:
                 case 200:
-                    statC = caster.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+                    statC = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
                     num = (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100)) + domC;
                     if (target.hasBuff(105) && spellid != 71) {
                         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId() + "", target.getId() + "," + target.getBuff(105).getFixvalue(), 105);
@@ -843,7 +877,7 @@ public class Formulas {
 
         //Renvoie
         if (caster.getId() != target.getId()) {
-            int renvoie = target.getTotalStatsLessBuff().getEffect(Constant.STATS_RETDOM);
+            int renvoie = target.getTotalStatsLessBuff().getEffect(EffectConstant.STATS_RETDOM);
             if (renvoie > 0 && !isHeal) {
                 if (renvoie > num)
                     renvoie = (int) num;
@@ -887,7 +921,7 @@ public class Formulas {
 
         // Stat dégats finaux
         if (!isHeal && num > 0 ) {
-            int finaldmg = caster.getTotalStats().getEffect(Constant.STATS_ADD_FINALDMG);
+            int finaldmg = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_FINALDMG);
             if (finaldmg < 0) {
                 finaldmg = Math.abs(finaldmg);
                 num = Math.round(num - (num * ((double)finaldmg / 100.0 )));
@@ -897,8 +931,15 @@ public class Formulas {
         }
 
         //Perte de 10% des PDV MAX par points de degat 10 PDV = 1PDV max en moins
-        if (target.getPlayer() != null)
-            target.removePdvMax((int) Math.floor(num / 10));
+        if (target.getPlayer() != null) {
+            int addFixEro = 0;
+            if(target.hasBuff(EffectConstant.EFFECTID_EROSION)){
+                for(Effect ero : target.getBuffsByEffectID(EffectConstant.EFFECTID_EROSION)){
+                    addFixEro+=ero.getArgs1();
+                }
+            }
+            target.removePdvMax((int) Math.floor(num / (10 + addFixEro)));
+        }
 
         // D�but Formule pour les MOBs -- OSEF CA
         if (caster.getPlayer() == null && !caster.isCollector()) {
@@ -924,7 +965,7 @@ public class Formulas {
 
     private static int getArmorResist(Fighter target, int statID) {
         int armor = 0;
-        for (SpellEffect SE : target.getBuffsByEffectID(265)) {
+        for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE)) {
             Fighter fighter;
 
             switch (SE.getSpell()) {
@@ -962,21 +1003,21 @@ public class Formulas {
                     fighter = target;
                     break;
             }
-            int intell = fighter.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+            int intell = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
             int carac = 0;
             switch (statID) {
                 case Constant.ELEMENT_AIR:
-                    carac = fighter.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
+                    carac = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
                     break;
                 case Constant.ELEMENT_FEU:
-                    carac = fighter.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+                    carac = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
                     break;
                 case Constant.ELEMENT_EAU:
-                    carac = fighter.getTotalStats().getEffect(Constant.STATS_ADD_CHAN);
+                    carac = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN);
                     break;
                 case Constant.ELEMENT_NEUTRE:
                 case Constant.ELEMENT_TERRE:
-                    carac = fighter.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
+                    carac = fighter.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
                     break;
             }
             int value = SE.getFixvalue();
@@ -984,22 +1025,22 @@ public class Formulas {
                     / 100;
             armor += a;
         }
-        for (SpellEffect SE : target.getBuffsByEffectID(105)) {
-            int intell = target.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+        for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE)) {
+            int intell = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
             int carac = 0;
             switch (statID) {
                 case Constant.ELEMENT_AIR:
-                    carac = target.getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
+                    carac = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
                     break;
                 case Constant.ELEMENT_FEU:
-                    carac = target.getTotalStats().getEffect(Constant.STATS_ADD_INTE);
+                    carac = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
                     break;
                 case Constant.ELEMENT_EAU:
-                    carac = target.getTotalStats().getEffect(Constant.STATS_ADD_CHAN);
+                    carac = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN);
                     break;
                 case Constant.ELEMENT_NEUTRE:
                 case Constant.ELEMENT_TERRE:
-                    carac = target.getTotalStats().getEffect(Constant.STATS_ADD_FORC);
+                    carac = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
                     break;
             }
             int value = SE.getFixvalue();
@@ -1011,15 +1052,15 @@ public class Formulas {
     }
 
     public static int getPointsLost(char z, int value, Fighter caster, Fighter target) {
-        float esquiveC = z == 'a' ? caster.getTotalStats().getEffect(Constant.STATS_ADD_AFLEE) : caster.getTotalStats().getEffect(Constant.STATS_ADD_MFLEE);
-        float esquiveT = z == 'a' ? target.getTotalStats().getEffect(Constant.STATS_ADD_AFLEE) : target.getTotalStats().getEffect(Constant.STATS_ADD_MFLEE);
-        float ptsMax = z == 'a' ? target.getTotalStatsLessBuff().getEffect(Constant.STATS_ADD_PA) : target.getTotalStatsLessBuff().getEffect(Constant.STATS_ADD_PM);
+        float esquiveC = z == 'a' ? caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_AFLEE) : caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_MFLEE);
+        float esquiveT = z == 'a' ? target.getTotalStats().getEffect(EffectConstant.STATS_ADD_AFLEE) : target.getTotalStats().getEffect(EffectConstant.STATS_ADD_MFLEE);
+        float ptsMax = z == 'a' ? target.getTotalStatsLessBuff().getEffect(EffectConstant.STATS_ADD_PA) : target.getTotalStatsLessBuff().getEffect(EffectConstant.STATS_ADD_PM);
 
         int retrait = 0;
 
         for (int i = 0; i < value; i++) {
             if (ptsMax == 0 && target.getMob() != null) {
-                ptsMax = z == 'a' ? target.getMob().getPa() : target.getMob().getPm();
+                ptsMax = z == 'a' ? target.getPa() : target.getPm();
             }
 
             float pts = z == 'a' ? target.getPa() : target.getPm();

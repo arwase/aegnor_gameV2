@@ -15,6 +15,7 @@ import client.AccountWeb;
 import client.Classe;
 import client.Player;
 import client.other.Stats;
+import command.AzuriomCommands;
 import common.*;
 import database.Database;
 import entity.Collector;
@@ -34,7 +35,6 @@ import guild.GuildMember;
 import hdv.Hdv;
 import hdv.HdvEntry;
 import job.Job;
-import command.AzuriomCommands;
 import kernel.*;
 import object.GameObject;
 import object.ObjectSet;
@@ -45,7 +45,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.LoggerFactory;
-import other.AegnorBot;
+import other.DiscordBot;
 import other.Sets;
 import other.Titre;
 import quest.QuestPlayer;
@@ -59,7 +59,6 @@ import java.awt.event.ActionListener;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
@@ -118,7 +117,7 @@ public class World {
     private Map<Short, Long> delayCollectors = new HashMap<>();
     private Map<Integer, Classe> Classes = new HashMap<>();
     public ArrayList<House> houseToClear = new ArrayList<>();
-    public AegnorBot bot = new AegnorBot();
+    public DiscordBot bot = new DiscordBot();
 
 
     private boolean timerStart = false;
@@ -919,9 +918,12 @@ public class World {
         if(player == null) return 1;
         if(player.get_align() == 0) return 1;
         if(player.getCurMap().getSubArea().getAlignement() == player.get_align()) {
-            final double factor = (100 + (getBalanceWorldNew(player.get_align()) + ((Math.rint((player.getGrade() / 2.5) + 1)) * 4))) / 100;
-            if (factor < 1) return 1;
-            return factor;
+            if(player.is_showWings()) {
+                final double factor = (100 + (getBalanceWorldNew(player.get_align()) + ((Math.rint((player.getGrade() / 2.5) + 1)) * 4))) / 100;
+                if (factor < 1) return 1;
+                return factor;
+            }
+            return 1;
         }
         else {
             return 1;
@@ -1360,8 +1362,8 @@ public class World {
 
         if (template == 8378) {
             return new Fragment(id, stats);
-        } else if (getObjTemplate(template).getType() == 85) {
-            return new SoulStone(id, qua, template, pos, stats,0);
+        } else if (getObjTemplate(template).getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI || getObjTemplate(template).getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || getObjTemplate(template).getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS) {
+            return new SoulStone(id, qua, template, pos, stats);
         } else if (getObjTemplate(template).getType() == 24 && (Constant.isCertificatDopeuls(getObjTemplate(template).getId()) || getObjTemplate(template).getId() == 6653)) {
             try {
                 Map<Integer, String> txtStat = new HashMap<>();
@@ -1587,21 +1589,47 @@ public class World {
 
         for (Entry<Integer, Guild> guild : Test.entrySet()){
             Boolean isInactifGuild = true;
+            Boolean hasMeneur = false;
             List<Player> Members = guild.getValue().getPlayers();
-            for (Player player : Members) {
-                String dateactuelle = guild.getValue().getMember(player.getId()).getLastCo();
-                String[] table =   dateactuelle.split("~");
-                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
+            if(Members.size() != 0){
+                for (Player player : Members) {
+                    String dateactuelle = guild.getValue().getMember(player.getId()).getLastCo();
+                    String[] table =   dateactuelle.split("~");
+                    LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
+                    if(player.getGuildMember().getRank() ==1){
+                        hasMeneur = true;
+                    }
 
-                if(lastConnection.isAfter(UnUsedDate) ){
-                    isInactifGuild = false;
-                    break ;
+                    if(lastConnection.isAfter(UnUsedDate) ){
+                        isInactifGuild = false;
+                        break ;
+                    }
                 }
+
             }
 
             if(isInactifGuild){
                 System.out.println("La guilde " + guild.getValue().getName() +" est inactive, on supprime");
                 ids.add(guild.getValue().getId());
+            }
+
+            if(!hasMeneur && !isInactifGuild){
+
+                GuildMember higherRank = null;
+                for (GuildMember gmember : guild.getValue().getMembers()) {
+                    if(higherRank == null)
+                        higherRank = gmember;
+
+                    if((gmember.getRank() < higherRank.getRank()) && gmember.getRank() != 0 ){
+                        higherRank=gmember;
+                    }
+                }
+
+                if(higherRank != null) {
+                    System.out.println("La guilde " + higherRank.getGuild().getName() + " n'a plus de meneur actif :" + higherRank.getPlayer().getName() + " choisi pour le remplacer");
+                    higherRank.setAllRights(1, (byte) 0, 1, higherRank.getPlayer());//1 => Meneur (Tous droits);
+                }
+
             }
         }
 
@@ -2028,7 +2056,7 @@ public class World {
             ArrayList<Monster> arrayMonstre = new ArrayList<>();
             try {
             getObjectsTemplates().values().stream().filter(objectTemplate -> objectTemplate != null && objectTemplate.getPanoId() == -1 && !objectTemplate.getStrTemplate().contains("32c#") && (!objectTemplate.getStrTemplate().isEmpty()) && !objectTemplate.getName().contains("Polyk")
-                    && (objectTemplate.getLevel() >= finalI && objectTemplate.getLevel()<= finalI+9) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  && !isDropable(objectTemplate.getId()) ).forEach(arrayBlackItem::add);
+                    && (objectTemplate.getLevel() >= finalI && objectTemplate.getLevel()<= finalI+9) && ArrayUtils.contains( Constant.ITEM_TYPE_OBJ_BLACK, objectTemplate.getType() )  && !isDropable(objectTemplate.getId()) && !ArrayUtils.contains(Constant.ITEMS_EXCLUDE_DROP,objectTemplate.getId()) ).forEach(arrayBlackItem::add);
             }
             catch (Exception e){
                 //System.out.println("ici item" + e);
@@ -2219,22 +2247,22 @@ public class World {
             Seller.get(map).remove(player);
     }
 
-    public double getPwrPerEffet(int effect) {
+    /*public double getPwrPerEffet(int effect) {
         double r = 0.0;
         switch (effect) {
-            case Constant.STATS_ADD_PA:
+            case EffectConstant.STATS_ADD_PA:
                 r = 100.0;
                 break;
-            case Constant.STATS_ADD_PM2:
+            case EffectConstant.STATS_ADD_PM2:
                 r = 90.0;
                 break;
-            case Constant.STATS_ADD_VIE:
+            case EffectConstant.STATS_ADD_VIE:
                 r = 0.25;
                 break;
-            case Constant.STATS_MULTIPLY_DOMMAGE:
+            case EffectConstant.STATS_MULTIPLY_DOMMAGE:
                 r = 100.0;
                 break;
-            case Constant.STATS_ADD_CC:
+            case EffectConstant.STATS_ADD_CC:
                 r = 30.0;
                 break;
             case Constant.STATS_ADD_PO:
@@ -2515,7 +2543,7 @@ public class World {
                 break;
         }
         return r;
-    }
+    }*/
 
     public double getTauxObtentionIntermediaire(double bonus, boolean b1, boolean b2) {
         double taux = bonus;
@@ -2619,33 +2647,70 @@ public class World {
         return temple;
     }
 
-    public static void sendWebhookMessage(String webhookUrl, String message) {
+    public static void sendWebhookMessage(String webhookUrl, String message, Player player) {
         try {
-            URL url = new URL(webhookUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            if(Config.INSTANCE.getDISCORD_WH()) {
+                if(!webhookUrl.isEmpty()) {
+                    URL url = new URL(webhookUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-            connection.addRequestProperty("User-Agent","Aegnor Webhook 1.0");
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setDoOutput(true);
+                    connection.addRequestProperty("User-Agent", "Aegnor Webhook 1.0");
 
-            String jsonMessage = "{\"content\":\"" + message + "\"}";
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonMessage.getBytes("utf-8");
-                os.write(input, 0, input.length);
-            }
+                    String jsonMessage = "{\"content\":\"" + "Compte '" + player.getAccount().getName() + "' **("+player.getAccount().getId()+")** - Joueur '" + player.getName() + "' **(" +player.getId()+ ")** : " +  message + "\"}";
+                    try (OutputStream os = connection.getOutputStream()) {
+                        byte[] input = jsonMessage.getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
 
-            int responseCode = connection.getResponseCode();
-            if(responseCode != 204){
-                if (Logging.USE_LOG) {
-                    Logging.getInstance().write("WebHookFail", message + " | Webhook Response Code:" + responseCode);
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode != 204) {
+                        if (Logging.USE_LOG) {
+                            Logging.getInstance().write("WebHookFail", message + " | Webhook Response Code:" + responseCode);
+                        }
+                    }
+                    connection.disconnect();
                 }
             }
-            connection.disconnect();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+    public static void sendWebhookInformations(String webhookUrl, String message, Player player) {
+        try {
+            if(Config.INSTANCE.getDISCORD_WH()) {
+                if(!webhookUrl.isEmpty()) {
+                    URL url = new URL(webhookUrl);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setDoOutput(true);
+                    connection.addRequestProperty("User-Agent", "Aegnor Webhook 1.0");
+
+                    String jsonMessage = "{\"content\":\"" + "'**(" + player.getName() + ")**' : " +  message + "\"}";
+                    try (OutputStream os = connection.getOutputStream()) {
+                        byte[] input = jsonMessage.getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode != 204) {
+                        if (Logging.USE_LOG) {
+                            Logging.getInstance().write("WebHookFail", message + " | Webhook Response Code:" + responseCode);
+                        }
+                    }
+                    connection.disconnect();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 
 
     public void sendMessageToAll(String message) {

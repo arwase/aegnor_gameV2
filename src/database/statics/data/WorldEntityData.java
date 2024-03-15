@@ -87,8 +87,23 @@ public class WorldEntityData extends AbstractDAO<Object> {
         return --nextMountId;
     }
 
-    public synchronized int getNextObjectId() {
-        //System.out.println(nextObjectId);
+    // TODO : A changer on peut essayer de demander a la base de générer le nouvel ID pour éviter les ID non unique
+    public int getNextObjectId() {
+        /*int nextObjectId = -1;
+        try {
+            Result result = getData("SELECT nextval('object_id_seq') FROM `sequence_table`;");
+            ResultSet RS = result.resultSet;
+            if (RS.next()) {
+                nextObjectId = RS.getInt(1);
+            }
+            this.nextObjectId = nextObjectId;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ++this.nextObjectId;
+            // Gérer l'erreur
+        }
+        return nextObjectId;*/
+
         return ++nextObjectId;
     }
 

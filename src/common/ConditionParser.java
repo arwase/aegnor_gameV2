@@ -2,6 +2,7 @@ package common;
 
 import area.map.GameMap;
 import client.Player;
+import fight.spells.EffectConstant;
 import game.world.World.Couple;
 import job.JobStat;
 import kernel.Constant;
@@ -70,20 +71,20 @@ public class ConditionParser {
 
         try {
             //Stats stuff compris
-            jep.addVariable("CI", perso.getTotalStats().getEffect(Constant.STATS_ADD_INTE));
-            jep.addVariable("CV", perso.getTotalStats().getEffect(Constant.STATS_ADD_VITA));
-            jep.addVariable("CA", perso.getTotalStats().getEffect(Constant.STATS_ADD_AGIL));
-            jep.addVariable("CW", perso.getTotalStats().getEffect(Constant.STATS_ADD_SAGE));
-            jep.addVariable("CC", perso.getTotalStats().getEffect(Constant.STATS_ADD_CHAN));
-            jep.addVariable("CS", perso.getTotalStats().getEffect(Constant.STATS_ADD_FORC));
-            jep.addVariable("CM", perso.getTotalStats().getEffect(Constant.STATS_ADD_PM));
+            jep.addVariable("CI", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE));
+            jep.addVariable("CV", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_VITA));
+            jep.addVariable("CA", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL));
+            jep.addVariable("CW", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_SAGE));
+            jep.addVariable("CC", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN));
+            jep.addVariable("CS", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC));
+            jep.addVariable("CM", perso.getTotalStats().getEffect(EffectConstant.STATS_ADD_PM));
             //Stats de bases
-            jep.addVariable("Ci", perso.getStats().getEffect(Constant.STATS_ADD_INTE));
-            jep.addVariable("Cs", perso.getStats().getEffect(Constant.STATS_ADD_FORC));
-            jep.addVariable("Cv", perso.getStats().getEffect(Constant.STATS_ADD_VITA));
-            jep.addVariable("Ca", perso.getStats().getEffect(Constant.STATS_ADD_AGIL));
-            jep.addVariable("Cw", perso.getStats().getEffect(Constant.STATS_ADD_SAGE));
-            jep.addVariable("Cc", perso.getStats().getEffect(Constant.STATS_ADD_CHAN));
+            jep.addVariable("Ci", perso.getStats().getEffect(EffectConstant.STATS_ADD_INTE));
+            jep.addVariable("Cs", perso.getStats().getEffect(EffectConstant.STATS_ADD_FORC));
+            jep.addVariable("Cv", perso.getStats().getEffect(EffectConstant.STATS_ADD_VITA));
+            jep.addVariable("Ca", perso.getStats().getEffect(EffectConstant.STATS_ADD_AGIL));
+            jep.addVariable("Cw", perso.getStats().getEffect(EffectConstant.STATS_ADD_SAGE));
+            jep.addVariable("Cc", perso.getStats().getEffect(EffectConstant.STATS_ADD_CHAN));
             //Autre
             jep.addVariable("Ps", perso.get_align());//Alignement
             jep.addVariable("Pa", perso.getALvl());
@@ -113,6 +114,103 @@ public class ConditionParser {
         }
         return false;
     }
+
+    /*public static boolean parseConditions(Player perso, String sCondition) {
+        String[] var2 = { ">", "<", "=", "!" };
+        String var3 = sCondition;
+        List<String> var5 = new ArrayList<>();
+
+        if (var3 == null || var3.isEmpty()) {
+            return true;
+        }
+
+        String[] var4 = var3.split("&");
+        int var6 = 0;
+
+        while (var6 < var4.length) {
+            var4[var6] = var4[var6].replace("(", "").replace(")", "");
+            String[] var7 = var4[var6].split("\\|");
+
+            for (int var8 = 0; var8 < var7.length; var8++) {
+                String var9 = var7[var8];
+                String var12 = "";
+                String var13 = "";
+
+                for (String var10 : var2) {
+                    String[] var9Array = var9.split(java.util.regex.Pattern.quote(var10));
+
+                    if (var9Array.length > 1) {
+                        var12 = String.valueOf(var9Array[0]);
+                        var13 = var9Array[1];
+                        break;
+                    }
+                }
+
+                if (var12 != null && !var12.isEmpty()) {
+                    if (var12.equals("PZ")) {
+                        break;
+                    }
+
+                    switch (var12) {
+                        case "Ps":
+                            var13 = this.api.lang.getAlignment(Integer.parseInt(var13)).n;
+                            break;
+                        case "PS":
+                            var13 = var13.equals("1") ? this.api.lang.getText("MALE") : this.api.lang.getText("FEMALE");
+                            break;
+                        case "Pr":
+                            var13 = this.api.lang.getAlignmentSpecialization(Integer.parseInt(var13)).n;
+                            break;
+                        case "Pg":
+                            String[] var14 = var13.split(",");
+                            if (var14.length == 2) {
+                                var13 = this.api.lang.getAlignmentFeat(Integer.parseInt(var14[0])).n + " (" + Integer.parseInt(var14[1]) + ")";
+                            } else {
+                                var13 = this.api.lang.getAlignmentFeat(Integer.parseInt(var13)).n;
+                            }
+                            break;
+                        default:
+                            switch (var12) {
+                                case "PG":
+                                    var13 = this.api.lang.getClassText(Integer.parseInt(var13)).sn;
+                                    break;
+                                case "PJ":
+                                case "Pj":
+                                    String[] var15 = var13.split(",");
+                                    var13 = this.api.lang.getJobText(Integer.parseInt(var15[0])).n + (var15.length > 1 ? " (" + this.api.lang.getText("LEVEL_SMALL") + " " + Integer.parseInt(var15[1]) + ")" : "");
+                                    break;
+                                case "PM":
+                                    continue;
+                                case "PO":
+                                    dofus.datacenter.MyClass var16 = new dofus.datacenter.MyClass(-1, Integer.parseInt(var13), 1, 0, "", 0);
+                                    var13 = var16.name;
+                            }
+                    }
+
+                    var12 = new ank.utils().replace(var12, new String[] { "CS", "Cs", "CV", "Cv", "CA", "Ca", "CI", "Ci", "CW", "Cw", "CC", "Cc", "CA", "PG", "PJ", "Pj", "PM", "PA", "PN", "PE", "<NO>", "PS", "PR", "PL", "PK", "Pg", "Pr", "Ps", "Pa", "PP", "PZ", "CM" }, this.api.lang.getText("ITEM_CHARACTERISTICS").split(","));
+                    boolean var17 = var10.equals("!");
+                    var10 = new ank.utils().replace(var10, new String[] { "!" }, new String[] { this.api.lang.getText("ITEM_NO") });
+
+                    switch (var12) {
+                        case "BI":
+                            var5.add(this.api.lang.getText("UNUSABLE"));
+                            break;
+                        case "PO":
+                            if (var17) {
+                                var5.add(this.api.lang.getText("ITEM_DO_NOT_POSSESS", var13) + " <" + var10 + ">");
+                            } else {
+                                var5.add(this.api.lang.getText("ITEM_DO_POSSESS", var13) + " <" + var10 + ">");
+                            }
+                            break;
+                        default:
+                            var5.add((var8 <= 0 ? "" : this.api.lang.getText("ITEM_OR") + " ") + var12 + " " + var10 + " " + var13);
+                    }
+                }
+            }
+            var6++;
+        }
+        return var5;
+    }*/
 
     private static boolean haveMorph(String c, Player p) {
         if (c.equalsIgnoreCase(""))
@@ -569,7 +667,7 @@ public class ConditionParser {
                     && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
-                    && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                    && !(newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI)
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
                     && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT
@@ -582,7 +680,7 @@ public class ConditionParser {
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
-                && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                && !(newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI)
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT
@@ -610,7 +708,7 @@ public class ConditionParser {
                 && !Constant.isIncarnationWeapon(newObj.getTemplate().getId())
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER
-                && newObj.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                && !(newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS || newObj.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI)
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
                 && newObj.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_VIVANT

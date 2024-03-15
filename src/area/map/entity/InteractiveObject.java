@@ -6,6 +6,7 @@ import area.map.labyrinth.Minotoror;
 import client.Player;
 import common.SocketManager;
 import entity.monster.Monster;
+import fight.spells.EffectConstant;
 import game.scheduler.Updatable;
 import game.world.World;
 import job.JobConstant;
@@ -136,12 +137,12 @@ public class InteractiveObject {
                 if (player.hasEquiped(1718)
                         && player.hasEquiped(1719)
                         && player.hasEquiped(1720)
-                        && player.getStats().getEffect(Constant.STATS_ADD_VITA) == 120
-                        && player.getStats().getEffect(Constant.STATS_ADD_SAGE) == 0
-                        && player.getStats().getEffect(Constant.STATS_ADD_FORC) == 60
-                        && player.getStats().getEffect(Constant.STATS_ADD_INTE) == 50
-                        && player.getStats().getEffect(Constant.STATS_ADD_AGIL) == 0
-                        && player.getStats().getEffect(Constant.STATS_ADD_CHAN) == 0) {
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_VITA) == 120
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_SAGE) == 0
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_FORC) == 60
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_INTE) == 50
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_AGIL) == 0
+                        && player.getStats().getEffect(EffectConstant.STATS_ADD_CHAN) == 0) {
                     SocketManager.GAME_SEND_ACTION_TO_DOOR(player.getCurMap(), 237, true);
                     SocketManager.GAME_SEND_MESSAGE(player, "Le crocoburio a été désactivé.");
                     /*perso.getWaiter().addNext(new Runnable()

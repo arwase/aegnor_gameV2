@@ -3,7 +3,6 @@ package game;
 import area.map.GameCase;
 import area.map.GameMap;
 import area.map.entity.*;
-import area.map.labyrinth.Minotoror;
 import client.Account;
 import client.Player;
 import client.other.Party;
@@ -32,8 +31,7 @@ import event.EventManager;
 import event.type.Event;
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.Spell;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
 import fight.spells.SpellGrade;
 import game.action.ExchangeAction;
 import game.action.GameAction;
@@ -460,13 +458,14 @@ public class GameClient {
         else
         {
             SocketManager.GAME_SEND_MESSAGE(player, "Votre objet n'a pas d'apparence !",Constant.COULEUR_ECHEC);
+            return;
         }
 
         // ITEM D'APPARAT A RESTORE
         int templateTorestore = object.getMimibiote();
         int id = Database.getStatics().getObjectData().getNextId();
         Map<Integer, String> Stat = new HashMap<>();
-        GameObject item = new GameObject(id, templateTorestore, object.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null) , new ArrayList<SpellEffect>(), new HashMap<Integer, Integer>(), Stat, 0,1, -1);
+        GameObject item = new GameObject(id, templateTorestore, object.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null) , new ArrayList<Effect>(), new HashMap<Integer, Integer>(), Stat, 0,1, -1);
         if (player.addObjet(item, true)) {
             World.world.addGameObject(item, true);
         }
@@ -570,7 +569,7 @@ public class GameClient {
         SocketManager.GAME_SEND_Ow_PACKET(player);
 
         Stats stats = objToChange.getStats();
-        ArrayList<SpellEffect> effetArme = objToChange.getEffects();
+        ArrayList<Effect> effetArme = objToChange.getEffects();
         Map<Integer, String> effetText = objToChange.CopyTxtStat();
         effetText.put(Constant.APPARAT_ITEM, T.getId()+"");
 
@@ -2707,7 +2706,7 @@ public class GameClient {
                     return;
                 }
 
-                if (template.getPoints() > 0 && this.player.boutique && template.getBoutique() > 0) {
+                if (template.getPoints() > 0 && template.getBoutique() > 0) {
                     if(player.getAccount().getWebAccount() == null && Config.INSTANCE.getAZURIOM()){
                         String mess = "Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web.";
                         player.sendMessage(mess);
@@ -3719,6 +3718,10 @@ public class GameClient {
 
                                 long kamasActuel =  ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).getKamas(true);
                                 long kamas = ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).getKamasSwitchItem(guid, qua);
+
+                                if (obj.getTemplate().getBoutique() > 0)
+                                    kamas = 0;
+
                                 if(kamasActuel > kamas){
                                     kamas = kamasActuel - kamas;
                                 }
@@ -3771,7 +3774,7 @@ public class GameClient {
                                     return;
 
                                 int type = obj.getTemplate().getType();
-                                if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type) ){
+                                if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type) & !(ArrayUtils.contains( Constant.ITEM_SUPERTYPE_CAPTURE,type)) ){
 
                                 }
                                 else{
@@ -4384,7 +4387,7 @@ public class GameClient {
         map.getPlayers().stream().filter(player -> player != null && player.isOnline()).forEach(player -> SocketManager.GAME_SEND_MERCHANT_LIST(player, player.getCurMap().getId()));
     }
 
-    private synchronized void putInInventory(String packet) {
+    private synchronized void putInInventory(String packet) { // TODO : géré que les cas d'echange interne sans changer celle avec des items
         if(this.player.getExchangeAction() != null && this.player.getExchangeAction().getType() == ExchangeAction.IN_MOUNTPARK) {
             int id = -1;
             MountPark park = this.player.getCurMap().getMountPark();
@@ -5083,6 +5086,7 @@ public class GameClient {
                 ((BreakingObject) exchangeAction.getValue()).setStop(true);
                 player.send("EV");
                 break;
+            case ExchangeAction.TRADING_WITH_BOUTIQUE:
             case ExchangeAction.TRADING_WITH_NPC:
             case ExchangeAction.IN_MOUNT:
                 player.send("EV");
@@ -6135,8 +6139,10 @@ public class GameClient {
                 SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this.player.getGameClient(), 'S');
                 return;
             }
-            if (this.player.getCurMap().mapNoAgression())
+            if (this.player.getCurMap().mapNoAgression()) {
+                this.player.sendMessage("Vous ne pouvez pas aggresser sur cette map.");
                 return;
+            }
             if (this.player.cantAgro())
                 return;
             int id = Integer.parseInt(packet.substring(5));
@@ -6148,10 +6154,10 @@ public class GameClient {
                     || this.player.getCurMap().getPlaces().equalsIgnoreCase("|")
                     || !target.canAggro() || target.isDead() == 1)
                 return;
-            /*if(target.getAccount().getCurrentIp().equals(this.getAccount().getCurrentIp())) {
+            if(target.getAccount().getCurrentIp().equals(this.getAccount().getCurrentIp())) {
                 this.player.sendMessage("Vous ne pouvez pas aggresser votre propre personnage.");
                 return;
-            }*/
+            }
             if (this.player.restriction.aggros.containsKey(target.getAccount().getCurrentIp())) {
                 if ((System.currentTimeMillis() - this.player.restriction.aggros.get(target.getAccount().getCurrentIp())) < 1000 * 60 * 60) {
                     SocketManager.GAME_SEND_MESSAGE(this.player, "Il faut que tu attende encore "
@@ -6308,7 +6314,7 @@ public class GameClient {
             //Porte int?ractif
             InteractiveDoor.show(this.player);
             //Prisme
-            World.world.showPrismes(this.player);
+            //World.world.showPrismes(this.player);
             this.player.refreshCraftSecure(false);
             this.player.afterFight = false;
             //Capabilities

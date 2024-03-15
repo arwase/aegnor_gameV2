@@ -18,6 +18,7 @@ import entity.monster.Monster.MobGroup;
 import entity.npc.Npc;
 import entity.npc.NpcQuestion;
 import entity.pet.PetEntry;
+import fight.spells.EffectConstant;
 import game.GameClient;
 import game.GameServer;
 import game.action.ExchangeAction;
@@ -604,15 +605,17 @@ public class Action {
                     int number = Integer.parseInt(args.split(",", 2)[1]);
                     player.getStats().addOneStat(statID, number);
                     SocketManager.GAME_SEND_STATS_PACKET(player);
+                    // TODO : trop bizarre ca sert a quoi ca encore ?
                     int messID = 0;
                     switch (statID) {
-                        case Constant.STATS_ADD_INTE:
+                        case EffectConstant.STATS_ADD_INTE:
                             messID = 14;
                             break;
                     }
                     if (messID > 0)
                         SocketManager.GAME_SEND_Im_PACKET(player, "0" + messID
                                 + ";" + number);
+
                 } catch (Exception e) {
                     e.printStackTrace();
                     return true;

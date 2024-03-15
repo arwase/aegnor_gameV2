@@ -27,7 +27,8 @@ import fight.Fight;
 import fight.Fighter;
 import fight.arena.DeathMatch;
 import fight.arena.TeamMatch;
-import fight.spells.SpellEffect;
+import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import fight.spells.SpellGrade;
 import game.GameClient;
 import game.GameServer;
@@ -44,7 +45,10 @@ import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
 import org.apache.commons.lang3.ArrayUtils;
-import other.*;
+import other.Action;
+import other.Dopeul;
+import other.Sets;
+import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
 import util.TimerWaiter;
@@ -54,7 +58,6 @@ import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -64,13 +67,26 @@ public class Player {
     public TeamMatch kolizeum;
     public DeathMatch deathMatch;
 
-
     public final Restriction restriction;
     public Stats stats;
+
+    /** var for commands **/
     public boolean isNew = false;
     public boolean controleinvo = false;
     public boolean noxp=false;
     public byte needRestat = 0;
+    //Suiveur - Suivi
+    public Map<Integer, Player> follower = new HashMap<>();
+    public Player follow = null;
+    //Commande h�h�
+    public int thatMap = -1;
+    public int thatCell = -1;
+    public boolean walkFast = false;
+    public boolean getCases = false;
+    public boolean mpToTp = false;
+    public boolean noall = false;
+
+
     //Job
     private JobAction _curJobAction;
     //Disponibilit�
@@ -78,21 +94,14 @@ public class Player {
     public boolean _isInvisible = false;
     //Double
     public boolean _isClone = false;
-    //Suiveur - Suivi
-    public Map<Integer, Player> follower = new HashMap<>();
-    public Player follow = null;
+
     //Prison Alignement :
     public boolean isInEnnemyFaction;
     public long enteredOnEnnemyFaction;
     public boolean donjon;
-    //Commande h�h�
-    public int thatMap = -1;
-    public int thatCell = -1;
-    public boolean walkFast = false;
-    public boolean getCases = false;
+
+
     public ArrayList<Integer> thisCases = new ArrayList<>();
-    public boolean mpToTp = false;
-    public boolean noall = false;
     private int id;
     private String name;
     private int sexe;
@@ -136,7 +145,7 @@ public class Player {
     private boolean isOnline = false;
     private Party party;
     private int duelId = -1;
-    private Map<Integer, SpellEffect> buffs = new HashMap<Integer, SpellEffect>();
+    private Map<Integer, Effect> buffs = new HashMap<Integer, Effect>();
     private Map<Integer, GameObject> objects = new HashMap<>();
     private String _savePos;
     private int _emoteActive = 0;
@@ -235,7 +244,7 @@ public class Player {
     public boolean noitems = false;
     public boolean noblackitems = false;
     public boolean passturn = false;
-    public boolean boutique =  false;
+    //public boolean boutique =  false;
     public boolean isInvocControlable = false;
     private ArrayList<Player> compagnon = new ArrayList<>();
     private Fighter currentCompagnon = null;
@@ -418,12 +427,12 @@ public class Player {
                     if (obj.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER) {
                         PetEntry MyPets = World.world.getPetsEntry(guid);
                         if (MyPets == null) {
-                            System.out.println("Création du familier " + obj.getGuid() + " car il n'existait plus " + obj.getTemplate().getName());
+                            //System.out.println("Création du familier " + obj.getGuid() + " car il n'existait plus " + obj.getTemplate().getName());
                             obj.getTemplate().createOldFamilier(obj);
                         }
                     }
                 }catch (Exception e){
-                    System.out.println(this.getName() + " - Erreur avec la création de fami "+ obj.getGuid() + " - " + e );
+                    //System.out.println(this.getName() + " - Erreur avec la création de fami "+ obj.getGuid() + " - " + e );
                     continue;
                 }
 
@@ -465,8 +474,8 @@ public class Player {
                 }
             }
             this.maxPdv = (this.level - 1) * 5 + 55
-                    + getTotalStats().getEffect(Constant.STATS_ADD_VITA)
-                    + getTotalStats().getEffect(Constant.STATS_ADD_VIE);
+                    + getTotalStats().getEffect(EffectConstant.STATS_ADD_VITA)
+                    + getTotalStats().getEffect(EffectConstant.STATS_ADD_VIE);
             if (this.curPdv <= 0)
                 this.curPdv = 1;
             if (pdvPer > 100)
@@ -552,7 +561,7 @@ public class Player {
                 continue;
             objects.put(obj.getGuid(), obj);
         }
-        this.maxPdv = (this.level - 1) * 5 + 50 + getStats().getEffect(Constant.STATS_ADD_VITA);
+        this.maxPdv = (this.level - 1) * 5 + 50 + getStats().getEffect(EffectConstant.STATS_ADD_VITA);
         this.curPdv = (this.maxPdv * pdvPer) / 100;
         this._align = alignement;
         this._showWings = this.get_align() != 0 && seeAlign == 1;
@@ -650,18 +659,20 @@ public class Player {
 
         float boostlife = caster.getPdvMax() * tauxhp;
         Stats casterboost = caster.getTotalStats();
+        float force2 = 0,intel2 = 0,agili2=0,sages2=0,chanc2=0;
+        if(!ArrayUtils.contains(Constant.STATIC_INVO,MobModelo.getTemplate().getId())) {
+            force2 = casterboost.get(EffectConstant.STATS_ADD_FORC) * tauxstat;
+            intel2 = casterboost.get(EffectConstant.STATS_ADD_INTE) * tauxstat;
+            agili2 = casterboost.get(EffectConstant.STATS_ADD_AGIL) * tauxstat;
+            sages2 = casterboost.get(EffectConstant.STATS_ADD_SAGE) * tauxstat;
+            chanc2 = casterboost.get(EffectConstant.STATS_ADD_CHAN) * tauxstat;
+        }
 
-        float force2 = casterboost.get(Constant.STATS_ADD_FORC) * tauxstat;
-        float intel2 = casterboost.get(Constant.STATS_ADD_INTE) * tauxstat;
-        float agili2 = casterboost.get(Constant.STATS_ADD_AGIL) * tauxstat;
-        float sages2 = casterboost.get(Constant.STATS_ADD_SAGE) * tauxstat;
-        float chanc2 = casterboost.get(Constant.STATS_ADD_CHAN) * tauxstat;
-
-        float force3 = (this.stats.get(Constant.STATS_ADD_FORC) * tauxlvl) ;
-        float intel3 =  (this.stats.get(Constant.STATS_ADD_INTE) * tauxlvl) ;
-        float agili3 = (this.stats.get(Constant.STATS_ADD_AGIL) * tauxlvl) ;
-        float sages3 =  (this.stats.get(Constant.STATS_ADD_SAGE) * tauxlvl) ;
-        float chanc3 =  (this.stats.get(Constant.STATS_ADD_CHAN) * tauxlvl) ;
+        float force3 = (this.stats.get(EffectConstant.STATS_ADD_FORC) * tauxlvl) ;
+        float intel3 =  (this.stats.get(EffectConstant.STATS_ADD_INTE) * tauxlvl) ;
+        float agili3 = (this.stats.get(EffectConstant.STATS_ADD_AGIL) * tauxlvl) ;
+        float sages3 =  (this.stats.get(EffectConstant.STATS_ADD_SAGE) * tauxlvl) ;
+        float chanc3 =  (this.stats.get(EffectConstant.STATS_ADD_CHAN) * tauxlvl) ;
 
         int life = Math.round(this.maxPdv * tauxlvl) + Math.round(boostlife);
         this.curPdv = life;
@@ -672,16 +683,16 @@ public class Player {
         int agili = Math.round( agili3 + agili2 );
         int sages = Math.round( sages3 + sages2 );
         int chanc = Math.round( chanc3 + chanc2 );
-        this.stats.addOneStat(Constant.STATS_ADD_FORC, -(this.stats.get(Constant.STATS_ADD_FORC)));
-        this.stats.addOneStat(Constant.STATS_ADD_INTE, -(this.stats.get(Constant.STATS_ADD_INTE)));
-        this.stats.addOneStat(Constant.STATS_ADD_AGIL, -(this.stats.get(Constant.STATS_ADD_AGIL)));
-        this.stats.addOneStat(Constant.STATS_ADD_SAGE, -(this.stats.get(Constant.STATS_ADD_SAGE)));
-        this.stats.addOneStat(Constant.STATS_ADD_CHAN, -(this.stats.get(Constant.STATS_ADD_CHAN)));
-        this.stats.addOneStat(Constant.STATS_ADD_FORC, force);
-        this.stats.addOneStat(Constant.STATS_ADD_INTE, intel);
-        this.stats.addOneStat(Constant.STATS_ADD_AGIL, agili);
-        this.stats.addOneStat(Constant.STATS_ADD_SAGE, sages);
-        this.stats.addOneStat(Constant.STATS_ADD_CHAN, chanc);
+        this.stats.addOneStat(EffectConstant.STATS_ADD_FORC, -(this.stats.get(EffectConstant.STATS_ADD_FORC)));
+        this.stats.addOneStat(EffectConstant.STATS_ADD_INTE, -(this.stats.get(EffectConstant.STATS_ADD_INTE)));
+        this.stats.addOneStat(EffectConstant.STATS_ADD_AGIL, -(this.stats.get(EffectConstant.STATS_ADD_AGIL)));
+        this.stats.addOneStat(EffectConstant.STATS_ADD_SAGE, -(this.stats.get(EffectConstant.STATS_ADD_SAGE)));
+        this.stats.addOneStat(EffectConstant.STATS_ADD_CHAN, -(this.stats.get(EffectConstant.STATS_ADD_CHAN)));
+        this.stats.addOneStat(EffectConstant.STATS_ADD_FORC, force);
+        this.stats.addOneStat(EffectConstant.STATS_ADD_INTE, intel);
+        this.stats.addOneStat(EffectConstant.STATS_ADD_AGIL, agili);
+        this.stats.addOneStat(EffectConstant.STATS_ADD_SAGE, sages);
+        this.stats.addOneStat(EffectConstant.STATS_ADD_CHAN, chanc);
     }
 
 
@@ -746,21 +757,21 @@ public class Player {
     //CLONAGE
     public static Player ClonePerso(Player P, int id, int pdv) {
         HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
-        stats.put(Constant.STATS_ADD_VITA, pdv);
-        stats.put(Constant.STATS_ADD_FORC, P.getStats().getEffect(Constant.STATS_ADD_FORC));
-        stats.put(Constant.STATS_ADD_SAGE, P.getStats().getEffect(Constant.STATS_ADD_SAGE));
-        stats.put(Constant.STATS_ADD_INTE, P.getStats().getEffect(Constant.STATS_ADD_INTE));
-        stats.put(Constant.STATS_ADD_CHAN, P.getStats().getEffect(Constant.STATS_ADD_CHAN));
-        stats.put(Constant.STATS_ADD_AGIL, P.getStats().getEffect(Constant.STATS_ADD_AGIL));
-        stats.put(Constant.STATS_ADD_PA, P.getStats().getEffect(Constant.STATS_ADD_PA));
-        stats.put(Constant.STATS_ADD_PM, P.getStats().getEffect(Constant.STATS_ADD_PM));
-        stats.put(Constant.STATS_ADD_RP_NEU, P.getStats().getEffect(Constant.STATS_ADD_RP_NEU));
-        stats.put(Constant.STATS_ADD_RP_TER, P.getStats().getEffect(Constant.STATS_ADD_RP_TER));
-        stats.put(Constant.STATS_ADD_RP_FEU, P.getStats().getEffect(Constant.STATS_ADD_RP_FEU));
-        stats.put(Constant.STATS_ADD_RP_EAU, P.getStats().getEffect(Constant.STATS_ADD_RP_EAU));
-        stats.put(Constant.STATS_ADD_RP_AIR, P.getStats().getEffect(Constant.STATS_ADD_RP_AIR));
-        stats.put(Constant.STATS_ADD_AFLEE, P.getStats().getEffect(Constant.STATS_ADD_AFLEE));
-        stats.put(Constant.STATS_ADD_MFLEE, P.getStats().getEffect(Constant.STATS_ADD_MFLEE));
+        stats.put(EffectConstant.STATS_ADD_VITA, pdv);
+        stats.put(EffectConstant.STATS_ADD_FORC, P.getStats().getEffect(EffectConstant.STATS_ADD_FORC));
+        stats.put(EffectConstant.STATS_ADD_SAGE, P.getStats().getEffect(EffectConstant.STATS_ADD_SAGE));
+        stats.put(EffectConstant.STATS_ADD_INTE, P.getStats().getEffect(EffectConstant.STATS_ADD_INTE));
+        stats.put(EffectConstant.STATS_ADD_CHAN, P.getStats().getEffect(EffectConstant.STATS_ADD_CHAN));
+        stats.put(EffectConstant.STATS_ADD_AGIL, P.getStats().getEffect(EffectConstant.STATS_ADD_AGIL));
+        stats.put(EffectConstant.STATS_ADD_PA, P.getStats().getEffect(EffectConstant.STATS_ADD_PA));
+        stats.put(EffectConstant.STATS_ADD_PM, P.getStats().getEffect(EffectConstant.STATS_ADD_PM));
+        stats.put(EffectConstant.STATS_ADD_RP_NEU, P.getStats().getEffect(EffectConstant.STATS_ADD_RP_NEU));
+        stats.put(EffectConstant.STATS_ADD_RP_TER, P.getStats().getEffect(EffectConstant.STATS_ADD_RP_TER));
+        stats.put(EffectConstant.STATS_ADD_RP_FEU, P.getStats().getEffect(EffectConstant.STATS_ADD_RP_FEU));
+        stats.put(EffectConstant.STATS_ADD_RP_EAU, P.getStats().getEffect(EffectConstant.STATS_ADD_RP_EAU));
+        stats.put(EffectConstant.STATS_ADD_RP_AIR, P.getStats().getEffect(EffectConstant.STATS_ADD_RP_AIR));
+        stats.put(EffectConstant.STATS_ADD_AFLEE, P.getStats().getEffect(EffectConstant.STATS_ADD_AFLEE));
+        stats.put(EffectConstant.STATS_ADD_MFLEE, P.getStats().getEffect(EffectConstant.STATS_ADD_MFLEE));
 
         byte showWings = 0;
         int alvl = 0;
@@ -1358,7 +1369,7 @@ public class Player {
         this.kamas = l;
     }
 
-    public Map<Integer, SpellEffect> get_buff() {
+    public Map<Integer, Effect> get_buff() {
         return buffs;
     }
 
@@ -2295,49 +2306,49 @@ public class Player {
         ASData.append(pdv).append(",").append(pdvMax).append("|");
         ASData.append(this.getEnergy()).append(",10000|");
         ASData.append(getInitiative()).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PROS) + sutffStats.getEffect(Constant.STATS_ADD_PROS) + ((int) Math.ceil(totalStats.getEffect(Constant.STATS_ADD_CHAN) / 10)) + buffStats.getEffect(Constant.STATS_ADD_PROS) + ((int) Math.ceil(buffStats.getEffect(Constant.STATS_ADD_CHAN) / 10))).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PA)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PA)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PA)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PA)).append(",").append(totalStats.getEffect(Constant.STATS_ADD_PA)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PM)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PM)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PM)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PM)).append(",").append(totalStats.getEffect(Constant.STATS_ADD_PM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_FORC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_FORC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_FORC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_FORC)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_VITA)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_VITA)).append(",").append(donStats.getEffect(Constant.STATS_ADD_VITA)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_VITA)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_SAGE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_SAGE)).append(",").append(donStats.getEffect(Constant.STATS_ADD_SAGE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_SAGE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_CHAN)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_CHAN)).append(",").append(donStats.getEffect(Constant.STATS_ADD_CHAN)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_CHAN)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_AGIL)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_AGIL)).append(",").append(donStats.getEffect(Constant.STATS_ADD_AGIL)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_AGIL)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(donStats.getEffect(Constant.STATS_ADD_INTE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_INTE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PO)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PO)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PO)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PO)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_CREATURE)).append(",").append(sutffStats.getEffect(Constant.STATS_CREATURE)).append(",").append(donStats.getEffect(Constant.STATS_CREATURE)).append(",").append(buffStats.getEffect(Constant.STATS_CREATURE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_DOMA)+stats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_DOMA)+sutffStats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(donStats.getEffect(Constant.STATS_ADD_DOMA)+donStats.getEffect(Constant.STATS_ADD_DOMA2)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_DOMA)+buffStats.getEffect(Constant.STATS_ADD_DOMA2)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PDOM)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PDOM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(donStats.getEffect(Constant.STATS_ADD_MAITRISE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MAITRISE)).append("|");//ASData.append("0,0,0,0|");//Maitrise ?
-        ASData.append(stats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(donStats.getEffect(Constant.STATS_ADD_PERDOM)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_PERDOM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_SOIN)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_SOIN)).append(",").append(donStats.getEffect(Constant.STATS_ADD_SOIN)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_SOIN)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(donStats.getEffect(Constant.STATS_TRAPDOM)).append(",").append(buffStats.getEffect(Constant.STATS_TRAPDOM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_TRAPPER)).append(",").append(sutffStats.getEffect(Constant.STATS_TRAPPER)).append(",").append(donStats.getEffect(Constant.STATS_TRAPPER)).append(",").append(buffStats.getEffect(Constant.STATS_TRAPPER)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_RETDOM)).append(",").append(sutffStats.getEffect(Constant.STATS_RETDOM)).append(",").append(donStats.getEffect(Constant.STATS_RETDOM)).append(",").append(buffStats.getEffect(Constant.STATS_RETDOM)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_CC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_CC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_CC)).append("|").append(totalStats.getEffect(Constant.STATS_ADD_CC)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_EC)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_EC)).append(",").append(donStats.getEffect(Constant.STATS_ADD_EC)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_EC)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_AFLEE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_AFLEE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MFLEE)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_MFLEE)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_NEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_NEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_NEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_NEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_NEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_NEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_PVP_NEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_PVP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_NEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_NEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_PVP_NEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_PVP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_NEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_NEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_TER)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_TER)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_TER)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_TER)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_TER)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_TER)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_TER)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_PVP_TER)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_PVP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_TER)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_TER)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_PVP_TER)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_PVP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_TER)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_TER)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_EAU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_EAU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_EAU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_EAU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_EAU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_EAU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_PVP_EAU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_PVP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_EAU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_EAU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_PVP_EAU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_PVP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_EAU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_EAU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_AIR)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_AIR)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_AIR)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_AIR)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_AIR)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_AIR)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_PVP_AIR)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_PVP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_AIR)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_AIR)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_PVP_AIR)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_PVP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_AIR)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_AIR)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_FEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_FEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_FEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_FEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_FEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_FEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_R_PVP_FEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_R_PVP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_FEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_R_PVP_FEU)).append("|");
-        ASData.append(stats.getEffect(Constant.STATS_ADD_RP_PVP_FEU)).append(",").append(sutffStats.getEffect(Constant.STATS_ADD_RP_PVP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_FEU)).append(",").append(buffStats.getEffect(Constant.STATS_ADD_RP_PVP_FEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PROS) + sutffStats.getEffect(EffectConstant.STATS_ADD_PROS) + ((int) Math.ceil(totalStats.getEffect(EffectConstant.STATS_ADD_CHAN) / 10)) + buffStats.getEffect(EffectConstant.STATS_ADD_PROS) + ((int) Math.ceil(buffStats.getEffect(EffectConstant.STATS_ADD_CHAN) / 10))).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PA)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_PA)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_PA)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_PA)).append(",").append(totalStats.getEffect(EffectConstant.STATS_ADD_PA)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PM)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_PM)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_PM)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_PM)).append(",").append(totalStats.getEffect(EffectConstant.STATS_ADD_PM)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_FORC)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_FORC)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_FORC)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_FORC)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_VITA)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_VITA)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_VITA)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_VITA)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_SAGE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_SAGE)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_SAGE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_SAGE)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_CHAN)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_CHAN)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_CHAN)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_CHAN)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_AGIL)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_AGIL)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_AGIL)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_AGIL)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_INTE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_INTE)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_INTE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_INTE)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PO)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_PO)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_PO)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_PO)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_CREATURE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_CREATURE)).append(",").append(donStats.getEffect(EffectConstant.STATS_CREATURE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_CREATURE)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_DOMA)+stats.getEffect(EffectConstant.STATS_ADD_DOMA2)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_DOMA)+sutffStats.getEffect(EffectConstant.STATS_ADD_DOMA2)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_DOMA)+donStats.getEffect(EffectConstant.STATS_ADD_DOMA2)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_DOMA)+buffStats.getEffect(EffectConstant.STATS_ADD_DOMA2)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PDOM)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_PDOM)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_PDOM)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_PDOM)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_MAITRISE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_MAITRISE)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_MAITRISE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_MAITRISE)).append("|");//ASData.append("0,0,0,0|");//Maitrise ?
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_PERDOM)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_PERDOM)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_PERDOM)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_PERDOM)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_SOIN)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_SOIN)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_SOIN)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_SOIN)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_TRAPDOM)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_TRAPDOM)).append(",").append(donStats.getEffect(EffectConstant.STATS_TRAPDOM)).append(",").append(buffStats.getEffect(EffectConstant.STATS_TRAPDOM)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_TRAPPER)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_TRAPPER)).append(",").append(donStats.getEffect(EffectConstant.STATS_TRAPPER)).append(",").append(buffStats.getEffect(EffectConstant.STATS_TRAPPER)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_RETDOM)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_RETDOM)).append(",").append(donStats.getEffect(EffectConstant.STATS_RETDOM)).append(",").append(buffStats.getEffect(EffectConstant.STATS_RETDOM)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_CC)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_CC)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_CC)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_CC)).append("|").append(totalStats.getEffect(EffectConstant.STATS_ADD_CC)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_EC)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_EC)).append(",").append(donStats.getEffect(EffectConstant.STATS_ADD_EC)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_EC)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_AFLEE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_AFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_AFLEE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_AFLEE)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_MFLEE)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_MFLEE)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_MFLEE)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_MFLEE)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_NEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_NEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_NEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_NEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_NEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_NEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_PVP_NEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_NEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_NEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_TER)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_TER)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_TER)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_TER)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_TER)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_TER)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_TER)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_PVP_TER)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_TER)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_TER)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_PVP_TER)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_TER)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_TER)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_TER)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_EAU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_EAU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_EAU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_EAU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_EAU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_EAU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_PVP_EAU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_EAU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_EAU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_AIR)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_AIR)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_AIR)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_AIR)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_AIR)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_AIR)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_PVP_AIR)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_AIR)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_AIR)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_FEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_FEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_FEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_FEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_FEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_FEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_R_PVP_FEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_FEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_R_PVP_FEU)).append("|");
+        ASData.append(stats.getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU)).append(",").append(sutffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU)).append(",").append(0).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU)).append(",").append(buffStats.getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU)).append("|");
         return ASData.toString();
     }
 
@@ -2384,7 +2395,7 @@ public class Player {
         Stats donStats = this.getDonsStats();
         Stats buffStats = this.getBuffsStats();
         Stats totalStats = this.getTotalStats();
-        total = (stats.getEffect(Constant.STATS_ADD_PROS) + this.getStuffStats().getEffect(Constant.STATS_ADD_PROS) + (int)(Math.ceil(totalStats.getEffect(Constant.STATS_ADD_CHAN) / 10)) + buffStats.getEffect(Constant.STATS_ADD_PROS) + (int)Math.ceil(buffStats.getEffect(Constant.STATS_ADD_CHAN) / 10));
+        total = (stats.getEffect(EffectConstant.STATS_ADD_PROS) + this.getStuffStats().getEffect(EffectConstant.STATS_ADD_PROS) + (int)(Math.ceil(totalStats.getEffect(EffectConstant.STATS_ADD_CHAN) / 10)) + buffStats.getEffect(EffectConstant.STATS_ADD_PROS) + (int)Math.ceil(buffStats.getEffect(EffectConstant.STATS_ADD_CHAN) / 10));
         // prospeccion
         str.append(total).append("|");
         final int[] statsArray = {111, 128, 118, 125, 124, 123, 119, 126, 117, 182, 112, 142, 165, 138, 178, 225, 226, 220, 115,
@@ -2456,9 +2467,9 @@ public class Player {
                                 }
                             }
                             if(NumOfPrimal >= 3){
-                                stats.addOneStat(Constant.STATS_ADD_PM,1);
+                                stats.addOneStat(EffectConstant.STATS_ADD_PM,1);
                                 if(NumOfPrimal >= 6){
-                                    stats.addOneStat(Constant.STATS_ADD_PA,1);
+                                    stats.addOneStat(EffectConstant.STATS_ADD_PA,1);
                                 }
                             }
                         }
@@ -2477,10 +2488,10 @@ public class Player {
         Stats stats = new Stats(false, null);
         if (this.fight != null)
             if (this.fight.getFighterByPerso(this) != null)
-                for (SpellEffect entry : this.fight.getFighterByPerso(this).getFightBuff())
+                for (Effect entry : this.fight.getFighterByPerso(this).getFightBuff())
                     stats.addOneStat(entry.getEffectID(), entry.getFixvalue());
 
-        for (Entry<Integer, SpellEffect> entry : buffs.entrySet())
+        for (Entry<Integer, Effect> entry : buffs.entrySet())
             stats.addOneStat(entry.getValue().getEffectID(), entry.getValue().getFixvalue());
         return stats;
     }
@@ -2502,11 +2513,11 @@ public class Player {
                 fact = 8;
             double coef = maxPdv / fact;
 
-            coef += getStuffStats().getEffect(Constant.STATS_ADD_INIT);
-            coef += getTotalStats().getEffect(Constant.STATS_ADD_AGIL);
-            coef += getTotalStats().getEffect(Constant.STATS_ADD_CHAN);
-            coef += getTotalStats().getEffect(Constant.STATS_ADD_INTE);
-            coef += getTotalStats().getEffect(Constant.STATS_ADD_FORC);
+            coef += getStuffStats().getEffect(EffectConstant.STATS_ADD_INIT);
+            coef += getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
+            coef += getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN);
+            coef += getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
+            coef += getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
 
             int init = 1;
             if (maxPdv != 0)
@@ -2540,17 +2551,17 @@ public class Player {
 
     public Stats newStatsMorph() {
         Stats stats = new Stats();
-        stats.addOneStat(Constant.STATS_ADD_PA, this.pa);
-        stats.addOneStat(Constant.STATS_ADD_PM, this.pm);
-        stats.addOneStat(Constant.STATS_ADD_VITA, this.vitalite);
-        stats.addOneStat(Constant.STATS_ADD_SAGE, this.sagesse);
-        stats.addOneStat(Constant.STATS_ADD_FORC, this.terre);
-        stats.addOneStat(Constant.STATS_ADD_INTE, this.feu);
-        stats.addOneStat(Constant.STATS_ADD_CHAN, this.eau);
-        stats.addOneStat(Constant.STATS_ADD_AGIL, this.air);
-        stats.addOneStat(Constant.STATS_ADD_INIT, this.initiative);
-        stats.addOneStat(Constant.STATS_ADD_PROS, 100);
-        stats.addOneStat(Constant.STATS_CREATURE, 1);
+        stats.addOneStat(EffectConstant.STATS_ADD_PA, this.pa);
+        stats.addOneStat(EffectConstant.STATS_ADD_PM, this.pm);
+        stats.addOneStat(EffectConstant.STATS_ADD_VITA, this.vitalite);
+        stats.addOneStat(EffectConstant.STATS_ADD_SAGE, this.sagesse);
+        stats.addOneStat(EffectConstant.STATS_ADD_FORC, this.terre);
+        stats.addOneStat(EffectConstant.STATS_ADD_INTE, this.feu);
+        stats.addOneStat(EffectConstant.STATS_ADD_CHAN, this.eau);
+        stats.addOneStat(EffectConstant.STATS_ADD_AGIL, this.air);
+        stats.addOneStat(EffectConstant.STATS_ADD_INIT, this.initiative);
+        stats.addOneStat(EffectConstant.STATS_ADD_PROS, 100);
+        stats.addOneStat(EffectConstant.STATS_CREATURE, 1);
         this.useCac = false;
         return stats;
     }
@@ -2572,8 +2583,8 @@ public class Player {
         total = Stats.cumulStat(total, this.getStats());
         total = Stats.cumulStat(total, this.getStuffStats());
         total = Stats.cumulStat(total, this.getDonsStats());
-        int pods = total.getEffect(Constant.STATS_ADD_PODS);
-        pods += total.getEffect(Constant.STATS_ADD_FORC) * 15;
+        int pods = total.getEffect(EffectConstant.STATS_ADD_PODS);
+        pods += total.getEffect(EffectConstant.STATS_ADD_FORC) * 15;
         for (JobStat SM : _metiers.values()) {
             pods += SM.get_lvl() * Config.INSTANCE.getRATE_JOB();
             if (SM.get_lvl() == 100)
@@ -2638,16 +2649,16 @@ public class Player {
             int value = 0;
             switch (stat) {
                 case 10://Force
-                    value = this.getStats().getEffect(Constant.STATS_ADD_FORC);
+                    value = this.getStats().getEffect(EffectConstant.STATS_ADD_FORC);
                     break;
                 case 13://Chance
-                    value = this.getStats().getEffect(Constant.STATS_ADD_CHAN);
+                    value = this.getStats().getEffect(EffectConstant.STATS_ADD_CHAN);
                     break;
                 case 14://Agilit�
-                    value = this.getStats().getEffect(Constant.STATS_ADD_AGIL);
+                    value = this.getStats().getEffect(EffectConstant.STATS_ADD_AGIL);
                     break;
                 case 15://Intelligence
-                    value = this.getStats().getEffect(Constant.STATS_ADD_INTE);
+                    value = this.getStats().getEffect(EffectConstant.STATS_ADD_INTE);
                     break;
             }
             int cout = Constant.getReqPtsToBoostStatsByClass(this.getClasse(), stat, value);
@@ -2655,24 +2666,24 @@ public class Player {
                 switch (stat) {
                     case 11://Vita
                         if (this.getClasse() != Constant.CLASS_SACRIEUR)
-                            this.getStats().addOneStat(Constant.STATS_ADD_VITA, 1);
+                            this.getStats().addOneStat(EffectConstant.STATS_ADD_VITA, 1);
                         else
-                            this.getStats().addOneStat(Constant.STATS_ADD_VITA, 2);
+                            this.getStats().addOneStat(EffectConstant.STATS_ADD_VITA, 2);
                         break;
                     case 12://Sage
-                        this.getStats().addOneStat(Constant.STATS_ADD_SAGE, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_SAGE, 1);
                         break;
                     case 10://Force
-                        this.getStats().addOneStat(Constant.STATS_ADD_FORC, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_FORC, 1);
                         break;
                     case 13://Chance
-                        this.getStats().addOneStat(Constant.STATS_ADD_CHAN, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_CHAN, 1);
                         break;
                     case 14://Agilit�
-                        this.getStats().addOneStat(Constant.STATS_ADD_AGIL, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_AGIL, 1);
                         break;
                     case 15://Intelligence
-                        this.getStats().addOneStat(Constant.STATS_ADD_INTE, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_INTE, 1);
                         break;
                     default:
                         return;
@@ -2726,8 +2737,10 @@ public class Player {
 
     public void addObjet(GameObject newObj) {
         objects.put(newObj.getGuid(), newObj);
+        Database.getStatics().getPlayerData().updateInventory(this);
         SocketManager.GAME_SEND_OAKO_PACKET(this, newObj);
     }
+
 
     public void addObject(GameObject newObj, boolean display) {
         this.objects.put(newObj.getGuid(), newObj);
@@ -2901,7 +2914,7 @@ public class Player {
     public void refreshStats() {
         double actPdvPer = (100 * (double) this.curPdv) / (double) this.maxPdv;
         if (!useStats)
-            this.maxPdv = (this.getLevel() - 1) * 5 + 50 + getTotalStats().getEffect(Constant.STATS_ADD_VITA);
+            this.maxPdv = (this.getLevel() - 1) * 5 + 50 + getTotalStats().getEffect(EffectConstant.STATS_ADD_VITA);
         this.curPdv = (int) Math.round(maxPdv * actPdvPer / 100);
     }
 
@@ -2914,9 +2927,9 @@ public class Player {
         this.maxPdv += 5;
         this.setPdv(this.getMaxPdv());
         if (this.getLevel() == 100)
-            this.getStats().addOneStat(Constant.STATS_ADD_PA, 1);
+            this.getStats().addOneStat(EffectConstant.STATS_ADD_PA, 1);
         if (this.getLevel() == 200)
-            this.getStats().addOneStat(Constant.STATS_ADD_PM, 1);
+            this.getStats().addOneStat(EffectConstant.STATS_ADD_PM, 1);
         Constant.onLevelUpSpells(this, this.getLevel());
         if (addXp)
             this.exp = World.world.getExpLevel(this.getLevel()).perso;
@@ -3064,36 +3077,56 @@ public class Player {
         return up;
     }
 
+    public void banAccount(){
+        int days = 0;
+        if (this == null) {
+            if (Logging.USE_LOG) {
+                Logging.getInstance().write("BanFail", "Le joueur n'a pas été trouvé pour ban UseFaille");
+            }
+            return;
+        }
+
+        if (this.getAccount() == null)
+            Database.getStatics().getAccountData().load(this.getAccID());
+
+        if (this.getAccount() == null) {
+            if (Logging.USE_LOG) {
+                Logging.getInstance().write("BanFail", "Le compte du joueur n'a pas été trouvé pour ban UseFaille");
+            }
+            return;
+        }
+
+        this.getAccount().setBanned(true);
+        Database.getStatics().getAccountData().updateBannedTime(this.getAccount(), (System.currentTimeMillis() + 86400000) * days);
+
+        if (this.getGameClient() != null)
+            this.getGameClient().kick();
+
+    }
+
     public void addKamas(long l) {
+        // Si retrait d'argent
         if(l < 0 ){
+            // Si le joueur n'avait pas l'argent qu'il a essayer de se faire retirer : USE FAILLE BAN
             if( ( kamas + l) < 0 ) {
-                if (Logging.USE_LOG) {
-                    StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                    String str = "";
-                    int i = 0;
-                    for (StackTraceElement caller : stackTrace ) {
+                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                String str = "";
+                int i = 0;
+                for (StackTraceElement caller : stackTrace ) {
                         i++;
                         str += "["+ i +"] :" + "De " + caller.getMethodName() + "/" + caller.getClassName() + " && ";
                         if(i > 4)
                             break;
-                    }
-                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur "+ this.getName() +" à payé "  + l + " Kamas alors qu'il en avait que " + this.getKamas() + " appelé par " + str );
                 }
-
-                if( this.getBankKamas() >= (kamas - l) ) {
-                    this.setBankKamas(this.getBankKamas() - (kamas - l));
-                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur " + this.getName() + " à payé " + ((kamas - l)) + " Kamas de sa banque qui en comptait "+ this.getBankKamas() + " pour compléter la faille");
-                }
-                else{
-                    World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur "+ this.getName() +" à payé "  + this.getBankKamas() + " Kamas qui restait de sa banque pour compléter la faille");
-                    this.setBankKamas(0);
-                }
+                World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de retrait de "+l+" kamas alors qu'il n'en n'avait que "+this.getKamas() +" : Trace" + str, this);
+                this.banAccount();
                 kamas = 0;
             }
             else{
                 kamas += l;
             }
         }
+        // Si ajout d'argent
         else{
             kamas += l;
         }
@@ -3118,7 +3151,7 @@ public class Player {
                     && stats1.equals(stats2)
                     && !Constant.isIncarnationWeapon(exGameObject.getTemplate().getId())
                     && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL
-                    && exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_PIERRE_AME_PLEINE
+                    && !(exGameObject.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE || exGameObject.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS || exGameObject.getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI)
                     && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_OBJET_ELEVAGE
                     && gameObject.getTemplate().getType() != Constant.ITEM_TYPE_CERTIF_MONTURE
                     && (exGameObject.getTemplate().getType() != Constant.ITEM_TYPE_QUETES || Constant.isFlacGelee(gameObject.getTemplate().getId()))
@@ -3467,8 +3500,8 @@ public class Player {
         str.append(this.curPdv).append(",").append(this.maxPdv).append(";");
         str.append(this.getLevel()).append(";");
         str.append(getInitiative()).append(";");
-        str.append(getTotalStats().getEffect(Constant.STATS_ADD_PROS)
-                + ((int) Math.ceil(getTotalStats().getEffect(Constant.STATS_ADD_CHAN) / 10))).append(";");
+        str.append(getTotalStats().getEffect(EffectConstant.STATS_ADD_PROS)
+                + ((int) Math.ceil(getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN) / 10))).append(";");
         str.append("0");//Side = ?
         return str.toString();
     }
@@ -3800,7 +3833,12 @@ public class Player {
     }
 
     public int getBankCost() {
-        return account.getBank().size();
+        if(account.getVip() == 0) {
+            return account.getBank().size();
+        }
+        else{
+            return 0;
+        }
     }
 
     public void openBank() {
@@ -4856,7 +4894,7 @@ public class Player {
         }
 
         if (usingBug) {
-            World.sendWebhookMessage(Constant.moderatorWebhook,"Le joueur **" + this.getName() + "** utilise une faille critique. Double stuff sur même case. à vérifier et bannir immédiatement !" );
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE()," tilise une faille critique. Double stuff sur même case. à vérifier et bannir immédiatement !", this );
         }
 
         this.verifEquiped();
@@ -4932,7 +4970,7 @@ public class Player {
         }
 
         if (!canGo) {
-            World.sendWebhookMessage(Constant.moderatorWebhook,"**" + this.getName() + "** a tenté d'utiliser une faille lié au TP PRISME. (ID PERSO: **" + this.getId() + "**)" );
+            //World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"**" + this.getName() + "** a tenté d'utiliser une faille lié au TP PRISME. (ID PERSO: **" + this.getId() + "**)",this );
             this.send("Im182");
             return;
         }
@@ -5235,6 +5273,9 @@ public class Player {
         }
     }
 
+    public void kick(){
+        this.getGameClient().kick();
+    }
     //Mariage
 
     public Stalk get_traque() {
@@ -6562,6 +6603,12 @@ public class Player {
 
     public synchronized void setExchangeAction(ExchangeAction<?> exchangeAction) {
         if(exchangeAction == null) this.setAway(false);
+
+        // On force la fermeture si le joueur est déjà dans un échange quelconque, problème avec la méthode chelou actuel
+        /*if(this.exchangeAction != null && exchangeAction != null){
+            this.getGameClient().leaveExchange(this);
+        }*/
+
         this.exchangeAction = exchangeAction;
     }
 
@@ -6615,16 +6662,16 @@ public class Player {
         int value = 0;
         switch (stat) {
             case 10://Force
-                value = this.getStats().getEffect(Constant.STATS_ADD_FORC);
+                value = this.getStats().getEffect(EffectConstant.STATS_ADD_FORC);
                 break;
             case 13://Chance
-                value = this.getStats().getEffect(Constant.STATS_ADD_CHAN);
+                value = this.getStats().getEffect(EffectConstant.STATS_ADD_CHAN);
                 break;
             case 14://Agilit�
-                value = this.getStats().getEffect(Constant.STATS_ADD_AGIL);
+                value = this.getStats().getEffect(EffectConstant.STATS_ADD_AGIL);
                 break;
             case 15://Intelligence
-                value = this.getStats().getEffect(Constant.STATS_ADD_INTE);
+                value = this.getStats().getEffect(EffectConstant.STATS_ADD_INTE);
                 break;
         }
         int cout = Constant.getReqPtsToBoostStatsByClass(this.getClasse(), stat, value);
@@ -6634,24 +6681,24 @@ public class Player {
             switch (stat) {
                 case 11://Vita
                     if (this.getClasse() != Constant.CLASS_SACRIEUR)
-                        this.getStats().addOneStat(Constant.STATS_ADD_VITA, 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_VITA, 1);
                     else
-                        this.getStats().addOneStat(Constant.STATS_ADD_VITA, capital ? 2 : 1);
+                        this.getStats().addOneStat(EffectConstant.STATS_ADD_VITA, capital ? 2 : 1);
                     break;
                 case 12://Sage
-                    this.getStats().addOneStat(Constant.STATS_ADD_SAGE, 1);
+                    this.getStats().addOneStat(EffectConstant.STATS_ADD_SAGE, 1);
                     break;
                 case 10://Force
-                    this.getStats().addOneStat(Constant.STATS_ADD_FORC, 1);
+                    this.getStats().addOneStat(EffectConstant.STATS_ADD_FORC, 1);
                     break;
                 case 13://Chance
-                    this.getStats().addOneStat(Constant.STATS_ADD_CHAN, 1);
+                    this.getStats().addOneStat(EffectConstant.STATS_ADD_CHAN, 1);
                     break;
                 case 14://Agilit�
-                    this.getStats().addOneStat(Constant.STATS_ADD_AGIL, 1);
+                    this.getStats().addOneStat(EffectConstant.STATS_ADD_AGIL, 1);
                     break;
                 case 15://Intelligence
-                    this.getStats().addOneStat(Constant.STATS_ADD_INTE, 1);
+                    this.getStats().addOneStat(EffectConstant.STATS_ADD_INTE, 1);
                     break;
                 default:
                     return;
@@ -6673,22 +6720,22 @@ public class Player {
         int statID = 0, usados = 0;
         switch (type) {
             case 10 :
-                statID = (Constant.STATS_ADD_FORC);
+                statID = (EffectConstant.STATS_ADD_FORC);
                 break;
             case 11 :
-                statID = (Constant.STATS_ADD_VITA);
+                statID = (EffectConstant.STATS_ADD_VITA);
                 break;
             case 12 :
-                statID = (Constant.STATS_ADD_SAGE);
+                statID = (EffectConstant.STATS_ADD_SAGE);
                 break;
             case 13 :
-                statID = (Constant.STATS_ADD_CHAN);
+                statID = (EffectConstant.STATS_ADD_CHAN);
                 break;
             case 14 :
-                statID = (Constant.STATS_ADD_AGIL);
+                statID = (EffectConstant.STATS_ADD_AGIL);
                 break;
             case 15 :
-                statID = (Constant.STATS_ADD_INTE);
+                statID = (EffectConstant.STATS_ADD_INTE);
                 break;
         }
         if (pointUsed > _capital) {
@@ -6711,7 +6758,7 @@ public class Player {
                 break;
             }
         }
-        if (statID == Constant.STATS_ADD_VITA) {// vitalidad
+        if (statID == EffectConstant.STATS_ADD_VITA) {// vitalidad
             refreshLife(true);
         }
         if (mod) {
@@ -6745,8 +6792,9 @@ public class Player {
     }
 
     public int getProspection () {
-        return (getTotalStats().getEffect(Constant.STATS_ADD_PROS) + Math.round(getTotalStats().getEffect(Constant.STATS_ADD_CHAN) / 10));
+        return (getTotalStats().getEffect(EffectConstant.STATS_ADD_PROS) + Math.round(getTotalStats().getEffect(EffectConstant.STATS_ADD_CHAN) / 10));
     }
+
     public void SwapClasse(int classetochange){
 
         if(isMorph())
@@ -6857,6 +6905,33 @@ public class Player {
             return false;
         }
 
+        for (SpellGrade sort : this._sorts.values() ) {
+            int point = 0;
+            switch (sort.getLevel()){
+                case 1:
+                    break;
+                case 2:
+                    point =1;
+                    break;
+                case 3:
+                    point =3;
+                    break;
+                case 4:
+                    point =6;
+                    break;
+                case 5:
+                    point =10;
+                    break;
+                case 6:
+                    point =15;
+                    break;
+                default:
+                    point = 0;
+                    break;
+            }
+            this.set_spellPts(this.get_spellPts() + point);
+        }
+
         this.setClasse(clase);
         //Clase = Mundo.getClase(ClaseID);
         SocketManager.GAME_SEND_AC_CHANGE_CLASSE(this, getClasse());
@@ -6865,12 +6940,12 @@ public class Player {
             Constant.onLevelUpSpells(this, a);
         }
         this._sortsPlaces = Constant.getStartSortsPlaces(classe);
-        int spellpoints = 0;
+        /*int spellpoints = 0;
         for(int i = 2; i < 201; i++)
         {
             spellpoints += 1;
         }
-        this._spellPts = spellpoints;
+        this._spellPts = spellpoints;*/
         if(isOnline)
         {
             SocketManager.GAME_SEND_SL_LISTE_SORTS(this);
@@ -6878,13 +6953,30 @@ public class Player {
         demorph();
         restat();
         this.stats = new Stats(this.stats.getMap(), true, this);
+        if(this.getisParcho()==1){
+            this.getStatsParcho().getMap().clear();
+            this.getStatsParcho().getEffects().clear();
+            this.getStats().addOneStat(125, 101);
+            this.getStats().addOneStat(124, 101);
+            this.getStats().addOneStat(118, 101);
+            this.getStats().addOneStat(126, 101);
+            this.getStats().addOneStat(119, 101);
+            this.getStats().addOneStat(123, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_VITA, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_SAGE, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_FORC, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_INTE, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_CHAN, 101);
+            this.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_AGIL, 101);
+        }
         SocketManager.GAME_SEND_STATS_PACKET(this);
         refreshToMap();
         Database.getStatics().getPlayerData().updateInfos(this);
         Database.getStatics().getPlayerData().update(this);
-        String	message = "Sauvegarde du Personnage terminé";
-        SocketManager.GAME_SEND_MESSAGE(this, message);
+
+        this.sendMessage("Sauvegarde du Personnage terminé");
         this.sendMessage("Bravo ! vous avez changé de classe");
+        this.getGameClient().kick();
        // SocketManager.GAME_SEND_Im_PACKET(this, "1CHANGED_CLASSE_SUCCESS");
         return true;
 

@@ -6,11 +6,8 @@ import client.other.Stats;
 import common.Formulas;
 import database.Database;
 import entity.monster.boss.MaitreCorbac;
-import fight.Fight;
 import fight.Fighter;
-import fight.spells.Spell;
-import fight.spells.SpellGrade;
-import fight.spells.SpellEffect;
+import fight.spells.*;
 import game.world.World;
 import game.world.World.Drop;
 import kernel.Config;
@@ -1195,7 +1192,7 @@ public class Monster {
         private int size;
         private int baseXp = 10;
         private GameCase fightCell;
-        private ArrayList<SpellEffect> fightBuffs = new ArrayList<SpellEffect>();
+        private ArrayList<Effect> fightBuffs = new ArrayList<Effect>();
         public Map<Integer, Integer> stats = new HashMap<Integer, Integer>();
         private Map<Integer, SpellGrade> spells = new HashMap<Integer, SpellGrade>();
         public ArrayList<Integer> statsInfos = new ArrayList<Integer>();
@@ -1221,30 +1218,30 @@ public class Monster {
 
             try {
                 if(resist.length > 3) {
-                    this.stats.put(Constant.STATS_ADD_RP_NEU, Integer.parseInt(resist[0]));
-                    this.stats.put(Constant.STATS_ADD_RP_TER, Integer.parseInt(resist[1]));
-                    this.stats.put(Constant.STATS_ADD_RP_FEU, Integer.parseInt(resist[2]));
-                    this.stats.put(Constant.STATS_ADD_RP_EAU, Integer.parseInt(resist[3]));
-                    this.stats.put(Constant.STATS_ADD_RP_AIR, Integer.parseInt(resist[4]));
-                    this.stats.put(Constant.STATS_ADD_AFLEE, Integer.parseInt(resist[5]));
-                    this.stats.put(Constant.STATS_ADD_MFLEE, Integer.parseInt(resist[6]));
+                    this.stats.put(EffectConstant.STATS_ADD_RP_NEU, Integer.parseInt(resist[0]));
+                    this.stats.put(EffectConstant.STATS_ADD_RP_TER, Integer.parseInt(resist[1]));
+                    this.stats.put(EffectConstant.STATS_ADD_RP_FEU, Integer.parseInt(resist[2]));
+                    this.stats.put(EffectConstant.STATS_ADD_RP_EAU, Integer.parseInt(resist[3]));
+                    this.stats.put(EffectConstant.STATS_ADD_RP_AIR, Integer.parseInt(resist[4]));
+                    this.stats.put(EffectConstant.STATS_ADD_AFLEE, Integer.parseInt(resist[5]));
+                    this.stats.put(EffectConstant.STATS_ADD_MFLEE, Integer.parseInt(resist[6]));
                 } else {
                     String[] split = resist[0].split(",");
                     this.stats.put(-1, Integer.parseInt(split[0]));
                     this.stats.put(-100, Integer.parseInt(split[1]));
-                    this.stats.put(Constant.STATS_ADD_AFLEE, Integer.parseInt(resist[1]));
-                    this.stats.put(Constant.STATS_ADD_MFLEE, Integer.parseInt(resist[2]));
+                    this.stats.put(EffectConstant.STATS_ADD_AFLEE, Integer.parseInt(resist[1]));
+                    this.stats.put(EffectConstant.STATS_ADD_MFLEE, Integer.parseInt(resist[2]));
                 }
 
-                this.stats.put(Constant.STATS_ADD_FORC, Integer.parseInt(stat[0]));
-                this.stats.put(Constant.STATS_ADD_SAGE, Integer.parseInt(stat[1]));
-                this.stats.put(Constant.STATS_ADD_INTE, Integer.parseInt(stat[2]));
-                this.stats.put(Constant.STATS_ADD_CHAN, Integer.parseInt(stat[3]));
-                this.stats.put(Constant.STATS_ADD_AGIL, Integer.parseInt(stat[4]));
-                this.stats.put(Constant.STATS_ADD_DOMA, Integer.parseInt(statInfos[0]));
-                this.stats.put(Constant.STATS_ADD_PERDOM, Integer.parseInt(statInfos[1]));
-                this.stats.put(Constant.STATS_ADD_SOIN, Integer.parseInt(statInfos[2]));
-                this.stats.put(Constant.STATS_CREATURE, Integer.parseInt(statInfos[3]));
+                this.stats.put(EffectConstant.STATS_ADD_FORC, Integer.parseInt(stat[0]));
+                this.stats.put(EffectConstant.STATS_ADD_SAGE, Integer.parseInt(stat[1]));
+                this.stats.put(EffectConstant.STATS_ADD_INTE, Integer.parseInt(stat[2]));
+                this.stats.put(EffectConstant.STATS_ADD_CHAN, Integer.parseInt(stat[3]));
+                this.stats.put(EffectConstant.STATS_ADD_AGIL, Integer.parseInt(stat[4]));
+                this.stats.put(EffectConstant.STATS_ADD_DOMA, Integer.parseInt(statInfos[0]));
+                this.stats.put(EffectConstant.STATS_ADD_PERDOM, Integer.parseInt(statInfos[1]));
+                this.stats.put(EffectConstant.STATS_ADD_SOIN, Integer.parseInt(statInfos[2]));
+                this.stats.put(EffectConstant.STATS_CREATURE, Integer.parseInt(statInfos[3]));
 
             } catch (Exception e) {
                 World.world.logger.error("#1# Erreur lors du chargement du grade du monstre (template) : " + template.getId());
@@ -1471,13 +1468,13 @@ public class Monster {
             this.fightCell = cell;
         }
 
-        public ArrayList<SpellEffect> getBuffs() {
+        public ArrayList<Effect> getBuffs() {
             return this.fightBuffs;
         }
 
         public Stats getStats() {
-            if(this.getTemplate().getId() == 42 && !stats.containsKey(Constant.STATS_CREATURE))
-                stats.put(Constant.STATS_CREATURE, 5);
+            if(this.getTemplate().getId() == 42 && !stats.containsKey(EffectConstant.STATS_CREATURE))
+                stats.put(EffectConstant.STATS_CREATURE, 5);
             if(this.stats.get(-1) != null) {
                 Map<Integer, Integer> LinkedHashMap = new LinkedHashMap<>();
                 stats.putAll(this.stats);
@@ -1486,11 +1483,11 @@ public class Monster {
                 int random = Formulas.getRandomValue(210, 214);
                 int one = this.stats.get(-1), all = this.stats.get(-100);
 
-                stats.put(Constant.STATS_ADD_RP_NEU, (random == Constant.STATS_ADD_RP_NEU ? one : all));
-                stats.put(Constant.STATS_ADD_RP_TER, (random == Constant.STATS_ADD_RP_TER ? one : all));
-                stats.put(Constant.STATS_ADD_RP_FEU, (random == Constant.STATS_ADD_RP_FEU ? one : all));
-                stats.put(Constant.STATS_ADD_RP_EAU, (random == Constant.STATS_ADD_RP_EAU ? one : all));
-                stats.put(Constant.STATS_ADD_RP_AIR, (random == Constant.STATS_ADD_RP_AIR ? one : all));
+                stats.put(EffectConstant.STATS_ADD_RP_NEU, (random == EffectConstant.STATS_ADD_RP_NEU ? one : all));
+                stats.put(EffectConstant.STATS_ADD_RP_TER, (random == EffectConstant.STATS_ADD_RP_TER ? one : all));
+                stats.put(EffectConstant.STATS_ADD_RP_FEU, (random == EffectConstant.STATS_ADD_RP_FEU ? one : all));
+                stats.put(EffectConstant.STATS_ADD_RP_EAU, (random == EffectConstant.STATS_ADD_RP_EAU ? one : all));
+                stats.put(EffectConstant.STATS_ADD_RP_AIR, (random == EffectConstant.STATS_ADD_RP_AIR ? one : all));
 
                 return new Stats(stats);
             }
@@ -1509,17 +1506,17 @@ public class Monster {
             float boostlife = caster.getPdvMax() * tauxhp;
             Stats casterboost = caster.getTotalStats();
 
-            float force2 = casterboost.get(Constant.STATS_ADD_FORC) * tauxstat;
-            float intel2 = casterboost.get(Constant.STATS_ADD_INTE) * tauxstat;
-            float agili2 = casterboost.get(Constant.STATS_ADD_AGIL) * tauxstat;
-            float sages2 = casterboost.get(Constant.STATS_ADD_SAGE) * tauxstat;
-            float chanc2 = casterboost.get(Constant.STATS_ADD_CHAN) * tauxstat;
+            float force2 = casterboost.get(EffectConstant.STATS_ADD_FORC) * tauxstat;
+            float intel2 = casterboost.get(EffectConstant.STATS_ADD_INTE) * tauxstat;
+            float agili2 = casterboost.get(EffectConstant.STATS_ADD_AGIL) * tauxstat;
+            float sages2 = casterboost.get(EffectConstant.STATS_ADD_SAGE) * tauxstat;
+            float chanc2 = casterboost.get(EffectConstant.STATS_ADD_CHAN) * tauxstat;
 
-            float force3 = (this.stats.get(Constant.STATS_ADD_FORC) * tauxlvl) ;
-            float intel3 =  (this.stats.get(Constant.STATS_ADD_INTE) * tauxlvl) ;
-            float agili3 = (this.stats.get(Constant.STATS_ADD_AGIL) * tauxlvl) ;
-            float sages3 =  (this.stats.get(Constant.STATS_ADD_SAGE) * tauxlvl) ;
-            float chanc3 =  (this.stats.get(Constant.STATS_ADD_CHAN) * tauxlvl) ;
+            float force3 = (this.stats.get(EffectConstant.STATS_ADD_FORC) * tauxlvl) ;
+            float intel3 =  (this.stats.get(EffectConstant.STATS_ADD_INTE) * tauxlvl) ;
+            float agili3 = (this.stats.get(EffectConstant.STATS_ADD_AGIL) * tauxlvl) ;
+            float sages3 =  (this.stats.get(EffectConstant.STATS_ADD_SAGE) * tauxlvl) ;
+            float chanc3 =  (this.stats.get(EffectConstant.STATS_ADD_CHAN) * tauxlvl) ;
 
             int life = Math.round(this.pdvMax * tauxlvl) + Math.round(boostlife) ;
             this.pdv = life;
@@ -1531,11 +1528,11 @@ public class Monster {
             int sages = Math.round( sages3 + sages2 );
             int chanc = Math.round( chanc3 + chanc2 );
 
-            this.stats.put(Constant.STATS_ADD_FORC, force);
-            this.stats.put(Constant.STATS_ADD_INTE, intel);
-            this.stats.put(Constant.STATS_ADD_AGIL, agili);
-            this.stats.put(Constant.STATS_ADD_SAGE, sages);
-            this.stats.put(Constant.STATS_ADD_CHAN, chanc);
+            this.stats.put(EffectConstant.STATS_ADD_FORC, force);
+            this.stats.put(EffectConstant.STATS_ADD_INTE, intel);
+            this.stats.put(EffectConstant.STATS_ADD_AGIL, agili);
+            this.stats.put(EffectConstant.STATS_ADD_SAGE, sages);
+            this.stats.put(EffectConstant.STATS_ADD_CHAN, chanc);
         }
 
         public void modifStatbyLvl(int newlvl,int avgLvlBoost) {
@@ -1577,20 +1574,20 @@ public class Monster {
 
         public String stringStatsMobgradeBase() {
             StringBuilder strStats = new StringBuilder();
-            strStats.append(this.stats.get(Constant.STATS_ADD_FORC)).append(",");
-            strStats.append(this.stats.get(Constant.STATS_ADD_SAGE)).append(",");
-            strStats.append(this.stats.get(Constant.STATS_ADD_INTE)).append(",");
-            strStats.append(this.stats.get(Constant.STATS_ADD_CHAN)).append(",");
-            strStats.append(this.stats.get(Constant.STATS_ADD_AGIL));
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_FORC)).append(",");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_SAGE)).append(",");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_INTE)).append(",");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_CHAN)).append(",");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_AGIL));
             return strStats.toString();
         }
 
         public String stringStatsInfoMobgrade() {
             StringBuilder strStats = new StringBuilder();
-            strStats.append(this.stats.get(Constant.STATS_ADD_DOMA)).append(";");
-            strStats.append(this.stats.get(Constant.STATS_ADD_PERDOM)).append(";");
-            strStats.append(this.stats.get(Constant.STATS_ADD_SOIN)).append(";");
-            strStats.append(this.stats.get(Constant.STATS_CREATURE));
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_DOMA)).append(";");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_PERDOM)).append(";");
+            strStats.append(this.stats.get(EffectConstant.STATS_ADD_SOIN)).append(";");
+            strStats.append(this.stats.get(EffectConstant.STATS_CREATURE));
             return strStats.toString();
         }
 
@@ -1601,7 +1598,7 @@ public class Monster {
             return strStats.toString();
         }
 
-        public String stringStatsResiGradeMobgrade() {
+        /*public String stringStatsResiGradeMobgrade() {
             StringBuilder strStats = new StringBuilder();
 
             strStats.append(this.getLevel()).append("@");
@@ -1613,32 +1610,32 @@ public class Monster {
             strStats.append(this.stats.get(Constant.STATS_ADD_AFLEE)).append(";");
             strStats.append(this.stats.get(Constant.STATS_ADD_MFLEE));
             return strStats.toString();
-        }
+        }*/
 
         public String stringStatsActualizado() {
             StringBuilder strStats = new StringBuilder();
-            strStats.append(Constant.STATS_ADD_PA).append(":").append(getPa()).append(",");
-            strStats.append(Constant.STATS_ADD_PM).append(":").append(getPm()).append(",");
+            strStats.append(EffectConstant.STATS_ADD_PA).append(":").append(getPa()).append(",");
+            strStats.append(EffectConstant.STATS_ADD_PM).append(":").append(getPm()).append(",");
             stats.forEach((key, value) -> {
                 switch (key) {
-                    case Constant.STATS_ADD_PA:
-                    case Constant.STATS_ADD_PM:
-                    case Constant.STATS_ADD_DOMA:
-                    case Constant.STATS_ADD_PERDOM:
-                    case Constant.STATS_CREATURE:
-                    case Constant.STATS_ADD_SAGE:
-                    case Constant.STATS_ADD_RP_NEU:
-                    case Constant.STATS_ADD_RP_TER:
-                    case Constant.STATS_ADD_RP_FEU:
-                    case Constant.STATS_ADD_RP_EAU:
-                    case Constant.STATS_ADD_RP_AIR:
-                    case Constant.STATS_ADD_MFLEE:
-                    case Constant.STATS_ADD_AFLEE:
-                    case Constant.STATS_ADD_CHAN:
-                    case Constant.STATS_ADD_AGIL:
-                    case Constant.STATS_ADD_FORC:
-                    case Constant.STATS_ADD_INTE :
-                    case Constant.STATS_ADD_INIT :
+                    case EffectConstant.STATS_ADD_PA:
+                    case EffectConstant.STATS_ADD_PM:
+                    case EffectConstant.STATS_ADD_DOMA:
+                    case EffectConstant.STATS_ADD_PERDOM:
+                    case EffectConstant.STATS_CREATURE:
+                    case EffectConstant.STATS_ADD_SAGE:
+                    case EffectConstant.STATS_ADD_RP_NEU:
+                    case EffectConstant.STATS_ADD_RP_TER:
+                    case EffectConstant.STATS_ADD_RP_FEU:
+                    case EffectConstant.STATS_ADD_RP_EAU:
+                    case EffectConstant.STATS_ADD_RP_AIR:
+                    case EffectConstant.STATS_ADD_MFLEE:
+                    case EffectConstant.STATS_ADD_AFLEE:
+                    case EffectConstant.STATS_ADD_CHAN:
+                    case EffectConstant.STATS_ADD_AGIL:
+                    case EffectConstant.STATS_ADD_FORC:
+                    case EffectConstant.STATS_ADD_INTE :
+                    case EffectConstant.STATS_ADD_INIT :
                     {
                         if (!strStats.toString().isEmpty()) {
                             strStats.append(",");
@@ -1647,36 +1644,36 @@ public class Monster {
                     }
                 }
             });
-            strStats.append(",").append(Constant.STATS_ADD_INIT).append(":").append(getInit());
+            strStats.append(",").append(EffectConstant.STATS_ADD_INIT).append(":").append(getInit());
             return strStats.toString();
         }
 
         public String getStringResi() {
             String Resi ="";
-            Resi = this.stats.get(Constant.STATS_ADD_RP_NEU) + "," + this.stats.get(Constant.STATS_ADD_RP_TER) + "," + this.stats.get(Constant.STATS_ADD_RP_FEU) + "," + this.stats.get(Constant.STATS_ADD_RP_EAU) + "," +this.stats.get(Constant.STATS_ADD_RP_AIR);
+            Resi = this.stats.get(EffectConstant.STATS_ADD_RP_NEU) + "," + this.stats.get(EffectConstant.STATS_ADD_RP_TER) + "," + this.stats.get(EffectConstant.STATS_ADD_RP_FEU) + "," + this.stats.get(EffectConstant.STATS_ADD_RP_EAU) + "," +this.stats.get(EffectConstant.STATS_ADD_RP_AIR);
             return Resi;
         }
 
         public String getResiString() {
-            String Neutre = this.stats.get(Constant.STATS_ADD_RP_NEU)+";" ;
-            String Terre = this.stats.get(Constant.STATS_ADD_RP_TER)+";";
-            String Feu =this.stats.get(Constant.STATS_ADD_RP_FEU)+";";
-            String Eau =this.stats.get(Constant.STATS_ADD_RP_EAU)+";";
-            String Agi =this.stats.get(Constant.STATS_ADD_RP_AIR)+";";
-            String EsquiPA =this.stats.get(Constant.STATS_ADD_AFLEE)+";";
-            String EsquiPM =this.stats.get(Constant.STATS_ADD_MFLEE) +"";
+            String Neutre = this.stats.get(EffectConstant.STATS_ADD_RP_NEU)+";" ;
+            String Terre = this.stats.get(EffectConstant.STATS_ADD_RP_TER)+";";
+            String Feu =this.stats.get(EffectConstant.STATS_ADD_RP_FEU)+";";
+            String Eau =this.stats.get(EffectConstant.STATS_ADD_RP_EAU)+";";
+            String Agi =this.stats.get(EffectConstant.STATS_ADD_RP_AIR)+";";
+            String EsquiPA =this.stats.get(EffectConstant.STATS_ADD_AFLEE)+";";
+            String EsquiPM =this.stats.get(EffectConstant.STATS_ADD_MFLEE) +"";
 
             return Neutre+Terre+Feu+Eau+Agi+EsquiPA+EsquiPM;
         }
 
         public String getTacle() {
-            int Tacle = Math.round(this.stats.get(Constant.STATS_ADD_AGIL)/10);
+            int Tacle = Math.round(this.stats.get(EffectConstant.STATS_ADD_AGIL)/10);
             String TacleString = Tacle+""  ;
             return TacleString;
         }
 
         public String getFuite() {
-            int Tacle = Math.round(this.stats.get(Constant.STATS_ADD_AGIL)/10);
+            int Tacle = Math.round(this.stats.get(EffectConstant.STATS_ADD_AGIL)/10);
             String TacleString = Tacle+""  ;
             return TacleString;
         }

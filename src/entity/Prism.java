@@ -8,8 +8,8 @@ import client.other.Stats;
 import common.SocketManager;
 import fight.Fight;
 import fight.Fighter;
+import fight.spells.EffectConstant;
 import game.world.World;
-import kernel.Constant;
 
 import java.util.HashMap;
 
@@ -219,20 +219,20 @@ public class Prism {
         int chance = 1000 + (500 * this.level);
         int resistance = 9 * this.level;
         this.stats.clear();
-        this.stats.put(Constant.STATS_ADD_FORC, feu);
-        this.stats.put(Constant.STATS_ADD_INTE, intel);
-        this.stats.put(Constant.STATS_ADD_AGIL, agi);
-        this.stats.put(Constant.STATS_ADD_SAGE, sagesse);
-        this.stats.put(Constant.STATS_ADD_CHAN, chance);
-        this.stats.put(Constant.STATS_ADD_RP_NEU, resistance);
-        this.stats.put(Constant.STATS_ADD_RP_FEU, resistance);
-        this.stats.put(Constant.STATS_ADD_RP_EAU, resistance);
-        this.stats.put(Constant.STATS_ADD_RP_AIR, resistance);
-        this.stats.put(Constant.STATS_ADD_RP_TER, resistance);
-        this.stats.put(Constant.STATS_ADD_AFLEE, resistance);
-        this.stats.put(Constant.STATS_ADD_MFLEE, resistance);
-        this.stats.put(Constant.STATS_ADD_PA, 6);
-        this.stats.put(Constant.STATS_ADD_PM, 0);
+        this.stats.put(EffectConstant.STATS_ADD_FORC, feu);
+        this.stats.put(EffectConstant.STATS_ADD_INTE, intel);
+        this.stats.put(EffectConstant.STATS_ADD_AGIL, agi);
+        this.stats.put(EffectConstant.STATS_ADD_SAGE, sagesse);
+        this.stats.put(EffectConstant.STATS_ADD_CHAN, chance);
+        this.stats.put(EffectConstant.STATS_ADD_RP_NEU, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_RP_FEU, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_RP_EAU, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_RP_AIR, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_RP_TER, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_AFLEE, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_MFLEE, resistance);
+        this.stats.put(EffectConstant.STATS_ADD_PA, 6);
+        this.stats.put(EffectConstant.STATS_ADD_PM, 0);
     }
 
     public int getX() {

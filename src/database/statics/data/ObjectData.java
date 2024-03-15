@@ -3,7 +3,6 @@ package database.statics.data;
 import com.zaxxer.hikari.HikariDataSource;
 import database.Database;
 import database.statics.AbstractDAO;
-import exchange.transfer.DataQueue;
 import game.world.World;
 import kernel.Main;
 import object.GameObject;
@@ -140,6 +139,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
         }
     }
 
+    // TODO : changé cette gestion de merde des IDs qui ecrase certains items
     public int getNextId() {
         return Database.getStatics().getWorldEntityData().getNextObjectId();
         //  final DataType<Integer> queue = new DataType<>((byte) 2);

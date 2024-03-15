@@ -363,7 +363,7 @@ public class NpcQuestion {
 
                                 if (player.hasItemTemplate(certificat, 1)) {
                                     String date = player.getItemTemplate(certificat, 1).getTxtStat().get(Constant.STATS_DATE);
-                                    long timeStamp = Long.parseLong(date.split("#")[0]);
+                                    long timeStamp = Long.parseLong(date.split("#")[3]);
                                     if (System.currentTimeMillis() - timeStamp <= 86400000) {
                                         ok = false;
                                     }

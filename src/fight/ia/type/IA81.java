@@ -4,8 +4,6 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
-import fight.spells.LaunchedSpell;
-import fight.spells.Spell;
 import game.world.World;
 
 import java.util.ArrayList;
@@ -38,6 +36,17 @@ public class IA81 extends AbstractNeedSpell  {
             ArrayList<Fighter> AllyToHeal = Function.getInstance().getAlliesToHeal(this.fight, this.fighter,80);
             Fighter AllyToBuff = Function.getInstance().getAllyToBuff(this.fight, this.fighter);
 
+            /*
+            for (SpellGrade spell : this.heals){
+                System.out.println("Heal + " + spell.getSpell().getName());
+            }
+            for (SpellGrade spell : this.buffs){
+                System.out.println("Buff + " + spell.getSpell().getName());
+            }
+            for (SpellGrade spell : this.highests){
+                System.out.println("Dmg + " + spell.getSpell().getName());
+            }*/
+
             // On essaie le heal de zone
             if(AllyToHeal.size() >= 2){
                 if (Function.getInstance().HealIfPossible(this.fight, this.fighter,this.fighter, World.world.getSort(1274).getStatsByLevel(1) ) != 0 ) {
@@ -63,7 +72,6 @@ public class IA81 extends AbstractNeedSpell  {
             }
 
             Fighter ennemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
-
             Fighter C = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, maxPoDammage +1 );//2 = po min 1 + 1;
             Fighter A = Function.getInstance().getNearestAminoinvocnbrcasemax(this.fight, this.fighter, 1, maxPoHeal + 1);// pomax +1;
 
@@ -110,8 +118,8 @@ public class IA81 extends AbstractNeedSpell  {
                 }
             }
 
-            if(this.fighter.getCurPm(this.fight) > 0 && A == null && ennemy != null && !action) {
-                int value = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, AllyToHeal.get(0));
+            if(this.fighter.getCurPm(this.fight) > 0 && A == null && AllyToHeal.size() > 0 && !action) {
+                int value = Function.getInstance().moveautourIfPossible(this.fight, this.fighter, AllyToHeal.get(0) );
                 if(value != 0) {
                     time = value;
                     action = true;
@@ -131,7 +139,7 @@ public class IA81 extends AbstractNeedSpell  {
                 if(value != 0) time = value;
             }
 
-            if(this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0) this.stop = true;
+            if((this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0) || !action) this.stop = true;
             addNext(this::decrementCount, time);
         } else {
             this.stop = true;

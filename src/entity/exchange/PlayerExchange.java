@@ -7,6 +7,7 @@ import entity.npc.NpcTemplate;
 import entity.pet.PetEntry;
 import game.world.World;
 import game.world.World.Couple;
+import kernel.Config;
 import kernel.Constant;
 import kernel.Logging;
 import object.GameObject;
@@ -181,12 +182,18 @@ public class PlayerExchange extends Exchange {
 
         if( (this.player2.getKamas() + (-kamas2 + kamas1)) < 0){
             this.cancel();
-            World.sendWebhookMessage(Constant.moderatorWebhook,"Tentative de dupplication de **" + (-kamas2 + kamas1) + " Kamas** de **" + this.player2.getName()  + "** vers **" + this.player1.getName() + "**" );
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de dupplication de Kamas vers **" + this.player1.getName() + "**",this.player2 );
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de dupplication de **" + (-kamas1 + kamas2) + " Kamas** de **" + this.player2.getName() + "**",this.player1 );
+            this.player2.banAccount();
+            this.player1.banAccount();
             return;
         }
         if( (this.player1.getKamas() + (-kamas1 + kamas2)) < 0 ){
             this.cancel();
-            World.sendWebhookMessage(Constant.moderatorWebhook,"Tentative de dupplication de **" + (-kamas2 + kamas1) + " Kamas** de **" + this.player1.getName()   + "** vers **" +  this.player2.getName()  + "**");
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de dupplication de Kamas vers **" +  this.player2.getName()  + "**",this.player1);
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de dupplication de **" + (-kamas1 + kamas2) + " Kamas** de **" + this.player1.getName() + "**",this.player2 );
+            this.player2.banAccount();
+            this.player1.banAccount();
             return;
         }
 
@@ -1367,16 +1374,19 @@ public class PlayerExchange extends Exchange {
                 rarity =1;
             }
 
-            if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type )){
-                kamastoadd =   4 * lvl * rarity *qua;
-            }
-            else if(ArrayUtils.contains( Constant.FILTER_NONEQUIPEMENT,type )){
-                kamastoadd =   2 * lvl * qua;
-            }
-            else if ( ArrayUtils.contains( Constant.FILTER_RESSOURCES,type )){
-                kamastoadd =  Math.round(0.5 * lvl *qua);
-            }
+            if(added.getBoutique() == 0 ) {
+                if (ArrayUtils.contains(Constant.FILTER_EQUIPEMENT, type)) {
+                    kamastoadd = 4 * lvl * rarity * qua;
+                } else if (ArrayUtils.contains(Constant.FILTER_NONEQUIPEMENT, type)) {
+                    kamastoadd = 2 * lvl * qua;
+                } else if (ArrayUtils.contains(Constant.FILTER_RESSOURCES, type)) {
+                    kamastoadd = Math.round(0.5 * lvl * qua);
+                }
 
+            }
+            else {
+                kamastoadd = 0;
+            }
             return kamastoadd;
         }
 
@@ -1434,13 +1444,6 @@ public class PlayerExchange extends Exchange {
             putAllGiveItem();
         }
 
-       /* public synchronized void setNpcKamas( long k) {
-            ok1 = true;
-
-            if (k < 0)
-                return;
-            SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'G', "", String.valueOf(k));
-        }*/
 
         public synchronized void cancel() {
             if((this.player.getAccount() != null) && (this.player.getGameClient() != null))
@@ -1449,30 +1452,6 @@ public class PlayerExchange extends Exchange {
         }
 
         public synchronized void apply() {
-            /*
-            for(Couple<Integer, Integer> couple : items1) {
-                if(couple.second == 0)continue;
-                if(World.world.getGameObject(couple.first).getPosition() != Constant.ITEM_POS_NO_EQUIPED)continue;
-                if(!this.player.hasItemGuid(couple.first)) {
-                    couple.second = 0;//On met la quantité a 0 pour éviter les problemes
-                    continue;
-                }
-                GameObject obj = World.world.getGameObject(couple.first);
-                if((obj.getQuantity() - couple.second) < 1) {
-                    this.player.removeItem(couple.first);
-                    World.world.removeGameObject(World.world.getGameObject(couple.first).getGuid());
-                    couple.second = obj.getQuantity();
-                    SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this.player, couple.first);
-                } else {
-                    obj.setQuantity(obj.getQuantity()-couple.second);
-                    SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this.player, obj);
-                }
-            }
-            if(kamas2 > 0) {
-                this.player.addKamas((-kamas1 + kamas2));
-                SocketManager.GAME_SEND_Ow_PACKET(this.player);
-                SocketManager.GAME_SEND_STATS_PACKET(this.player);
-            }*/
 
             this.player.setExchangeAction(null);
             SocketManager.GAME_SEND_EXCHANGE_VALID(this.player.getGameClient(), 'a');

@@ -22,7 +22,6 @@ import fight.arena.TeamMatch;
 import game.scheduler.Updatable;
 import game.world.World;
 import kernel.*;
-import lombok.var;
 import object.GameObject;
 import other.Action;
 import util.TimerWaiter;
@@ -678,6 +677,12 @@ public class GameMap {
     public Fight newFight(Player init1, Player init2, int type) {
         if (init1.getFight() != null || init2.getFight() != null)
             return null;
+
+        if (this.placesStr.isEmpty() || this.placesStr.equals("|")) {
+            init1.sendMessage("Poste sur le forum dans la catégorie adéquat avec l'id de la map (/mapid dans le tchat) afin de pouvoir y mettre les cellules de combat. Merci.");
+            return null;
+        }
+
         int id = 1;
         if(this.fights == null)
             this.fights = new ArrayList<>();
@@ -1082,6 +1087,12 @@ public class GameMap {
         }
         if (mapNoPrism()) {
             parametros = (short)(parametros + 128);
+        }
+        if (mapNoSaveTeleport()) {
+            parametros = (short)(parametros + 256);
+        }
+        if (mapNoTeleport()) {
+            parametros = (short)(parametros + 512);
         }
         return parametros;
     }
@@ -2249,7 +2260,7 @@ public class GameMap {
         byte cof = (byte) (player.isOnMount() ? 2 : 1);
         if(player != null && player.getGameClient() != null)
             if (player.getGroupe() == null && player.getGameClient().depla != 0 && System.currentTimeMillis() - player.getGameClient().depla < (300 / cof)) {
-                World.sendWebhookMessage(Constant.moderatorWebhook, "Le joueur **" + player.getName() + "** vient d'utiliser la faille speedHack Walk et a été déconnecté.");
+                //World.sendWebhookMessage(Constant.moderatorWebhook, "Le joueur **" + player.getName() + "** vient d'utiliser la faille speedHack Walk et a été déconnecté.");
                 //player.getGameClient().disconnect();
                 return;
             }

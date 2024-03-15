@@ -6,9 +6,9 @@ import common.PathFinding;
 import common.SocketManager;
 import database.Database;
 import fight.Fight;
+import fight.spells.EffectConstant;
 import game.world.World;
 import guild.Guild;
-import kernel.Constant;
 import object.GameObject;
 
 import java.util.Collection;
@@ -442,7 +442,7 @@ public class Collector {
     }
 
     public int getMaxPod() {
-        return World.world.getGuild(this.getGuildId()).getStats(Constant.STATS_ADD_PODS);
+        return World.world.getGuild(this.getGuildId()).getStats(EffectConstant.STATS_ADD_PODS);
     }
 
     public boolean addObjet(GameObject newObj) {

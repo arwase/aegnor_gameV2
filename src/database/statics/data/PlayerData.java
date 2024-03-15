@@ -4,11 +4,9 @@ import client.Account;
 import client.Player;
 import com.zaxxer.hikari.HikariDataSource;
 import command.administration.Group;
-import common.SocketManager;
 import database.Database;
 import database.statics.AbstractDAO;
-import exchange.ExchangeClient;
-import game.GameClient;
+import fight.spells.EffectConstant;
 import game.world.World;
 import kernel.Config;
 import kernel.Constant;
@@ -20,7 +18,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.Map;
 
 public class PlayerData extends AbstractDAO<Player> {
 
@@ -58,12 +55,12 @@ public class PlayerData extends AbstractDAO<Player> {
 
                 HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
-                stats.put(Constant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(Constant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(Constant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(Constant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(Constant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(Constant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
 
 
                 Player perso = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
@@ -73,31 +70,14 @@ public class PlayerData extends AbstractDAO<Player> {
                 if (perso.isShowSeller())
                     World.world.addSeller(perso);
 
+                // FAILLE : Statistique trop élevés (Anciennement faille sur Dj familier)
                 if(RS.getInt("vitalite") > 2091 || RS.getInt("force") > 465 || RS.getInt("sagesse") > 432 || RS.getInt("intelligence") > 465 || RS.getInt("chance") > 465 || RS.getInt("agilite") > 465  ){
-                    Player player = perso;
-                    short days = 0;
-
-                    if (player == null) {
-                        System.out.println("The player was not found, verify the name please.");
-                        return;
-                    }
-                    if (player.getAccount() == null)
-                        Database.getStatics().getAccountData().load(player.getAccID());
-                    if (player.getAccount() == null) {
-                        System.out.println("The account of the player was not found, contact a supervisor.");
-                        return;
-                    }
-
-                    player.getAccount().setBanned(true);
-                    if (player.getFight() == null) {
-                        if (player.getGameClient() != null)
-                            player.getGameClient().kick();
-                    } else {
-                        SocketManager.send(player, "Im1201;" + player.getName());
-                    }
+                    perso.banAccount();
+                    World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de faille statistique, supérieurs aux jets maximum",perso );
                 }
 
-                //if(Config.INSTANCE.getAUTO_CLEAN()) {
+
+                if(Config.INSTANCE.getAUTO_CLEAN()) {
                     LocalDateTime now = LocalDateTime.now();
                     LocalDate firstDate = now.toLocalDate();
                     LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
@@ -109,7 +89,8 @@ public class PlayerData extends AbstractDAO<Player> {
                         System.out.println("Le perso " + RS.getString("name") + " doit être supprimé car le compte n'est plus utilisé depuis plus de 6 mois :" + lastConnection + " avant " + UnUsedDate);
                         perso.getAccount().deletePlayer(perso.getId());
                     }
-                //}
+                }
+
             }
         } catch (SQLException e) {
             super.sendError("PlayerData load", e);
@@ -130,12 +111,12 @@ public class PlayerData extends AbstractDAO<Player> {
                     continue;
 
                 HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
-                stats.put(Constant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(Constant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(Constant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(Constant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(Constant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(Constant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
 
                 Player oldPlayer = World.world.getPlayer((int) obj);
                 player = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
@@ -187,12 +168,12 @@ public class PlayerData extends AbstractDAO<Player> {
 
                 HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
 
-                stats.put(Constant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(Constant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(Constant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(Constant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(Constant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(Constant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
                 Player player = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
 
                 if(p != null)
@@ -311,12 +292,12 @@ public class PlayerData extends AbstractDAO<Player> {
             p.setInt(10, player.get_honor());
             p.setInt(11, player.getDeshonor());
             p.setInt(12, player.getALvl());
-            p.setInt(13, player.stats.getEffect(Constant.STATS_ADD_VITA));
-            p.setInt(14, player.stats.getEffect(Constant.STATS_ADD_FORC));
-            p.setInt(15, player.stats.getEffect(Constant.STATS_ADD_SAGE));
-            p.setInt(16, player.stats.getEffect(Constant.STATS_ADD_INTE));
-            p.setInt(17, player.stats.getEffect(Constant.STATS_ADD_CHAN));
-            p.setInt(18, player.stats.getEffect(Constant.STATS_ADD_AGIL));
+            p.setInt(13, player.stats.getEffect(EffectConstant.STATS_ADD_VITA));
+            p.setInt(14, player.stats.getEffect(EffectConstant.STATS_ADD_FORC));
+            p.setInt(15, player.stats.getEffect(EffectConstant.STATS_ADD_SAGE));
+            p.setInt(16, player.stats.getEffect(EffectConstant.STATS_ADD_INTE));
+            p.setInt(17, player.stats.getEffect(EffectConstant.STATS_ADD_CHAN));
+            p.setInt(18, player.stats.getEffect(EffectConstant.STATS_ADD_AGIL));
             p.setInt(19, (player.is_showFriendConnection() ? 1 : 0));
             p.setInt(20, (player.is_showWings() ? 1 : 0));
             p.setInt(21, (player.isShowSeller() ? 1 : 0));
@@ -368,6 +349,20 @@ public class PlayerData extends AbstractDAO<Player> {
             player.getQuestPerso().values().stream().filter(QP -> QP != null).forEach(QP -> Database.getStatics().getQuestPlayerData().update(QP, player));
 
         return true;
+    }
+
+    public void updateInventory(Player perso){
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE `players` SET `objets` = ? WHERE `id`= ?");
+            p.setString(1, perso.parseObjetsToDB());
+            p.setInt(2, perso.getId());
+            execute(p);
+        } catch (SQLException e) {
+            super.sendError("PlayerData updateInfos", e);
+        } finally {
+            close(p);
+        }
     }
 
     public void updateInfos(Player perso) {

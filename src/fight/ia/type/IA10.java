@@ -4,8 +4,8 @@ import fight.Fight;
 import fight.Fighter;
 import fight.ia.AbstractIA;
 import fight.ia.util.Function;
+import fight.spells.EffectConstant;
 import fight.spells.SpellGrade;
-import kernel.Constant;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -28,7 +28,7 @@ public class IA10 extends AbstractIA  {
             if (cellId != -1) {
                 if (fight.canCastSpell1(this.fighter, spellStats, this.fighter.getCell(), cellId))
                     fight.tryCastSpell(this.fighter, spellStats, cellId);
-            } else if (this.fighter.haveState(Constant.ETAT_PORTE)) {
+            } else if (this.fighter.haveState(EffectConstant.ETAT_PORTE)) {
                 if (!Function.getInstance().HealIfPossible(fight, this.fighter, true))
                     if (!Function.getInstance().HealIfPossible(fight, this.fighter, false))
                         this.stop = true;

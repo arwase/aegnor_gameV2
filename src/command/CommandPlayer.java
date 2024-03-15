@@ -1,7 +1,6 @@
 package command;
 
 import area.map.GameMap;
-import area.map.labyrinth.PigDragon;
 import client.Player;
 import client.other.Party;
 import common.SocketManager;
@@ -12,6 +11,7 @@ import fight.Fight;
 import fight.Fighter;
 import fight.arena.FightManager;
 import fight.arena.TeamMatch;
+import fight.spells.EffectConstant;
 import game.GameClient;
 import game.GameServer;
 import game.action.ExchangeAction;
@@ -28,9 +28,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import util.TimerWaiter;
 import util.lang.Lang;
 
-import javax.swing.Timer;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -511,11 +508,14 @@ public class CommandPlayer {
                     return true;
                 }
 
-                // TODO a décommenter une fois qu'on a cibler les tricheur
-               /* if (player.getExchangeAction() != null){
-                    player.sendMessage("Impossible d'utiliser cette commande, tu es déja en échange");
+                if(player.isInPrison() ){
                     return true;
-                }*/
+                }
+                // FAILLE : Correction faille dupplication kamas en échange
+                if (player.getExchangeAction() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande, tu es déjà en échange");
+                    return true;
+                }
 
                  Boutique.open(player);
 
@@ -566,12 +566,12 @@ public class CommandPlayer {
                             player.getStats().addOneStat(126, 101);
                             player.getStats().addOneStat(119, 101);
                             player.getStats().addOneStat(123, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_VITA, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_SAGE, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_FORC, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_INTE, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_CHAN, 101);
-                            player.getStatsParcho().addOneStat(Constant.STATS_ADD_AGIL, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_VITA, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_SAGE, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_FORC, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_INTE, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_CHAN, 101);
+                            player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_AGIL, 101);
                         }
 
                         SocketManager.GAME_SEND_STATS_PACKET(player);
@@ -608,12 +608,12 @@ public class CommandPlayer {
                         player.getStats().addOneStat(126, 101);
                         player.getStats().addOneStat(119, 101);
                         player.getStats().addOneStat(123, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_VITA, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_SAGE, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_FORC, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_INTE, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_CHAN, 101);
-                        player.getStatsParcho().addOneStat(Constant.STATS_ADD_AGIL, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_VITA, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_SAGE, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_FORC, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_INTE, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_CHAN, 101);
+                        player.getStatsParcho().addOneStat(EffectConstant.STATS_ADD_AGIL, 101);
                     }
 
                     SocketManager.GAME_SEND_STATS_PACKET(player);
@@ -976,45 +976,7 @@ public class CommandPlayer {
                     return true;
                 }
 
-                if (player.getAccount().getVip() == 0) {
-                   // player.sendMessage("Tu n'es pas VIP.");
-                    //return true;
-                    cost = player.getBankCost();
-                }
-
-                if (cost > 0) {
-                    final long playerKamas = player.getKamas();
-                    final long kamasRemaining = playerKamas - cost;
-                    final long bankKamas = player.getAccount().getBankKamas();
-                    final long totalKamas = bankKamas + playerKamas;
-                    if (kamasRemaining < 0)//Si le joueur n'a pas assez de kamas SUR LUI pour ouvrir la banque
-                    {
-                        if (bankKamas >= cost) {
-                            player.setBankKamas(bankKamas - cost); //On modifie les kamas de la banque
-                        } else if (totalKamas >= cost) {
-                            player.setKamas(0); //On puise l'entiereter des kamas du joueurs. Ankalike ?
-                            player.setBankKamas(totalKamas - cost); //On modifie les kamas de la banque
-                            SocketManager.GAME_SEND_STATS_PACKET(player);
-                            SocketManager.GAME_SEND_Im_PACKET(player, "020;"
-                                    + playerKamas);
-                        } else {
-                            SocketManager.GAME_SEND_MESSAGE_SERVER(player, "10|"
-                                    + cost);
-                            return true;
-                        }
-                    } else
-                    //Si le joueur a les kamas sur lui on lui retire directement
-                    {
-                        player.setKamas(kamasRemaining);
-                        SocketManager.GAME_SEND_STATS_PACKET(player);
-                        SocketManager.GAME_SEND_Im_PACKET(player, "020;"
-                                + cost);
-                    }
-                }
-                SocketManager.GAME_SEND_ECK_PACKET(player.getGameClient(), 5, "");
-                SocketManager.GAME_SEND_EL_BANK_PACKET(player);
-                player.setAway(true);
-                player.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_BANK, 0));
+                player.openBank();
                 return true;
             }
             else if(command(msg, "refreshMobs") || command(msg, "rmobs")) {

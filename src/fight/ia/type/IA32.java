@@ -5,11 +5,9 @@ import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.LaunchedSpell;
-import fight.spells.Spell;
 import fight.spells.SpellGrade;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by Locos on 04/10/2015.
@@ -54,7 +52,6 @@ public class IA32 extends AbstractNeedSpell  {
 
             Fighter longestEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, maxPo);//po max+ 1;
             if(longestEnnemy != null) if(longestEnnemy.isHide()) longestEnnemy = null;
-
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().invocIfPossible(this.fight, this.fighter, this.invocations)) {
