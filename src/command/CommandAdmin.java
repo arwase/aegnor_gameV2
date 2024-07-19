@@ -4,6 +4,8 @@ import area.SubArea;
 import area.map.GameCase;
 import area.map.GameMap;
 import area.map.entity.MountPark;
+import area.map.labyrinth.Gladiatrool;
+import area.map.labyrinth.Hotomani;
 import client.Account;
 import client.Player;
 import command.administration.AdminUser;
@@ -23,6 +25,7 @@ import entity.pet.PetEntry;
 import exchange.ExchangeClient;
 import fight.Challenge;
 import fight.Fight;
+import fight.spells.Effect;
 import fight.spells.Spell;
 import fight.spells.SpellGrade;
 import game.GameClient;
@@ -30,6 +33,7 @@ import game.GameServer;
 import game.action.ExchangeAction;
 import game.scheduler.entity.WorldSave;
 import game.world.World;
+import guild.GuildMember;
 import job.JobStat;
 import kernel.Config;
 import kernel.Constant;
@@ -37,6 +41,7 @@ import kernel.Main;
 import object.GameObject;
 import object.ObjectSet;
 import object.ObjectTemplate;
+import org.apache.commons.lang3.ArrayUtils;
 import other.Action;
 import quest.Quest;
 import quest.QuestPlayer;
@@ -63,7 +68,7 @@ public class CommandAdmin extends AdminUser {
             Group groupe = this.getPlayer().getGroupe();
 
             if (groupe == null) {
-                World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"Tentative de lancement de commande admin en jeu '"+ msg+"' .",this.getPlayer() );
+                World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"KICK : Tentative de lancement de commande admin en jeu '"+ msg+"' .",this.getPlayer() );
                 this.getClient().kick();
                 return;
             }
@@ -79,13 +84,15 @@ public class CommandAdmin extends AdminUser {
     }
 
     public void command(String command, String[] infos, String msg) {
-        if (command.equalsIgnoreCase("CHALL")) {
+        if (command.equalsIgnoreCase("CHALL"))
+        {
             Challenge challenge = new Challenge(this.getPlayer().getFight(), Integer.parseInt(infos[1]), 0, 0);
             this.getPlayer().getFight().getAllChallenges().put(Integer.parseInt(infos[1]), challenge);
             challenge.fightStart();
             SocketManager.GAME_SEND_CHALLENGE_FIGHT(this.getPlayer().getFight(), 1, challenge.parseToPacket());
             return;
-        } else if (command.equalsIgnoreCase("HELP")) {
+        } else if (command.equalsIgnoreCase("HELP"))
+        {
             String cmd = infos.length == 2 ? infos[1] : "";
 
             if (cmd.equalsIgnoreCase("")) {
@@ -106,7 +113,8 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             return;
-        } else if (command.equalsIgnoreCase("ONLINE")) {
+        } else if (command.equalsIgnoreCase("ONLINE"))
+        {
                  Player perso = this.getPlayer();
                 if (infos.length > 1) {//Si un nom de perso est specifie
                     try {
@@ -132,7 +140,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(str);
                 return;
 
-        } else if (command.equalsIgnoreCase("ANAME")) {
+        } else if (command.equalsIgnoreCase("ANAME"))
+        {
             infos = msg.split(" ", 2);
             String prefix = "<b><a href='asfunction:onHref,ShowPlayerPopupMenu," + this.getPlayer().getName() + "'>[" + this.getPlayer().getGroupe().getName() + "] " + this.getPlayer().getName() + "</a></b>";
             if(infos.length > 1) {
@@ -146,7 +155,6 @@ public class CommandAdmin extends AdminUser {
             return;
         } else if (command.equalsIgnoreCase("GETUNKNOWOBJECT")) {
             Player perso = this.getPlayer();
-            perso.sendMessage("Test 3 ");
             Collection<GameObject> objCOll = GameObject.getunkownOriginObject();
             String mess = null;
 
@@ -205,7 +213,8 @@ public class CommandAdmin extends AdminUser {
         else if (command.equalsIgnoreCase("GONAME")
                 || command.equalsIgnoreCase("JOIN")
                 || command.equalsIgnoreCase("join")
-                || command.equalsIgnoreCase("GON")) {
+                || command.equalsIgnoreCase("GON"))
+        {
             Player P = World.world.getPlayerByName(infos[1]);
             if (P == null) {
                 String str = "Le personnage de destination n'existe pas.";
@@ -235,7 +244,8 @@ public class CommandAdmin extends AdminUser {
                     + " a ete teleporte vers " + P.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("KICKFIGHT")) {
+        } else if (command.equalsIgnoreCase("KICKFIGHT"))
+        {
             Player P = World.world.getPlayerByName(infos[1]);
             if (P == null || P.getFight() == null) {
                 this.sendMessage("Le personnage n'a pas ete trouve ou il n'est pas en combat.");
@@ -250,7 +260,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Le personnage "
                     + P.getName() + " a ete expulse de son combat.");
             return;
-        } else if (command.equalsIgnoreCase("DEBUG")) {
+        } else if (command.equalsIgnoreCase("DEBUG"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1)//Si un nom de perso est specifie
             {
@@ -273,7 +284,8 @@ public class CommandAdmin extends AdminUser {
                     + " a ete teleporte e son point de sauvegarde.";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("JOBLEFT")) {
+        } else if (command.equalsIgnoreCase("JOBLEFT"))
+        {
             Player perso = this.getPlayer();
             try {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -286,7 +298,8 @@ public class CommandAdmin extends AdminUser {
             perso.setExchangeAction(null);
             this.sendMessage("L'action de metier e ete annule.");
             return;
-        } else if (command.equalsIgnoreCase("WHO")) {
+        } else if (command.equalsIgnoreCase("WHO"))
+        {
             String mess = "\n<u>Liste des joueurs en ligne :</u>";
             this.sendMessage(mess);
             int i = 0;
@@ -319,7 +332,8 @@ public class CommandAdmin extends AdminUser {
             mess = "\n";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("WHOALL")) {
+        } else if (command.equalsIgnoreCase("WHOALL"))
+        {
             String mess = "\n<u>Liste des joueurs en ligne :</u>";
             this.sendMessage(mess);
             for (GameClient client : GameServer.getClients()) {
@@ -344,7 +358,8 @@ public class CommandAdmin extends AdminUser {
             mess = "\n";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("WHOFIGHT")) {
+        } else if (command.equalsIgnoreCase("WHOFIGHT"))
+        {
             String mess = "";
             this.sendMessage("\n<u>Liste des joueurs en ligne et en combat :</u>");
             for (GameClient client : GameServer.getClients()) {
@@ -377,7 +392,8 @@ public class CommandAdmin extends AdminUser {
             }
             return;
         } else if (command.equalsIgnoreCase("NAMEGO")
-                || command.equalsIgnoreCase("NGO")) {
+                || command.equalsIgnoreCase("NGO"))
+        {
             Player perso = World.world.getPlayerByName(infos[1]);
             if (perso == null) {
                 String str = "Le personnage e teleporter n'existe pas.";
@@ -412,14 +428,14 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(str);
             }
             return;
-        } else if (command.equalsIgnoreCase("TP")) {
+        } else if (command.equalsIgnoreCase("TP"))
+        {
             short mapID = -1;
             int cellID = -1;
             try {
                 mapID = Short.parseShort(infos[1]);
                 cellID = Integer.parseInt(infos[2]);
             } catch (Exception e) {
-                System.out.println("bug récup loc");
                 System.out.println(e);
             }
 
@@ -475,7 +491,8 @@ public class CommandAdmin extends AdminUser {
             String str = "Le joueur " + perso.getName() + " a ete teleporte.";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("SIZE")) {
+        } else if (command.equalsIgnoreCase("SIZE"))
+        {
             int size = -1;
             try {
                 size = Integer.parseInt(infos[1]);
@@ -504,7 +521,8 @@ public class CommandAdmin extends AdminUser {
                     + " a ete modifiee.";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("FREEZE")) {
+        } else if (command.equalsIgnoreCase("FREEZE"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1) {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -520,7 +538,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Le joueur est bloque.");
             perso.setBlockMovement(!perso.getBlockMovement());
             return;
-        } else if (command.equalsIgnoreCase("BLOCKMAP")) {
+        } else if (command.equalsIgnoreCase("BLOCKMAP"))
+        {
             int i = -1;
             try {
                 i = Short.parseShort(infos[1]);
@@ -537,7 +556,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Aucune information.");
             }
             return;
-        } else if (command.equalsIgnoreCase("BLOCKFIGHT")) {
+        } else if (command.equalsIgnoreCase("BLOCKFIGHT"))
+        {
             int i = -1;
             try {
                 i = Short.parseShort(infos[1]);
@@ -550,6 +570,7 @@ public class CommandAdmin extends AdminUser {
                     player.sendServerMessage(Lang.get(player, 15));
                 this.sendMessage("Les combats ont etes debloques.");
             } else if (i == 1) {
+                Main.INSTANCE.setFightAsBlocked(true);
                 for(Player player : World.world.getOnlinePlayers())
                     player.sendServerMessage(Lang.get(player, 14));
                 this.sendMessage("Les combats ont etes bloques.");
@@ -557,7 +578,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Aucune information.");
             }
             return;
-        } else if (command.equalsIgnoreCase("MUTE")) {
+        } else if (command.equalsIgnoreCase("MUTE"))
+        {
             Player player;
             String name;
             short time;
@@ -595,7 +617,8 @@ public class CommandAdmin extends AdminUser {
             if (!player.isOnline())
                 this.sendErrorMessage("The player is not online, are you sure it is the correct player ?");
             return;
-        } else if (command.equalsIgnoreCase("MUTEIP")) {
+        } else if (command.equalsIgnoreCase("MUTEIP"))
+        {
             Player player;
             String name;
             short time;
@@ -635,7 +658,8 @@ public class CommandAdmin extends AdminUser {
 
             this.sendSuccessMessage("All the accounts of the IP (" + ip + ") have been mute for " + time + " minute(s) successfully !");
             return;
-        } else if (command.equalsIgnoreCase("UNMUTEIP")) {
+        } else if (command.equalsIgnoreCase("UNMUTEIP"))
+        {
             Player player;
             String name;
 
@@ -673,7 +697,8 @@ public class CommandAdmin extends AdminUser {
 
             this.sendSuccessMessage("All the accounts of the IP (" + ip + ") are free to talk successfully !");
             return;
-        } else if (command.equalsIgnoreCase("UNMUTE")) {
+        } else if (command.equalsIgnoreCase("UNMUTE"))
+        {
             Player player;
             String name;
 
@@ -702,7 +727,8 @@ public class CommandAdmin extends AdminUser {
             if (!player.isOnline())
                 this.sendErrorMessage("The player is not online, are you sure it is the correct player ?");
             return;
-        } else if (command.equalsIgnoreCase("MUTEMAP")) {
+        } else if (command.equalsIgnoreCase("MUTEMAP"))
+        {
             if (this.getPlayer().getCurMap() == null)
                 return;
             this.getPlayer().getCurMap().mute();
@@ -713,7 +739,8 @@ public class CommandAdmin extends AdminUser {
                 mess = "Vous venez de demuter la MAP.";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("KICK")) {
+        } else if (command.equalsIgnoreCase("KICK"))
+        {
             /*
             1 : Tu es resté trop longtemps inactif.
             2 : Ton personnage a atteint le niveau maximum autorisé
@@ -758,7 +785,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendErrorMessage("The player isn't connected, verify the name please.");
             }
             return;
-        } else if (command.equalsIgnoreCase("JAIL")) {
+        } else if (command.equalsIgnoreCase("JAIL"))
+        {
             short mapID = 666;
             int cellID = getCellJail();
             if (mapID == -1 || cellID == -1 || World.world.getMap(mapID) == null) {
@@ -803,7 +831,8 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             return;
-        } else if (command.equalsIgnoreCase("UNJAIL")) {
+        } else if (command.equalsIgnoreCase("UNJAIL"))
+        {
             Player perso = World.world.getPlayerByName(infos[1]);
             if (perso == null || perso.getFight() != null) {
                 String str = "Le personnage n'a pas ete trouve ou est en combat.";
@@ -819,7 +848,8 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             return;
-        } else if (command.equalsIgnoreCase("BAN")) {
+        } else if (command.equalsIgnoreCase("BAN"))
+        {
             Player player = World.world.getPlayerByName(infos[1]);
             short days = 0;
 
@@ -851,7 +881,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendSuccessMessage("You've kick and ban the player " + player.getName() + "(Acc: " + player.getAccount().getName() + ") for " + (days == 0 ? "unlimited" : days) + " day(s).");
             return;
-        } else if (command.equalsIgnoreCase("BANACCOUNT")) {
+        } else if (command.equalsIgnoreCase("BANACCOUNT"))
+        {
             String mess = "Le compte est introuvable";
             String A = "";
             try {
@@ -888,7 +919,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(mess
                     + ".");
             return;
-        } else if (command.equalsIgnoreCase("BANBYID")) {
+        } else if (command.equalsIgnoreCase("BANBYID"))
+        {
             int ID = -1;
             String mess = "Aucun personnage n'a ete trouve.";
             try {
@@ -927,7 +959,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("BANBYIP")) {
+        } else if (command.equalsIgnoreCase("BANBYIP"))
+        {
             String IP = "";
             try {
                 IP = infos[1];
@@ -964,7 +997,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("L'IP "
                         + IP + " a ete banni.");
             return;
-        } else if (command.equalsIgnoreCase("BANIP")) {
+        } else if (command.equalsIgnoreCase("BANIP"))
+        {
             Player P = null;
             try {
                 P = World.world.getPlayerByName(infos[1]);
@@ -1008,7 +1042,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("L'IP "
                         + IP + " a ete banni.");
             return;
-        } else if (command.equalsIgnoreCase("SHOWITEM")) {
+        } else if (command.equalsIgnoreCase("SHOWITEM"))
+        {
             Player perso = this.getPlayer();
             String name = null;
             try {
@@ -1038,7 +1073,8 @@ public class CommandAdmin extends AdminUser {
             mess = "==========";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("SHOWBANK")) {
+        } else if (command.equalsIgnoreCase("SHOWBANK"))
+        {
             Player perso = this.getPlayer();
             String name = null;
             try {
@@ -1067,7 +1103,73 @@ public class CommandAdmin extends AdminUser {
             mess = "==========";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("SHOWSTORE")) {
+        }else if (command.equalsIgnoreCase("SHOWITEM"))
+        {
+            Player perso = this.getPlayer();
+            String name = null;
+            try {
+                name = infos[1];
+            } catch (Exception e) {
+                // ok
+            }
+
+            perso = World.world.getPlayerByName(name);
+            if (perso == null) {
+                String mess = "Le personnage n'a pas ete trouve.";
+                this.sendMessage(mess);
+                return;
+            }
+            String mess = "==========\n"
+                    + "Liste d'items sur le personnage :\n";
+            this.sendMessage(mess);
+            for (Entry<Integer, GameObject> entry : perso.getItems().entrySet()) {
+                mess = entry.getValue().getGuid() + " || "
+                        + entry.getValue().getTemplate().getName() + " || "
+                        + entry.getValue().getQuantity();
+                this.sendMessage(mess);
+            }
+
+            this.sendMessage("Le personnage possede : "
+                    + perso.getKamas() + " Kamas.\n");
+            mess = "==========";
+            this.sendMessage(mess);
+            return;
+        }
+        else if (command.equalsIgnoreCase("SHOWEQUIPEDITEMS"))
+        {
+            Player perso = this.getPlayer();
+            String name = null;
+            try {
+                name = infos[1];
+            } catch (Exception e) {
+                // ok
+            }
+
+            perso = World.world.getPlayerByName(name);
+            if (perso == null) {
+                String mess = "Le personnage n'a pas ete trouve.";
+                this.sendMessage(mess);
+                return;
+            }
+            String mess = "==========\n"
+                    + "Liste d'items sur le personnage :\n";
+            this.sendMessage(mess);
+            for (GameObject entry : perso.getEquippedObjects()) {
+                mess = entry.getGuid() + " || "
+                        + entry.getTemplate().getName() + " || "
+                        + entry.getQuantity() + " || "
+                        + entry.getPosition();
+                this.sendMessage(mess);
+            }
+
+            this.sendMessage("Le personnage possede : "
+                    + perso.getKamas() + " Kamas.\n");
+            mess = "==========";
+            this.sendMessage(mess);
+            return;
+        }
+        else if (command.equalsIgnoreCase("SHOWSTOREITEMS"))
+        {
             Player perso = this.getPlayer();
             String name = null;
             try {
@@ -1094,7 +1196,8 @@ public class CommandAdmin extends AdminUser {
             mess = "==========";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("SHOWMOUNT")) {
+        } else if (command.equalsIgnoreCase("SHOWMOUNTITEMS"))
+        {
             Player perso = this.getPlayer();
             String name = null;
             try {
@@ -1109,7 +1212,7 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(mess);
                 return;
             }
-            String mess = "==========\n" + "Liste d'items dans la banque :";
+            String mess = "==========\n" + "Liste d'items dans la monture :";
             this.sendMessage(mess);
             if(perso.getMount() != null) {
                 for (Entry<Integer, GameObject> entry : perso.getMount().getObjects().entrySet()) {
@@ -1122,7 +1225,8 @@ public class CommandAdmin extends AdminUser {
             mess = "==========";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("BLOCKTRADE")) {
+        } else if (command.equalsIgnoreCase("BLOCKTRADE"))
+        {
             int i = -1;
             try {
                 i = Short.parseShort(infos[1]);
@@ -1140,13 +1244,15 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Aucune information.");
             }
             return;
-        } else if (command.equalsIgnoreCase("ERASEALLMAP")) {
+        } else if (command.equalsIgnoreCase("ERASEALLMAP"))
+        {
             for (GameMap map : World.world.getMaps())
                 map.delAllDropItem();
             this.sendMessage("Tous les objets sur toutes les maps ont été supprimés.");
             return;
         }
-        else if (command.equalsIgnoreCase("SETSPELLTYPE")) {
+        else if (command.equalsIgnoreCase("SETSPELLTYPE"))
+        {
             int spellid = -1;
             int typetoSet = -1;
             if (infos.length >= 2)//Si un nom de perso est specifie
@@ -1181,13 +1287,16 @@ public class CommandAdmin extends AdminUser {
             for(SpellGrade sg : target.getSortsStats().values()){
                sg.setTypeSwitchSpellEffects();
             }
+            Database.getDynamics().getSpellData().updateType(target);
             return;
         }
-        else if (command.equalsIgnoreCase("ERASEMAP")) {
+        else if (command.equalsIgnoreCase("ERASEMAP"))
+        {
             this.getPlayer().getCurMap().delAllDropItem();
             this.sendMessage("Les objets de la map ont été supprimés.");
             return;
-        } else if (command.equalsIgnoreCase("MORPH")) {
+        } else if (command.equalsIgnoreCase("MORPH"))
+        {
             int morphID = -9;
             try {
                 morphID = Integer.parseInt(infos[1]);
@@ -1228,13 +1337,15 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(str);
                 return;
             }
-        } else if (command.equalsIgnoreCase("DEMORPHALL")) {
+        } else if (command.equalsIgnoreCase("DEMORPHALL"))
+        {
             for (Player player : World.world.getOnlinePlayers()) {
                 player.setGfxId(player.getClasse() * 10 + player.getSexe());
             }
             this.sendMessage("Tous les joueurs connectes ont leur apparence originale.");
             return;
-        } else if (command.equalsIgnoreCase("ADDHONOR")) {
+        } else if (command.equalsIgnoreCase("ADDHONOR"))
+        {
             int honor = 0;
             try {
                 honor = Integer.parseInt(infos[1]);
@@ -1262,7 +1373,8 @@ public class CommandAdmin extends AdminUser {
             perso.addHonor(honor);
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("HONOR")) {
+        } else if (command.equalsIgnoreCase("HONOR"))
+        {
             int honor = 0;
             try {
                 honor = Integer.parseInt(infos[1]);
@@ -1290,7 +1402,8 @@ public class CommandAdmin extends AdminUser {
             perso.addHonor(honor);
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("NOAGRO")) {
+        } else if (command.equalsIgnoreCase("NOAGRO"))
+        {
             Player perso = this.getPlayer();
             String name = null;
             try {
@@ -1318,7 +1431,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(mess);
             }
             return;
-        } else if (command.equalsIgnoreCase("WHOIS")) {
+        } else if (command.equalsIgnoreCase("WHOIS"))
+        {
             String name = "";
             Player perso = null;
             try {
@@ -1371,11 +1485,13 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("CLEANFIGHT")) {
+        } else if (command.equalsIgnoreCase("CLEANFIGHT"))
+        {
             this.getPlayer().getCurMap().getFights().clear();
             this.sendMessage("Tous les combats de la map ont etes supprimes.");
             return;
-        } else if (command.equalsIgnoreCase("ETATSERVER")) {
+        } else if (command.equalsIgnoreCase("ETATSERVER"))
+        {
             int etat = 1;
             try {
                 etat = Integer.parseInt(infos[1]);
@@ -1386,7 +1502,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez change l'etat du serveur en "
                     + etat + ".");
             return;
-        } else if (command.equalsIgnoreCase("MPTOTP")) {
+        } else if (command.equalsIgnoreCase("MPTOTP"))
+        {
             this.getPlayer().mpToTp = !this.getPlayer().mpToTp;
             String mess = "";
             if (this.getPlayer().mpToTp)
@@ -1395,7 +1512,8 @@ public class CommandAdmin extends AdminUser {
                 mess = "Vous venez de desactiver le MP to TP.";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("RETURNTP")) {
+        } else if (command.equalsIgnoreCase("RETURNTP"))
+        {
             for (Player perso : World.world.getOnlinePlayers()) {
                 if (perso.thatMap == -1 || perso.getFight() != null)
                     continue;
@@ -1405,7 +1523,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage("Vous venez de renvoyer tous les joueurs e leur ancienne position.");
             return;
-        } else if (command.equalsIgnoreCase("GETCASES")) {
+        } else if (command.equalsIgnoreCase("GETCASES"))
+        {
             if (this.getPlayer().getCases) {
                 this.sendMessage("Le getCases viens d'etre disable :");
                 String i = "";
@@ -1417,21 +1536,24 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Le getCases viens d'etre active. Deplacez-vous sur la map pour capturer les cellules.");
             this.getPlayer().getCases = !this.getPlayer().getCases;
             return;
-        } else if (command.equalsIgnoreCase("WALKFAST")) {
+        } else if (command.equalsIgnoreCase("WALKFAST"))
+        {
             if (this.getPlayer().walkFast)
                 this.sendMessage("La marche instantanne viens d'etre disable.");
             else
                 this.sendMessage("La marche instantanne viens d'etre active.");
             this.getPlayer().walkFast = !this.getPlayer().walkFast;
             return;
-        } else if (command.equalsIgnoreCase("LISTMAP")) {
+        } else if (command.equalsIgnoreCase("LISTMAP"))
+        {
             String data = "";
             ArrayList<GameMap> i = World.world.getMapByPosInArray(this.getPlayer().getCurMap().getX(), this.getPlayer().getCurMap().getY());
             for (GameMap map : i)
                 data += map.getId() + " | ";
             this.sendMessage(data);
             return;
-        } else if (command.equalsIgnoreCase("DELINVENTORY")) {
+        } else if (command.equalsIgnoreCase("DELINVENTORY"))
+        {
             Player perso = null;
             infos = msg.split(" ", 3);
             try {
@@ -1458,12 +1580,45 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous venez de supprimer "
                     + i + " objets au joueur " + perso.getName() + ".");
             return;
-        } else if (command.equalsIgnoreCase("RMOBS")) {
-            this.getPlayer().getCurMap().refreshSpawns();
+        } else if (command.equalsIgnoreCase("RMOBS"))
+        {
+            if( Constant.isInGladiatorDonjon(this.getPlayer().getCurMap().getId())) {
+                if(this.getPlayer().getCurMap().getMobGroups().size() < 1) {
+                    Gladiatrool.spawnGroupGladiatrool(this.getPlayer().getCurMap().getId());
+                }
+            }
+            else if(ArrayUtils.contains(Constant.HOTOMANI_MAPID,this.getPlayer().getCurMap().getId())){
+                if(this.getPlayer().getCurMap().getMobGroups().size() < 3) {
+                    Hotomani.spawnGroupHotomani(this.getPlayer().getCurMap().getId());
+                }
+            }
+            else if(ArrayUtils.contains(Constant.HOTOMANIDJ_MAPID,this.getPlayer().getCurMap().getId())){
+                if(this.getPlayer().getCurMap().getMobGroups().size() < 1) {
+                    if (this.getPlayer().getCurMap().getId() == 12010) // Hotomani groups salle1
+                        Hotomani.spawnGroupe1();
+                    else if (this.getPlayer().getCurMap().getId() == 12017) // Hotomani groups salle2
+                        Hotomani.spawnGroupe2();
+                    else if (this.getPlayer().getCurMap().getId() == 12000) // Hotomani groups salle3
+                        Hotomani.spawnGroupe3();
+                    else if (this.getPlayer().getCurMap().getId() == 12015) // Hotomani groups salle4
+                        Hotomani.spawnGroupe4();
+                    else if (this.getPlayer().getCurMap().getId() == 12014) // Hotomani groups salle5
+                        Hotomani.spawnGroupe5();
+                    else if (this.getPlayer().getCurMap().getId() == 12028) { // Hotomani boss
+                        Hotomani.spawnBossBoth();
+                        Hotomani.spawnBoss2();
+                        Hotomani.spawnBoss1();
+                    }
+                }
+            }
+            else{
+                this.getPlayer().getCurMap().refreshSpawns();
+            }
             String mess = "Les spawns de monstres sur la map ont etes rafraichit.";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("DELJOB")) {
+        } else if (command.equalsIgnoreCase("DELJOB"))
+        {
             Player perso = this.getPlayer();
             infos = msg.split(" ", 3);
             int job = -1;
@@ -1495,7 +1650,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez supprimé le métier "
                     + job + " sur le personnage " + perso.getName() + ".");
             return;
-        } else if (command.equalsIgnoreCase("ADDTRIGGER")) {
+        } else if (command.equalsIgnoreCase("ADDTRIGGER"))
+        {
             String args = "";
             try {
                 args = infos[1];
@@ -1518,7 +1674,8 @@ public class CommandAdmin extends AdminUser {
                 str = "Le trigger n'a pas ete ajoute.";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("DELTRIGGER")) {
+        } else if (command.equalsIgnoreCase("DELTRIGGER"))
+        {
             int cellID = -1;
             try {
                 cellID = Integer.parseInt(infos[1]);
@@ -1541,7 +1698,8 @@ public class CommandAdmin extends AdminUser {
                 str = "Le trigger n'a pas ete retire.";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("SAVETHAT")) {
+        } else if (command.equalsIgnoreCase("SAVETHAT"))
+        {
             this.getPlayer().thatMap = this.getPlayer().getCurMap().getId();
             this.getPlayer().thatCell = this.getPlayer().getCurCell().getId();
             this.sendMessage("Vous avez sauvegarde la map "
@@ -1549,7 +1707,8 @@ public class CommandAdmin extends AdminUser {
                     + " et la cellule "
                     + this.getPlayer().thatCell + ".");
             return;
-        } else if (command.equalsIgnoreCase("APPLYTHAT")) {
+        } else if (command.equalsIgnoreCase("APPLYTHAT"))
+        {
             if (this.getPlayer().thatMap == -1 || this.getPlayer().thatCell == -1) {
                 this.sendMessage("Impossible d'ajouter le trigger, veuillez utiliser la commande SAVETHAT avant.");
                 return;
@@ -1562,7 +1721,8 @@ public class CommandAdmin extends AdminUser {
             this.getPlayer().thatCell = -1;
 
             return;
-        } else if (command.equalsIgnoreCase("STRIGGER")) {
+        } else if (command.equalsIgnoreCase("STRIGGER"))
+        {
             this.getPlayer().thatMap = this.getPlayer().getCurMap().getId();
             this.getPlayer().thatCell = this.getPlayer().getCurCell().getId();
             this.sendMessage("Vous avez sauvegarde la map "
@@ -1570,7 +1730,8 @@ public class CommandAdmin extends AdminUser {
                     + " et la cellule "
                     + this.getPlayer().thatCell + ".");
             return;
-        } else if (command.equalsIgnoreCase("APTRIGGER")) {
+        } else if (command.equalsIgnoreCase("APTRIGGER"))
+        {
             if (this.getPlayer().thatMap == -1
                     || this.getPlayer().thatCell == -1) {
                 this.sendMessage("Impossible d'ajouter le trigger, veuillez utiliser la commande STRIGGER avant.");
@@ -1584,7 +1745,8 @@ public class CommandAdmin extends AdminUser {
             this.getPlayer().thatCell = -1;
             this.sendMessage("Vous avez applique le trigger.");
             return;
-        } else if (command.equalsIgnoreCase("INFOS")) {
+        } else if (command.equalsIgnoreCase("INFOS"))
+        {
             long uptime = System.currentTimeMillis() - Config.INSTANCE.getStartTime();
             int day = (int) (uptime / (1000 * 3600 * 24));
             uptime %= (1000 * 3600 * 24);
@@ -1640,7 +1802,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(message);
             }
             return;
-        } else if (command.equalsIgnoreCase("STARTFIGHT")) {
+        } else if (command.equalsIgnoreCase("STARTFIGHT"))
+        {
             if (this.getPlayer().getFight() == null) {
                 this.sendMessage("Vous devez etre dans un combat.");
                 return;
@@ -1648,7 +1811,8 @@ public class CommandAdmin extends AdminUser {
             this.getPlayer().getFight().startFight();
             this.sendMessage("Le combat a ete demarre.");
             return;
-        } else if (command.equalsIgnoreCase("ENDFIGHT")) {
+        } else if (command.equalsIgnoreCase("ENDFIGHT"))
+        {
             if (this.getPlayer().getFight() == null) {
                 this.sendMessage("Le combat n'existe pas.");
                 return;
@@ -1670,7 +1834,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Aucune information.");
             }
             return;
-        } else if (command.equalsIgnoreCase("ENDFIGHTALL")) {
+        } else if (command.equalsIgnoreCase("ENDFIGHTALL"))
+        {
             try {
                 for (GameClient client : GameServer.getClients()) {
                     Player player = client.getPlayer();
@@ -1699,7 +1864,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Tous les combats ont ete termines.");
             }
             return;
-        } else if (command.equalsIgnoreCase("MAPINFO")) {
+        } else if (command.equalsIgnoreCase("MAPINFO"))
+        {
             String mess = "==========\n" + "Liste des PNJs de la Map :";
             this.sendMessage(mess);
             GameMap map = this.getPlayer().getCurMap();
@@ -1724,7 +1890,8 @@ public class CommandAdmin extends AdminUser {
             mess = "==========";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("UNBANIP")) {
+        } else if (command.equalsIgnoreCase("UNBANIP"))
+        {
             Player perso = null;
             try {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -1751,7 +1918,8 @@ public class CommandAdmin extends AdminUser {
             }
             return;
         }
-        else if (command.equalsIgnoreCase("UNBANIPBYIP")) {
+        else if (command.equalsIgnoreCase("UNBANIPBYIP"))
+        {
             String ip = null;
             try {
                 ip = infos[1];
@@ -1772,7 +1940,8 @@ public class CommandAdmin extends AdminUser {
             }
             return;
         }
-        else if (command.equalsIgnoreCase("UNBAN")) {
+        else if (command.equalsIgnoreCase("UNBAN"))
+        {
             Player P = World.world.getPlayerByName(infos[1]);
             if (P == null) {
                 this.sendMessage("Personnage non trouve.");
@@ -1789,21 +1958,79 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez debanni "
                     + P.getName() + ".");
             return;
-        } else if (command.equalsIgnoreCase("EXIT")) {
+        } else if (command.equalsIgnoreCase("EXIT"))
+        {
             this.sendMessage("Lancement du reboot.");
             Main.INSTANCE.getRunnables().add(() -> Main.INSTANCE.stop("Exit by administrator"));
             return;
-        } else  if (command.equalsIgnoreCase("SETMAX")) {
+        } else if (command.equalsIgnoreCase("SETMAX"))
+        {
             short i = Short.parseShort(infos[1]);
             this.sendMessage("Le maximum de joueur a été fixer à : " + i);
             GameServer.MAX_PLAYERS = i;
             return;
-        } else if (command.equalsIgnoreCase("SAVE") && !Config.INSTANCE.isSaving()) {
+        }
+        else if (command.equalsIgnoreCase("SETSERVERONLYGM"))
+        {
+            try {
+                boolean bool = Integer.parseInt(infos[1]) == 1;
+
+                if(bool){
+                    if(GameServer.INSTANCE.getState() != 0) {
+                        GameServer.INSTANCE.closeServerForPlayers();
+                        this.sendMessage("Le serveur a été fermé aux joueurs");
+                    }
+                    else {
+                        this.sendMessage("Le serveur est déjà fermé aux joueurs");
+                    }
+                }
+
+                if(!bool){
+                    GameServer.INSTANCE.openServerForPlayers();
+                    this.sendMessage("Le serveur a été ouvert aux joueurs");
+                }
+
+            }
+            catch(Exception e) {
+                this.sendMessage("Uniquement 0 ou 1 autorisé : 1 pour fermé 0 pour ouvrir");
+            }
+            return;
+        }
+        else if (command.equalsIgnoreCase("SETIA")) {
+            try {
+                int IA = Integer.parseInt(infos[1]);
+                int MobID = Integer.parseInt(infos[2]);
+
+                Monster mob = World.world.getMonstre(MobID);
+
+                if(mob == null) {
+                    this.sendMessage("Aucun monstre avec ID '" + MobID + "' trouvé");
+                    return;
+                }
+
+                if(IA > 100 || IA <=0){
+                    this.sendMessage("IA '" + IA + "' invalide");
+                    return;
+                }
+
+                int oldIA = mob.getIa();
+                mob.setIA(IA);
+                Database.getDynamics().getMonsterData().updateMonsterIA(mob.getId(),IA);
+                this.sendMessage("L'IA du monstre '"+ mob.getName()+"' a été changé de '"+ oldIA+ "' à '" +IA+"'");
+            }
+            catch(Exception e) {
+                this.sendMessage("IA ou MobID non valide " + e.getMessage());
+            }
+            return;
+        }
+        else if (command.equalsIgnoreCase("SAVE") && !Config.INSTANCE.isSaving())
+        {
             WorldSave.cast(1);
             String mess = "Sauvegarde lancee!";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("LEVEL")) {
+        } else if (command.equalsIgnoreCase("LEVEL"))
+        {
             int count = 0;
             try {
                 count = Integer.parseInt(infos[1]);
@@ -1833,7 +2060,8 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             return;
-        } else if (command.equalsIgnoreCase("KAMAS")) {
+        } else if (command.equalsIgnoreCase("KAMAS"))
+        {
             int count = 0;
             try {
                 count = Integer.parseInt(infos[1]);
@@ -1868,7 +2096,8 @@ public class CommandAdmin extends AdminUser {
             mess += Math.abs(count) + " kamas e " + perso.getName() + ".";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("ITEMSET")) {
+        } else if (command.equalsIgnoreCase("ITEMSET"))
+        {
             int tID = 0;
             try {
                 tID = Integer.parseInt(infos[1]);
@@ -1899,7 +2128,8 @@ public class CommandAdmin extends AdminUser {
             str += ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("ITEM") || command.equalsIgnoreCase("!getitem")) {
+        } else if (command.equalsIgnoreCase("ITEM") || command.equalsIgnoreCase("!getitem"))
+        {
             int tID = 0;
             try {
                 tID = Integer.parseInt(infos[1]);
@@ -2000,7 +2230,8 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             return;
-        } else if (command.equalsIgnoreCase("SPELLPOINT")) {
+        } else if (command.equalsIgnoreCase("SPELLPOINT"))
+        {
             int pts = -1;
             try {
                 pts = Integer.parseInt(infos[1]);
@@ -2029,7 +2260,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if(command.equalsIgnoreCase("UTILITY")) {
+        } else if(command.equalsIgnoreCase("UTILITY"))
+        {
             switch(infos[1].toUpperCase()) {
                 case "COLLECTOR":
                     switch(infos[2].toUpperCase()) {
@@ -2067,7 +2299,8 @@ public class CommandAdmin extends AdminUser {
 
                     break;
             }
-        } else if (command.equalsIgnoreCase("LSPELL")) {
+        } else if (command.equalsIgnoreCase("LSPELL"))
+        {
             int spell = -1;
             try {
                 spell = Integer.parseInt(infos[1]);
@@ -2095,7 +2328,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("CAPITAL")) {
+        } else if (command.equalsIgnoreCase("CAPITAL"))
+        {
             int pts = -1;
             try {
                 pts = Integer.parseInt(infos[1]);
@@ -2124,7 +2358,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("ALIGN")) {
+        } else if (command.equalsIgnoreCase("ALIGN"))
+        {
             byte align = -1;
             try {
                 align = Byte.parseByte(infos[1]);
@@ -2161,7 +2396,8 @@ public class CommandAdmin extends AdminUser {
             String str = "L'alignement du joueur a ete modifie en " + a + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("LIFE")) {
+        } else if (command.equalsIgnoreCase("LIFE"))
+        {
             int count = 0;
             try {
                 count = Integer.parseInt(infos[1]);
@@ -2190,7 +2426,8 @@ public class CommandAdmin extends AdminUser {
                 return;
             }
             return;
-        } else if (command.equalsIgnoreCase("XPJOB")) {
+        } else if (command.equalsIgnoreCase("XPJOB"))
+        {
             int job = -1;
             int xp = -1;
             try {
@@ -2230,7 +2467,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("LJOB")) {
+        } else if (command.equalsIgnoreCase("LJOB"))
+        {
             int job = -1;
             try {
                 job = Integer.parseInt(infos[1]);
@@ -2258,7 +2496,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName() + ".";
             this.sendMessage(str);
             return;
-        } else if (command.equalsIgnoreCase("UNLSPELL")) {
+        } else if (command.equalsIgnoreCase("UNLSPELL"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 2)//Si un nom de perso est specifie
             {
@@ -2272,7 +2511,8 @@ public class CommandAdmin extends AdminUser {
             perso.setExchangeAction(new ExchangeAction<>(ExchangeAction.FORGETTING_SPELL, 0));
             SocketManager.GAME_SEND_FORGETSPELL_INTERFACE('+', perso);
             return;
-        } else if (command.equalsIgnoreCase("SPAWN")) {
+        } else if (command.equalsIgnoreCase("SPAWN"))
+        {
             String Mob = null;
             try {
                 Mob = infos[1];
@@ -2287,7 +2527,8 @@ public class CommandAdmin extends AdminUser {
             this.getPlayer().getCurMap().spawnGroupOnCommand(this.getPlayer().getCurCell().getId(), Mob, true);
             this.sendMessage("Vous avez ajoute un groupe de monstres.");
             return;
-        } else if (command.equalsIgnoreCase("SHUTDOWN")) {
+        } else if (command.equalsIgnoreCase("SHUTDOWN"))
+        {
             int time = 30, OffOn = 0;
             try {
                 OffOn = Integer.parseInt(infos[1]);
@@ -2296,7 +2537,7 @@ public class CommandAdmin extends AdminUser {
                 // ok
             }
 
-            World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO()," Un reboot a été programmé dans "+time+ " minutes.",this.getPlayer() );
+            //World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO()," Un reboot a été programmé dans "+time+ " minutes.",this.getPlayer() );
             if (OffOn == 1 && this.isTimerStart())// demande de demarer le reboot
             {
                 this.sendMessage("Un reboot est déjà programmé.");
@@ -2327,7 +2568,8 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Aucun reboot n'est lancé.");
             }
             return;
-        } else if (command.equalsIgnoreCase("LINEM")) {
+        } else if (command.equalsIgnoreCase("LINEM"))
+        {
             String line = "|";
             for(String split : infos[1].split(",")) {
                 int id = Integer.parseInt(split);
@@ -2339,7 +2581,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage(line);
             return;
-        } else if (command.equalsIgnoreCase("ENERGIE")) {
+        } else if (command.equalsIgnoreCase("ENERGIE"))
+        {
             try {
                 Player perso = this.getPlayer();
                 String name = null;
@@ -2358,7 +2601,8 @@ public class CommandAdmin extends AdminUser {
 
             }
             return;
-        } else if (command.equalsIgnoreCase("RES")) {
+        } else if (command.equalsIgnoreCase("RES"))
+        {
             Player perso = this.getPlayer();
             perso = World.world.getPlayerByName(infos[1]);
             if (perso == null) {
@@ -2376,11 +2620,13 @@ public class CommandAdmin extends AdminUser {
             } else
                 this.sendMessage("Le personnage n'est pas connecte.");
             return;
-        } else if (command.equalsIgnoreCase("KICKALL")) {
+        } else if (command.equalsIgnoreCase("KICKALL"))
+        {
             this.sendMessage("Tout le monde va etre kicke.");
             GameServer.INSTANCE.kickAll(false);
             return;
-        } else if (command.equalsIgnoreCase("RESET")) {
+        } else if (command.equalsIgnoreCase("RESET"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1) {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -2402,7 +2648,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez restat "
                     + perso.getName() + ".");
             return;
-        }else if (command.equalsIgnoreCase("RESETALL")) {
+        }else if (command.equalsIgnoreCase("RESETALL"))
+        {
             for (Player perso: World.world.getPlayers()) {
                 perso.getStats().addOneStat(125, -perso.getStats().getEffect(125));
                 perso.getStats().addOneStat(124, -perso.getStats().getEffect(124));
@@ -2417,7 +2664,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage("Vous avez restat tout le monde");
             return;
-        } else if (command.equalsIgnoreCase("RENAMEPERSO")) {
+        } else if (command.equalsIgnoreCase("RENAMEPERSO"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1)
                 perso = World.world.getPlayerByName(infos[1]);
@@ -2440,7 +2688,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez renomme "
                     + name + " en " + perso.getName() + ".");
             return;
-        } else if (command.equalsIgnoreCase("RENAMEGUILDE")) {
+        } else if (command.equalsIgnoreCase("RENAMEGUILDE"))
+        {
             String ancName = "";
             String newName = "";
             int idGuild = -1;
@@ -2457,18 +2706,54 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez renomme la guilde en "
                     + newName + ".");
             return;
-        } else if (command.equalsIgnoreCase("A")) {
+        }
+        else if (command.equalsIgnoreCase("SETGUILDRIGHTANDRANK"))
+        {
+            int right = -1;
+            int rank = -1;
+            Player perso = World.world.getPlayerByName(infos[1]);
+            if(perso == null) {
+                String mess = "Le personnage " + infos[1] + " n'existe pas.";
+                this.sendMessage(mess);
+                return;
+            }
+
+            right = Integer.parseInt(infos[2]);
+            try {
+                rank = Integer.parseInt(infos[3]);
+            }
+            catch (Exception e){}
+
+            if(right == -1)
+                return;
+
+            GuildMember gP = perso.getGuildMember();
+            if(gP != null) {
+                if(rank != -1) {
+                    gP.setAllRights(rank, (byte) gP.getXpGive(), right, perso);
+                }
+                else{
+                    gP.setAllRights(gP.getRank(), (byte) gP.getXpGive(), right, perso);
+                }
+            }
+
+            return;
+        }
+        else if (command.equalsIgnoreCase("A"))
+        {
             infos = msg.split(" ", 2);
             String prefix = "<b>Server</b>";
             SocketManager.GAME_SEND_Im_PACKET_TO_ALL("116;" + prefix + "~"
                     + infos[1]);
             this.sendMessage("Vous avez envoye un message e tout le serveur.");
             return;
-        } else if (command.equalsIgnoreCase("MOVEMOB")) {
+        } else if (command.equalsIgnoreCase("MOVEMOB"))
+        {
             this.getPlayer().getCurMap().onMapMonsterDeplacement();
             this.sendMessage("Vous avez deplace un groupe de monstres.");
             return;
-        } else if (command.equalsIgnoreCase("ALLGIFTS")) {
+        } else if (command.equalsIgnoreCase("ALLGIFTS"))
+        {
             int template = -1, quantity = 0, jp = 0;
 
             try {
@@ -2495,7 +2780,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(World.world.getAccounts().size()
                     + " ont reeu le cadeau : " + gift + ".");
             return;
-        } else if (command.equalsIgnoreCase("GIFTS")) {
+        } else if (command.equalsIgnoreCase("GIFTS"))
+        {
             String name = "";
             int template = -1, quantity = 0, jp = 0;
 
@@ -2528,7 +2814,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(name
                     + " a reeu le cadeau : " + gift + ".");
             return;
-        } else if (command.equalsIgnoreCase("SHOWPOINTS")) {
+        } else if (command.equalsIgnoreCase("SHOWPOINTS"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1)
                 perso = World.world.getPlayerByName(infos[1]);
@@ -2552,7 +2839,23 @@ public class CommandAdmin extends AdminUser {
                         + " points boutique. car pas lié a son compte web");
             }
             return;
-        } else if (command.equalsIgnoreCase("ADDNPC")) {
+        }
+        else if (command.equalsIgnoreCase("REMOVETONICS"))
+        {
+            Player perso = this.getPlayer();
+            if (infos.length > 1)
+                perso = World.world.getPlayerByName(infos[1]);
+            if (perso == null) {
+                String mess = "Le personnage n'existe pas.";
+                this.sendMessage(mess);
+                return;
+            }
+            perso.removeAllsToniques();
+
+            return;
+        }
+        else if (command.equalsIgnoreCase("ADDNPC"))
+        {
             int id = 0;
             try {
                 id = Integer.parseInt(infos[1]);
@@ -2579,7 +2882,8 @@ public class CommandAdmin extends AdminUser {
             else
                 this.sendMessage("Erreur lors de la sauvegarde de la position.");
             return;
-        } else if (command.equalsIgnoreCase("DELNPC")) {
+        } else if (command.equalsIgnoreCase("DELNPC"))
+        {
             int id = 0;
             try {
                 id = Integer.parseInt(infos[1]);
@@ -2604,7 +2908,8 @@ public class CommandAdmin extends AdminUser {
             else
                 this.sendMessage("Erreur lors de la sauvegarde de la position.");
             return;
-        } else if (command.equalsIgnoreCase("SETSTATS")) {
+        } else if (command.equalsIgnoreCase("SETSTATS"))
+        {
             int obj = -1;
             String stats = "";
             try {
@@ -2631,7 +2936,177 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage("L'objet a ete modifie avec succes.");
             return;
-        } else if (command.equalsIgnoreCase("ADDCELLPARK")) {
+        }
+        else if (command.equalsIgnoreCase("SETSPELLEA"))
+        {
+            int obj = -1;
+            int type = -1;
+            try {
+                obj = Integer.parseInt(infos[1]);
+                type = Integer.parseInt(infos[2]);
+            } catch (Exception e) {
+                // ok
+            }
+            if (obj == -1 || type == -1) {
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+            Spell spell = World.world.getSort(obj);
+            if (spell == null) {
+                this.sendMessage("Le sort n'existe pas.");
+                return;
+            }
+            spell.setType(type);
+            Database.getDynamics().getSpellData().updateType(spell);
+
+            this.sendMessage("Le sort a ete modifie avec succes.");
+            return;
+        }
+        else if (command.equalsIgnoreCase("SETSPELLEOH")) {
+            int spellid = -1;
+            int effectid = -1;
+            String onhit = "";
+            try {
+                spellid = Integer.parseInt(infos[1]);
+                effectid = Integer.parseInt(infos[2]);
+                onhit = infos[3];
+            } catch (Exception e) {
+                // ok
+            }
+            if (spellid == -1 || effectid == -1) {
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+
+            Spell spell = World.world.getSort(spellid);
+            if (spell == null) {
+                this.sendMessage("Le sort n'existe pas.");
+                return;
+            }
+            int effetType = -1;
+
+            int oHtrigger = -1;
+
+            for (SpellGrade sG : spell.getSortsStats().values()){
+                for (Effect sE : sG.getEffects()){
+                    if(sE.getEffectID() == effectid){
+
+                        if(onhit.contains(";")){
+                            String[] table = onhit.split(";");
+                            effetType = Integer.parseInt(table[0]);
+
+                            sE.isOnHitEffect = false;
+                            sE.isEndTurnEffect = false;
+                            sE.isNewTurnEffect = false;
+                            sE.isDirectEffect = false;
+
+                            switch (effetType){
+                                case 1 :
+                                    sE.isOnHitEffect = true;
+                                    oHtrigger =  Integer.parseInt(table[1]);
+                                    sE.onHitTrigger = World.world.getEffectTrigger(Integer.parseInt(table[1]));
+
+                                    break;
+                                case 2 :
+                                    sE.isNewTurnEffect = true;
+                                    break;
+                                case 3 :
+                                    sE.isEndTurnEffect = true;
+                                    break;
+                                default:
+                                    sE.isDirectEffect = true;
+                                    break;
+                            }
+                        }
+                        else{
+                            sE.isDirectEffect = true;
+                            sE.onHitTrigger = null;
+                        }
+                        this.sendMessage("On a passé l'effet "+sE.getEffectID()+ " du sort "+spell.getName()+" grade "+ sG.getLevel()+ " a " + onhit );
+
+                    }
+                }
+            }
+
+            Database.getDynamics().getSpellData().updateOnHitEffect(spell,effetType,oHtrigger,effectid);
+            this.sendMessage("Le sort a ete modifie avec succes.");
+            return;
+        }
+        else if (command.equalsIgnoreCase("SETSPELLET")) {
+            int spellid = -1;
+            int effectid = -1;
+            int targetid = -1;
+            int[] targetvalid = {0,1,2,4,8,16,32,64,1024};
+            try {
+                spellid = Integer.parseInt(infos[1]);
+                effectid = Integer.parseInt(infos[2]);
+                targetid = Integer.parseInt(infos[3]);
+            } catch (Exception e) {
+                // ok
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+            if (spellid == -1 || effectid == -1 || targetid == -1) {
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+
+            if(!ArrayUtils.contains(targetvalid,targetid)){
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+            Spell spell = World.world.getSort(spellid);
+            if (spell == null) {
+                this.sendMessage("Le sort n'existe pas.");
+                return;
+            }
+
+            for (SpellGrade sG : spell.getSortsStats().values()){
+                for (Effect sE : sG.getEffects()){
+                    if(sE.getEffectID() == effectid){
+                        if(sE.getEffectTarget() != targetid){
+                            sE.setEffectTarget(targetid);
+                            this.sendMessage("On a passé l'effet "+sE.getEffectID()+ " du sort "+spell.getName()+" grade "+ sG.getLevel()+ " a " + targetid );
+                        }
+                    }
+                }
+            }
+            Database.getDynamics().getSpellData().updateTargetEffect(spell,targetid,effectid);
+            this.sendMessage("Le sort a ete modifie avec succes.");
+            return;
+        }
+        else if (command.equalsIgnoreCase("GETSPELLID")) {
+            int i = 0;
+            String spellName = "";
+            for(String nameconcat : infos){
+                if(i!=0) {
+                    if(i==1) {
+                        spellName += nameconcat;
+                    }
+                    else{
+                        spellName += " "+nameconcat;
+                    }
+                }
+                i++;
+            }
+
+            if (spellName.isEmpty()) {
+                this.sendMessage("Les parametres sont invalides.");
+                return;
+            }
+
+            Spell spell = World.world.getSpellbyName(spellName);
+            if (spell == null) {
+                this.sendMessage("Le sort n'existe pas.");
+                return;
+            }
+            else{
+                this.sendMessage("le sort "+spell.getName()+" a pour ID :"+spell.getSpellID());
+            }
+            return;
+        }
+        else if (command.equalsIgnoreCase("ADDCELLPARK"))
+        {
             if (this.getPlayer().getCurMap().getMountPark() == null) {
                 this.sendMessage("Pas d'enclos sur votre map.");
                 return;
@@ -2640,7 +3115,8 @@ public class CommandAdmin extends AdminUser {
             Database.getStatics().getMountParkData().update(this.getPlayer().getCurMap().getMountPark());
             this.sendMessage("Vous avez ajoute la cellule e l'enclos.");
             return;
-        } else if (command.equalsIgnoreCase("O")) {
+        } else if (command.equalsIgnoreCase("O"))
+        {
             MountPark mp = this.getPlayer().getCurMap().getMountPark();
 
             for (GameCase c : this.getPlayer().getCurMap().getCases()) {
@@ -2657,54 +3133,66 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             this.sendMessage("Vous ne vous situez pas sur la porte.");
-        } else if (command.equalsIgnoreCase("A1")) {
+        } else if (command.equalsIgnoreCase("A1"))
+        {
             this.getPlayer().getCurMap().getMountPark().setMountCell(this.getPlayer().getCurCell().getId());
             this.sendMessage("Vous avez modifie la cellule de spawn de l'enclos.");
-        } else if (command.equalsIgnoreCase("B1")) {
+        } else if (command.equalsIgnoreCase("B1"))
+        {
             this.getPlayer().getCases = true;
             this.sendMessage("Vous avez active le getCases.");
-        } else if (command.equalsIgnoreCase("C1")) {
+        } else if (command.equalsIgnoreCase("C1"))
+        {
             this.getPlayer().getCases = false;
             this.getPlayer().getCurMap().getMountPark().setCellObject(this.getPlayer().thisCases);
             this.getPlayer().thisCases.clear();
             Database.getStatics().getMountParkData().update(this.getPlayer().getCurMap().getMountPark());
             this.sendMessage("Vous avez applique les nouvelles cases e l'enclos.");
-        } else if (command.equalsIgnoreCase("RELOADDROP")) {
+        } else if (command.equalsIgnoreCase("RELOADDROP"))
+        {
             World.world.reloadDrops();
             this.sendMessage("Le rechargement des drops a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADENDFIGHT")) {
+        } else if (command.equalsIgnoreCase("RELOADENDFIGHT"))
+        {
             World.world.reloadEndFightActions();
             this.sendMessage("Le rechargement des endfights a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADHOUSE")) {
+        } else if (command.equalsIgnoreCase("RELOADHOUSE"))
+        {
             World.world.reloadHouses();
             this.sendMessage("Le rechargement des maisons a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADCOFFRE")) {
+        } else if (command.equalsIgnoreCase("RELOADCOFFRE"))
+        {
             World.world.reloadTrunks();
             this.sendMessage("Le rechargement des coffres a ete effectue.");
             return;
         }
-        else if (command.equalsIgnoreCase("RELOADTITRE")) {
+        else if (command.equalsIgnoreCase("RELOADTITRE"))
+        {
             World.world.reloadTitres();
             this.sendMessage("Le rechargement des titres a ete effectue.");
             return;
-        }  else if (command.equalsIgnoreCase("RELOADACTION")) {
+        }  else if (command.equalsIgnoreCase("RELOADACTION"))
+        {
             World.world.reloadObjectsActions();
             this.sendMessage("Le rechargement des actions a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADMAP")) {
+        } else if (command.equalsIgnoreCase("RELOADMAP"))
+        {
             World.world.reloadMaps();
             this.sendMessage("Le rechargement des maps a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADMOUNTPARK")) {
+        } else if (command.equalsIgnoreCase("RELOADMOUNTPARK"))
+        {
             int i = Integer.parseInt(infos[1]);
             World.world.reloadMountParks(i);
             this.sendMessage("Le rechargement de l'enclos "
                     + i + " a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADNPC")) {
+        } else if (command.equalsIgnoreCase("RELOADNPC"))
+        {
             try {
                 World.world.reloadNpcs();
             } catch(Exception e) {
@@ -2713,29 +3201,35 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage("Le rechargement des Npcs a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADSPELL")) {
+        } else if (command.equalsIgnoreCase("RELOADSPELL"))
+        {
             World.world.reloadSpells();
             this.sendMessage("Le rechargement des sorts a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADITEM")) {
+        } else if (command.equalsIgnoreCase("RELOADITEM"))
+        {
             World.world.reloadItems();
             this.sendMessage("Le rechargement des items a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADMONSTER")) {
+        } else if (command.equalsIgnoreCase("RELOADMONSTER"))
+        {
             World.world.reloadMonsters();
             this.sendMessage("Le rechargement des monstres a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADQUEST")) {
+        } else if (command.equalsIgnoreCase("RELOADQUEST"))
+        {
             World.world.reloadQuests();
             this.sendMessage("Le rechargement des quetes a ete effectue.");
             return;
-        } else if (command.equalsIgnoreCase("RELOADADMIN")) {
+        } else if (command.equalsIgnoreCase("RELOADADMIN"))
+        {
             Command.reload();
             Group.reload();
             World.world.reloadPlayerGroup();
             this.sendMessage("Le rechargement des commandes et des groupes ont etes effectues.");
             return;
-        } else if (command.equalsIgnoreCase("CONVERT")) {
+        } else if (command.equalsIgnoreCase("CONVERT"))
+        {
             try {
                 this.sendMessage(Long.toHexString(Long.parseLong(infos[1])));
                 this.sendMessage(Long.parseLong(infos[1], 16) + "");
@@ -2743,14 +3237,16 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage(Long.parseLong(infos[1], 16) + "");
             }
             return;
-        } else if (command.equalsIgnoreCase("LISTTYPE")) {
+        } else if (command.equalsIgnoreCase("LISTTYPE"))
+        {
             String s = "";
             for (ObjectTemplate obj : World.world.getObjTemplates())
                 if (obj.getType() == Integer.parseInt(infos[1]))
                     s += obj.getId() + ",";
             this.sendMessage(s);
             return;
-        } else if (command.equalsIgnoreCase("EMOTE")) {
+        } else if (command.equalsIgnoreCase("EMOTE"))
+        {
             Player perso = this.getPlayer();
             byte emoteId = 0;
             try {
@@ -2768,7 +3264,8 @@ public class CommandAdmin extends AdminUser {
                     + perso.getName()
                     + ".");
             return;
-        } else if (command.equalsIgnoreCase("DELNPCITEM")) {
+        } else if (command.equalsIgnoreCase("DELNPCITEM"))
+        {
             int npcGUID = 0;
             int itmID = -1;
             try {
@@ -2798,7 +3295,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(str);
             Database.getDynamics().getNpcTemplateData().update(npcTemplate);
             return;
-        } else if (command.equalsIgnoreCase("ADDNPCITEM")) {
+        } else if (command.equalsIgnoreCase("ADDNPCITEM"))
+        {
             int npcGUID = 0;
             int itmID = -1;
             try {
@@ -2830,7 +3328,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage(str);
             Database.getDynamics().getNpcTemplateData().update(npcTemplate);
             return;
-        } else if (command.equalsIgnoreCase("LISTEXTRA")) {
+        } else if (command.equalsIgnoreCase("LISTEXTRA"))
+        {
             String mess = "Liste des Extra Monstres :";
             for (Entry<Integer, GameMap> i : World.world.getExtraMonsterOnMap().entrySet())
                 mess += "\n- " + i.getKey() + " est sur la map : "
@@ -2839,7 +3338,8 @@ public class CommandAdmin extends AdminUser {
                 mess = "Aucun Extra Monstres existe.";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("CREATEGUILD")) {
+        } else if (command.equalsIgnoreCase("CREATEGUILD"))
+        {
             Player perso = this.getPlayer();
             if (infos.length > 1) {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -2867,17 +3367,20 @@ public class CommandAdmin extends AdminUser {
                     + ": Panneau de creation de guilde ouvert.";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("SEND")) {
+        } else if (command.equalsIgnoreCase("SEND"))
+        {
             SocketManager.send(this.getClient(), msg.substring(5));
             this.sendMessage("Le paquet a ete envoye : "
                     + msg.substring(5));
             return;
-        } else if (command.equalsIgnoreCase("SENDTOMAP")) {
+        } else if (command.equalsIgnoreCase("SENDTOMAP"))
+        {
             SocketManager.sendPacketToMap(this.getPlayer().getCurMap(), infos[1]);
             this.sendMessage("Le paquet a ete envoye : "
                     + msg.substring(10));
             return;
-        } else if (command.equalsIgnoreCase("SENDTO")) {
+        } else if (command.equalsIgnoreCase("SENDTO"))
+        {
             Player perso = null;
             try {
                 perso = World.world.getPlayerByName(infos[1]);
@@ -2892,7 +3395,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Le paquet a ete envoye : "
                     + msg.substring(8 + infos[1].length()) + " e " + infos[1] + ".");
             return;
-        } else if (command.equalsIgnoreCase("TITRE")) {
+        } else if (command.equalsIgnoreCase("TITRE"))
+        {
             Player perso = this.getPlayer();
             byte TitleID = 0;
             try {
@@ -2917,7 +3421,8 @@ public class CommandAdmin extends AdminUser {
             if (perso.getFight() == null)
                 SocketManager.GAME_SEND_ALTER_GM_PACKET(perso.getCurMap(), perso);
             return;
-        } else if (command.equalsIgnoreCase("POINTS")) {
+        } else if (command.equalsIgnoreCase("POINTS"))
+        {
             int count = 0;
             try {
                 count = Integer.parseInt(infos[1]);
@@ -2962,7 +3467,8 @@ public class CommandAdmin extends AdminUser {
                     + " points boutique e " + perso.getName() + ".";
             this.sendMessage(mess);
             return;
-        } else if (command.equalsIgnoreCase("ITEMTYPE")) {
+        } else if (command.equalsIgnoreCase("ITEMTYPE"))
+        {
             int type = 0;
             try {
                 type = Integer.parseInt(infos[1]);
@@ -2980,11 +3486,13 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez tous les objets de type "
                     + type + " dans votre inventaire.");
             return;
-        } else if (command.equalsIgnoreCase("FULLMORPH")) {
+        } else if (command.equalsIgnoreCase("FULLMORPH"))
+        {
             this.getPlayer().setFullMorph(10, false, false);
             this.sendMessage("Vous avez ete transforme en crocoburio.");
             return;
-        } else if (command.equalsIgnoreCase("UNFULLMORPH")) {
+        } else if (command.equalsIgnoreCase("UNFULLMORPH"))
+        {
             String pseudo = "";
             try {
                 pseudo = infos[1];
@@ -2998,7 +3506,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez transforme dans la forme originale "
                     + p.getName() + ".");
             return;
-        } else if (command.equalsIgnoreCase("PETSRES")) {
+        } else if (command.equalsIgnoreCase("PETSRES"))
+        {
             int objID = 1;
             try {
                 objID = Integer.parseInt(infos[1]);
@@ -3015,7 +3524,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez ressuscite le familier.");
             SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(this.getPlayer(), World.world.getGameObject(objID));
             return;
-        } else if (command.equalsIgnoreCase("SETGROUPE")) {
+        } else if (command.equalsIgnoreCase("SETGROUPE"))
+        {
             int id;
             try {
                 id = Integer.parseInt(infos[1]);
@@ -3058,11 +3568,13 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             return;
-        } else  if (command.equalsIgnoreCase("SETFREEPLACE")) {
+        } else if (command.equalsIgnoreCase("SETFREEPLACE"))
+        {
             //GameServer.freePlace = Integer.parseInt(infos[1]);
             this.sendMessage("");
             return;
-        } else if (command.equalsIgnoreCase("SHOWRIGHTGROUPE")) {
+        } else if (command.equalsIgnoreCase("SHOWRIGHTGROUPE"))
+        {
             int groupe = -1;
             String cmd = "";
             try {
@@ -3112,7 +3624,8 @@ public class CommandAdmin extends AdminUser {
                 }
             }
             return;
-        } else if (command.equalsIgnoreCase("INV")) {
+        } else if (command.equalsIgnoreCase("INV"))
+        {
             int size = this.getPlayer().get_size();
             Player perso = this.getPlayer();
             if (size == 0) {
@@ -3132,17 +3645,20 @@ public class CommandAdmin extends AdminUser {
                 this.sendMessage("Vous etes invisible.");
             }
             return;
-        } else if (command.equalsIgnoreCase("INCARNAM")) {
+        } else if (command.equalsIgnoreCase("INCARNAM"))
+        {
             Player perso = this.getPlayer();
             perso.teleport((short) 10292, 284);
             this.sendMessage("Vous avez ete teleporte e Incarnam.");
             return;
-        } else if (command.equalsIgnoreCase("ASTRUB")) {
+        } else if (command.equalsIgnoreCase("ASTRUB"))
+        {
             Player perso = this.getPlayer();
             perso.teleport((short) 7411, 311);
             this.sendMessage("Vous avez ete teleporte e Astrub.");
             return;
-        } else if (command.equalsIgnoreCase("DELQUEST")) {
+        } else if (command.equalsIgnoreCase("DELQUEST"))
+        {
             int id = -1;
             String perso = "";
             try {
@@ -3174,7 +3690,8 @@ public class CommandAdmin extends AdminUser {
             } else
                 this.sendMessage("Un probleme est survenu.");
             return;
-        } else if (command.equalsIgnoreCase("ADDQUEST")) {
+        } else if (command.equalsIgnoreCase("ADDQUEST"))
+        {
             int id = -1;
             String perso = "";
             try {
@@ -3208,7 +3725,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("La quete a ete ajoute sur le personnage "
                     + perso + ".");
             return;
-        } else if (command.equalsIgnoreCase("FINISHQUEST")) {
+        } else if (command.equalsIgnoreCase("FINISHQUEST"))
+        {
             int id = -1;
             String perso = "";
             try {
@@ -3240,7 +3758,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("La quete a ete termine sur le personnage "
                     + perso + ".");
             return;
-        } else if (command.equalsIgnoreCase("SKIPQUEST")) {
+        } else if (command.equalsIgnoreCase("SKIPQUEST"))
+        {
             int id = -1;
             String perso = "";
             try {
@@ -3276,7 +3795,8 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("La quete est passe e l'etape suivante sur le personnage "
                     + perso + ".");
             return;
-        } else if (command.equalsIgnoreCase("ITEMQUEST")) {
+        } else if (command.equalsIgnoreCase("ITEMQUEST"))
+        {
             int id = -1;
             try {
                 id = Integer.parseInt(infos[1]);
@@ -3311,7 +3831,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage("Vous avez reeu tous les items necessaire e la quete.");
             return;
-        } else if (command.equalsIgnoreCase("SHOWFIGHTPOS")) {
+        } else if (command.equalsIgnoreCase("SHOWFIGHTPOS"))
+        {
             String mess = "Liste des StartCell [teamID][cellID]:";
             this.sendMessage(mess);
             String places = this.getPlayer().getCurMap().getPlaces();
@@ -3347,7 +3868,8 @@ public class CommandAdmin extends AdminUser {
             }
             this.sendMessage(mess);
             /*"ADD_CELL_FIGHT", "AGREGAR_CELDA_PELEA", "ADD_CELDA_PELEA", "ADD_POS_FIGHT", "AGREGAR_POS_PELEA", "ADD_FIGHT_POS"*/
-        } else if (command.equalsIgnoreCase("ADDFIGHTPOS") || command.equalsIgnoreCase("ADD_FIGHT_POS")) {
+        } else if (command.equalsIgnoreCase("ADDFIGHTPOS") || command.equalsIgnoreCase("ADD_FIGHT_POS"))
+        {
             int team = -1;
             int cell = -1;
             try {
@@ -3421,7 +3943,8 @@ public class CommandAdmin extends AdminUser {
             SocketManager.send(getPlayer(), "GDZ|+" + cell + ";0;" + numb);
             this.sendMessage("Les places ont ete modifiees ("
                     + newPlaces + ")");
-        } else if (command.equalsIgnoreCase("DELFIGHTPOS")) {
+        } else if (command.equalsIgnoreCase("DELFIGHTPOS"))
+        {
             int cell = -1;
             try {
                 cell = Integer.parseInt(infos[2]);
@@ -3466,12 +3989,14 @@ public class CommandAdmin extends AdminUser {
                 return;
             this.sendMessage("Les places ont ete modifiees ("
                     + newPlaces + ")");
-        } else if (command.equalsIgnoreCase("DELALLFIGHTPOS")) {
+        } else if (command.equalsIgnoreCase("DELALLFIGHTPOS"))
+        {
             this.getPlayer().getCurMap().setPlaces("");
             if (!Database.getDynamics().getMapData().update(this.getPlayer().getCurMap()))
                 return;
             this.sendMessage("Les places ont ete mis a zero !");
-        } else if (command.equalsIgnoreCase("ADDMOBSUBAREA")) {
+        } else if (command.equalsIgnoreCase("ADDMOBSUBAREA"))
+        {
             String monsters = "";
             String mess = "";
             if (infos.length > 1)
@@ -3507,7 +4032,8 @@ public class CommandAdmin extends AdminUser {
             mess = i + " maps ont etes modifies et refresh. " + y
                     + "maps ont etes modifies sans monstres et refresh.";
             this.sendMessage(mess);
-        } else if (command.equalsIgnoreCase("GSMOBSUBAREA")) {
+        } else if (command.equalsIgnoreCase("GSMOBSUBAREA"))
+        {
             byte maxGroup = 0;
             byte minSize = 0;
             byte fixSize = 0;
@@ -3549,7 +4075,8 @@ public class CommandAdmin extends AdminUser {
             mess = i + " maps ont etes modifies et refresh. " + y
                     + " maps ont etes modifies e -1 partout et refresh.";
             this.sendMessage(mess);
-        } else if (command.equalsIgnoreCase("FINDEXTRAMONSTER")) {
+        } else if (command.equalsIgnoreCase("FINDEXTRAMONSTER"))
+        {
             java.util.Map<Integer, java.util.Map<String, java.util.Map<String, Integer>>> extras = World.world.getExtraMonsters();
 
             for (Entry<Integer, java.util.Map<String, java.util.Map<String, Integer>>> entry : extras.entrySet()) {
@@ -3558,7 +4085,8 @@ public class CommandAdmin extends AdminUser {
                     map.getMobPossibles().stream().filter(mob -> mob.getTemplate().getId() == idMob).forEach(mob -> this.sendMessage("Map avec extraMonster : " + map.getId() + " -> " + idMob + "."));
             }
             this.sendMessage("Recherche termine et affiche en console.");
-        } else if (command.equalsIgnoreCase("GETAREA")) {
+        } else if (command.equalsIgnoreCase("GETAREA"))
+        {
             int subArea = -1, area = -1, superArea = -1;
             try {
                 subArea = this.getPlayer().getCurMap().getSubArea().getId();
@@ -3573,7 +4101,8 @@ public class CommandAdmin extends AdminUser {
                     + area
                     + "\nsuperArea : "
                     + superArea);
-        } else if (command.equalsIgnoreCase("PANEL_ADMIN")) {
+        } else if (command.equalsIgnoreCase("PANEL_ADMIN"))
+        {
             try {
                 GameMap mapa2 = this.getPlayer().getCurMap();
                 StringBuilder packet = new StringBuilder();
@@ -3582,7 +4111,8 @@ public class CommandAdmin extends AdminUser {
             } catch (Exception e) {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception a été relevée");
             }
-        } else if (command.equalsIgnoreCase("MAPA_PARAMETROS")) {
+        } else if (command.equalsIgnoreCase("MAPA_PARAMETROS"))
+        {
             String cantShort = "";
             try {
                     cantShort = infos[1];
@@ -3592,7 +4122,8 @@ public class CommandAdmin extends AdminUser {
             getPlayer().getCurMap().setCapabilities(Short.parseShort(cantShort));
             Database.getDynamics().getMapData().updateCapabilities(getPlayer().getCurMap());
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Les paramètres de la map on bien été modifié");
-        } else if (command.equalsIgnoreCase("ELIMINAR_POSICIONES")) {
+        } else if (command.equalsIgnoreCase("ELIMINAR_POSICIONES"))
+        {
             getPlayer().getCurMap().SuppFightCell();
             if (!Database.getDynamics().getMapData().updateFightCells(getPlayer().getCurMap())) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une erreur est survenue lors de la sauvegarde en BDD!");
@@ -3607,27 +4138,7 @@ public class CommandAdmin extends AdminUser {
         {
             getPlayer().getCurMap().deleteMobsFixOnMap();
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Suppression des Groupes de Monstres Fix Réussi.");
-        }else if(command.equalsIgnoreCase("MAX_GRUPO_MOBS"))
-            try {
-                Byte limite = 0;
-                try {
-                    limite = Byte.parseByte(infos[1]);
-                } catch (Exception ignored) {
-                }
-
-                if (limite < 0) {
-                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Arguments incorrectes");
-                    return;
-                }
-                getPlayer().getCurMap().setMaxGroupNumb(limite);
-                if (!Database.getDynamics().getMapData().updateMaxNumGroup(getPlayer().getCurMap(), limite)) {
-                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une erreur est survenu lors de l'actualisation des la BDD");
-                    return;
-                }
-                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "La map " + getPlayer().getCurMap().getId() + " a désormais une limite de groupe de monstre de " + limite);
-            } catch (Exception e) {
-            SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une execption est survenue dans la commande");
-        } else if(command.equalsIgnoreCase("MAX_MOBS_POR_GRUPO"))
+        }else if(command.equalsIgnoreCase("MAX_MOBS_POR_GRUPO"))
             try {
                 Byte limite = 0;
                 try {
@@ -3647,7 +4158,8 @@ public class CommandAdmin extends AdminUser {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "La map " + getPlayer().getCurMap().getId() + " a désormais une limite de taille de groupe de monstre de " + limite);
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une execption est survenue dans la commande");
-        } else if(command.equalsIgnoreCase("ADD_ACTION_END_FIGHT"))
+        }
+        else if(command.equalsIgnoreCase("ADD_ACTION_END_FIGHT"))
             try {
                 int tipo = 0;
                 int accionID = 0;
@@ -3691,7 +4203,8 @@ public class CommandAdmin extends AdminUser {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), strB.toString());
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception a été relévé.");
-        } else if(command.equalsIgnoreCase("MODIFICAR_NPC"))
+        }
+        else if(command.equalsIgnoreCase("MODIFICAR_NPC"))
             try {
                 int id = 0;
                 Byte sexo = 1;
@@ -3782,7 +4295,8 @@ public class CommandAdmin extends AdminUser {
                 SocketManager.ENVIAR_M145_MENSAJE_PANEL_INFORMACION(getPlayer(), "NPC MODIFIER !! :D");
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une erreur est survenu lors de la commande");
-        } else if(command.equalsIgnoreCase("MODIFICAR_STATS_MOB"))
+        }
+        else if(command.equalsIgnoreCase("MODIFICAR_STATS_MOB"))
             try {
                 int id = 0;
                 Byte grado = 0;
@@ -3811,7 +4325,8 @@ public class CommandAdmin extends AdminUser {
                 }
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est apparu dans la commande : " + e.getMessage());
-        } else if(command.equalsIgnoreCase("ADD_GRUPO_MOB_SQL"))
+        }
+        else if(command.equalsIgnoreCase("ADD_GRUPO_MOB_SQL"))
         {
             Boolean sql = true;
             try {
@@ -4087,6 +4602,1799 @@ public class CommandAdmin extends AdminUser {
         {
             this.sendMessage("Commande invalide !");
         }
+    }
+
+    public int getIdFromCommandString(String command) {
+        int commandID = -1;
+        for (Command command1 : Command.commands){
+            for(String commandString : command1.getnamesString()) {
+                if(command.equalsIgnoreCase((commandString)))
+                    return command1.getId();
+            }
+        }
+        return commandID;
+    }
+
+
+    public void command2(String command, String[] infos, String msg) { //TODO : FINIR (en cours mais c'est long et chiant)
+        int idCommand = getIdFromCommandString(command);
+        if(idCommand ==-1){
+            this.getPlayer().sendMessage("La commande '"+command+"' n'a pas été trouvé");
+            return;
+        }
+
+        switch (idCommand){
+            case 1 : // Commande HELP
+            {
+                String cmd = infos.length == 2 ? infos[1] : "";
+                if (cmd.equalsIgnoreCase("")) {
+                    this.sendMessage("\nVous avez actuellement le groupe GM " + this.getPlayer().getGroupe().getName() + ".\nCommandes disponibles :\n");
+                    for (Command commande : this.getPlayer().getGroupe().getCommands()) {
+                        String args = (commande.getArguments()[1] != null && !commande.getArguments()[1].equalsIgnoreCase("")) ? (" + " + commande.getArguments()[1]) : ("");
+                        String desc = (commande.getArguments()[2] != null && !commande.getArguments()[2].equalsIgnoreCase("")) ? (commande.getArguments()[2]) : ("");
+                        this.sendMessage("<u>" + commande.getArguments()[0] + args + "</u> - " + desc);
+                    }
+                } else {
+                    this.sendMessage("\nVous avez actuellement le groupe GM " + this.getPlayer().getGroupe().getName() + ".\nCommandes recherches :\n");
+                    for (Command commande : this.getPlayer().getGroupe().getCommands()) {
+                        if (commande.getArguments()[0].contains(cmd.toUpperCase())) {
+                            String args = (commande.getArguments()[1] != null && !commande.getArguments()[1].equalsIgnoreCase("")) ? (" + " + commande.getArguments()[1]) : ("");
+                            String desc = (commande.getArguments()[2] != null && !commande.getArguments()[2].equalsIgnoreCase("")) ? (commande.getArguments()[2]) : ("");
+                            this.sendMessage("<u>" + commande.getArguments()[0] + args + "</u> - " + desc);
+                        }
+                    }
+                }
+                break;
+            }
+            case 2 : // Commande Online
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 1) {//Si un nom de perso est specifie
+                    try {
+                        perso = World.world.getPlayerByName(infos[1]);
+                    } catch (Exception e) {
+                        // ok
+                    }
+                    if (perso == null) {
+                        this.sendMessage("Le personnage n'a pas ete trouve");
+                        return;
+                    }
+                }
+                if (perso.getGameClient() != null)
+                    perso.getGameClient().kick();
+                perso.setOnline(false);
+                perso.resetVars();
+                Database.getStatics().getPlayerData().update(perso);
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(perso.getCurMap(), perso.getId());
+                World.world.unloadPerso(perso);
+                Database.getStatics().getPlayerData().load(perso.getId());
+                World.world.ReassignAccountToChar(perso.getAccount());
+                String str = "Le joueur " + perso.getName() + " a ete reinitialise de ces variables.";
+                this.sendMessage(str);
+                break;
+            }
+            case 3 : // Commande ANAME
+            {
+                infos = msg.split(" ", 2);
+                String prefix = "<b><a href='asfunction:onHref,ShowPlayerPopupMenu," + this.getPlayer().getName() + "'>[" + this.getPlayer().getGroupe().getName() + "] " + this.getPlayer().getName() + "</a></b>";
+                if(infos.length > 1) {
+                    String suffix = infos[1];
+                    if (suffix.contains("<") && (!suffix.contains(">") || !suffix.contains("</"))) // S'il n'y a pas de balise fermante
+                        suffix = suffix.replace("<", "").replace(">", "");
+                    if (suffix.contains("<") && suffix.contains(">") && !suffix.contains("</")) // S'il n'y a pas de balise fermante
+                        suffix = suffix.replace("<", "").replace(">", "");
+                    SocketManager.GAME_SEND_Im_PACKET_TO_ALL("116;" + prefix + "~" + suffix);
+                }
+                break;
+            }
+            case 4 : // Commande INFO
+            {
+                long uptime = System.currentTimeMillis() - Config.INSTANCE.getStartTime();
+                int day = (int) (uptime / (1000 * 3600 * 24));
+                uptime %= (1000 * 3600 * 24);
+                int hour = (int) (uptime / (1000 * 3600));
+                uptime %= (1000 * 3600);
+                int min = (int) (uptime / (1000 * 60));
+                uptime %= (1000 * 60);
+                int sec = (int) (uptime / (1000));
+
+                String message = "\n**Global informations system of the Aegnor emulator :**\n\nUptime : " + day + "j " + hour + "h " + min + "m " + sec + "s.\n";
+                message += "Online players         : " + GameServer.getClients().size() + "\n";
+                message += "Unique online players  : " + GameServer.getPlayersNumberByIp() + "\n";
+                message += "Online clients         : " + GameServer.getClients().size() + "\n";
+
+
+                int mb = 1024 * 1024;
+                Runtime instance = Runtime.getRuntime();
+
+                message += "\n<u>Heap utilization statistics :</u>";
+                message += "\nTotal Memory : " + instance.totalMemory() / mb + " Mo.";
+                message += "\nFree Memory  : " + instance.freeMemory() / mb + " Mo.";
+                message += "\nUsed Memory  : " + (instance.totalMemory() - instance.freeMemory()) / mb + " Mo.";
+                message += "\nMax Memory   : " + instance.maxMemory() / mb + " Mo.";
+                message += "\n\n<u>Available processor :</u> " + instance.availableProcessors();
+                Set<Thread> list = Thread.getAllStackTraces().keySet();
+
+                int news = 0, running = 0, blocked = 0, waiting = 0, sleeping = 0, terminated = 0;
+                for(Thread thread : list) {
+                    switch(thread.getState()) {
+                        case NEW: news++; break;
+                        case RUNNABLE: running++; break;
+                        case BLOCKED: blocked++; break;
+                        case WAITING: waiting++; break;
+                        case TIMED_WAITING: sleeping++; break;
+                        case TERMINATED: news++; break;
+                    }
+                }
+
+                message +="\n\n<u>Informations of " + list.size() + " threads :</u> ";
+                message += "\nNEW           : " + news;
+                message += "\nRUNNABLE      : " + running;
+                message += "\nBLOCKED       : " + blocked;
+                message += "\nWAITING       : " + waiting;
+                message += "\nTIMED_WAITING : " + sleeping;
+                message += "\nTERMINATED    : " + terminated;
+
+                this.sendMessage(message + "\n");
+
+                if(infos.length > 1) {
+                    message = "List of all threads :\n";
+                    for(Thread thread : list)
+                        message += "- " + thread.getId() + "-> "+ thread.getPriority() + " -> " + thread.getName() + " -> " + thread.getState().name().toUpperCase() + "" + (thread.isDaemon() ? " (Daemon)" : "") + " ressources " + thread.getContextClassLoader() + ".\n";
+                    this.sendMessage(message);
+                }
+                break;
+            }
+            case 5 : // Commande StartFight
+            {
+                if (this.getPlayer().getFight() == null) {
+                    this.sendMessage("Vous devez etre dans un combat.");
+                    return;
+                }
+                this.getPlayer().getFight().startFight();
+                this.sendMessage("Le combat a ete demarre.");
+                break;
+            }
+            case 6 : // Commande GON
+            {
+                Player P = World.world.getPlayerByName(infos[1]);
+                if (P == null) {
+                    String str = "Le personnage de destination n'existe pas.";
+                    this.sendMessage(str);
+                    return;
+                }
+                short mapID = P.getCurMap().getId();
+                int cellID = P.getCurCell().getId();
+
+                Player perso = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[2]);
+                    if (perso == null) {
+                        String str = "Le personnage e teleporter n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                    if (perso.getFight() != null) {
+                        String str = "La cible e teleporter est en combat.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                perso.teleport(mapID, cellID);
+                String str = "Le joueur " + perso.getName()
+                        + " a ete teleporte vers " + P.getName() + ".";
+                this.sendMessage(str);
+                break;
+            }
+            case 7 : // Commande TP
+            {
+                short mapID = -1;
+                int cellID = -1;
+                try {
+                    mapID = Short.parseShort(infos[1]);
+                    cellID = Integer.parseInt(infos[2]);
+                } catch (Exception e) {} // Mauvais int entré
+
+                try {
+                    if(cellID <= -1)
+                    {
+                        cellID = World.world.getMap(mapID).getRandomFreeCellId();
+                    }
+                    if (mapID == -1 || cellID == -1 || World.world.getMap(mapID) == null) {
+                        String str = "";
+                        if (mapID == -1 || World.world.getMap(mapID) == null)
+                            str = "MapID invalide.";
+                        else
+                            str = "cellID invalide.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                    if (World.world.getMap(mapID).getCase(cellID) == null) {
+                        String str = "cellID invalide.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                } catch (Exception e) {}
+
+                Player perso = this.getPlayer();
+                try {
+                    if (infos.length > 3)//Si un nom de perso est specifie
+                    {
+                        perso = World.world.getPlayerByName(infos[3]);
+                        if (perso == null || perso.getFight() != null) {
+                            String str = "Le personnage n'a pas ete trouve ou est en combat";
+                            this.sendMessage(str);
+                            return;
+                        }
+                        if(!perso.isOnline()) {
+                            perso.setCurMap(World.world.getMap(mapID));
+                            perso.setCurCell(World.world.getMap(mapID).getCase(cellID));
+                        }
+                    }
+                } catch (Exception e) {}
+                try {
+                    perso.teleport(mapID, cellID);
+                    String str = "Le joueur " + perso.getName() + " a ete teleporte.";
+                    this.sendMessage(str);
+                } catch (Exception e) {
+                    System.out.println("Bug teleport :" + e.getMessage());
+                }
+                break;
+            }
+            case 8 : // Commande KickFight
+            {
+                Player P = World.world.getPlayerByName(infos[1]);
+                if (P == null || P.getFight() == null) {
+                    this.sendMessage("Le personnage n'a pas ete trouve ou il n'est pas en combat.");
+                    return;
+                }
+                SocketManager.GAME_SEND_GV_PACKET(P);
+                if (P.getFight() != null) {
+                    P.getFight().leftFight(P, null);
+                    P.setFight(null);
+                }
+                SocketManager.GAME_SEND_GV_PACKET(P);
+                this.sendMessage("Le personnage "
+                        + P.getName() + " a ete expulse de son combat.");
+                break;
+            }
+            case 9 : // Commande DEBUG
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 1)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[1]);
+                    if (perso == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                    if (perso.getFight() != null) {
+                        String str = "La cible est en combat.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                } else {
+                    return;
+                }
+                perso.warpToSavePos();
+                String str = "Le joueur " + perso.getName()
+                        + " a ete teleporte e son point de sauvegarde.";
+                this.sendMessage(str);
+                break;
+            }
+            case 10 : // Commande WHO
+            {
+                String mess = "\n<u>Liste des joueurs en ligne :</u>";
+                this.sendMessage(mess);
+                int i = 0;
+
+                for (Player player : World.world.getOnlinePlayers()) {
+                    if (i == 30)
+                        break;
+                    if (player == null)
+                        continue;
+                    i++;
+                    mess = player.getName() + " (" + player.getId() + ") ";
+                    mess += returnClasse(player.getClasse());
+                    mess += " ";
+                    mess += (player.getSexe() == 0 ? "M" : "F") + " ";
+                    mess += player.getLevel() + " ";
+                    mess += player.getCurMap().getId() + "("
+                            + player.getCurMap().getX() + "/"
+                            + player.getCurMap().getY() + ") ";
+                    mess += player.getFight() == null ? "" : "Combat ";
+                    mess += player.getAccount().getCurrentIp();
+
+                    this.sendMessage(mess);
+                }
+
+                if (GameServer.getClients().size() - 30 > 0) {
+                    mess = "Et " + (GameServer.getClients().size() - 30)
+                            + " autres personnages";
+                    this.sendMessage(mess);
+                }
+                mess = "\n";
+                this.sendMessage(mess);
+                break;
+            }
+            case 11 : // Commande WHOALL
+            {
+                String mess = "\n<u>Liste des joueurs en ligne :</u>";
+                this.sendMessage(mess);
+                for (GameClient client : GameServer.getClients()) {
+                    Player player = client.getPlayer();
+
+                    if (player == null)
+                        continue;
+
+                    mess = player.getName() + " (" + player.getId() + ") ";
+                    mess += returnClasse(player.getClasse());
+                    mess += " ";
+                    mess += (player.getSexe() == 0 ? "M" : "F") + " ";
+                    mess += player.getLevel() + " ";
+                    mess += player.getCurMap().getId() + "("
+                            + player.getCurMap().getX() + "/"
+                            + player.getCurMap().getY() + ") ";
+                    mess += player.getFight() == null ? "" : "Combat ";
+                    mess += player.getAccount().getCurrentIp();
+
+                    this.sendMessage(mess);
+                }
+                mess = "\n";
+                this.sendMessage(mess);
+                break;
+            }
+            case 12 : // Commande MUTE
+            {
+                Player player;
+                String name;
+                short time;
+
+                try {
+                    name = infos[1];
+
+                    if(name.equals("*")) {
+                        CommandPlayer.canalMute = !CommandPlayer.canalMute;
+                        this.sendSuccessMessage("The main channel has been " + (CommandPlayer.canalMute ? "closed." : "opened."));
+                        return;
+                    }
+
+                    time = Short.parseShort(infos[2]);
+                } catch (Exception e) {
+                    this.sendErrorMessage("The name/time you've enter is/are invalid ! (max time : " + Short.MAX_VALUE + " in minutes)");
+                    return;
+                }
+
+                player = World.world.getPlayerByName(name);
+
+                if (player == null || time <= 0) {
+                    this.sendErrorMessage("The player wasn't found or the time is negative. (max time : " + Short.MAX_VALUE + " in minutes)");
+                    return;
+                }
+
+                if (player.getAccount() == null) {
+                    this.sendErrorMessage("The account of the player wasn't found, please verify the name.");
+                    return;
+                }
+
+                player.getAccount().mute(time, this.getPlayer().getName());
+                this.sendSuccessMessage("You've mute the player " + player.getName() + " for " + time + "minute(s) effective for all players of this account !");
+
+                if (!player.isOnline())
+                    this.sendErrorMessage("The player is not online, are you sure it is the correct player ?");
+                break;
+            }
+            case 13 : // Commande UNMUTE
+            {
+                Player player;
+                String name;
+
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    this.sendErrorMessage("The name/time you've enter is/are invalid ! (max time : " + Short.MAX_VALUE + " in minutes)");
+                    return;
+                }
+
+                player = World.world.getPlayerByName(name);
+
+                if (player == null) {
+                    this.sendErrorMessage("The player wasn't found or the time is negative. (max time : " + Short.MAX_VALUE + " in minutes)");
+                    return;
+                }
+
+                if (player.getAccount() == null) {
+                    this.sendErrorMessage("The account of the player wasn't found, please verify the name.");
+                    return;
+                }
+
+                player.getAccount().unMute();
+                this.sendSuccessMessage("You've unmute the player " + player.getName() + " effective for all players of this account !");
+
+                if (!player.isOnline())
+                    this.sendErrorMessage("The player is not online, are you sure it is the correct player ?");
+                break;
+            }
+            case 14 : // Commande JAIL
+            {
+                short mapID = 666;
+                int cellID = getCellJail();
+                if (mapID == -1 || cellID == -1 || World.world.getMap(mapID) == null) {
+                    String str = "MapID ou cellID invalide.";
+                    if (cellID == -1)
+                        str = "cellID invalide.";
+                    else
+                        str = "MapID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                if (World.world.getMap(mapID).getCase(cellID) == null) {
+                    String str = "cellID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                try {
+                    if (infos.length > 1)//Si un nom de perso est specifie
+                    {
+                        Player perso = World.world.getPlayerByName(infos[1]);
+                        if (perso.getGroupe() != null) {
+                            String str = "Il est interdit d'emprisonner un personnage ayant des droits.";
+                            this.sendMessage(str);
+                            return;
+                        }
+                        if (perso == null || perso.getFight() != null) {
+                            String str = "Le personnage n'a pas ete trouve ou est en combat.";
+                            this.sendMessage(str);
+                            return;
+                        }
+                        if (perso.isOnline())
+                            perso.teleport(mapID, cellID);
+                        else
+                            perso.teleportD(mapID, cellID);
+                        String str = "Le joueur " + perso.getName()
+                                + " a ete teleporte emprisonne.";
+                        this.sendMessage(str);
+                    }
+                } catch (Exception e) {
+                    this.sendMessage("Introuvable.");
+                    // ok
+                    return;
+                }
+                break;
+            }
+            case 15 : // Commande UNJAIL
+            {
+                Player perso = World.world.getPlayerByName(infos[1]);
+                if (perso == null || perso.getFight() != null) {
+                    String str = "Le personnage n'a pas ete trouve ou est en combat.";
+                    this.sendMessage(str);
+                    return;
+                }
+                if (infos.length > 1 && perso.isInPrison())//Si un nom de perso est specifie
+                {
+                    perso.warpToSavePos();
+                    String str = "Le joueur " + perso.getName()
+                            + " a ete teleporte e son point de sauvegarde.";
+                    this.sendMessage(str);
+                    return;
+                }
+                break;
+            }
+            case 16 : // Commande MUTEMAP
+            {
+                if (this.getPlayer().getCurMap() == null) {
+                    return;
+                }
+
+                this.getPlayer().getCurMap().mute();
+                String mess = "";
+                if (this.getPlayer().getCurMap().isMute()) {
+                    mess = "Vous venez de muter la MAP.";
+                }
+                else {
+                    mess = "Vous venez de demuter la MAP.";
+                }
+                this.sendMessage(mess);
+
+                break;
+            }
+            case 17 : // Commande KICK
+            {
+                /*
+            1 : Tu es resté trop longtemps inactif.
+            2 : Ton personnage a atteint le niveau maximum autorisé
+            3 : Pour des raisons de maintenance, le serveur va être coupé d'ici quelques minutes.
+            4 : Votre connexion a été coupée pour des raisons de maintenance.
+            5 : Retry connection (Oui ou Non)
+            6 : Le nombre d'objets pour cet inventaire est déjà atteint.
+            7 : Cette opération n'est pas autorisée ici.
+            8 : Cet objetn 'est plus disponible.
+             */
+
+                Player player;
+                String name, reason = "";
+
+                try {
+                    name = infos[1];
+                } catch (Exception ignored) {
+                    this.sendErrorMessage("You need to give the name of the player !");
+                    return;
+                }
+
+                try {
+                    reason = msg.substring(infos[0].length() + infos[1].length() + 1);
+                } catch (Exception ignored) {}
+
+                player = World.world.getPlayerByName(name);
+
+                if (player == null) {
+                    this.sendErrorMessage("The name of the player is invalid or non-existent !");
+                    return;
+                }
+
+                if (player.isOnline()) {
+                    if (reason.isEmpty()) {
+                        player.send("M018|" + this.getPlayer().getName() + ";");
+                    } else {
+                        player.send("M018|" + this.getPlayer().getName() + ";<br>" + reason);
+                    }
+                    player.getGameClient().kick();
+                    this.sendSuccessMessage("The player have been kicked successfully.");
+                } else {
+                    this.sendErrorMessage("The player isn't connected, verify the name please.");
+                }
+                break;
+            }
+            case 18 : // Commande RES
+            {
+                Player perso = this.getPlayer();
+                perso = World.world.getPlayerByName(infos[1]);
+                if (perso == null) {
+                    String mess = "Le personnage n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                if (perso.getFight() != null) {
+                    this.sendMessage("Le personnage est en combat.");
+                    return;
+                }
+                if (perso.isOnline()) {
+                    this.sendMessage("Vous avez ramene e la vie " + perso.getName() + ".");
+                    perso.setAlive();
+                } else
+                    this.sendMessage("Le personnage n'est pas connecte.");
+                break;
+            }
+            case 19 : // Commande ENERGIE
+            {
+                try {
+                    Player perso = this.getPlayer();
+                    String name = null;
+                    name = infos[2];
+                    perso = World.world.getPlayerByName(name);
+                    int jet = Integer.parseInt(infos[1]);
+                    int EnergyTotal = perso.getEnergy() + jet;
+                    if (EnergyTotal > 10000)
+                        EnergyTotal = 10000;
+                    perso.setEnergy(EnergyTotal);
+                    SocketManager.GAME_SEND_STATS_PACKET(perso);
+                    this.sendMessage("Vous avez fixe l'energie de "
+                            + perso.getName() + " e " + EnergyTotal + ".");
+                } catch (Exception e) {
+                    this.sendMessage("Une erreur a eu lieu lors l'ajout d'energie");
+                }
+                break;
+            }
+            case 20 : // Commande LIFE
+            {
+                int count = 0;
+                try {
+                    count = Integer.parseInt(infos[1]);
+                    if (count < 0)
+                        count = 0;
+                    if (count > 100)
+                        count = 100;
+                    Player perso = this.getPlayer();
+                    if (infos.length == 3)//Si le nom du perso est specifie
+                    {
+                        String name = infos[2];
+                        perso = World.world.getPlayerByName(name);
+                        if (perso == null)
+                            perso = this.getPlayer();
+                    }
+                    int newPDV = perso.getMaxPdv() * count / 100;
+                    perso.setPdv(newPDV);
+                    if (perso.isOnline())
+                        SocketManager.GAME_SEND_STATS_PACKET(perso);
+                    String mess = "Vous avez fixe le pourcentage de vitalite de "
+                            + perso.getName() + " e " + count + "%.";
+                    this.sendMessage(mess);
+                } catch (Exception e) {
+                    // ok
+                    this.sendMessage("Valeur incorecte.");
+                    return;
+                }
+                break;
+            }
+            case 21 : // Commande ALIGN
+            {
+                byte align = -1;
+                try {
+                    align = Byte.parseByte(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (align < Constant.ALIGNEMENT_NEUTRE
+                        || align > Constant.ALIGNEMENT_MERCENAIRE) {
+                    String str = "Valeur invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                Player perso = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[2]);
+                    if (perso == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                perso.modifAlignement(align);
+                String a = "";
+                if (align == 0)
+                    a = "neutre";
+                else if (align == 1)
+                    a = "bontarien";
+                else if (align == 2)
+                    a = "brakmarien";
+                else if (align == 3)
+                    a = "serianne";
+                String str = "L'alignement du joueur a ete modifie en " + a + ".";
+                this.sendMessage(str);
+                break;
+            }
+            case 22 : // Commande ADDHONOR
+            {
+                int honor = 0;
+                try {
+                    honor = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                Player perso = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[2]);
+                    if (perso == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                String str = "Vous avez ajoute " + honor + " points d'honneur e "
+                        + perso.getName() + ".";
+                if (perso.get_align() != Constant.ALIGNEMENT_MERCENAIRE) {
+                    str = "Le joueur n'est pas mercenaire ... l'action a ete annulee.";
+                    this.sendMessage(str);
+                    return;
+                }
+                perso.addHonor(honor);
+                this.sendMessage(str);
+                break;
+            }
+            case 23 : // Commande JOBLEFT
+            {
+                Player perso = this.getPlayer();
+                try {
+                    perso = World.world.getPlayerByName(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+                if (perso == null)
+                    perso = this.getPlayer();
+                perso.setDoAction(false);
+                perso.setExchangeAction(null);
+                this.sendMessage("L'action de metier e ete annule.");
+                break;
+            }
+            case 24 : // Commande NGO
+            {
+                Player perso = World.world.getPlayerByName(infos[1]);
+                if (perso == null) {
+                    String str = "Le personnage e teleporter n'existe pas.";
+                    this.sendMessage(str);
+                    return;
+                }
+                if (perso.getFight() != null) {
+                    String str = "Le personnage e teleporter est en combat.";
+                    this.sendMessage(str);
+                    return;
+                }
+                Player P = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    P = World.world.getPlayerByName(infos[2]);
+                    if (P == null) {
+                        String str = "Le personnage de destination n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                if (P.isOnline()) {
+                    short mapID = P.getCurMap().getId();
+                    int cellID = P.getCurCell().getId();
+                    perso.teleport(mapID, cellID);
+                    String str = "Le joueur " + perso.getName()
+                            + " a ete teleporte vers " + P.getName() + ".";
+                    this.sendMessage(str);
+                } else {
+                    String str = "Le joueur " + P.getName()
+                            + " n'est pas en ligne.";
+                    this.sendMessage(str);
+                }
+                break;
+            }
+            case 25 : // Commande SHOWITEM
+            {
+                Player perso = this.getPlayer();
+                String name = null;
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                perso = World.world.getPlayerByName(name);
+                if (perso == null) {
+                    String mess = "Le personnage n'a pas ete trouve.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                String mess = "==========\n"
+                        + "Liste d'items sur le personnage :\n";
+                this.sendMessage(mess);
+                for (Entry<Integer, GameObject> entry : perso.getItems().entrySet()) {
+                    mess = entry.getValue().getGuid() + " || "
+                            + entry.getValue().getTemplate().getName() + " || "
+                            + entry.getValue().getQuantity();
+                    this.sendMessage(mess);
+                }
+
+                this.sendMessage("Le personnage possede : "
+                        + perso.getKamas() + " Kamas.\n");
+                mess = "==========";
+                this.sendMessage(mess);
+                break;
+            }
+            case 26 : // Commande SHOWBANK
+            {
+                Player perso = this.getPlayer();
+                String name = null;
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                perso = World.world.getPlayerByName(name);
+                if (perso == null) {
+                    String mess = "Le personnage n'a pas ete trouve.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                Account cBank = perso.getAccount();
+                String mess = "==========\n" + "Liste d'items dans la banque :";
+                this.sendMessage(mess);
+                for (GameObject entry : cBank.getBank()) {
+                    mess = entry.getGuid() + " || "
+                            + entry.getTemplate().getName() + " || "
+                            + entry.getQuantity();
+                    this.sendMessage(mess);
+                }
+                this.sendMessage("Le personnage possede : "
+                        + cBank.getBankKamas() + " Kamas en banque.");
+                mess = "==========";
+                this.sendMessage(mess);
+                break;
+            }
+            case 27 : // Commande SHOWSTORE
+            {
+                Player perso = this.getPlayer();
+                String name = null;
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                perso = World.world.getPlayerByName(name);
+                if (perso == null) {
+                    String mess = "Le personnage n'a pas ete trouve.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                String mess = "==========\n" + "Liste d'items dans le Store :";
+                this.sendMessage(mess);
+                for (Entry<Integer, Integer> obj : perso.getStoreItems().entrySet()) {
+                    GameObject entry = World.world.getGameObject(obj.getKey());
+                    mess = entry.getGuid() + " || " + entry.getTemplate().getName()
+                            + " || " + entry.getQuantity();
+                    this.sendMessage(mess);
+                }
+
+                mess = "==========";
+                this.sendMessage(mess);
+                break;
+            }
+            case 28 : // Commande SHOWMOUNT
+            {
+                Player perso = this.getPlayer();
+                String name = null;
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                perso = World.world.getPlayerByName(name);
+                if (perso == null) {
+                    String mess = "Le personnage n'a pas ete trouve.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                String mess = "==========\n" + "Liste d'items dans la monture :";
+                this.sendMessage(mess);
+                if(perso.getMount() != null) {
+                    for (Entry<Integer, GameObject> entry : perso.getMount().getObjects().entrySet()) {
+                        mess = entry.getValue().getGuid() + " || "
+                                + entry.getValue().getTemplate().getName() + " || "
+                                + entry.getValue().getQuantity();
+                        this.sendMessage(mess);
+                    }
+                }
+                mess = "==========";
+                this.sendMessage(mess);
+                break;
+            }
+            case 29 : // Commande BAN
+            {
+                Player player = World.world.getPlayerByName(infos[1]);
+                short days = 0;
+
+                try {
+                    days = Short.parseShort(infos[2]);
+                } catch(Exception ignored) {
+                    this.sendMessage("You've not enter a day value (the time while the account is banned), the default value is unlimited.");
+                }
+
+                if (player == null) {
+                    this.sendErrorMessage("The player was not found, verify the name please.");
+                    return;
+                }
+                if (player.getAccount() == null)
+                    Database.getStatics().getAccountData().load(player.getAccID());
+                if (player.getAccount() == null) {
+                    this.sendErrorMessage("The account of the player was not found, contact a supervisor.");
+                    return;
+                }
+
+                player.getAccount().setBanned(true);
+                Database.getStatics().getAccountData().updateBannedTime(player.getAccount(), System.currentTimeMillis() + 86400000 * days);
+
+                if (player.getFight() == null) {
+                    if (player.getGameClient() != null)
+                        player.getGameClient().kick();
+                } else {
+                    SocketManager.send(player, "Im1201;" + this.getPlayer().getName());
+                }
+                this.sendSuccessMessage("You've kick and ban the player " + player.getName() + "(Acc: " + player.getAccount().getName() + ") for " + (days == 0 ? "unlimited" : days) + " day(s).");
+                break;
+            }
+            case 30 : // Commande BLOCKTRADE
+            {
+                int i = -1;
+                try {
+                    i = Short.parseShort(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (i == 0) {
+                    Main.INSTANCE.setTradeAsBlocked(false);
+                    this.sendMessage("Les échanges ont été débloqués.");
+                } else if (i == 1) {
+                    Main.INSTANCE.setTradeAsBlocked(true);
+                    this.sendMessage("Tous les échanges sont bloqués.");
+                } else {
+                    this.sendMessage("Aucune information.");
+                }
+                break;
+            }
+            case 31 : // Commande KICKALL
+            {
+                GameServer.INSTANCE.kickAll(false);
+                this.sendMessage("Tout le monde a été kick sauf GM");
+                break;
+            }
+            case 32 : // Commande SHUTDOWN
+            {
+                int time = 30, OffOn = 0;
+                try {
+                    OffOn = Integer.parseInt(infos[1]);
+                    time = Integer.parseInt(infos[2]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO()," Un reboot a été programmé dans "+time+ " minutes.",this.getPlayer() );
+                if (OffOn == 1 && this.isTimerStart())// demande de demarer le reboot
+                {
+                    this.sendMessage("Un reboot est déjà programmé.");
+                } else if (OffOn == 1 && !this.isTimerStart()) {
+                    if (time <= 5) {
+                        for(Player player : World.world.getOnlinePlayers()) {
+                            player.sendServerMessage(Lang.get(player, 14));
+                            player.send("M13");
+                        }
+                        Main.INSTANCE.setFightAsBlocked(true);
+                    }
+                    this.setTimer(createTimer(time));
+                    this.getTimer().start();
+                    this.setTimerStart(true);
+                    String timeMSG = "minutes";
+                    if (time <= 1)
+                        timeMSG = "minute";
+                    SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " " + timeMSG);
+                    this.sendMessage("Reboot programmé.");
+                } else if (OffOn == 0 && this.isTimerStart()) {
+                    this.getTimer().stop();
+                    this.setTimerStart(false);
+                    for(Player player : World.world.getOnlinePlayers())
+                        player.sendServerMessage(Lang.get(player, 15));
+                    Main.INSTANCE.setFightAsBlocked(false);
+                    this.sendMessage("Reboot arrêté.");
+                } else if (OffOn == 0 && !this.isTimerStart()) {
+                    this.sendMessage("Aucun reboot n'est lancé.");
+                }
+                break;
+            }
+            case 33 : // Commande EXIT
+            {
+                this.sendMessage("Lancement du reboot.");
+                Main.INSTANCE.getRunnables().add(() -> Main.INSTANCE.stop("Exit by administrator"));
+                break;
+            }
+            case 34 : // Commande SAVE
+            {
+                if(!Config.INSTANCE.isSaving()) {
+                    WorldSave.cast(1);
+                    String mess = "Sauvegarde lancee!";
+                    this.sendMessage(mess);
+                }
+                break;
+            }
+            case 35 : // Commande BLOCKFIGHT TODO: Fonctionne ???
+            {
+                int i = -1;
+                try {
+                    i = Short.parseShort(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+                if (i == 0) {
+                    Main.INSTANCE.setFightAsBlocked(false);
+                    for(Player player : World.world.getOnlinePlayers())
+                        player.sendServerMessage(Lang.get(player, 15));
+                    this.sendMessage("Les combats ont etes debloques.");
+                } else if (i == 1) {
+                    for(Player player : World.world.getOnlinePlayers())
+                        player.sendServerMessage(Lang.get(player, 14));
+                    this.sendMessage("Les combats ont etes bloques.");
+                } else {
+                    this.sendMessage("Aucune information.");
+                }
+                break;
+            }
+            case 37 : // Commande SPAWN
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[2]);
+                    if (perso == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                perso.setExchangeAction(new ExchangeAction<>(ExchangeAction.FORGETTING_SPELL, 0));
+                SocketManager.GAME_SEND_FORGETSPELL_INTERFACE('+', perso);
+                break;
+            }
+            case 38 : // RMOBS TODO : Faire le refresh dans les DJs (Hotomani)
+            {
+                this.getPlayer().getCurMap().refreshSpawns();
+                this.sendMessage("Les spawns de monstres sur la map ont etes rafraichit.");
+                break;
+            }
+            case 39 : // ENDFIGHT
+            {
+                if (this.getPlayer().getFight() == null) {
+                    this.sendMessage("Le combat n'existe pas.");
+                    return;
+                }
+                int i = -1;
+                try {
+                    i = Short.parseShort(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (i == 0) {
+                    this.getPlayer().getFight().endFight(false);
+                    this.sendMessage("L'equipe des joueurs meurent !");
+                } else if (i == 1) {
+                    this.getPlayer().getFight().endFight(true);
+                    this.sendMessage("L'equipe des monstres meurent !");
+                } else {
+                    this.sendMessage("Aucune information.");
+                }
+                break;
+            }
+            case 41 : // MPTOTP TODO : Fonctionne ??
+            {
+                this.getPlayer().mpToTp = !this.getPlayer().mpToTp;
+                String mess = "";
+                if (this.getPlayer().mpToTp)
+                    mess = "Vous venez d'activer le MP to TP.";
+                else
+                    mess = "Vous venez de desactiver le MP to TP.";
+                this.sendMessage(mess);
+                break;
+            }
+            case 42 : // RETURNTP TODO : Fonctionne ??
+            {
+                for (Player perso : World.world.getOnlinePlayers()) {
+                    if (perso.thatMap == -1 || perso.getFight() != null)
+                        continue;
+                    perso.teleport((short) perso.thatMap, perso.thatCell);
+                    perso.thatMap = -1;
+                    perso.thatCell = -1;
+                }
+                this.sendMessage("Vous venez de renvoyer tous les joueurs e leur ancienne position.");
+                break;
+            }
+            case 43 : // UNBAN
+            {
+                Player P = World.world.getPlayerByName(infos[1]);
+                if (P == null) {
+                    this.sendMessage("Personnage non trouve.");
+                    return;
+                }
+                if (P.getAccount() == null)
+                    Database.getStatics().getAccountData().load(P.getAccID());
+                if (P.getAccount() == null) {
+                    this.sendMessage("Le personnage n'a pas de compte.");
+                    return;
+                }
+                P.getAccount().setBanned(false);
+                Database.getStatics().getAccountData().update(P.getAccount());
+                this.sendMessage("Vous avez debanni "
+                        + P.getName() + ".");
+                break;
+            }
+            case 44 : // UNBANIP
+            {
+                Player perso = null;
+                try {
+                    perso = World.world.getPlayerByName(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+                if (perso == null) {
+                    this.sendMessage("Le nom du personnage n'est pas bon.");
+                    return;
+                }
+                if (Database.getStatics().getBanIpData().delete(perso.getAccount().getCurrentIp())) {
+                    String ip = perso.getAccount().getCurrentIp();
+                    for (Account a : World.world.getAccounts() ){
+                        if(a.getLastIP().equals(ip)){
+                            a.setBanned(false);
+                            Database.getStatics().getAccountData().update(a);
+                            this.sendMessage("Le compte '"+a.getName()+"' a été débanni.");
+                        }
+                    }
+
+                    perso.getAccount().setBanned(false);
+                    this.sendMessage("L'IP '"+ip+"' a ete debanni.");
+                    return;
+                }
+                break;
+            }
+            case 46 : // RENAMEPERSO
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 1)
+                    perso = World.world.getPlayerByName(infos[1]);
+                if (perso == null) {
+                    String mess = "Le personnage n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                if(World.world.getPlayerByName(infos[2]) != null) {
+                    String mess = "Le personnage " + infos[2] + " existe déjà.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                String name = perso.getName();
+                perso.setName(infos[2]);
+                Database.getStatics().getPlayerData().update(perso);
+                SocketManager.GAME_SEND_STATS_PACKET(perso);
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(perso.getCurMap(), perso.getId());
+                SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(perso.getCurMap(), perso);
+                this.sendMessage("Vous avez renomme "
+                        + name + " en " + perso.getName() + ".");
+                break;
+            }
+            case 47 : // RENAMEGUILDE
+            {
+                String ancName = "";
+                String newName = "";
+                int idGuild = -1;
+                if (infos.length > 1)
+                    ancName = infos[1];
+                newName = infos[2];
+                idGuild = World.world.getGuildByName(ancName);
+                if (idGuild == -1) {
+                    String mess = "La guilde n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                World.world.getGuild(idGuild).setName(newName);
+                this.sendMessage("Vous avez renomme la guilde en "
+                        + newName + ".");
+                break;
+            }
+            case 48 : // DELJOB
+            {
+                Player perso = this.getPlayer();
+                infos = msg.split(" ", 3);
+                int job = -1;
+                try {
+                    job = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                try {
+                    perso = World.world.getPlayerByName(infos[2]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (perso == null) {
+                    this.sendMessage("Le nom du personnage est incorrect.");
+                    return;
+                }
+                if (job < 1)
+                    return;
+                JobStat jobStats = perso.getMetierByID(job);
+                if (jobStats == null)
+                    return;
+                perso.unlearnJob(jobStats.getId());
+                SocketManager.GAME_SEND_STATS_PACKET(perso);
+                Database.getStatics().getPlayerData().update(perso);
+                SocketManager.GAME_SEND_MESSAGE(perso, "Vous venez de désapprendre un métier, veuillez vous reconnecter.");
+                this.sendMessage("Vous avez supprimé le métier "
+                        + job + " sur le personnage " + perso.getName() + ".");
+                break;
+            }
+            case 49 : // DEMORPHALL
+            {
+                for (Player player : World.world.getOnlinePlayers()) {
+                    player.setGfxId(player.getClasse() * 10 + player.getSexe());
+                }
+                this.sendMessage("Tous les joueurs connectes ont leur apparence originale.");
+                break;
+            }
+            case 50 : // MORPH
+            {
+                int morphID = -9;
+                try {
+                    morphID = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (morphID == -9) {
+                    String str = "MorphID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                Player target = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    target = World.world.getPlayerByName(infos[2]);
+                    if (target == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                if (morphID == -1) {
+                    morphID = target.getClasse() * 10 + target.getSexe();
+                    target.setGfxId(morphID);
+                    SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(target.getCurMap(), target.getId());
+                    SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(target.getCurMap(), target);
+                    String str = "Le joueur " + target.getName()
+                            + " a son apparence originale.";
+                    this.sendMessage(str);
+
+                } else {
+                    target.setGfxId(morphID);
+                    SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(target.getCurMap(), target.getId());
+                    SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(target.getCurMap(), target);
+                    String str = "Le joueur " + target.getName()
+                            + " a ete transforme.";
+                    this.sendMessage(str);
+
+                }
+                break;
+            }
+            case 51 : //WHOIS
+            {
+                String name = "";
+                Player perso = null;
+                try {
+                    name = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (name == "")
+                    return;
+
+                perso = World.world.getPlayerByName(name);
+                if (perso == null) {
+                    String mess = "Le personnage n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                } else if (perso.getAccount().getLastIP().equalsIgnoreCase("")) {
+                    String mess = "Aucune IP.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                java.util.Map<Integer, Account> accounts = World.world.getAccountsByIp(perso.getAccount().getLastIP());
+                String mess = "Whois sur le joueur : " + name + "\n";
+                mess += "Derniere IP : " + perso.getAccount().getLastIP() + "\n";
+                int i = 1;
+                for (Entry<Integer, Account> entry : accounts.entrySet()) {
+                    String persos = "";
+                    Account a = entry.getValue();
+                    if (a == null)
+                        continue;
+                    for (Entry<Integer, Player> entry2 : a.getPlayers().entrySet()) {
+                        perso = entry2.getValue();
+                        if (perso != null) {
+                            if (persos.equalsIgnoreCase(""))
+                                persos += perso.getName()
+                                        + ((perso.getGroupe() != null) ? ":"
+                                        + perso.getGroupe().getName() : "");
+                            else
+                                persos += ", "
+                                        + perso.getName()
+                                        + ((perso.getGroupe() != null) ? ":"
+                                        + perso.getGroupe().getName() : "");
+                        }
+                    }
+                    if (!persos.equalsIgnoreCase("")) {
+                        mess += "[" + i + "] " + a.getName() + " - " + persos
+                                + ((a.isBanned()) ? " : banni" : "") + "\n";
+                        i++;
+                    }
+                }
+                this.sendMessage(mess);
+                break;
+            }
+            case 52 : //ERASEALLMAP
+            {
+                for (GameMap map : World.world.getMaps())
+                    map.delAllDropItem();
+                this.sendMessage("Tous les objets sur toutes les maps ont été supprimés.");
+                break;
+            }
+            case 53 : //ERASEMAP
+            {
+                this.getPlayer().getCurMap().delAllDropItem();
+                this.sendMessage("Les objets de la map ont été supprimés.");
+                break;
+            }
+            case 54 : //SIZE
+            {
+                int size = -1;
+                try {
+                    size = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+                if (size == -1) {
+                    String str = "Taille invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                Player perso = this.getPlayer();
+                if (infos.length > 2)//Si un nom de perso est specifie
+                {
+                    perso = World.world.getPlayerByName(infos[2]);
+                    if (perso == null) {
+                        String str = "Le personnage n'a pas ete trouve.";
+                        this.sendMessage(str);
+                        return;
+                    }
+                }
+                perso.set_size(size);
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(perso.getCurMap(), perso.getId());
+                SocketManager.GAME_SEND_ADD_PLAYER_TO_MAP(perso.getCurMap(), perso);
+                String str = "La taille du joueur " + perso.getName()
+                        + " a ete modifiee.";
+                this.sendMessage(str);
+                break;
+            }
+            case 56 : // LISTMAP
+            {
+                String data = "";
+                ArrayList<GameMap> i = World.world.getMapByPosInArray(this.getPlayer().getCurMap().getX(), this.getPlayer().getCurMap().getY());
+                for (GameMap map : i)
+                    data += map.getId() + " | ";
+                this.sendMessage(data);
+                break;
+            }
+            case 57 : // WALKFAST
+            {
+                if (this.getPlayer().walkFast)
+                    this.sendMessage("La marche instantanne viens d'etre disable.");
+                else
+                    this.sendMessage("La marche instantanne viens d'etre active.");
+                this.getPlayer().walkFast = !this.getPlayer().walkFast;
+                break;
+            }
+            case 58 : // ADDTRIGGER
+            {
+                String args = "";
+                try {
+                    args = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (args.equals("")) {
+                    String str = "Valeur invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+
+                this.getPlayer().getCurCell().addOnCellStopAction(0, args, "-1", null);
+                boolean success = Database.getDynamics().getScriptedCellData().update(this.getPlayer().getCurMap().getId(), this.getPlayer().getCurCell().getId(), 0, 1, args, "-1");
+                String str = "";
+                if (success)
+                    str = "Le trigger a ete ajoute.";
+                else
+                    str = "Le trigger n'a pas ete ajoute.";
+                this.sendMessage(str);
+                break;
+            }
+            case 59 : // DELTRIGGER
+            {
+                int cellID = -1;
+                try {
+                    cellID = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (cellID == -1
+                        || this.getPlayer().getCurMap().getCase(cellID) == null) {
+                    String str = "CellID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                this.getPlayer().getCurMap().getCase(cellID).clearOnCellAction();
+                boolean success = Database.getDynamics().getScriptedCellData().delete(this.getPlayer().getCurMap().getId(), cellID);
+                String str = "";
+                if (success)
+                    str = "Le trigger a ete retire.";
+                else
+                    str = "Le trigger n'a pas ete retire.";
+                this.sendMessage(str);
+                break;
+            }
+            case 60 : // SAVETHAT
+            {
+                this.getPlayer().thatMap = this.getPlayer().getCurMap().getId();
+                this.getPlayer().thatCell = this.getPlayer().getCurCell().getId();
+                this.sendMessage("Vous avez sauvegarde la map "
+                        + this.getPlayer().thatMap
+                        + " et la cellule "
+                        + this.getPlayer().thatCell + ".");
+                break;
+            }
+            case 61 : // APPLYTHAT
+            {
+                if (this.getPlayer().thatMap == -1
+                        || this.getPlayer().thatCell == -1) {
+                    this.sendMessage("Impossible d'ajouter le trigger, veuillez utiliser la commande STRIGGER avant.");
+                    return;
+                }
+                World.world.getMap((short) this.getPlayer().thatMap).getCase(this.getPlayer().thatCell).addOnCellStopAction(0, this.getPlayer().getCurMap().getId()
+                        + "," + this.getPlayer().getCurCell().getId(), "-1", null);
+                Database.getDynamics().getScriptedCellData().update(this.getPlayer().thatMap, this.getPlayer().thatCell, 0, 1, this.getPlayer().getCurMap().getId()
+                        + "," + this.getPlayer().getCurCell().getId(), "-1");
+                this.getPlayer().thatMap = -1;
+                this.getPlayer().thatCell = -1;
+                this.sendMessage("Vous avez applique le trigger.");
+                break;
+            }
+            case 64 : // BANIP
+            {
+                String IP = "";
+                try {
+                    IP = infos[1];
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (IP.equalsIgnoreCase("")) {
+                    this.sendMessage("Une IP est necessaire.");
+                    return;
+                }
+                for (Entry<Integer, Account> entry : World.world.getAccountsByIp(IP).entrySet()) {
+                    Account a = entry.getValue();
+                    if (a == null)
+                        continue;
+                    if (!a.getLastIP().equalsIgnoreCase(IP))
+                        continue;
+
+                    a.setBanned(true);
+                    Database.getStatics().getAccountData().update(a);
+                    this.sendMessage("Le compte "
+                            + a.getName() + " a ete banni.");
+                    if (a.isOnline()) {
+                        GameClient gc = a.getGameClient();
+                        if (gc == null)
+                            continue;
+                        this.sendMessage("Le joueur "
+                                + gc.getPlayer().getName() + " a ete kick.");
+                        gc.kick();
+                    }
+                }
+                ExchangeClient.INSTANCE.send("SB" + IP);
+                if (Database.getStatics().getBanIpData().add(IP))
+                    this.sendMessage("L'IP "
+                            + IP + " a ete banni.");
+                break;
+            }
+            case 66 : // A
+            {
+                infos = msg.split(" ", 2);
+                String prefix = "<b>Server</b>";
+                SocketManager.GAME_SEND_Im_PACKET_TO_ALL("116;" + prefix + "~"
+                        + infos[1]);
+                this.sendMessage("Vous avez envoye un message e tout le serveur.");
+                break;
+            }
+            case 69 : // FREEZE
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 1) {
+                    perso = World.world.getPlayerByName(infos[1]);
+                }
+                if (perso == null) {
+                    String mess = "Le personnage n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                }
+                if (perso.getBlockMovement())
+                    this.sendMessage("Le joueur n'est plus bloque.");
+                else
+                    this.sendMessage("Le joueur est bloque.");
+                perso.setBlockMovement(!perso.getBlockMovement());
+                break;
+            }
+            case 70 : // BLOCKMAP
+            {
+                int i = -1;
+                try {
+                    i = Short.parseShort(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+                if (i == 0) {
+                    Main.INSTANCE.setMapAsBlocked(false);
+                    this.sendMessage("Map deblocke.");
+                } else if (i == 1) {
+                    Main.INSTANCE.setMapAsBlocked(true);
+                    this.sendMessage("Map blocke.");
+                } else {
+                    this.sendMessage("Aucune information.");
+                }
+                break;
+            }
+            case 71 : // RELOADDROP
+            {
+                World.world.reloadDrops();
+                this.sendMessage("Le rechargement des drops a ete effectue.");
+                break;
+            }
+            case 72 : // RELOADENDFIGHT
+            {
+                World.world.reloadEndFightActions();
+                this.sendMessage("Le rechargement des EndFightActions a ete effectue.");
+                break;
+            }
+            case 73 : // RELOADHOUSE
+            {
+                World.world.reloadHouses();
+                this.sendMessage("Le rechargement des maisons a ete effectue.");
+                break;
+            }
+            case 74 : // RELOADCOFFRE
+            {
+                World.world.reloadTrunks();
+                this.sendMessage("Le rechargement des coffres a ete effectue.");
+                break;
+            }
+            case 75 : // RELOADACTION
+            {
+                World.world.reloadObjectsActions();
+                this.sendMessage("Le rechargement des actions a ete effectue.");
+                break;
+            }
+            case 76 : // RELOADMAP
+            {
+                World.world.reloadMaps();
+                this.sendMessage("Le rechargement des maps a ete effectue.");
+                break;
+            }
+            case 77 : // RELOADMOUNTPARK
+            {
+                int i = Integer.parseInt(infos[1]);
+                World.world.reloadMountParks(i);
+                this.sendMessage("Le rechargement de l'enclos "
+                        + i + " a ete effectue.");
+                break;
+            }
+            case 78 : // RELOADNPC
+            {
+                try {
+                    World.world.reloadNpcs();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                    this.sendMessage(e.getMessage());
+                }
+                this.sendMessage("Le rechargement des Npcs a ete effectue.");
+                break;
+            }
+            case 79 : // RELOADSPELL
+            {
+                World.world.reloadSpells();
+                this.sendMessage("Le rechargement des sorts a ete effectue.");
+                break;
+            }
+            case 80 : // RELOADITEM
+            {
+                World.world.reloadItems();
+                this.sendMessage("Le rechargement des items a ete effectue.");
+                break;
+            }
+            case 81 : // RELOADMONSTER
+            {
+                World.world.reloadMonsters();
+                this.sendMessage("Le rechargement des monstres a ete effectue.");
+                break;
+            }
+            case 83 : // MAPINFO
+            {
+                String mess = "==========\n" + "Liste des PNJs de la Map :";
+                this.sendMessage(mess);
+                GameMap map = this.getPlayer().getCurMap();
+                for (Entry<Integer, Npc> entry : map.getNpcs().entrySet()) {
+                    mess = entry.getKey()
+                            + " | "
+                            + entry.getValue().getTemplate().getId()
+                            + " | "
+                            + entry.getValue().getCellId()
+                            + " | "
+                            + entry.getValue().getTemplate().getInitQuestionId(this.getPlayer().getCurMap().getId());
+                    this.sendMessage(mess);
+                }
+                mess = "Liste des groupes de monstres :";
+                this.sendMessage(mess);
+                for (Entry<Integer, MobGroup> entry : map.getMobGroups().entrySet()) {
+                    mess = entry.getKey() + " | " + entry.getValue().getCellId()
+                            + " | " + entry.getValue().getAlignement() + " | "
+                            + entry.getValue().getMobs().size();
+                    this.sendMessage(mess);
+                }
+                mess = "==========";
+                this.sendMessage(mess);
+                break;
+            }
+            case 85 : // ADDNPC
+            {
+                int id = 0;
+                try {
+                    id = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                if (id == 0 || World.world.getNPCTemplate(id) == null) {
+                    String str = "NpcID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                Npc npc = this.getPlayer().getCurMap().addNpc(id, this.getPlayer().getCurCell().getId(), this.getPlayer().get_orientation());
+                SocketManager.GAME_SEND_ADD_NPC_TO_MAP(this.getPlayer().getCurMap(), npc);
+                String str = "Le PNJ a ete ajoute";
+                if (this.getPlayer().get_orientation() == 0
+                        || this.getPlayer().get_orientation() == 2
+                        || this.getPlayer().get_orientation() == 4
+                        || this.getPlayer().get_orientation() == 6)
+                    str += " mais est invisible (orientation diagonale invalide)";
+                str += ".";
+                if (Database.getDynamics().getNpcData().addOnMap(this.getPlayer().getCurMap().getId(), id, this.getPlayer().getCurCell().getId(), this.getPlayer().get_orientation(), false))
+                    this.sendMessage(str);
+                else
+                    this.sendMessage("Erreur lors de la sauvegarde de la position.");
+                break;
+            }
+            case 86 : // DELNPC
+            {
+                int id = 0;
+                try {
+                    id = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                Npc npc = this.getPlayer().getCurMap().getNpc(id);
+                if (id == 0 || npc == null) {
+                    String str = "Npc GUID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                int exC = npc.getCellId();
+                //on l'efface de la map
+                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(this.getPlayer().getCurMap(), id);
+                this.getPlayer().getCurMap().removeNpcOrMobGroup(id);
+
+                String str = "Le PNJ a ete supprime.";
+                if (Database.getDynamics().getNpcData().delete(this.getPlayer().getCurMap().getId(), exC))
+                    this.sendMessage(str);
+                else
+                    this.sendMessage("Erreur lors de la sauvegarde de la position.");
+                break;
+            }
+            case 91 : // DELNPCITEM
+            {
+                int npcGUID = 0;
+                int itmID = -1;
+                try {
+                    npcGUID = Integer.parseInt(infos[1]);
+                    itmID = Integer.parseInt(infos[2]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                GameMap map = this.getPlayer().getCurMap();
+                Npc npc = map.getNpc(npcGUID);
+                NpcTemplate npcTemplate = null;
+                if (npc == null)
+                    npcTemplate = World.world.getNPCTemplate(npcGUID);
+                else
+                    npcTemplate = npc.getTemplate();
+                if (npcGUID == 0 || itmID == -1 || npcTemplate == null) {
+                    String str = "NpcGUID ou itemID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                String str = "";
+                if (npcTemplate.removeItemVendor(itmID))
+                    str = "L'objet a ete retire.";
+                else
+                    str = "L'objet n'a pas ete retire.";
+                this.sendMessage(str);
+                Database.getDynamics().getNpcTemplateData().update(npcTemplate);
+                break;
+            }
+            case 92 : // ADDNPCITEM
+            {
+                int npcGUID = 0;
+                int itmID = -1;
+                try {
+                    npcGUID = Integer.parseInt(infos[1]);
+                    itmID = Integer.parseInt(infos[2]);
+                } catch (Exception e) {
+                    // ok
+                }
+
+                GameMap map = this.getPlayer().getCurMap();
+                Npc npc = map.getNpc(npcGUID);
+                NpcTemplate npcTemplate = null;
+                if (npc == null)
+                    npcTemplate = World.world.getNPCTemplate(npcGUID);
+                else
+                    npcTemplate = npc.getTemplate();
+                ObjectTemplate item = World.world.getObjTemplate(itmID);
+                if (npcGUID == 0 || itmID == -1 || npcTemplate == null
+                        || item == null) {
+                    String str = "NpcGUID ou itemID invalide.";
+                    this.sendMessage(str);
+                    return;
+                }
+                String str = "";
+                if (npcTemplate.addItemVendor(item))
+                    str = "L'objet a ete rajoute.";
+                else
+                    str = "L'objet n'a pas ete rajoute.";
+                this.sendMessage(str);
+                Database.getDynamics().getNpcTemplateData().update(npcTemplate);
+                break;
+            }
+            case 93 : // SHOWPOINTS
+            {
+                Player perso = this.getPlayer();
+                if (infos.length > 1)
+                    perso = World.world.getPlayerByName(infos[1]);
+                if (perso == null) {
+                    String mess = "Le personnage n'existe pas.";
+                    this.sendMessage(mess);
+                    return;
+                }
+
+                if(perso.getAccount().getWebAccount()!=null) {
+
+                    this.sendMessage(perso.getName()
+                            + " possede "
+                            + perso.getAccount().getWebAccount().getPoints()
+                            + " points boutique.");
+                }
+                else{
+                    this.sendMessage(perso.getName()
+                            + " possede "
+                            + " pas de "
+                            + " points boutique. car pas lié a son compte web");
+                }
+                break;
+            }
+
+            case 90 : //CONVERT
+            case 89 : //C1
+            case 88 : //B1
+            case 87 : //A1
+            case 84 : // MOVEMOB
+            case 82 : // LOG
+            case 68 : // POP
+            case 67 : // POPALL
+            case 65 : // FLOOR
+            case 63 : //
+            case 62 : //
+            case 55 : // GETCASE
+            case 45 : // RESET
+            case 40 : // CLEANFIGHT
+            case 36 : // Commande NOAGGRO INUTILE
+            default :
+            {
+                this.sendMessage("Commande inutile");
+                break;
+            }
+        }
+        return;
     }
 
     private static int getCellJail() {

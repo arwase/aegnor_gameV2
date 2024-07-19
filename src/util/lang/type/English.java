@@ -24,7 +24,7 @@ public class English extends AbstractLang {
         this.sentences.add(index, "List of members of staff connected :"); index++;
         this.sentences.add(index, "There is no member of staff connected."); index++;
         this.sentences.add(index, "You are not stuck.."); index++;
-        this.sentences.add(index, "<b>" + Config.INSTANCE.getNAME() + "</b>\nOnline since : #1j #2h #3m #4s."); index++;
+        this.sentences.add(index, "<b>" + Config.INSTANCE.getSERVER_NAME() + "</b>\nOnline since : #1j #2h #3m #4s."); index++;
         this.sentences.add(index, "\nPlayers online : #1"); index++;
         this.sentences.add(index, "\nUnique players online : #1"); index++;
         this.sentences.add(index, "\nMost online : #1"); index++;

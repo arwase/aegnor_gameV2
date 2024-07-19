@@ -24,7 +24,7 @@ public class Monster {
     private int gfxId;
     private int align;
     private String colors;
-    private int ia = 0;
+    private int ia = 27;
     private int minKamas;
     private int maxKamas;
     private Map<Integer, MobGrade> grades = new HashMap<>();
@@ -393,6 +393,10 @@ public class Monster {
 
     public int getIa() {
         return this.ia;
+    }
+
+    public void setIA(int ia) {
+        this.ia = ia;
     }
 
     public int getMinKamas() {
@@ -1338,9 +1342,6 @@ public class Monster {
             Monster.MobGrade MG4 = this.getTemplate().getGrade(4);
             Monster.MobGrade MG1 = this.getTemplate().getGrade(1);
 
-
-
-
             switch (fightDiff) {
                 case 1:
                     int lvlMin = MG4.getLevel();
@@ -1374,8 +1375,6 @@ public class Monster {
                     this.baseXp = XPMG7;
                     break;
             }
-
-
         }
 
         public void replaceStatsInfos(int s) {

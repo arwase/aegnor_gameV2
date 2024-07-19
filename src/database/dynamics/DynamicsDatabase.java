@@ -58,6 +58,9 @@ public class DynamicsDatabase {
     private RuneData runeData;
     private ScriptedCellData scriptedCellData;
     private SpellData spellData;
+    private SpellGradeData spellGradeData;
+    private SpellEffectData spellEffectData;
+    private TriggerSpellEffectData triggerSpellEffectData;
     private TutorialData tutorialData;
     private ZaapData zaapData;
     private ZaapiData zaapiData;
@@ -110,6 +113,9 @@ public class DynamicsDatabase {
         this.scriptedCellData = new ScriptedCellData(this.dataSource);
         this.subAreaData = new SubAreaData(this.dataSource);
         this.spellData = new SpellData(this.dataSource);
+        this.spellGradeData = new SpellGradeData(this.dataSource);
+        this.spellEffectData = new SpellEffectData(this.dataSource);
+        this.triggerSpellEffectData = new TriggerSpellEffectData(this.dataSource);
         this.tutorialData = new TutorialData(this.dataSource);
         this.zaapData = new ZaapData(this.dataSource);
         this.zaapiData = new ZaapiData(this.dataSource);
@@ -317,6 +323,18 @@ public class DynamicsDatabase {
 
     public SpellData getSpellData() {
         return spellData;
+    }
+
+    public SpellEffectData getSpellEffectData() {
+        return spellEffectData;
+    }
+
+    public SpellGradeData getSpellGradeData() {
+        return spellGradeData;
+    }
+
+    public TriggerSpellEffectData getTriggerSpellEffectData() {
+        return triggerSpellEffectData;
     }
 
     public TutorialData getTutorialData() {

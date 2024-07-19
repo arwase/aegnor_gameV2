@@ -34,7 +34,7 @@ public class SpellGrade {
     private ArrayList<Effect> effectsSpell  = new ArrayList<>();
     private ArrayList<Integer> statesForbidden;
     private int stateRequire;
-    private int type=0;
+    private int type;
 
     public SpellGrade(int spellid, int gradeid, int paCost, int poMin, int poMax, int ratioCC, int ratioEC, boolean isLine, boolean needLOS, boolean needEmptyC, boolean isPoModif, int maxByTurn, int maxByTarget, int cd, int lvlLearn, boolean endTurn, ArrayList<Integer> forbiddenStates, int stateNeed) {
         this.spellID = spellid;
@@ -248,166 +248,14 @@ public class SpellGrade {
         }
     }
 
-    /*public void applySpellEffectToFight(Fight fight, Fighter perso,
-                                        GameCase cell, boolean isCC, boolean isTrap) {
-        ArrayList<Effect> effets;
-
-        if (isCC)
-            effets = CCeffects;
-        else
-            effets = effects;
-
-        int jetChance = 0;
-        if (this.getSpell().getSpellID() == 101) // Si c'est roulette
-        {
-            jetChance = Formulas.getRandomValue(0, 75);
-            if (jetChance % 2 == 0)
-                jetChance++;
-        } else if (this.getSpell().getSpellID() == 574) // Si c'est Ouverture hasardeuse fant�me
-            jetChance = Formulas.getRandomValue(0, 96);
-        else if (this.getSpell().getSpellID() == 574) // Si c'est Ouverture hasardeuse
-            jetChance = Formulas.getRandomValue(0, 95);
-        else if (this.getSpell().getSpellID() == 913) // Si c'est Ouverture hasardeuse
-            jetChance = Formulas.getRandomValue(0, 95);
-        else
-            jetChance = Formulas.getRandomValue(0, 99);
-        int curMin = 0;
-        int num = 0;
-
-
-        for (SpellEffect SE : effets) {
-            try {
-                if (fight.getState() >= Constant.FIGHT_STATE_FINISHED)
-                    return;
-                if (SE.getChance() != 0 && SE.getChance() != 100)// Si pas 100%
-                {
-                    if (jetChance <= curMin || jetChance >= (SE.getChance() + curMin)) {
-                        curMin += SE.getChance();
-                        num++;
-                        continue;
-                    }
-                    curMin += SE.getChance();
-                }
-
-
-                ArrayList<GameCase> cells = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), perso.getCell().getId(), SE.getAreaEffect());
-                ArrayList<GameCase> finalCells = new ArrayList<GameCase>();
-
-                int TE = SE.getEffectTarget();
-
-                for (GameCase C : cells) {
-                    if (C == null)
-                        continue;
-                    Fighter F = C.getFirstFighter();
-                    if (F == null)
-                        continue;
-                    // Ne touches pas les alli�s : 1
-                    if (((TE & 1) == 1) && (F.getTeam() == perso.getTeam()))
-                        continue;
-                    // Ne touche pas le lanceur : 2
-                    if ((((TE >> 1) & 1) == 1) && (F.getId() == perso.getId()))
-                        continue;
-                    // Ne touche pas les ennemies : 4
-                    if ((((TE >> 2) & 1) == 1) && (F.getTeam() != perso.getTeam()))
-                        continue;
-                    // Ne touche pas les combatants (seulement invocations) : 8
-                    if ((((TE >> 3) & 1) == 1) && (!F.isInvocation()))
-                        continue;
-                    // Ne touche pas les invocations : 16
-                    if ((((TE >> 4) & 1) == 1) && (F.isInvocation()))
-                        continue;
-                    // N'affecte que le lanceur : 32
-                    if ((((TE >> 5) & 1) == 1) && (F.getId() != perso.getId()))
-                        continue;
-                    // N'affecte que les alliés (pas le lanceur) : 64
-                    if ((((TE >> 6) & 1) == 1) && (F.getTeam() != perso.getTeam() || F.getId() == perso.getId()))
-                        continue;
-                    // N'affecte PERSONNE : 1024
-                    if ((((TE >> 10) & 1) == 1))
-                        continue;
-
-                    // Si pas encore eu de continue, on ajoute la case, tout le monde : 0
-                    finalCells.add(C);
-                }
-                // Si le sort n'affecte que le lanceur et que le lanceur n'est
-                // pas dans la zone
-
-                if (((TE >> 5) & 1) == 1)
-                    if (!finalCells.contains(perso.getCell()))
-                        finalCells.add(perso.getCell());
-                ArrayList<Fighter> cibles = SpellEffect.getTargets(SE, fight, finalCells);
-
-
-                TE = SE.getEffectTarget();
-                for (GameCase C : cells) {
-                    if (C == null)
-                        continue;
-                    Fighter F = C.getFirstFighter();
-                    if (F == null)
-                        continue;
-                    // Ne touches pas les alli�s : 1
-                    if (((TE & 1) == 1) && (F.getTeam() == perso.getTeam()))
-                        continue;
-                    // Ne touche pas le lanceur : 2
-                    if ((((TE >> 1) & 1) == 1) && (F.getId() == perso.getId()))
-                        continue;
-                    // Ne touche pas les ennemies : 4
-                    if ((((TE >> 2) & 1) == 1) && (F.getTeam() != perso.getTeam()))
-                        continue;
-                    // Ne touche pas les combatants (seulement invocations) : 8
-                    if ((((TE >> 3) & 1) == 1) && (!F.isInvocation()))
-                        continue;
-                    // Ne touche pas les invocations : 16
-                    if ((((TE >> 4) & 1) == 1) && (F.isInvocation()))
-                        continue;
-                    // N'affecte que le lanceur : 32
-                    if ((((TE >> 5) & 1) == 1) && (F.getId() != perso.getId()))
-                        continue;
-                    // N'affecte que les alliés (pas le lanceur) : 64
-                    if ((((TE >> 6) & 1) == 1) && (F.getTeam() != perso.getTeam() || F.getId() == perso.getId()))
-                        continue;
-                    // N'affecte PERSONNE : 1024
-                    if ((((TE >> 10) & 1) == 1))
-                        continue;
-
-                    // Si pas encore eu de continue, on ajoute la case, tout le monde : 0
-                    finalCells.add(C);
-                }
-
-
-                if ((fight.getType() != Constant.FIGHT_TYPE_CHALLENGE)
-                        && (fight.getAllChallenges().size() > 0)) {
-                    for (Map.Entry<Integer, Challenge> c : fight.getAllChallenges().entrySet()) {
-                        if (c.getValue() == null)
-                            continue;
-                        c.getValue().onFightersAttacked(cibles, perso, SE, this.getSpellID(), isTrap);
-                    }
-                }
-
-                SE.applyToFight(fight, perso, cell, cibles);
-                // Si c'est une transpo et qu'il reste des effets on rajoute la nouvelle cellule d'arrivée et on enleve la cellule de départ'
-                if(SE.getEffectID() == 8 ){
-                    cell = cibles.get(0).getCell();
-                }
-
-                num++;
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }*/
 
     public void applySpellEffectToFight(Fight fight, Fighter perso,
                                         GameCase cell, boolean isCC, boolean isTrap) {
-
         // On rempli avec tous les effets du sortGrade on exclura les CC plus tard
         List<Effect> effets = new ArrayList<Effect>();
         effets.addAll(effectsSpell);
-
         Effect.applyAllEffectFromList(fight,effets,isCC,perso,cell);
-
     }
-
 
 
 }

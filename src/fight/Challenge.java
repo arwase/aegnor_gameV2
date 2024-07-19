@@ -5,8 +5,10 @@ import common.Formulas;
 import common.PathFinding;
 import common.SocketManager;
 import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import fight.spells.SpellGrade;
 import game.GameClient;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -135,8 +137,7 @@ public class Challenge {
                     for (Fighter f : Choix) {
                         if (f.getPlayer() != null)
                             continue;
-                        if (f.getMob() != null && f.getTeam2() == 2
-                                && !f.isDead() && !f.isInvocation())
+                        if (f.getMob() != null && f.getTeam2() == 2 && !f.isDead() && !f.isInvocation())
                             _cible = f;
                     }
                 }
@@ -236,28 +237,21 @@ public class Challenge {
     }
 
     public void onFightersAttacked(ArrayList<Fighter> targets, Fighter caster,
-                                   Effect SE, int spell, boolean isTrap) {
+                                   Effect SE, int spellid, boolean isTrap) {
         int effectID = SE.getEffectID();
         if (!challengeAlive)
             return;
-        String DamagingEffects = "|82|85|86|87|88|89|91|92|93|94|95|96|97|98|99|100|141|";
-        String HealingEffects = "|108|";
-        String MPEffects = "|77|127|169|";
-        String APEffects = "|84|101|";
-        String OPEffects = "|116|320|";
+
         switch (Type) {
             case 31:
                 break;
             case 18: // Incurable
-                if ((caster.getTeam() == 0) && !caster.isInvocation() && HealingEffects.contains("|" + effectID + "|"))
+                if ((caster.getTeam() == 0) && !caster.isInvocation() && ArrayUtils.contains(EffectConstant.EFFECTS_HEAL,effectID))
                     targets.stream().filter(fighter -> fighter.getTeam() == 0).forEach(fighter -> challengeLoose(caster));
                 break;
-
-            case 20: // El�mentaire
-                if ((caster.getTeam() == 0)
-                        && DamagingEffects.contains("|" + effectID + "|")
-                        && effectID != 141) {
-                    switch (spell) {
+            case 20: // Elémentaire
+                if ((!caster.isInvocation()) && (caster.getTeam() == 0) && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_DAMMAGE,effectID) && effectID != 141) {
+                    switch (spellid) {
                         case 126://Mot stimulant
                         case 149://Mutilation
                         case 106://Roue de la fortune
@@ -268,26 +262,30 @@ public class Challenge {
                         case 123://Mot drainant
                             return;
                     }
+
                     if (Arg == 0) {
-                        Arg = effectID;
+                        if(!ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_NOELEM,effectID))
+                            Arg = effectID;
                         break;
                     }
                     if (Arg != effectID) {
-                        String eau = "85 91 96", terre = "86 92 97", air = "87 93 98", feu = "88 94 99", neutre = "89 95 100";
-                        if (eau.contains(String.valueOf(Arg))
-                                && eau.contains(String.valueOf(effectID))) {
+                        if(ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_EAU,Arg)
+                                && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_EAU,effectID) ) {
                             break;
-                        } else if (terre.contains(String.valueOf(Arg))
-                                && terre.contains(String.valueOf(effectID))) {
+                        } else if (ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_TERRE,Arg)
+                                && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_TERRE,effectID) ) {
                             break;
-                        } else if (air.contains(String.valueOf(Arg))
-                                && air.contains(String.valueOf(effectID))) {
+                        } else if (ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_AIR,Arg)
+                                && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_AIR,effectID) ) {
                             break;
-                        } else if (feu.contains(String.valueOf(Arg))
-                                && feu.contains(String.valueOf(effectID))) {
+                        } else if (ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_FEU,Arg)
+                                && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_FEU,effectID)) {
                             break;
-                        } else if (neutre.contains(String.valueOf(Arg))
-                                && neutre.contains(String.valueOf(effectID))) {
+                        } else if (ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_NEUTRE,Arg)
+                                && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_NEUTRE,effectID)) {
+                            break;
+                        }
+                        else if(ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_NOELEM,effectID)){
                             break;
                         }
                         challengeLoose(caster);
@@ -296,7 +294,7 @@ public class Challenge {
                 }
                 break;
             case 21: // Circulez !
-                if ((caster.getTeam() == 0) && MPEffects.contains("|" + effectID + "|")) {
+                if ((!caster.isInvocation()) && (caster.getTeam() == 0) && ArrayUtils.contains(EffectConstant.EFFECTS_RETPM,effectID)) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
                             challengeLoose(caster);
@@ -306,8 +304,8 @@ public class Challenge {
                 }
                 break;
             case 22: // Le temps qui court !
-                if ((caster.getTeam() == 0)
-                        && APEffects.contains("|" + effectID + "|")) {
+                if ((!caster.isInvocation()) && (caster.getTeam() == 0)
+                        && ArrayUtils.contains(EffectConstant.EFFECTS_RETPA,effectID)) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
                             challengeLoose(caster);
@@ -317,8 +315,8 @@ public class Challenge {
                 }
                 break;
             case 23: // Perdu de vue !
-                if ((caster.getTeam() == 0)
-                        && OPEffects.contains("|" + effectID + "|")) {
+                if ((!caster.isInvocation()) && (caster.getTeam() == 0)
+                        && ArrayUtils.contains(EffectConstant.EFFECTS_RET_PO,effectID)) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
                             challengeLoose(caster);
@@ -329,19 +327,17 @@ public class Challenge {
                 break;
             case 32: // Elitiste
             case 34: // Impr�visible
-                if ((caster.getTeam() == 0)
-                        && DamagingEffects.contains("|" + effectID + "|")) {
+                if ( (!caster.isInvocation()) &&  (caster.getTeam() == 0) && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_DAMMAGE_WITHNOELEM,effectID) ) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
-                            if (_cible == null
-                                    || _cible.getId() != target.getId())
+                            if (_cible == null || _cible.getId() != target.getId())
                                 challengeLoose(caster);
                         }
                     }
                 }
                 break;
             case 38: // Blitzkrieg
-                if ((caster.getTeam() == 0) && DamagingEffects.contains("|" + effectID + "|")) {
+                if ((caster.getTeam() == 0) && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_DAMMAGE_WITHNOELEM,effectID)) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
                             StringBuilder id = new StringBuilder();
@@ -355,15 +351,15 @@ public class Challenge {
                 }
                 break;
             case 43: // Abn�gation
-                if ((caster.getTeam() == 0) && HealingEffects.contains("|" + effectID + "|") && caster.getInvocator() == null)
+                if ((caster.getTeam() == 0) && ArrayUtils.contains(EffectConstant.EFFECTS_HEAL,effectID) && caster.getInvocator() == null)
                     for (Fighter target : targets)
                         if (target.getId() == caster.getId())
                             challengeLoose(caster);
                 break;
             case 45: // Duel
             case 46: // Chacun son monstre
-                if ((caster.getTeam() == 0)
-                        && DamagingEffects.contains("|" + effectID + "|")) {
+                if ((!caster.isInvocation()) && (caster.getTeam() == 0)
+                        && ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_DAMMAGE_WITHNOELEM,effectID)) {
                     for (Fighter target : targets) {
                         if (target.getTeam() == 1) {
                             if (!Args.contains(";" + target.getId() + ","))
@@ -378,9 +374,8 @@ public class Challenge {
                 }
                 break;
             case 47: // Contamination
-                if (DamagingEffects.contains("|" + effectID + "|"))
-                    targets.stream().filter(target -> target.getTeam() == 0 && target.getPdv() != target.getPdvMax())
-                            .filter(target -> !Args.contains(";" + target.getId() + ",")).forEach(target -> Args += ";" + target.getId() + "," + "3;");
+                if (ArrayUtils.contains(EffectConstant.EFFECTS_ATTAK_DAMMAGE_WITHNOELEM,effectID))
+                    targets.stream().filter(target -> target.getTeam() == 0 && target.getPdv() != target.getPdvMax()).filter(target -> !Args.contains(";" + target.getId() + ",")).forEach(target -> Args += ";" + target.getId() + "," + "3;");
                 break;
         }
     }
@@ -419,8 +414,9 @@ public class Challenge {
                 break;
 
             case 19: // Mains propres
-                if (killer.getTeam() != 0 || killer.isInvocation() && this.fight.getFighterByOrdreJeu() != killer)
+                if ( killer.getTeam() != 0 || killer.isInvocation() || !killer.canPlay())
                     return;
+
                 if (mob.getTeam() == 1 && !mob.isInvocation()) {
                     challengeLoose(killer);
                     break;
@@ -452,14 +448,13 @@ public class Challenge {
                 break;
 
             case 31: // Focus
-                if (killer.getMob() != null || killer == mob || mob.getLevelUp())
+                if (killer.getMob() != null || killer == mob || mob.getLevelUp() || mob.isInvocation())
                     break;
                 if (Args.contains("" + mob.getId()))
                     Args = "";
                 else
                     challengeLoose(killer);
                 break;
-
             case 32: // Elitiste
                 if (_cible.getId() == mob.getId())
                     challengeWin();
@@ -478,7 +473,8 @@ public class Challenge {
                 if (isKiller) {
                     if(killer.isInvocation())
                         killer = killer.getInvocator();
-                    Args += (Args.isEmpty() ? killer.getId() : ";" + killer.getId());
+                    if(!mob.isInvocation())
+                        Args += (Args.isEmpty() ? killer.getId() : ";" + killer.getId());
                 }
                 break;
             case 30: // Les petits d'abord
@@ -502,7 +498,7 @@ public class Challenge {
                 if (_cible == null)
                     return;
                 if (_cible.getId() != mob.getId()) {
-                    if (!mob.isInvocation())
+                    if (!mob.isInvocation() && !killer.isInvocation())
                         challengeLoose(fight.getFighterByOrdreJeu());
                 } else {
                     try {
@@ -528,24 +524,21 @@ public class Challenge {
                     }
                 }
                 break;
-
             case 10: // Cruel
                 if (_cible == null)
                     return;
-                if (_cible.isInvocation() || _cible.isDouble()
-                        || mob.getPlayer() != null)
+                if (_cible.isInvocation() || _cible.isDouble() || mob.getPlayer() != null || killer.isInvocation())
                     return;
-                if (_cible.getId() != mob.getId()
-                        && _cible.getLvl() != mob.getLvl()) {
+                if (_cible.getId() != mob.getId() && _cible.getLvl() != mob.getLvl()) {
                     if (mob.getLvl() > _cible.getLvl())
                         challengeLoose(fight.getFighterByOrdreJeu());
                 } else {
                     try {
                         int levelMin = 2000;
                         for (Fighter fighter : fight.getFighters(2)) {
-                            if (fighter.isInvocation() || fighter.isDouble()
-                                    || fighter.getPlayer() != null || fighter.isDead())
+                            if (fighter.isInvocation() || fighter.isDouble() || fighter.getPlayer() != null || fighter.isDead())
                                 continue;
+
                             if (fighter.getPlayer() == null
                                     && fighter.getLvl() < levelMin) {
                                 levelMin = fighter.getLvl();
@@ -684,7 +677,7 @@ public class Challenge {
                     else Args = "cant";
                 break;
             case 34: // Impr�visible
-                if (fighter.getTeam() == 1)
+                if (fighter.getTeam() == 1 || fighter.isInvocation())
                     return;
                 try {
                     int noBoucle = 0, GUID = 0;
@@ -693,7 +686,7 @@ public class Challenge {
                         if (_ordreJeu.size() > 0) {
                             GUID = Formulas.getRandomValue(0, _ordreJeu.size() - 1);
                             Fighter f = _ordreJeu.get(GUID);
-                            if (f.getPlayer() == null && !f.isDead())
+                            if (f.getPlayer() == null && !f.isDead() && !f.isInvocation())
                                 _cible = f;
                             noBoucle++;
                             if (noBoucle > 150)
@@ -765,7 +758,8 @@ public class Challenge {
                 break;
 
             case 8: // Nomade
-                if (!fighter.isInvocation() && this.fight.getCurFighterPm() != 0)
+                //System.out.println(fighter.getCurPm(this.fight));
+                if (!fighter.isInvocation() && fighter.getCurPm(this.fight) > 0)  //this.fight.getCurFighterPm() != 0
                     challengeLoose(fighter);
                 break;
 
@@ -814,7 +808,7 @@ public class Challenge {
                 break;
 
             case 41: // P�tulant
-                if (this.fight.getCurFighterPa() != 0)
+                if (!fighter.isInvocation() && fighter.getCurPa(this.fight) > 0)
                     challengeLoose(fighter);
                 break;
 

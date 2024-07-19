@@ -152,13 +152,13 @@ public class Stats {
 
     public int getEffect(int id) {
 
-        int val;
-        if (this.effects.get(id) == null)
-            val = 0;
-        else
-            val = this.effects.get(id);
+        int val = this.effects.get(id) == null ? 0 : this.effects.get(id);
 
         switch (id) {
+            case EffectConstant.STATS_ADD_SAGE:
+                if (this.effects.get(EffectConstant.STATS_REM_SAGE) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_SAGE);
+                break;
             case EffectConstant.STATS_ADD_AFLEE:
                 if (this.effects.get(EffectConstant.STATS_REM_AFLEE) != null)
                     val -= getEffect(EffectConstant.STATS_REM_AFLEE);
@@ -174,6 +174,30 @@ public class Stats {
             case EffectConstant.STATS_ADD_INIT:
                 if (this.effects.get(EffectConstant.STATS_REM_INIT) != null)
                     val -= this.effects.get(EffectConstant.STATS_REM_INIT);
+                break;
+            case EffectConstant.STATS_ADD_CC:
+                if (this.effects.get(EffectConstant.STATS_REM_CC) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_CC);
+                break;
+            case EffectConstant.STATS_CREATURE:
+                if (this.effects.get(EffectConstant.STATS_REM_INVO) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_INVO);
+                break;
+            case EffectConstant.STATS_RETDOM:
+                if (this.effects.get(EffectConstant.STATS_REM_RENVOI) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_RENVOI);
+                break;
+            case EffectConstant.STATS_ADD_SOIN:
+                if (this.effects.get(EffectConstant.STATS_REM_SOIN) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_SOIN);
+                break;
+            case EffectConstant.STATS_TRAPPER:
+                if (this.effects.get(EffectConstant.STATS_REM_TRAPPER) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_TRAPPER);
+                break;
+            case EffectConstant.STATS_TRAPDOM:
+                if (this.effects.get(EffectConstant.STATS_REM_TRAPDOM) != null)
+                    val -= this.effects.get(EffectConstant.STATS_REM_TRAPDOM);
                 break;
             case EffectConstant.STATS_ADD_AGIL:
                 if (this.effects.get(EffectConstant.STATS_REM_AGIL) != null)
@@ -198,6 +222,8 @@ public class Stats {
                     val -= this.effects.get(EffectConstant.STATS_REM_PA);
                 if (this.effects.get(EffectConstant.STATS_REM_PA2) != null)//Non esquivable
                     val -= this.effects.get(EffectConstant.STATS_REM_PA2);
+                if (this.effects.get(EffectConstant.STATS_REM_PA3) != null)//Non esquivable
+                    val -= this.effects.get(EffectConstant.STATS_REM_PA3);
                 break;
             case EffectConstant.STATS_ADD_PM:
                 if (this.effects.get(EffectConstant.STATS_ADD_PM2) != null)
@@ -206,6 +232,10 @@ public class Stats {
                     val -= this.effects.get(EffectConstant.STATS_REM_PM);
                 if (this.effects.get(EffectConstant.STATS_REM_PM2) != null)//Non esquivable
                     val -= this.effects.get(EffectConstant.STATS_REM_PM2);
+                break;
+            case EffectConstant.STATS_ADD_EC:
+                if (this.effects.get(EffectConstant.STATS_ADD_EC) != null)
+                    val = this.effects.get(EffectConstant.STATS_ADD_EC);
                 break;
             case EffectConstant.STATS_ADD_PO:
                 if (this.effects.get(EffectConstant.STATS_REM_PO) != null)
@@ -282,7 +312,24 @@ public class Stats {
                 if (this.effects.get(EffectConstant.STATS_ADD_MAITRISE) != null)
                     val = this.effects.get(EffectConstant.STATS_ADD_MAITRISE);
                 break;
+            case EffectConstant.STATS_SPELL_ADD_PO:
+                if(this.effects.get(EffectConstant.STATS_SPELL_ADD_PO) != null)
+                    val = this.effects.get(EffectConstant.STATS_SPELL_ADD_PO);
+                break;
+            case EffectConstant.STATS_SPELL_REM_PA:
+                if(this.effects.get(EffectConstant.STATS_SPELL_REM_PA) != null)
+                    val = this.effects.get(EffectConstant.STATS_SPELL_REM_PA);
+                break;
+            case EffectConstant.STATS_SPELL_ADD_LAUNCH:
+                if(this.effects.get(EffectConstant.STATS_SPELL_ADD_LAUNCH) != null)
+                    val = this.effects.get(EffectConstant.STATS_SPELL_ADD_LAUNCH);
+                break;
+            case EffectConstant.STATS_SPELL_ADD_PER_TARGET:
+                if(this.effects.get(EffectConstant.STATS_SPELL_ADD_PER_TARGET) != null)
+                    val = this.effects.get(EffectConstant.STATS_SPELL_ADD_PER_TARGET);
+                break;
         }
+
         return val;
     }
 
@@ -323,4 +370,13 @@ public class Stats {
         return this.effects;
     }
 
+    public void equilibreStat(int statadd, int statrem, Player player ,Map<String, String> fullMorph , String test) {
+        if (player.getTotalStats().getEffect(statadd) == Integer.parseInt(fullMorph.get(test)))
+        {}
+        else if (player.getTotalStats().getEffect(statadd) > Integer.parseInt(fullMorph.get(test))) {
+            this.addOneStat(statrem, player.getTotalStats().getEffect(statadd) - Integer.parseInt(fullMorph.get(test)));
+        } else {
+            this.addOneStat(statadd, Integer.parseInt(fullMorph.get(test)) - player.getTotalStats().getEffect(statadd));
+        }
+    }
 }

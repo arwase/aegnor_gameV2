@@ -76,10 +76,7 @@ public class Reboot {
             }
             else{}
 
-
         return (hour == 0 && minute == 0) || (actualHour == 4 && actualMinute == 59);
-
-
     }
 
     public static String toStr() {

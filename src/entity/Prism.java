@@ -11,6 +11,7 @@ import fight.Fighter;
 import fight.spells.EffectConstant;
 import game.world.World;
 
+import java.util.Comparator;
 import java.util.HashMap;
 
 public class Prism {
@@ -265,4 +266,13 @@ public class Prism {
                 + this.alignement;
         return str;
     }
+
+
+    public static class PrimsXComparator implements Comparator<Prism> {
+        @Override
+        public int compare(Prism p1, Prism p2) {
+            return Integer.compare(p1.getX(), p2.getX());
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ package database.dynamics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
 import database.dynamics.AbstractDAO;
+import fight.spells.EffectTrigger;
 import fight.spells.Spell;
 import game.world.World;
 import kernel.Main;
@@ -10,8 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class SpellData extends AbstractDAO<Spell> {
-    public SpellData(HikariDataSource dataSource) {
+public class TriggerSpellEffectData extends AbstractDAO<EffectTrigger> {
+    public TriggerSpellEffectData(HikariDataSource dataSource) {
         super(dataSource);
     }
 
@@ -20,56 +21,33 @@ public class SpellData extends AbstractDAO<Spell> {
     }
 
     @Override
-    public boolean update(Spell obj) {
+    public boolean update(EffectTrigger obj) {
         return false;
     }
 
-    public boolean updateType(Spell spell) {
-        if (spell == null) {
-            super.sendError("SpellData update", new Exception("spell is null"));
-            return false;
-        }
-
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `spell` SET `type`= ? WHERE `spell`.`id` = ? LIMIT 1");
-            p.setInt(1, spell.getType());
-            p.setInt(2, spell.getSpellID());
-            execute(p);
-        }
-        catch (Exception e) {
-            super.sendError("PlayerData update", e);
-        }
-        finally {
-            close(p);
-        }
-        return true;
-    }
 
     public void load() {
-        Result result = null,result2 ,result3,result4;
+        Result result = null;
         try {
-            result = getData("SELECT  * from spells");
-            ResultSet RS = result.resultSet;
-            boolean modif = false;
-            while (RS.next()) {
-                int id = RS.getInt("id");
-                Spell spell = null;
-                if (World.world.getSort(id) != null) {
-                    spell = World.world.getSort(id);
-                    spell.setInfos(RS.getInt("sprite"), RS.getString("spriteinfo"), RS.getInt("type"), RS.getInt("duration"));
-                    modif = true;
-                } else {
-                    spell = new Spell(id, RS.getString("name"), RS.getInt("sprite"), RS.getString("spriteinfo"), RS.getInt("type"), RS.getInt("duration"));
-                    World.world.addSort(spell);
+            result = getData("SELECT  * from spells_effect_triggers");
+            ResultSet RS4 = result.resultSet;
+            while (RS4.next()) {
+                int id = RS4.getInt("trigger_id");
+                EffectTrigger trigger = null;
+                if (World.world.getEffectTrigger(id) != null) {
+                    trigger = World.world.getEffectTrigger(id);
+                    trigger.setInfos(RS4.getString("effects_triggering"), RS4.getInt("target"), RS4.getInt("isunbuffable"), RS4.getString("description"));
+                }
+                else {
+                    trigger = new EffectTrigger(id, RS4.getString("effects_triggering"), RS4.getInt("target"), RS4.getInt("isunbuffable"), RS4.getString("description"));
+                    World.world.addEffectTrigger(trigger);
                 }
             }
-            /*if (modif)
-                for (Monster monster : World.world.getMonstres())
-                    monster.getGrades().values().forEach(Monster.MobGrade::refresh);*/
+            close(result);
+
         } catch (SQLException e) {
-            super.sendError("SortData load", e);
-            Main.INSTANCE.stop("SortData load");
+            super.sendError("TriggerSpellEffectData load", e);
+            Main.INSTANCE.stop("loading TriggerSpellEffectData");
         } finally {
             close(result);
         }

@@ -4,11 +4,9 @@ import entity.monster.Monster;
 import game.world.World;
 import kernel.Constant;
 import org.apache.commons.lang3.ArrayUtils;
-import util.TimerWaiter;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public class Hotomani {
 
@@ -33,6 +31,7 @@ public class Hotomani {
     public static void spawnGroupe1() {
         mapid = 12010;
         String groupData = "181,53,53;182,80,80;180,200,200;99,43,43";
+        // Boss Possible :
         World.world.getMap(mapid).spawnNewGroupWithDifficulty(false,238,groupData,200);
     }
 
@@ -141,5 +140,23 @@ public class Hotomani {
         }
     }
 
+    public static void spawnOldGroupHotomani(short Mapid, Monster.MobGroup MobList) {
+        if(!ArrayUtils.contains(Constant.HOTOMANI_MAPID,Mapid))
+            return;
 
+        String groupData = "";
+        if(MobList.getMobs().size() > 3) {
+            for (Monster.MobGrade mob : MobList.getMobs().values() ) {
+                 int grade =  mob.getGrade();
+                 int level = mob.getTemplate().getGrade(grade).getLevel();
+                 groupData += "" + mob.getTemplate().getId() + "," + level + "," + level + ";";
+            }
+            if (World.world.getMap(Mapid).getMobGroups().size() < 3) {
+                World.world.getMap(Mapid).spawnNewGroupWithDifficulty(groupData, 200);
+            }
+        }
+        else{
+            spawnGroupHotomani(Mapid);
+        }
+    }
 }

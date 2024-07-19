@@ -4685,9 +4685,12 @@ public class Function {
         if (fight == null || fighter == null)
             return 0;
 
+
+
         if (spell.isLineLaunch() && line == false)
         {
-            return 0;
+            if (!PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), launchCell, 'z', 70) && !PathFinding.isNextTo(fight.getMap(), fighter.getCell().getId(), launchCell))
+                return 0;
         }
 
         ArrayList<GameCase> possibleLaunch = new ArrayList<GameCase>();
@@ -4730,6 +4733,7 @@ public class Function {
                 for (Effect se : spell.getEffects()) {
                     ArrayList<GameCase> celltemp = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), launchCell, se.getAreaEffect());
                     if(celltemp.size() > cellsnb){
+                        cellsnb = celltemp.size();
                         cells = celltemp;
                     }
                 }

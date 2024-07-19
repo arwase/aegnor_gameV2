@@ -33,6 +33,7 @@ import object.entity.SoulStone;
 import quest.Quest;
 import quest.QuestPlayer;
 import util.TimerWaiter;
+import util.lang.Lang;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -114,8 +115,21 @@ public class Action {
             return true;
         }
         if (!cond.equalsIgnoreCase("") && !cond.equalsIgnoreCase("-1") && !World.world.getConditionManager().validConditions(player, cond)) {
-            SocketManager.GAME_SEND_Im_PACKET(player, "119");
-            return true;
+            if(cond.contains(";")){
+                String[] test = cond.split(";");
+                for (int i =0;i<test.length;i++){
+                    if(!ConditionParser.validConditions(player, test[i])){
+                        SocketManager.GAME_SEND_Im_PACKET(player, "119");
+                        return true;
+                    }
+                }
+            }
+            else {
+                if(!ConditionParser.validConditions(player, cond)){
+                    SocketManager.GAME_SEND_Im_PACKET(player, "119");
+                    return true;
+                }
+            }
         }
 
         GameClient client = player.getGameClient();
@@ -339,6 +353,8 @@ public class Action {
                 } catch (Exception e) {
                     // Pas ok, mais il y a trop de dialogue de PNJ bugg� pour laisser cette erreur flood.
                     e.printStackTrace();
+                    System.out.println("On a essayer de se téléporter avec les arguments " + args  + " sur la map " + map + " id " + id + " et cdt " + cond);
+
                     return true;
                 }
                 break;
@@ -381,7 +397,114 @@ public class Action {
                     return true;
                 }
                 break;
+            case 3://Equip CAC - Gladiatroll
+                try {
+                    int position = Constant.ITEM_POS_ARME;
+                    int quantity = 1;
+                    int newCacID = Integer.parseInt(args.split(",")[0]);
+                    int VerifCertificatID = Integer.parseInt(args.split(",")[1]);
 
+                    if (player.hasItemTemplate(VerifCertificatID, 1)) {
+                        String date = player.getItemTemplate(VerifCertificatID, 1).getTxtStat().get(Constant.STATS_DATE);
+                        try {
+                            long timeStamp = Long.parseLong(date);
+                            if (System.currentTimeMillis() - timeStamp <= 60000) {
+                                SocketManager.GAME_SEND_MESSAGE(player, Lang.get(player, 21));
+                                return true;
+                            } else
+                                player.removeByTemplateID(VerifCertificatID, 1);
+                        } catch (Exception ignored) {
+                            player.removeByTemplateID(VerifCertificatID, 1);
+                        }
+                        SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1
+                                + "~" + VerifCertificatID);
+                    }
+                    ObjectTemplate T = World.world.getObjTemplate(newCacID);
+                    if (T == null)
+                        return true;
+
+                    player.unsetFullMorph();
+
+                    GameObject exObj = player.getObjetByPos(Constant.ITEM_POS_ARME);//Objet a l'ancienne position
+                    if (exObj != null)//S'il y avait d?ja un objet sur cette place on d?s?quipe
+                    {
+                        GameObject obj2;
+                        ObjectTemplate exObjTpl = exObj.getTemplate();
+                        if(Constant.isGladiatroolWeapon(exObjTpl.getId())) {
+                            player.removeByTemplateID(player.getObjetByPos(Constant.ITEM_POS_ARME).getTemplate().getId(),1);
+                        }
+                        else {
+                            int idSetExObj = exObj.getTemplate().getPanoId();
+                            if ((obj2 = player.getSimilarItem(exObj)) != null)//On le poss?de deja
+                            {
+                                obj2.setQuantity(obj2.getQuantity()
+                                        + exObj.getQuantity());
+                                SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(player, obj2);
+                                World.world.removeGameObject(exObj.getGuid());
+                                player.removeItem(exObj.getGuid());
+                                SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, exObj.getGuid());
+                            } else
+                            //On ne le poss?de pas
+                            {
+                                exObj.setPosition(Constant.ITEM_POS_NO_EQUIPED);
+                                player.removeSpellEffectofObject(exObj);
+                                SocketManager.GAME_SEND_OBJET_MOVE_PACKET(player, exObj);
+                            }
+                            if (player.getObjetByPos(Constant.ITEM_POS_ARME) == null)
+                                SocketManager.GAME_SEND_OT_PACKET(player.getGameClient(), -1);
+
+                            //Si objet de panoplie
+                            if (exObj.getTemplate().getPanoId() > 0)
+                                SocketManager.GAME_SEND_OS_PACKET(player, exObj.getTemplate().getPanoId());
+                        }
+                    }
+
+                    GameObject object = T.createNewItem(quantity, false,1);
+                    object.setPosition(position);
+                    //Si retourne true, on l'ajoute au monde
+                    if (player.addObjet(object, true))
+                        World.world.addGameObject(object,true);
+                    //SocketManager.GAME_SEND_OBJET_MOVE_PACKET(player, object);
+
+                    SocketManager.GAME_SEND_Ow_PACKET(player);
+                    SocketManager.GAME_SEND_ON_EQUIP_ITEM(player.getCurMap(), player);
+
+                    int morphid = 0;
+                    if (position == Constant.ITEM_POS_ARME) {
+                        morphid = object.getTemplate().getId() - 12681;
+                        player.setFullMorph(morphid, false, false);
+                        Map<String, String> fullMorph = World.world.getFullMorph(morphid);
+
+
+                        if (player.getObjetByPos(Constant.ITEM_POS_TONIQUE_EQUILIBRAGE) != null) {
+                            int guid = player.getObjetByPos(Constant.ITEM_POS_TONIQUE_EQUILIBRAGE).getGuid();
+                            SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, guid);
+                            player.deleteItem(guid);
+                        }
+                        player.setToniqueEquilibrage(player.generateStatsTonique(fullMorph));
+
+                    } else {// Tourmenteur ; on d?morphe
+                        if (Constant.isIncarnationWeapon(object.getTemplate().getId()))
+                            player.unsetFullMorph();
+                    }
+
+                    ObjectTemplate t2 = World.world.getObjTemplate(VerifCertificatID);
+                    GameObject obj2 = t2.createNewItem(1, false,1);
+                    obj2.refreshStatsObjet("325#0#0#"
+                            + System.currentTimeMillis());
+                    if (player.addObjet(obj2, false)) {
+                        SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1
+                                + "~" + obj2.getTemplate().getId());
+                        World.world.addGameObject(obj2,true);
+                    }
+                    player.setPdv(player.getMaxPdv());
+                    SocketManager.GAME_SEND_STATS_PACKET(player);
+                    Database.getStatics().getPlayerData().update(player);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return true;
+                }
+                break;
             case 4://Kamas
                 try {
                     int count = Integer.parseInt(args);
@@ -773,7 +896,7 @@ public class Action {
                                 //Le perso a l'item
                                 //Le perso est sur la bonne map
                                 //On t�l�porte, on supprime apr�s
-                                if (player.getSlaves() != null) {
+                                if (player.getSlaves() != null && player.getCurMap().getId() != 12277) {
                                     if (player.getSlaves().size() > 0) {
                                             boolean test;
                                             test = true;
@@ -1163,6 +1286,12 @@ public class Action {
                     final Tutorial tuto = World.world.getTutorial(tutorial);
                     if (tuto == null)
                         return true;
+                    if (player == null)
+                        return true;
+                    if (tuto.getStart() == null) {
+                        player.sendMessage("Pas dev");
+                        return true;
+                    }
                     if (player.getKamas() >= price) {
                         if (price != 0L) {
                             player.setKamas(player.getKamas() - price);
@@ -1239,7 +1368,55 @@ public class Action {
                     return true;
                 player.teleport((short) mapid, cellid);
                 break;
+            case 49: // Echange Gladiatroc
+                try {
+                    int tID = Integer.parseInt(args.split(",")[0]);
+                    int count = Integer.parseInt(args.split(",")[1]);
+                    int tMoney = Integer.parseInt(args.split(",")[2]);
+                    int price = Integer.parseInt(args.split(",")[3]);
 
+                    if (!player.hasItemTemplate(tMoney,price)) {
+                        SocketManager.GAME_SEND_BUY_ERROR_PACKET(player.getGameClient());
+                        return false;
+                    }
+                    player.removeByTemplateID(tMoney,price);
+                    SocketManager.GAME_SEND_Im_PACKET(player, "022;" + price + "~" + tMoney);
+
+                    boolean send = true;
+                    if (args.split(",").length > 2)
+                        send = args.split(",")[2].equals("1");
+
+                    //Si on ajoute
+                    if (count > 0) {
+                        ObjectTemplate T = World.world.getObjTemplate(tID);
+                        if (T == null)
+                            return true;
+                        GameObject O = T.createNewItem(count, true,0);
+                        //Si retourne true, on l'ajoute au monde
+                        if (player.addObjet(O, true))
+                            World.world.addGameObject(O,true);
+
+                        SocketManager.GAME_SEND_Im_PACKET(player, "021;" + count + "~" + tID);
+                    } else {
+                        player.removeByTemplateID(tID, -count);
+                    }
+                    //Si en ligne (normalement oui)
+                    /*if (player.isOnline())//on envoie le packet qui indique l'ajout//retrait d'un item
+                    {
+                        SocketManager.GAME_SEND_Ow_PACKET(player);
+                        if (send) {
+                            if (count >= 0) {
+                                SocketManager.GAME_SEND_Im_PACKET(player, "021;" + count + "~" + tID);
+                            } else if (count < 0) {
+                                SocketManager.GAME_SEND_Im_PACKET(player, "022;"
+                                        + -count + "~" + tID);
+                            }
+                        }
+                    }*/
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
             case 50: //Traque
                 if (player.get_align() == 0 || player.get_align() == 3)
                     return true;
@@ -3083,7 +3260,29 @@ public class Action {
                 player.addStaticEmote(19);
                 player.teleport((short) 10155, 210);
                 break;
+            case 528:// Gladiatroll : R�compense.
+                int nbjeton = Integer.parseInt(args);
+                if (!Constant.isInGladiatorDonjon(player.getCurMap().getId()) && player.getCurMap().getId() != 15080)
+                    return true;
+                player.unsetFullMorph();
+                player.teleport((short) 3451, 267);
+                player.setPdv(player.getMaxPdv());
+                if(nbjeton>0){
+                    GameObject Jetons = World.world.getObjTemplate(16000).createNewItem(nbjeton, false,0);
+                    if (player.addObjet(Jetons, true))
+                        World.world.addGameObject(Jetons, true);
 
+                    SocketManager.GAME_SEND_Im_PACKET(player, "021;"+ nbjeton + "~" + 16000);
+                }
+
+                if(nbjeton==1250){
+                    GameObject medals = World.world.getObjTemplate(16001).createNewItem(1, false,0);
+                    if (player.addObjet(medals, true))
+                        World.world.addGameObject(medals, true);
+
+                    SocketManager.GAME_SEND_Im_PACKET(player, "021;"+ 1 + "~" + 16001);
+                }
+                break;
             case 964://Signer le registre
                 if(client == null) return true;
                 if (player.getCurMap().getId() != 10255)

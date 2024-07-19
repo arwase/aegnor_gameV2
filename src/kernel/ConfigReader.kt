@@ -18,6 +18,8 @@ object ConfigReader {
         val id by intType
         val key by stringType
         val host by stringType
+        val name by stringType
+        val version by stringType
         val port by intType
     }
 

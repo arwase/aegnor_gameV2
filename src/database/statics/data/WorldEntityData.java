@@ -20,61 +20,59 @@ public class WorldEntityData extends AbstractDAO<Object> {
 
     @Override
     public void load(Object obj) {
-        Result result = null;
-        try {
-            result = getData("SELECT MIN(id) AS min FROM `world.entity.mounts`;");
-            ResultSet RS = result.resultSet;
-            boolean found = RS.first();
-            if (found) this.nextMountId = RS.getInt("min");
-            else this.nextMountId = -1;
+        try (Result result = getData("SELECT MIN(id) AS min FROM `world.entity.mounts`;")) {
+            ResultSet RS = result.getResultSet();
+            if (RS.next()) {
+                this.nextMountId = RS.getInt("min");
+            } else {
+                this.nextMountId = -1;
+            }
         } catch (SQLException e) {
             logger.error("WorldEntityData load", e);
-        } finally {
-            close(result);
         }
-        try {
-            result = getData("SELECT MAX(id) AS max FROM `world.entity.objects`;");
-            ResultSet RS = result.resultSet;
-            boolean found = RS.first();
-            if (found) this.nextObjectId = RS.getInt("max");
-            else this.nextObjectId = 1;
+
+        try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.objects`;")) {
+            ResultSet RS = result.getResultSet();
+            if (RS.next()) {
+                this.nextObjectId = RS.getInt("max");
+            } else {
+                this.nextObjectId = 1;
+            }
         } catch (SQLException e) {
             logger.error("WorldEntityData load", e);
-        } finally {
-            close(result);
         }
-        try {
-            result = getData("SELECT MAX(id) AS max FROM `world.entity.players.quests`;");
-            ResultSet RS = result.resultSet;
-            boolean found = RS.first();
-            if (found) this.nextQuestId = RS.getInt("max");
-            else this.nextQuestId = 1;
+
+        try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.players.quests`;")) {
+            ResultSet RS = result.getResultSet();
+            if (RS.next()) {
+                this.nextQuestId = RS.getInt("max");
+            } else {
+                this.nextQuestId = 1;
+            }
         } catch (SQLException e) {
             logger.error("WorldEntityData load", e);
-        } finally {
-            close(result);
         }
-        try {
-            result = getData("SELECT MAX(id) AS max FROM `world.entity.guilds`;");
-            ResultSet RS = result.resultSet;
-            boolean found = RS.first();
-            if (found) this.nextGuildId = RS.getInt("max");
-            else this.nextGuildId = 1;
+
+        try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.guilds`;")) {
+            ResultSet RS = result.getResultSet();
+            if (RS.next()) {
+                this.nextGuildId = RS.getInt("max");
+            } else {
+                this.nextGuildId = 1;
+            }
         } catch (SQLException e) {
             logger.error("WorldEntityData load", e);
-        } finally {
-            close(result);
         }
-        try {
-            result = getData("SELECT MAX(id) AS max FROM `world.entity.pets`;");
-            ResultSet RS = result.resultSet;
-            boolean found = RS.first();
-            if (found) this.nextPetId = RS.getInt("max");
-            else this.nextPetId = 1;
+
+        try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.pets`;")) {
+            ResultSet RS = result.getResultSet();
+            if (RS.next()) {
+                this.nextPetId = RS.getInt("max");
+            } else {
+                this.nextPetId = 1;
+            }
         } catch (SQLException e) {
             logger.error("WorldEntityData load", e);
-        } finally {
-            close(result);
         }
     }
 

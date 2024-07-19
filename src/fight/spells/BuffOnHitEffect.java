@@ -10,20 +10,19 @@ public class BuffOnHitEffect extends Effect{
 
 
     private int buffType;
-    private int[] onHitConditions; // Nouvel attribut
+    private EffectTrigger onHitConditions; // Nouvel attribut
     private Effect onHitEffectBuff; // Nouvel attribut
-    private boolean debuffable = true;
     private int impactedTarget = 0;
 
-
-    public BuffOnHitEffect(int id, int duration, int args1, int args2, int args3, int chance, Fighter caster, int spellID, Effect buffToAddOnHit, int onHitConditions, int impactedTarget) {
+    public BuffOnHitEffect(int id, int duration, int args1, int args2, int args3, int chance, Fighter caster, int spellID, Effect buffToAddOnHit, EffectTrigger onHitConditions, int impactedTarget) {
         super(id, duration, args1, args2,args3, chance,caster,spellID);
         this.buffType = TYPE_ON_HIT;
-        this.onHitConditions = EffectConstant.ALL_TRIGGERS.get(onHitConditions);
+
+        // Ca c'est le trigger de déclanchement
+        this.onHitConditions = onHitConditions;
 
         // Ca c'est le sort de boost a déclancher si la condition est remplie
         this.onHitEffectBuff = buffToAddOnHit;
-        this.impactedTarget = impactedTarget;
     }
 
 
@@ -32,7 +31,7 @@ public class BuffOnHitEffect extends Effect{
     }
 
     // Ajoutez des méthodes spécifiques aux effets de buff si nécessaire
-    public int[] getBuffOnHitConditions(){
+    public EffectTrigger getBuffOnHitConditions(){
         return this.onHitConditions;
     }
 

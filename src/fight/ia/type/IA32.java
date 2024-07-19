@@ -61,6 +61,19 @@ public class IA32 extends AbstractNeedSpell  {
             }
 
             if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,nearestEnnemy)) {
+                    time = 1000;
+                    action = true;
+                }
+            }
+            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
+                if (Function.getInstance().invocIfPossibleloin(this.fight, this.fighter, this.invocations,longestEnnemy)) {
+                    time = 1000;
+                    action = true;
+                }
+            }
+
+            if(this.fighter.getCurPa(this.fight) > 0 && !action) {
                 if (Function.getInstance().HealIfPossible(this.fight, this.fighter, true, 70) != 0) {
                     time = 1000;
                     action = true;

@@ -28,7 +28,6 @@ public class ExchangePacketHandler {
                                 break;
                         }
                         break;
-
                     case 'S': //Server
                         switch (packet.charAt(1)) {
                             case 'H': //Host
@@ -38,14 +37,12 @@ public class ExchangePacketHandler {
                                         break;
                                 }
                                 break;
-
                             case 'K': //Key
                                 switch (packet.charAt(2)) {
                                     case '?': //Required
                                         int i = 50000 - GameServer.getClients().size();
                                         ExchangeClient.INSTANCE.send("SK" + Config.INSTANCE.getSERVER_ID() + ";" + Config.INSTANCE.getSERVER_KEY() + ";" + i);
                                         break;
-
                                     case 'K': //Ok
                                         ExchangeClient.logger.info("The login server has accepted the connection.");
                                         ExchangeClient.INSTANCE.send("SH" + Config.INSTANCE.getIp() + ";" + Config.INSTANCE.getGamePort());
@@ -59,7 +56,6 @@ public class ExchangePacketHandler {
                                 break;
                         }
                         break;
-
                     case 'W': //Waiting
                         switch (packet.charAt(1)) {
                             case 'A': //Add

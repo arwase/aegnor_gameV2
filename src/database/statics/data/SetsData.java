@@ -5,14 +5,12 @@ import database.statics.AbstractDAO;
 import game.world.World;
 import other.Sets;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class SetsData extends AbstractDAO<SetsData>  {
 
-    public SetsData(HikariDataSource dataSource)
-    {
+    public SetsData(HikariDataSource dataSource) {
         super(dataSource);
     }
 
@@ -25,146 +23,115 @@ public class SetsData extends AbstractDAO<SetsData>  {
     }
 
     public void load() {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `sets`;");
-            ResultSet RS = result.resultSet;
-
+        try (Result result = getData("SELECT * FROM `sets`;")) {
+            ResultSet RS = result.getResultSet();
             while (RS.next()) {
                 Sets set = new Sets((RS.getInt("id")), (RS.getInt("playerId")), (RS.getInt("nb")), (RS.getString("name")) , (RS.getString("objects")),(RS.getInt("icon")) );
                 World.world.addSets(set);
-
             }
         } catch (SQLException e) {
-            super.sendError("Subarea_dataData load", e);
-        } finally {
-            close(result);
+            super.sendError("SetsData load", e);
         }
     }
 
     public int getNextId() {
-        Result result = null;
         int guid = 0;
-        try {
-            result = getData("SELECT id FROM sets ORDER BY id DESC LIMIT 1");
-            ResultSet RS = result.resultSet;
-
+        try (Result result = getData("SELECT id FROM sets ORDER BY id DESC LIMIT 1")) {
+            ResultSet RS = result.getResultSet();
             if (!RS.first())
                 guid = 1;
             else
                 guid = RS.getInt("id") + 1;
         } catch (SQLException e) {
-            super.sendError("PlayerData getNextId", e);
-        } finally {
-            close(result);
+            super.sendError("SetsData getNextId", e);
         }
-
         return guid;
     }
 
     public boolean add(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("INSERT INTO sets( `id` ,`playerId`, `nb`, `name`, `objects`, `icon`) VALUES (?,?,?,?,?,?)");
-            p.setInt(1, set.getId());
-            p.setInt(2, set.getPlayerId());
-            p.setInt(3, set.getNb());
-            p.setString(4, set.getName());
-            p.setString(5, set.getObjects());
-            p.setInt(6, set.getIcon());
-            execute(p);
+        String query = "INSERT INTO sets( `id` ,`playerId`, `nb`, `name`, `objects`, `icon`) VALUES (?,?,?,?,?,?)";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setInt(1, set.getId());
+            p.getPreparedStatement().setInt(2, set.getPlayerId());
+            p.getPreparedStatement().setInt(3, set.getNb());
+            p.getPreparedStatement().setString(4, set.getName());
+            p.getPreparedStatement().setString(5, set.getObjects());
+            p.getPreparedStatement().setInt(6, set.getIcon());
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             super.sendError("SetsData add", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public boolean delete(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE FROM sets WHERE id = ?");
-            p.setInt(1, set.getId());
-            execute(p);
+        String query = "DELETE FROM sets WHERE id = ?";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setInt(1, set.getId());
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             super.sendError("SetsData delete", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public boolean deletebyPerso(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE FROM sets WHERE playerid = ? and nb = ?");
-            p.setInt(1, set.getPlayerId());
-            p.setInt(2, set.getNb());
-            execute(p);
+        String query = "DELETE FROM sets WHERE playerid = ? and nb = ?";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setInt(1, set.getPlayerId());
+            p.getPreparedStatement().setInt(2, set.getNb());
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             super.sendError("SetsData deletebyPerso", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public boolean updateInfos(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ? WHERE `id`= ?");
-            p.setString(1, set.getName());
-            p.setString(2, set.getObjects());
-            p.setInt(3, set.getIcon());
-            p.setInt(4, set.getId());
-            execute(p);
+        String query = "UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ? WHERE `id`= ?";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setString(1, set.getName());
+            p.getPreparedStatement().setString(2, set.getObjects());
+            p.getPreparedStatement().setInt(3, set.getIcon());
+            p.getPreparedStatement().setInt(4, set.getId());
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             super.sendError("SetsData updateInfos", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public void updateByPerso(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ? WHERE `nb`= ? and `playerid`= ?");
-            p.setString(1, set.getName());
-            p.setString(2, set.getObjects());
-            p.setInt(3, set.getIcon());
-            p.setInt(4, set.getNb());
-            p.setInt(5, set.getPlayerId());
-            execute(p);
+        String query = "UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ? WHERE `nb`= ? and `playerid`= ?";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setString(1, set.getName());
+            p.getPreparedStatement().setString(2, set.getObjects());
+            p.getPreparedStatement().setInt(3, set.getIcon());
+            p.getPreparedStatement().setInt(4, set.getNb());
+            p.getPreparedStatement().setInt(5, set.getPlayerId());
+            executeUpdate(p);
         } catch (SQLException e) {
             super.sendError("SetsData updateByPerso", e);
-        } finally {
-            close(p);
         }
     }
 
     public void update(Sets set) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ?, `playerId`= ?, `nb`= ? WHERE `id`= ?");
-            p.setString(1, set.getName());
-            p.setString(2, set.getObjects());
-            p.setInt(3, set.getIcon());
-            p.setInt(4, set.getPlayerId());
-            p.setInt(5, set.getNb());
-            p.setInt(6, set.getId());
-            execute(p);
+        String query = "UPDATE `sets` SET `name` = ?, `objects`=?, `icon`= ?, `playerId`= ?, `nb`= ? WHERE `id`= ?";
+        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
+            p.getPreparedStatement().setString(1, set.getName());
+            p.getPreparedStatement().setString(2, set.getObjects());
+            p.getPreparedStatement().setInt(3, set.getIcon());
+            p.getPreparedStatement().setInt(4, set.getPlayerId());
+            p.getPreparedStatement().setInt(5, set.getNb());
+            p.getPreparedStatement().setInt(6, set.getId());
+            executeUpdate(p);
         } catch (SQLException e) {
             super.sendError("SetsData update", e);
-        } finally {
-            close(p);
         }
     }
-
 }
 

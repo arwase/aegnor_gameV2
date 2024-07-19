@@ -11,50 +11,36 @@ import java.sql.SQLException;
 
 public class HouseData extends AbstractDAO<House>
 {
-	public HouseData(HikariDataSource dataSource)
-	{
+	public HouseData(HikariDataSource dataSource) {
 		super(dataSource);
 	}
 
 	@Override
-	public void load(Object obj)
-	{
-    }
+	public void load(Object obj) {
+	}
 
 	@Override
-	public boolean update(House h)
-	{
+	public boolean update(House h) {
 		return false;
 	}
 
-	public int load()
-	{
-		Result result = null;
+	public int load() {
 		int nbr = 0;
-		try
-		{
-			result = getData("SELECT * from houses");
-			ResultSet RS = result.resultSet;
-			while (RS.next())
-			{
-                GameMap map = World.world.getMap(RS.getShort("map_id"));
-				if (map == null)
-					continue;
-
-				World.world.addHouse(new House(RS.getInt("id"), RS.getShort("map_id"), RS.getInt("cell_id"), RS.getInt("mapid"), RS.getInt("caseid"), RS.getString("houseMaps") , RS.getLong("saleBase")));
-				/*long saleBase = RS.getLong("saleBase");
-				Database.getDynamics().getHouseData().update(RS.getInt("id"), saleBase);*/
-				nbr++;
+		String query = "SELECT * from houses";
+		try (Result result = getData(query)) {
+			if (result != null) {
+				ResultSet RS = result.getResultSet();
+				while (RS.next()) {
+					GameMap map = World.world.getMap(RS.getShort("map_id"));
+					if (map == null)
+						continue;
+					World.world.addHouse(new House(RS.getInt("id"), RS.getShort("map_id"), RS.getInt("cell_id"), RS.getInt("mapid"), RS.getInt("caseid"), RS.getString("houseMaps"), RS.getLong("saleBase")));
+					nbr++;
+				}
 			}
-		}
-		catch (SQLException e)
-		{
+		} catch (SQLException e) {
 			super.sendError("HouseData load", e);
 			nbr = 0;
-		}
-		finally
-		{
-			close(result);
 		}
 		return nbr;
 	}

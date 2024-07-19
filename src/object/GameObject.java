@@ -19,6 +19,7 @@ import job.JobAction;
 import kernel.Constant;
 import kernel.Logging;
 import object.entity.Fragment;
+import object.entity.SoulStone;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
@@ -55,6 +56,7 @@ public class GameObject {
         this.mimibiote = mimibiote;
         this.Stats = new Stats();
         this.parseStringToStats(strStats, true);
+        this.getStatsClass();
     }
 
     public GameObject(int Guid) {
@@ -81,6 +83,7 @@ public class GameObject {
         this.puit = puit;
         this.rarity = rarity;
         this.mimibiote = mimibiote;
+        this.getStatsClass();
     }
 
     /*private static ArrayList<SpellEffect> getEffectTemplate(String statsTemplate) {
@@ -119,16 +122,27 @@ public class GameObject {
     }*/
 
     public static GameObject getCloneObjet(GameObject obj, int qua) {
+
         Map<Integer, Integer> maps = new HashMap<>();
         ArrayList<Effect> statsCAC = new ArrayList<>();
         Map<Integer, String> statsTXT = new HashMap<>();
-
         maps.putAll(obj.getStats().getMap());
         statsTXT.putAll(obj.getTxtStat());
         statsCAC.addAll(obj.CopyEffectStat());
         Stats newStats = new Stats(maps);
 
-        GameObject ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, statsCAC, obj.getSoulStat(), statsTXT, obj.getPuit(),obj.getRarity(), obj.getMimibiote());
+        GameObject ob = null;
+
+        switch (obj.getTemplate().getType()){
+            case Constant.ITEM_TYPE_PIERRE_AME_PLEINE_ARCHI:
+            case Constant.ITEM_TYPE_PIERRE_AME_PLEINE:
+            case Constant.ITEM_TYPE_PIERRE_AME_PLEINE_BOSS:
+                ob = new SoulStone(Database.getStatics().getObjectData().getNextId(), qua , obj.getTemplate().getId(), Constant.ITEM_POS_NO_EQUIPED, obj.parseStatsString() );
+                break;
+            default:
+                ob = new GameObject(Database.getStatics().getObjectData().getNextId(), obj.getTemplate().getId(), qua, Constant.ITEM_POS_NO_EQUIPED, newStats, statsCAC, obj.getSoulStat(), statsTXT, obj.getPuit(), obj.getRarity(), obj.getMimibiote());
+                break;
+        }
         ob.modification = 0;
         return ob;
     }
@@ -239,7 +253,6 @@ public class GameObject {
                     String[] stats = split.split("#");
                     int id = Integer.parseInt(stats[0], 16);
 
-
                     if (id == Constant.STATS_PETS_DATE
                             && this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
                         txtStats.put(id, split.substring(3));
@@ -298,7 +311,29 @@ public class GameObject {
                         txtStats.put(id, stats[3]);
                         continue;
                     }
-                    //Si stats avec Texte (Signature, apartenance, etc)//FIXME
+
+                    // Ici c'est les stats des consommables
+                    boolean follow1 = true;
+                    switch (id) {
+                        case EffectConstant.STATS_ADD_VIE: // Ahhh ca c'est pour ce heal (genre le pain etc)
+                        case EffectConstant.STATS_ADD_ENERGIE:  // Ahhh ca c'est pour l'energie (genre le pain etc)
+                        case EffectConstant.STATS_ADD_XP: // Parchemin XP
+                        case EffectConstant.STATS_ADD_XPJOB: // Parchemin XP JOB
+                            String min = stats[1];
+                            String max = stats[2];
+                            String args3 = stats[3];
+                            String jet = "";
+                            if(stats.length >= 5)
+                                jet = stats[4];
+                            String args = min + ";" + max + ";"+args3+";" + jet;
+                            Effects.add(new Effect(id, args, 0, -1,true));
+                            follow1 = false;
+                            break;
+                    }
+                    if (!follow1) {
+                        continue;
+                    }
+                    //Si stats avec Texte (Signature, apartenance, etc)//FIXME Ca c'est de la merde
                     if (id != Constant.STATS_RESIST  && (id < 970 || id > 974) && (!stats[3].equals("") && (!stats[3].equals("0") || id == Constant.STATS_PETS_DATE || id == Constant.STATS_PETS_PDV || id == Constant.STATS_PETS_POIDS || id == Constant.STATS_PETS_EPO || id == Constant.STATS_PETS_REPAS))) {//Si le stats n'est pas vide et (n'est pas ï¿½gale ï¿½ 0 ou est de type familier)
                         if (!(this.getTemplate().getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL && id == Constant.STATS_PETS_DATE)) {
 
@@ -321,6 +356,8 @@ public class GameObject {
                         continue;
                     }
 
+
+
                     if(id >= 970 && id <= 974)
                     {
                         int jet = Integer.parseInt(stats[3]);
@@ -339,24 +376,6 @@ public class GameObject {
                         continue;
                     }
 
-                    // Ici c'est les stats des consommables
-                    boolean follow1 = true;
-                    switch (id) {
-                        case EffectConstant.STATS_ADD_VIE: // Ahhh ca c'est pour ce heal (genre le pain etc)
-                        case EffectConstant.STATS_ADD_ENERGIE:  // Ahhh ca c'est pour l'energie (genre le pain etc)
-                        case EffectConstant.STATS_ADD_XP: // Parchemin XP
-                        case EffectConstant.STATS_ADD_XPJOB: // Parchemin XP JOB
-                            String min = stats[1];
-                            String max = stats[2];
-                            String jet = stats[4];
-                            String args = min + ";" + max + ";-1;-1;0;" + jet;
-                            Effects.add(new Effect(id, args, 0, -1));
-                            follow1 = false;
-                            break;
-                    }
-                    if (!follow1) {
-                        continue;
-                    }
 
                     boolean follow2 = true;
                     for (int a : Constant.ARMES_EFFECT_IDS) {
@@ -433,14 +452,16 @@ public class GameObject {
                     }
 
 
-                    if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER &&  this.getTemplate().getType() != Constant.ITEM_TYPE_FANTOME_FAMILIER  &&  this.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL ) {
+                    if(this.getTemplate().getType() != Constant.ITEM_TYPE_FAMILIER &&  this.getTemplate().getType() != Constant.ITEM_TYPE_FANTOME_FAMILIER  &&  this.getTemplate().getType() != Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
                         if(poidligne <= poidmax) {
                             try {
                                 Stats.addOneStat(id, Integer.parseInt(stats[1], 16));
                             }
                             catch (Exception e){
-                                e.printStackTrace();
+                                //e.printStackTrace();
+                                this.setModification();
                                 System.out.println("Stats id = " + id + " la valeur " + stats[1] + " du coup ca bug item " + this.getTemplate().getName() + " guid " + this.getGuid() );
+                                continue;
                             }
                         }
                         else {
@@ -463,6 +484,7 @@ public class GameObject {
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
+                    System.out.println(this.getTemplate().getName() + " Stats pas géré " + strStats);
                 }
             }
         }
@@ -486,6 +508,17 @@ public class GameObject {
     public void addTxtStat(int id, String stringName) {
         this.txtStats.put(id, stringName);
         //this.setModification();
+    }
+
+    private void getStatsClass() {
+        for(final String s : this.getTemplate().getStrTemplate().split(",")) {
+            if(s.isEmpty()) continue;
+            String[] stats = s.split("#");
+            final int statID = Integer.parseInt(stats[0], 16);
+            if (statID < EffectConstant.STATS_SPELL_ADD_PO || statID > EffectConstant.STATS_SPELL_REM_PO)
+                continue;
+            this.SortStats.add(s);
+        }
     }
 
     public static String whoGotObject(GameObject gameObject) {
@@ -681,13 +714,32 @@ public class GameObject {
     public ArrayList<Effect> CopyEffectStat() {
         ArrayList<Effect> effectsCac = new ArrayList<>();
         for ( Effect test : this.getEffects() ) {
-            int iddd = test.getEffectID();
-            int newmin = test.getArgs1();
-            int newmax = test.getArgs2();
-            String newjet = test.getJet();
-            int neWweaponType = this.getTemplate().getType();
-            int neWweaponId = this.getTemplate().getId();
-            effectsCac.add(new Effect(iddd,neWweaponId,neWweaponType,newjet,newmin,newmax));
+            switch (test.getEffectID()) {
+                case EffectConstant.STATS_ADD_VIE: // Ahhh ca c'est pour ce heal (genre le pain etc)
+                case EffectConstant.STATS_ADD_ENERGIE:  // Ahhh ca c'est pour l'energie (genre le pain etc)
+                case EffectConstant.STATS_ADD_XP: // Parchemin XP
+                case EffectConstant.STATS_ADD_XPJOB: // Parchemin XP JOB
+                    int min = test.getArgs1();
+                    int max = test.getArgs2();
+                    int args3 = test.getArgs3();
+                    String jet = "";
+                    if(test.getJet() != null)
+                        jet = test.getJet();
+
+                    String args = min + ";" + max + ";" + args3 + ";" + jet;
+                    effectsCac.add(new Effect(test.getEffectID(), args, 0, -1,false));
+                    break;
+                default:
+                    int iddd = test.getEffectID();
+                    int newmin = test.getArgs1();
+                    int newmax = test.getArgs2();
+                    String newjet = test.getJet();
+                    int neWweaponType = this.getTemplate().getType();
+                    int neWweaponId = this.getTemplate().getId();
+                    effectsCac.add(new Effect(iddd,neWweaponId,neWweaponType,newjet,newmin,newmax));
+                    break;
+            }
+
         }
         return effectsCac;
     }
@@ -771,6 +823,7 @@ public class GameObject {
         StringBuilder stats = new StringBuilder();
         boolean isFirst = true;
 
+        // Effet d'arme en premier en général
         if(Effects != null) {
             for (Effect SE : Effects) {
                 if (!isFirst)
@@ -778,11 +831,20 @@ public class GameObject {
 
                 try {
                     switch (SE.getEffectID()) {
-                        case EffectConstant.STATS_ADD_XPJOB: // Pk c'est le seul cas différent, a étudier
-                            stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(Integer.toHexString(SE.getArgs1())).append("#").append(SE.getJet());
-                            break;
+                        //case EffectConstant.STATS_ADD_XPJOB: // Pk c'est le seul cas différent, a étudier
+                        //    stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(Integer.toHexString(SE.getArgs3()));
+
+                        //   break;
                         default:
-                            stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(0).append("#").append(SE.getJet());
+                            if(SE.getJet() != "" && SE.getJet() != null) {
+                                if (SE.getArgs3() == 0)
+                                    stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(0).append("#").append(SE.getJet());
+                                else
+                                    stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(Integer.toHexString(SE.getArgs3())).append("#").append(SE.getJet());
+                            }
+                            else {
+                                stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(Integer.toHexString(SE.getArgs3()));
+                            }
                             break;
                     }
                 } catch (Exception e) {
@@ -793,6 +855,7 @@ public class GameObject {
             }
         }
 
+        // Stats de texte en second
         if(txtStats != null) {
             for (Entry<Integer, String> entry : txtStats.entrySet()) {
                 if (!isFirst)
@@ -903,6 +966,7 @@ public class GameObject {
             }
         }
 
+        // Stats de Pierre d'ames
         if(txtStats != null) {
             for (Entry<Integer, Integer> entry : SoulStats.entrySet()) {
                 if (!isFirst)
@@ -916,16 +980,23 @@ public class GameObject {
             }
         }
 
+        // Stats tout genre autre
         if(txtStats != null) {
             for (Entry<Integer, Integer> entry : Stats.getMap().entrySet()) {
 
                 int statID = entry.getKey();
-                if ((getTemplate().getPanoId() >= 81 && getTemplate().getPanoId() <= 92)
-                        || (getTemplate().getPanoId() >= 201 && getTemplate().getPanoId() <= 212) || getTemplate().getId() == 8992 || getTemplate().getId() == 8993  ) {
+                // Dans le cas d'un effet de spell
+                if (EffectConstant.IS_SPELL_BOOST_EFFECT(statID)) {
                     String[] modificable = template.getStrTemplate().split(",");
                     int cantMod = modificable.length;
                     for (int j = 0; j < cantMod; j++) {
                         String[] mod = modificable[j].split("#");
+                        try{
+                            Integer.parseInt(mod[0], 16);
+                        }
+                        catch (Exception e){
+                            continue;
+                        }
                         if (Integer.parseInt(mod[0], 16) == statID) {
                             String jet = "0d0+" + Integer.parseInt(mod[1], 16);
                             if (!isFirst) {
@@ -1075,12 +1146,23 @@ public class GameObject {
 
             try {
                 switch (SE.getEffectID()) {
-                    case EffectConstant.STATS_ADD_XPJOB: // Pk c'est le seul cas différent, a étudier
-                        stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(Integer.toHexString(SE.getArgs1())).append("#").append(SE.getJet());
-                        break;
+                    //case EffectConstant.STATS_ADD_XPJOB: // Pk c'est le seul cas différent, a étudier
+                        //stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(Integer.toHexString(SE.getArgs1())).append("#").append(SE.getJet());
+                        //stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(Integer.toHexString(SE.getArgs1())).append("#").append(SE.getJet());
+                        //stats.append(Integer.toHexString(SE.getEffectID())).append("#0#0#").append(Integer.toHexString(SE.getArgs1())).append("#").append(SE.getJet());
+                        //break;
+
                     default:
-                        stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(0).append("#").append(SE.getJet());
-                        break;
+                        if(SE.getJet() != "" && SE.getJet() != null) {
+                            if (SE.getArgs3() == 0)
+                                stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(0).append("#").append(SE.getJet());
+                            else
+                                stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(Integer.toHexString(SE.getArgs3())).append("#").append(SE.getJet());
+                        }
+                        else {
+                            stats.append(Integer.toHexString(SE.getEffectID())).append("#").append(Integer.toHexString(SE.getArgs1())).append("#").append(Integer.toHexString(SE.getArgs2())).append("#").append(Integer.toHexString(SE.getArgs3()));
+                        }
+                         break;
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1291,6 +1373,7 @@ public class GameObject {
                     effets.add(SE);
                     continue;
                 }
+
                 int min = SE.getArgs1() + (boost ? template.getBonusCC() : 0);
                 int max = SE.getArgs2() + (boost ? template.getBonusCC() : 0);
 
@@ -1361,7 +1444,7 @@ public class GameObject {
             try {
                 int min = Integer.parseInt(stats[1],16);
                 int max = Integer.parseInt(stats[2],16);
-                if(max == -1 ||max == 0)
+                if(max == -1 || max == 0)
                     return min;
                 if(max <= min)
                     return min;
@@ -1916,26 +1999,29 @@ public class GameObject {
             return false;
         }
         else {
-            Collections.sort(this.getEffects(), Comparator.comparing(Effect::getEffectID));
-            Collections.sort(other.getEffects(), Comparator.comparing(Effect::getEffectID));
+            ArrayList<Effect> test1 = new ArrayList<>();
+            ArrayList<Effect> test2 = new ArrayList<>();
+            test1.addAll(this.getEffects());
+            test2.addAll(other.getEffects());
+            Collections.sort(test1, Comparator.comparing(Effect::getEffectID));
+            Collections.sort(test2, Comparator.comparing(Effect::getEffectID));
 
-            for (int i = 0; i < this.getEffects().size(); i++ ){
-                if( this.getEffects().get(i).getEffectID() != other.getEffects().get(i).getEffectID() ){
+            for (int i = 0; i < test1.size(); i++ ){
+                if( test1.get(i).getEffectID() != test2.get(i).getEffectID() ){
                     return false;
                 }
-                if( (this.getEffects().get(i).getArgs1() != other.getEffects().get(i).getArgs1())){
+                if( (test1.get(i).getArgs1() != test2.get(i).getArgs1())){
                         return false;
                 }
-                if( (this.getEffects().get(i).getArgs2() != other.getEffects().get(i).getArgs2())){
+                if( (test1.get(i).getArgs2() != test2.get(i).getArgs2())){
                     return false;
                 }
-                if( (this.getEffects().get(i).getArgs3() != other.getEffects().get(i).getArgs3())){
+                if( (test1.get(i).getArgs3() != test2.get(i).getArgs3())){
                     return false;
                 }
-                if((this.getEffects().get(i).getJet() != null))
-                    if( !(this.getEffects().get(i).getJet().equals(other.getEffects().get(i).getJet())))
+                if((test1.get(i).getJet() != null) && test2.get(i).getJet() != null )
+                    if( !(test1.get(i).getJet().equals(test2.get(i).getJet())))
                         return false;
-
             }
             return true;
         }
@@ -1965,5 +2051,9 @@ public class GameObject {
             }
             return true;
         }
+    }
+
+    public ArrayList<String> getSortStats() {
+        return this.SortStats;
     }
 }

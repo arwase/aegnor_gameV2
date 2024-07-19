@@ -2,7 +2,6 @@ package fight.ia;
 
 import fight.Fight;
 import fight.Fighter;
-import fight.spells.Effect;
 import fight.spells.SpellGrade;
 import game.world.World;
 import guild.Guild;
@@ -69,18 +68,18 @@ public abstract class AbstractNeedSpell extends AbstractIA {
                     case "CAC":
                         if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
-                            for (Effect spellEffect : spell.getEffects())
+                           /* for (Effect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
-                                    effect = true;
+                                    effect = true;*/
                             if (!effect && spell.getMaxPO() < 3) spells.add(spell);
                         }
                         break;
                     case "HIGHEST":
                         if (spell.getTypeSwitchSpellEffects() == 0) {
                             boolean effect = false;
-                            for (Effect spellEffect : spell.getEffects())
+                            /*for (Effect spellEffect : spell.getEffects())
                                 if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
-                                    effect = true;
+                                    effect = true;*/
                             if (effect && spell.getSpellID() != 805) continue;
                             if (spell.getMaxPO() > 1) spells.add(spell);
                         }

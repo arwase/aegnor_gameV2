@@ -22,28 +22,25 @@ public class ServerData extends AbstractDAO<Object> {
     }
 
     public void updateTime(long time) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE servers SET `uptime` = ? WHERE `id` = ?");
+        String query = "UPDATE servers SET `uptime` = ? WHERE `id` = ?";
+        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
+            PreparedStatement p = wrapper.getPreparedStatement();
             p.setLong(1, time);
             p.setInt(2, Config.INSTANCE.getSERVER_ID());
-            execute(p);
+            executeUpdate(wrapper);
         } catch (SQLException e) {
-            super.sendError("ServerData updateTime", e);
-        } finally {
-            close(p);
+            sendError("ServerData updateTime", e);
         }
     }
 
     public void loggedZero() {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE players SET `logged` = 0 WHERE `server` = '" + Config.INSTANCE.getSERVER_ID() + "'");
-            execute(p);
+        String query = "UPDATE players SET `logged` = 0 WHERE `server` = ?";
+        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
+            PreparedStatement p = wrapper.getPreparedStatement();
+            p.setInt(1, Config.INSTANCE.getSERVER_ID());
+            executeUpdate(wrapper);
         } catch (SQLException e) {
-            super.sendError("ServerData loggedZero", e);
-        } finally {
-            close(p);
+            sendError("ServerData loggedZero", e);
         }
     }
 }

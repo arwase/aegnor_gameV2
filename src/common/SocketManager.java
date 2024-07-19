@@ -49,6 +49,11 @@ public class SocketManager {
             SocketManager.send(player.getGameClient(), packet);
     }
 
+    /*public static void send(GameClient client, String packet) {
+        if (client != null && client.getSession() != null && client.getSession().isActive()) {
+            client.send(packet);
+        }
+    }*/
 
     public static void send(GameClient client, String packet) {
         if (client != null && client.getSession() != null && !client.getSession().isClosing() && client.getSession().isConnected())
@@ -143,7 +148,6 @@ public class SocketManager {
         String packet = perso.stringStats();
         SocketManager.GAME_SEND_Ow_PACKET(perso);
         send(perso, packet);
-
     }
 
     public static void GAME_SEND_SETS_PACKET(Player perso) {
@@ -213,27 +217,10 @@ public class SocketManager {
             packet.append((color3 == -1 ? "-1" : Integer.toHexString(color3))).append("|");
             packet.append(perso.parseItemToASK());
             send(out, packet.toString());
-        } catch(Exception e) { e.printStackTrace(); System.out.println("Error occured : " + e.getMessage());}
-    }
-    public static void GAME_SEND_AB_TO_LEADER(Player perso, Player leader) {
-        try {
-            StringBuilder packet = new StringBuilder();
-            int color1 = perso.getColor1(), color2 = perso.getColor2(), color3 = perso.getColor3();
-            if (perso.getObjetByPos(Constant.ITEM_POS_MALEDICTION) != null) {
-                if (perso.getObjetByPos(Constant.ITEM_POS_MALEDICTION).getTemplate().getId() == 10838) {
-                    color1 = 16342021;
-                    color2 = 16342021;
-                    color3 = 16342021;
-                }
-            }
-            packet.append("AB|").append(perso.getId()).append("|").append(perso.getName()).append("|");
-            packet.append(perso.getLevel()).append("|").append(perso.getMorphMode() ? -1 : perso.getClasse()).append("|").append(perso.getSexe());
-            packet.append("|").append(perso.getGfxId()).append("|").append((color1 == -1 ? "-1" : Integer.toHexString(color1)));
-            packet.append("|").append((color2 == -1 ? "-1" : Integer.toHexString(color2))).append("|");
-            packet.append((color3 == -1 ? "-1" : Integer.toHexString(color3))).append("|");
-            packet.append(perso.parseItemToASK());
-            send(leader, packet.toString());
-        } catch(Exception e) { e.printStackTrace(); System.out.println("Error occured : " + e.getMessage());}
+        } catch(Exception e) {
+            e.printStackTrace();
+            System.out.println("Error occured : " + e.getMessage());
+        }
     }
 
     public static void GAME_SEND_ALIGNEMENT(GameClient out, int alliID) {
@@ -296,13 +283,14 @@ public class SocketManager {
     public static void GAME_SEND_MAPDATA_COMPLETE(Player player)
     {
         GameMap map = player.getCurMap();
-        StringBuilder packet = new StringBuilder();
-        packet.append("GDM").append('|').append(map.getId()).append('|').append(map.getDate()).append('|').append('|')
-                .append(map.getW()).append('|').append(map.getH()).append('|').append(map.getBackgroundID()).append('|')
-                .append(map.getMusicID()).append('|').append(map.getAmbianceID()).append('|').append(map.getOutDoor()).append('|')
-                .append(map.getCapabilities()).append('|').append(map.getMapData()).append('|').append('1');
-        send(player, packet.toString());
-        //System.out.println(packet.toString());
+       // System.out.println(map.getKey().length());
+       // if(map.getKey().length() <= 1) {
+            StringBuilder packet = new StringBuilder();
+            packet.append("GDM").append('|').append(map.getId()).append('|').append(map.getDate()).append('|').append('|')
+                    .append(map.getW()).append('|').append(map.getH()).append('|').append(map.getBackgroundID()).append('|')
+                    .append(map.getMusicID()).append('|').append(map.getAmbianceID()).append('|').append(map.getOutDoor()).append('|')
+                    .append(map.getCapabilities()).append('|').append(map.getMapData()).append('|').append('1');
+            send(player, packet.toString());
     }
 
     public static void GAME_SEND_GDK_PACKET(GameClient out) {
@@ -937,7 +925,6 @@ public class SocketManager {
             if (f.getPlayer() == null || !f.getPlayer().isOnline())
                 continue;
             send(f.getPlayer(), packet);
-            //System.out.println(packet);
         }
 
     }
@@ -999,8 +986,10 @@ public class SocketManager {
         if (!s2.equals(""))
             packet += ";" + s2;
 
+        if(out ==null)
+            return;
 
-        if(out.getPlayer() != null) {
+        if( out.getPlayer() != null) {
             if (out.getPlayer().getSlaveLeader() != null && s0 == "0") {
                 send(out.getPlayer().getSlaveLeader().getGameClient(), packet);
             }
@@ -1447,12 +1436,19 @@ public class SocketManager {
     public static void GAME_SEND_OAKO_PACKET(Player out, GameObject obj) {
         String packet = "OAKO" + obj.parseItem();
         send(out, packet);
+
     }
 
     public static void GAME_SEND_ESK_PACKEt(Player out) {
         String packet = "ESK";
         send(out, packet);
 
+    }
+
+    // Packet Gladiatrool offi
+    public static void GAME_SEND_wr(Player player,int palier) {
+        String packet = player.getWrPacket(palier);
+        send(player, packet);
     }
 
     public static void GAME_SEND_REMOVE_ITEM_PACKET(Player out, int guid) {
@@ -1647,31 +1643,8 @@ public class SocketManager {
         }
         send(out, packet.toString());
 
-    }/*
-17:44:58.337 [NioProcessor-6] TRACE game.world.World - Comette --> OAKO1acab0~3a6~1~~7d#11#0#0#0d0+17;
-17:44:58.337 [NioProcessor-6] TRACE game.world.World - Comette --> ErKO+1755824|1|934|7d#11#0#0#0d0+17
-17:44:58.337 [NioProcessor-6] TRACE game.world.World - Comette --> EcK;934;BRoulbab;7d#11#0#0#0d0+17
-17:44:58.338 [NioProcessor-6] TRACE game.world.World - Comette --> IO298|+934
-17:44:58.343 [NioProcessor-6] TRACE game.world.World - Comette --> Ow110|6755
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab <-- EK
-17:44:58.343 [NioProcessor-6] TRACE game.world.World - Comette --> As1563767088,1534506000,1616294000|665800|2|46|1~1,1,1,0,0,0|970,970|1000,10000|479|100|7,0,0,0,7|3,0,0,0,3|251,0,0,0|0,0,0,0|155,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|1,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|38,0,0,0,0|38,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab --> EK1298
-17:44:58.343 [NioProcessor-6] TRACE game.world.World - Comette --> EK0298
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab --> OQ1755788|30
-17:44:58.343 [NioProcessor-6] TRACE game.world.World - Comette --> EK01157
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab --> OQ1755762|29
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab --> OQ1755782|27
-17:44:58.343 [NioProcessor-3] TRACE game.world.World - Roulbab --> Ow2057|12557
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> ErKO+1755824|1|934|7d#11#0#0#0d0+17
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> EcK;934;TComette;7d#11#0#0#0d0+17
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> Ow2057|12557
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> IO298|+934
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> JX|27;100;581687;500000000;581687;
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> Ow2057|12557
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> As7411963754,7407232000,7407232000|12588|964|68|0~0,0,1,0,0,0|101095,101095|2000,10000|29284|220|7,1,0,0,8|3,0,0,0,3|1000,12,0,0|100000,50,0,0|1000,0,0,0|1000,0,0,0|1000,0,0,0|1000,12,0,0|0,0,0,0|1,0,0,0|0,2,0,0|0,0,0,0|0,0,0,0|0,14,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|0,0,0,0|250,0,0,0,0|250,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|0,0,0,0,0|
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> EK0298
-17:44:58.344 [NioProcessor-3] TRACE game.world.World - Roulbab --> EK01157
-*/
+    }
+
     public static void GAME_SEND_PM_ADD_PACKET_TO_GROUP(
             Party g, Player p) {
         String packet = "PM+" + p.parseToPM();
@@ -2965,6 +2938,7 @@ public class SocketManager {
             }
         }
     }
+
     public static void GAME_SEND_SL_LISTE(Fighter leader) {
         String packet = "SL" + leader.getPlayer().stringListeSorts();
         send(leader.getPlayer(), packet);
@@ -2986,6 +2960,7 @@ public class SocketManager {
         String packet = "Aa" + player.getId();
         send(leader, packet);
     }
+
     public static void ENVIAR_AB_PERSONAJE_A_LIDER(Player player, Player leader) {
         String packet = "AB" + player.getId() + "|" + player.getName() + "|" + player.getLevel() + "|"
                 + player.getClasse() + "|" + player.getSexe() + "|" + player.getGfxId() + "|";
@@ -3043,16 +3018,29 @@ public class SocketManager {
             int panoId = item.getTemplate().getPanoId();
             ObjectTemplate template = item.getTemplate();
             int position = item.getPosition();
-            if( (panoId >= 81 && panoId <= 92 && position != Constant.ITEM_POS_NO_EQUIPED)  ) {
+            if( ((panoId >= 81 && panoId <= 92 && position != Constant.ITEM_POS_NO_EQUIPED) && !Constant.isInGladiatorDonjon(player.getCurMap().getId())) || Constant.isToniquePos(position)) {
                 String[] stats = template.getStrTemplate().split(",");
 
                 for (String stat : stats) {
+
                     String[] split = stat.split("#");
-                    int effect = Integer.parseInt(split[0], 16), spell = Integer.parseInt(split[1], 16);
-                    int value = Integer.parseInt(split[3], 16);
-                    if (effect == 289 || effect == 282 || effect == 288)
-                        value = 1;
-                    SEND_SB_SPELL_BOOST(leader, effect + ";" + spell + ";" + value);
+                    int effect = 0;
+                    try {
+                        effect = Integer.parseInt(split[0], 16);
+                    }
+                    catch(Exception e)
+                    {
+                        //e.printStackTrace();
+                        continue;
+                    }
+                    if(EffectConstant.IS_SPELL_BOOST_EFFECT(effect)) {
+                        int spell = Integer.parseInt(split[1], 16);
+                        int value = Integer.parseInt(split[3], 16);
+                        if (effect == 289 || effect == 282 || effect == 288)
+                            value = 1;
+                        SEND_SB_SPELL_BOOST(leader, effect + ";" + spell + ";" + value);
+                    }
+
                 }
             }
         }

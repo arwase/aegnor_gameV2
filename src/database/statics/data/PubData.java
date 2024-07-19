@@ -15,22 +15,23 @@ public class PubData extends AbstractDAO<Object> {
 		super(dataSource);
 	}
 
-	@Override
-	public void load(Object obj) {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `pubs` WHERE `server` LIKE " + Config.INSTANCE.getSERVER_ID() + ";");
-            ResultSet RS = result.resultSet;
-            while (RS.next())
-                WorldPub.pubs.add(RS.getString("data"));
+    @Override
+    public void load(Object obj) {
+        String query = "SELECT * FROM `pubs` WHERE `server` = " + Config.INSTANCE.getSERVER_ID() + ";";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    WorldPub.pubs.add(RS.getString("data"));
+                }
+            }
         } catch (SQLException e) {
-            super.sendError("PubData load", e);
-        } finally {
-            close(result);
+            sendError("PubData load", e);
         }
     }
 
-	@Override
+
+    @Override
 	public boolean update(Object t)	{
 		return false;
 	}

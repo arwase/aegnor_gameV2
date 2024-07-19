@@ -28,129 +28,65 @@ public abstract class AbstractDAO<T> implements DAO<T> {
         logger.setLevel(Level.ERROR);
     }
 
-    protected void execute(String query) {
+    protected Result getData(String query) {
         synchronized (locker) {
-            Connection connection = null;
-            Statement statement = null;
-            try {
-                connection = dataSource.getConnection();
-                statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                statement.execute(query);
+            try (Connection connection = dataSource.getConnection();
+                 Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+
+                if (!query.endsWith(";")) {
+                    query = query + ";";
+                }
+
+                ResultSet resultSet = statement.executeQuery(query);
                 logger.debug("SQL request executed successfully {}", query);
+
+                return new Result(connection, statement, resultSet);
+
             } catch (SQLException e) {
                 logger.error("Can't execute SQL Request :" + query, e);
-            } finally {
-                close(statement);
-                close(connection);
+                return null;
             }
         }
     }
 
-    protected void execute(PreparedStatement statement) {
+    protected PreparedStatementWrapper getPreparedStatement(String query) throws SQLException {
+        try {
+            Connection connection = dataSource.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(query);
+            return new PreparedStatementWrapper(connection, preparedStatement);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            logger.error("Can't get datasource connection", e);
+            dataSource.close();
+            if (!Database.getSites().initializeConnection())
+                Main.INSTANCE.stop("statics prepared statement failed");
+            throw e;
+        }
+    }
+
+    public void execute(PreparedStatementWrapper statementWrapper) {
         synchronized (locker) {
-            Connection connection = null;
-            try {
-                connection = statement.getConnection();
+            try (PreparedStatementWrapper wrapper = statementWrapper) {
+                PreparedStatement statement = wrapper.getPreparedStatement();
                 statement.execute();
                 logger.debug("SQL request executed successfully {}", statement.toString());
             } catch (SQLException e) {
                 e.printStackTrace();
-                logger.error("Can't execute SQL Request :" + statement.toString(), e);
-            } finally {
-                close(statement);
-                close(connection);
+                logger.error("Can't execute SQL Request :" + statementWrapper.getPreparedStatement().toString(), e);
             }
         }
     }
 
-    protected Result getData(String query) {
+    public void executeUpdate(PreparedStatementWrapper statementWrapper) {
         synchronized (locker) {
-            Connection connection = null;
-            try {
-                if (!query.endsWith(";"))
-                    query = query + ";";
-                connection = dataSource.getConnection();
-                Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
-                Result result = new Result(connection, statement.executeQuery(query));
-                logger.debug("SQL request executed successfully {}", query);
-                return result;
+            try (PreparedStatementWrapper wrapper = statementWrapper) {
+                PreparedStatement statement = wrapper.getPreparedStatement();
+                int affectedRows = statement.executeUpdate();
+                logger.debug("SQL request executed successfully, affected rows: {}", affectedRows);
             } catch (SQLException e) {
-                logger.error("Can't execute SQL Request :" + query, e);
+                e.printStackTrace();
+                logger.error("Can't execute SQL Request :" + statementWrapper.getPreparedStatement().toString(), e);
             }
-            return null;
-        }
-    }
-
-    protected PreparedStatement getPreparedStatement(String query)
-            throws SQLException {
-        try {
-            Connection connection = dataSource.getConnection();
-            return connection.prepareStatement(query);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            logger.error("Can't getWaitingAccount datasource connection", e);
-            dataSource.close();
-            if (!Database.getSites().initializeConnection())
-                Main.INSTANCE.stop("statics prepared statement failed");
-            return null;
-        }
-    }
-
-    protected void close(PreparedStatement statement) {
-        if (statement == null)
-            return;
-        try {
-            if(!statement.isClosed()) {
-                statement.clearParameters();
-                statement.close();
-            }
-        } catch (Exception e) {
-            logger.error("Can't stop statement", e);
-        }
-    }
-
-    protected void close(Connection connection) {
-        if (connection == null)
-            return;
-        try {
-            if(!connection.isClosed()) {
-                connection.close();
-                logger.trace("{} released", connection);
-            }
-        } catch (Exception e) {
-            logger.error("Can't stop connection", e);
-        }
-    }
-
-    protected void close(Statement statement) {
-        if (statement == null)
-            return;
-        try {
-            if(!statement.isClosed())
-                statement.close();
-        } catch (Exception e) {
-            logger.error("Can't stop statement", e);
-        }
-    }
-
-    protected void close(ResultSet resultSet) {
-        if (resultSet == null)
-            return;
-        try {
-            if(!resultSet.isClosed())
-                resultSet.close();
-        } catch (Exception e) {
-            logger.error("Can't stop resultSet", e);
-        }
-    }
-
-    protected void close(Result result) {
-        if (result != null) {
-            if (result.resultSet != null)
-                close(result.resultSet);
-            if (result.connection != null)
-                close(result.connection);
-            logger.trace("Connection {} has been released", result.connection);
         }
     }
 
@@ -159,13 +95,64 @@ public abstract class AbstractDAO<T> implements DAO<T> {
         logger.error("Error statics database " + msg + " : " + e.getMessage());
     }
 
-    protected class Result {
-        public final Connection connection;
-        public final ResultSet resultSet;
+    public class PreparedStatementWrapper implements AutoCloseable {
+        private final Connection connection;
+        private final PreparedStatement preparedStatement;
 
-        protected Result(Connection connection, ResultSet resultSet) {
+        public PreparedStatementWrapper(Connection connection, PreparedStatement preparedStatement) {
             this.connection = connection;
+            this.preparedStatement = preparedStatement;
+        }
+
+        public PreparedStatement getPreparedStatement() {
+            return preparedStatement;
+        }
+
+        @Override
+        public void close() {
+            try {
+                if (preparedStatement != null && !preparedStatement.isClosed()) {
+                    preparedStatement.close();
+                }
+                if (connection != null && !connection.isClosed()) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public class Result implements AutoCloseable {
+        private final Connection connection;
+        private final Statement statement;
+        private final ResultSet resultSet;
+
+        public Result(Connection connection, Statement statement, ResultSet resultSet) {
+            this.connection = connection;
+            this.statement = statement;
             this.resultSet = resultSet;
+        }
+
+        public ResultSet getResultSet() {
+            return resultSet;
+        }
+
+        @Override
+        public void close() {
+            try {
+                if (resultSet != null && !resultSet.isClosed()) {
+                    resultSet.close();
+                }
+                if (statement != null && !statement.isClosed()) {
+                    statement.close();
+                }
+                if (connection != null && !connection.isClosed()) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

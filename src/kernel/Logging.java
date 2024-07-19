@@ -1,8 +1,5 @@
 package kernel;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,9 +14,6 @@ public class Logging {
     private static final Logging singleton = new Logging();
     public static boolean USE_LOG = true;
     private ArrayList<Log> logs = new ArrayList<>();
-
-
-
 
     public static Logging getInstance() {
         return singleton;

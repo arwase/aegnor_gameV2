@@ -25,33 +25,6 @@ public class Spell {
         this.spriteInfos = aspriteInfos;
         this.duration = duration;
         this.type = type;
-       /* if (ET.equalsIgnoreCase("0")) s{
-            effectTargets.add(0);
-            CCeffectTargets.add(0);
-        } else {
-            String nET = ET.split(":")[0];
-            String ccET = "";
-            if (ET.split(":").length > 1)
-                ccET = ET.split(":")[1];
-            for (String num : nET.split(";")) {
-                try {
-                    effectTargets.add(Integer.parseInt(num));
-                } catch (Exception e) {
-                    // ok
-                    effectTargets.add(0);
-                }
-            }
-            for (String num : ccET.split(";")) {
-                try {
-                    CCeffectTargets.add(Integer.parseInt(num));
-                } catch (Exception e) {
-                    // ok
-                    CCeffectTargets.add(0);
-                }
-            }
-        }*/
-
-        this.type = type;
     }
 
     public void setInfos(int aspriteID, String aspriteInfos, int type, int duration) {
@@ -83,6 +56,10 @@ public class Spell {
 
     public Map<Integer, SpellGrade> getSortsStats() {
         return SpellGrade;
+    }
+
+    public SpellGrade getSpellGrade(int lvl) {
+        return SpellGrade.get(lvl);
     }
 
     public void addSortStats(Integer lvl, SpellGrade stats) {

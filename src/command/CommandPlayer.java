@@ -57,7 +57,7 @@ public class CommandPlayer {
 
                 player.getGameClient().timeLastTaverne = System.currentTimeMillis();
 
-                String prefix = "<font color='#C35617'>[" + (new SimpleDateFormat("HH:mm").format(new Date(System.currentTimeMillis()))) + "] (" + canal + ") (" + (Config.INSTANCE.getNAME().isEmpty() ? getNameServerById(Config.INSTANCE.getSERVER_ID()) : Config.INSTANCE.getNAME()) + ") <b><a href='asfunction:onHref,ShowPlayerPopupMenu," + player.getName() + "'>" + player.getName() + "</a></b>";
+                String prefix = "<font color='#C35617'>[" + (new SimpleDateFormat("HH:mm").format(new Date(System.currentTimeMillis()))) + "] (" + canal + ") (" + (Config.INSTANCE.getSERVER_NAME().isEmpty() ? getNameServerById(Config.INSTANCE.getSERVER_ID()) : Config.INSTANCE.getSERVER_NAME()) + ") <b><a href='asfunction:onHref,ShowPlayerPopupMenu," + player.getName() + "'>" + player.getName() + "</a></b>";
 
                 Logging.getInstance().write("AllMessage", "[" + (new SimpleDateFormat("HH:mm").format(new Date(System.currentTimeMillis()))) + "] : " + player.getName() + " : " + msg.substring(5, msg.length() - 1));
 
@@ -282,18 +282,16 @@ public class CommandPlayer {
                     Fighter fighter = playerFight.getFighterByPerso(player);
                     int lol2 = playerFight.getFighterByOrdreJeu().getTeam();
 
-                    if(lol2 == 0) {
+                    if(lol2 == fighter.getTeam()) {
                         if(playerFight.getFighterByOrdreJeu().getPlayer() != null) {
                             player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getPlayer().getName() + " pour débloquer le combat");
                         }
                         else{
                             player.sendMessage("Vous avez passez le tour de " + playerFight.getFighterByOrdreJeu().getMob().getTemplate().getName() + " pour débloquer le combat");
                         }
-                            playerFight.setCurAction("");
-                            if (fighter.getPlayer() != null) {
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(playerFight, 7, 102, fighter.getId() + "", fighter.getId() + ",-0");
-                            }
-                            playerFight.endTurn(false, fighter);
+
+                        playerFight.setCurAction("");
+                        playerFight.endTurn(false,  playerFight.getFighterByOrdreJeu());
                     }
                     else{
                         if(playerFight.startedTimerPass){
@@ -444,6 +442,23 @@ public class CommandPlayer {
                 }
                 return true;
             }
+            /*else if(command(msg, "openmetierparch") || command(msg, "omp")) {
+                if (player.getFight() != null){
+                    player.sendMessage("Impossible d'utiliser cette commande en combat");
+                    return true;
+                }
+                if(player.getExchangeAction() != null) GameClient.leaveExchange(player);
+
+                List<GameObject> fragments = player.getParcheminMetierObject();
+
+                if(fragments != null){
+                    for(GameObject fragment : fragments){
+
+                    }
+
+                }
+                return true;
+            }*/
             else if(command(msg, "difficulty0") || command(msg, "diff0")) {
                 if (player.difficulty != 0) {
                     player.difficulty = 0;
@@ -990,6 +1005,10 @@ public class CommandPlayer {
                         return true;
                     }
                     if(ArrayUtils.contains(Constant.HOTOMANIDJ_MAPID,player.getCurMap().getId())){
+                        player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
+                        return true;
+                    }
+                    if(Constant.isInGladiatorDonjon(player.getCurMap().getId())){
                         player.sendMessage("Vous ne pouvez pas rafraichir les monstres de cette map.");
                         return true;
                     }

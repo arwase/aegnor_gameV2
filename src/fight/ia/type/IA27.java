@@ -5,7 +5,6 @@ import fight.Fighter;
 import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 import fight.spells.LaunchedSpell;
-import fight.spells.Spell;
 import fight.spells.SpellGrade;
 
 import java.util.ArrayList;
@@ -25,6 +24,7 @@ public class IA27 extends AbstractNeedSpell  {
             int time = 100, maxPo = 1;
             boolean action = false;
             Fighter nearestEnnemy = Function.getInstance().getNearestEnnemy(this.fight, this.fighter);
+            //System.out.println(this.fighter.getCurPa(this.fight));
 
             ArrayList<Fighter> Exclusions = new ArrayList<>();
             for(SpellGrade S : this.highests) {

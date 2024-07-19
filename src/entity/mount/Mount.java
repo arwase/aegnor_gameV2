@@ -188,20 +188,13 @@ public class Mount {
     }
 
 	private static int checkCanKen(MountPark park, Mount mount, int cellTest, int action) {
-
-		//System.out.println("On entre la " + park.getMap().getId() + " DD " +  mount.name + " Action " + action);
 		if(park.getListOfRaising().size() > 1) {
-			//System.out.println("On est tj la ");
 			for(Integer arg : park.getListOfRaising()) {
 				Mount mountArg = World.world.getMountById(arg);
 				if(mountArg == null) continue;
-
                 if(mountArg.getSex() !=	mount.getSex() && mountArg.isFecund() != 0 && mount.isFecund() != 0 && mountArg.getOwner() == mount.getOwner()) {
-					//System.out.println("On est la ");
 					if(mountArg.getReproduction() < 20 && mount.getReproduction() < 20 && !mountArg.isCastrated() && !mount.isCastrated()) {
-						//System.out.println("On est la 2");
 						if(mountArg.getSex() == 1) {
-							//System.out.println("On est la 3");
 							mountArg.fecundatedDate = System.currentTimeMillis();
 							mountArg.setCouple(mount.id);
 							mountArg.resAmor(2500);
@@ -1069,6 +1062,7 @@ public class Mount {
 			{
 				//On cree une copy de l'item dans le coffre
 				playerObj = GameObject.getCloneObjet(TrunkObj, qua);
+
 				//On l'ajoute au monde
 				World.world.addGameObject(playerObj, true);
 				//On retire X objet du coffre
@@ -1114,11 +1108,14 @@ public class Mount {
 		SocketManager.GAME_SEND_EsK_PACKET(P, str);
 	}
 
-	private GameObject getSimilarObject(GameObject obj) {
-		for(GameObject gameObject : this.objects.values())
-			if(gameObject.getTemplate().getType() != 85)
-				if(gameObject.getTemplate().getId() == obj.getTemplate().getId() && gameObject.getStats().isSameStats(obj.getStats()) && gameObject.isSameStats(obj) && gameObject.getRarity() == obj.getRarity() )
-					return gameObject;
+	private GameObject getSimilarObject(GameObject exGameObject) {
+		if (exGameObject.getTemplate().getId() == 8378)
+			return null;
+
+		for (GameObject gameObject : this.objects.values()) {
+			if (World.world.getConditionManager().stackIfSimilar2(gameObject, exGameObject, true))
+				return gameObject;
+		}
 		return null;
 	}
 

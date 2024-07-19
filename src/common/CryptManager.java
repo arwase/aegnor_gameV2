@@ -117,6 +117,43 @@ public class CryptManager {
         return null;
     }
 
+    public static String checksumKey(String data) {
+        int num = 0;
+        int num3 = (data.length() - 1);
+        int i = 0;
+        while ((i <= num3)) {
+            num = (num + ((int) (data.substring(i, i + 1).charAt(0)) % 16));
+            i++;
+        }
+
+        String[] strArray = new String[] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"};
+        return strArray[(num % 16)];
+    }
+
+    public static String decryptMapData(String mapData, String key) {
+        key = prepareKey(key);
+        String strsum = checksumKey(key);
+        int checksum = Integer.parseInt(strsum, 16) * 2;
+        mapData = decypherData(mapData, key, checksum);
+        return mapData;
+    }
+
+    public static String decypherData(String Data, String Key, int Checksum) {
+        StringBuilder dataToDecrypt = new StringBuilder();
+        int num4 = (Data.length() - 2);
+        int i = 0;
+        while ((i <= num4)) {
+            String sub = Data.substring(i, i+2);
+            int num = Integer.parseInt(sub, 16);
+            int s = (int) (Math.round((double) (((((i) / 2) + Checksum) % (double) (Key.length())))));
+
+            int num2 = (int) Key.substring(s, s+1).charAt(0);
+            dataToDecrypt.append(String.valueOf((char) (((char) num) ^ ((char) num2))));
+            i = (i + 2);
+
+        }
+        return unescape(dataToDecrypt.toString());
+    }
 
     // prepareData
     public String cryptMessage(String message, String key) {
@@ -157,7 +194,7 @@ public class CryptManager {
         }
     }
 
-    public String prepareKey(String key) {
+    public static String prepareKey(String key) {
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < key.length(); i += 2)
             sb.append((char) Integer.parseInt(key.substring(i, i + 2), 16));
@@ -169,7 +206,7 @@ public class CryptManager {
             return null;
         }
     }
-    private String unescape(String s1) {
+    private static String unescape(String s1) {
         String s = s1;
         try {
             s = URLDecoder.decode(s, StandardCharsets.UTF_8.toString());

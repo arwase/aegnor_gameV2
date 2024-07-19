@@ -70,7 +70,7 @@ object Main {
                 GameMap.updatable.update()
                 InteractiveObject.updatable.update()
                 Mount.updatable.update()
-                WorldPlayerOption.updatable.update()
+                //WorldPlayerOption.updatable.update()
                 WorldPub.updatable.update()
                 EventManager.getInstance().update()
 
@@ -112,6 +112,30 @@ object Main {
         GameServer.INSTANCE.stop()
         logger.info("The server is now closed.")
     }
+
+    private fun closeServerForPlayers() {
+        if (Config.isRunning) {
+            GameServer.INSTANCE.setState(0)
+            Config.isRunning = true
+            GameServer.INSTANCE.kickAll(true)
+            WorldSave.cast(0)
+            Database.getStatics().serverData.loggedZero()
+        }
+
+        logger.info("The server is now closed for players.")
+    }
+
+    private fun openServerForPlayers() {
+        if (Config.isRunning) {
+            GameServer.INSTANCE.setState(1)
+            Config.isRunning = true
+            GameServer.INSTANCE.kickAll(true)
+            WorldSave.cast(0)
+        }
+
+        logger.info("The server is now open for players.")
+    }
+
 
 
     @JvmOverloads

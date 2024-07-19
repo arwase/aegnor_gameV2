@@ -81,7 +81,8 @@ public class HouseData extends AbstractDAO<House> {
                     //        + " a un propriétaire inexistant.")).printStackTrace();
                     removeHouse(owner,id);
                     int pricebase = (int) World.world.getHouse(id).getSaleBase();
-                    System.out.println("La maison "+ id +" a été remise sur le marché car propriétaire inexistant a une valeur de " + pricebase);
+                    World.world.sendWebhookInformationsServeur("La maison en ["+World.world.getMap((short) house.getHouseMapId()).getX()+","+World.world.getMap((short) house.getHouseMapId()).getY()+"] a été remis en vente.");
+                    System.out.println("La maison en ["+World.world.getMap((short) house.getHouseMapId()).getX()+","+World.world.getMap((short) house.getHouseMapId()).getY()+"] id : "+ id+ " a été remis en vente car propriétaire supprimé a une valeur de " + pricebase);
 
                     house.setOwnerId(0);
                     house.setSale(pricebase);
@@ -199,7 +200,7 @@ public class HouseData extends AbstractDAO<House> {
         Long pricebase = World.world.getHouse(houseId).getSaleBase();
         PreparedStatement p = null;
         try {
-            p = getPreparedStatement("UPDATE `houses` SET `owner_id`='0',`guild_rights`='0', `sale`=?, `key`='-', `guild_id`='0' WHERE `owner_id`=? and `houseId`=?");
+            p = getPreparedStatement("UPDATE `houses` SET `owner_id`='0',`guild_rights`='0', `sale`=?, `key`='-', `guild_id`='0' WHERE `owner_id`=? and `id`=?");
             p.setLong(1, pricebase);
             p.setInt(2, OwnerID);
             p.setInt(3, houseId);

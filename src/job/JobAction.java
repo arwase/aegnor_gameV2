@@ -1992,6 +1992,8 @@ public class JobAction {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("L'objet "+ objTemplateID + " a une stats de base "+ statID +" qui n'a pas une valeur de jet correcte " + s + " cas a gérer");
+                //value = Integer.parseInt(stats[2], 16);
             }
             double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
             weight = (int) Math.floor(value * coef);
@@ -2034,6 +2036,7 @@ public class JobAction {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                System.out.println("L'objet "+ objTemplateID + " a une stats de base "+ statID +" qui n'a pas une valeur de jet correcte " + s + " cas a gérer");
             }
             double coef = getPwrPerEffet(statID);   // On recupÃ¨re le poid de la stat a l'unité
             weight = (int) Math.round( (value + ((value)*0.5)) * coef);

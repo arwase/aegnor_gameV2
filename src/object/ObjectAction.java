@@ -37,7 +37,8 @@ public class ObjectAction {
         this.cond = cond;
     }
 
-    public void apply(Player player0, Player target, int objet, int cellid) {
+    public void apply(Player player0, Player target, int objet, int cellid,int qty) {
+        int qtyuse = qty;
         if (player0 == null || !player0.isOnline() || player0.getDoAction() || player0.getGameClient() == null)
             return;
         if (!this.cond.equalsIgnoreCase("") && !this.cond.equalsIgnoreCase("-1") && !World.world.getConditionManager().validConditions(player0, this.cond)) {
@@ -55,8 +56,13 @@ public class ObjectAction {
             SocketManager.GAME_SEND_MESSAGE(player, "Error object null. Merci de prévenir un administrateur et d'indiquer le message.");
             return;
         }
+        if (World.world.getGameObject(objet).getQuantity() < qty ) {
+            SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez la quantité demandé");
+            return;
+        }
 
-        boolean sureIsOk = false, isOk = true;
+
+        boolean sureIsOk = false, isOk = true, canMultiple = false;
         int turn = 0;
         String arg = "";
         try {
@@ -106,72 +112,201 @@ public class ObjectAction {
                         break;
 
                     case 3://Don de vie.
-                        if(this.type.split(";").length > 1 && player.getFight() != null) return;
-                        boolean isOk1 = true,
-                                isOk2 = true;
-                        for (String arg0 : arg.split(",")) {
-                            int val, statId1;
-                            if (arg.contains(";")) {
-                                statId1 = Integer.parseInt(arg.split(";")[0]);
-                                val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg.split(";")[0]));
-                            } else {
-                                statId1 = Integer.parseInt(arg0);
-                                val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg0));
+                        canMultiple = true;
+                        if(qty <= 1) {
+                            if (this.type.split(";").length > 1 && player.getFight() != null) return;
+                            boolean isOk1 = true,
+                                    isOk2 = true;
+                            for (String arg0 : arg.split(",")) {
+                                int val, statId1;
+                                if (arg.contains(";")) {
+                                    statId1 = Integer.parseInt(arg.split(";")[0]);
+                                    val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg.split(";")[0]));
+                                } else {
+                                    statId1 = Integer.parseInt(arg0);
+                                    val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg0));
+                                }
+                                switch (statId1) {
+                                    case 110://Vie.
+                                        if (player.getCurPdv() == player.getMaxPdv()) {
+                                            isOk1 = false;
+                                            continue;
+                                        }
+                                        if (player.getCurPdv() + val > player.getMaxPdv())
+                                            val = player.getMaxPdv() - player.getCurPdv();
+                                        player.setPdv(player.getCurPdv() + val);
+                                        if (player.getFight() != null)
+                                            player.getFight().getFighterByPerso(player).setPdv(player.getCurPdv());
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "01;" + val);
+                                        sureIsOk = true;
+                                        break;
+                                    case 139://Energie.
+                                        if (player.getEnergy() == 10000) {
+                                            isOk2 = false;
+                                            continue;
+                                        }
+                                        if (player.getEnergy() + val > 10000)
+                                            val = 10000 - player.getEnergy();
+                                        player.setEnergy(player.getEnergy() + val);
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "07;" + val);
+                                        sureIsOk = true;
+                                        break;
+                                    case 605://Exp�rience.
+                                        player.addXp((long) (val * Config.INSTANCE.getRATE_XP()));
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "08;" + val);
+                                        sureIsOk = true;
+                                        break;
+                                    case 614://Exp�rience m�tier.
+                                        String parchemin = World.world.getGameObject(objet).parseStatsString();
+                                        JobStat job = player.getMetierByID(Integer.parseInt(parchemin.split("#")[2], 16));
+                                        val = Integer.parseInt(parchemin.split("#")[3], 16) * Config.INSTANCE.getRATE_JOB();
+                                        if (job == null) {
+                                            isOk1 = false;
+                                            isOk2 = false;
+                                            continue;
+                                        }
+                                        if (job.get_lvl() >= 100) {
+                                            isOk1 = false;
+                                            isOk2 = false;
+                                        }
+                                        job.addXp(player, val);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "017;" + val + "~" + Integer.parseInt(arg0.split(";")[1]));
+                                        sureIsOk = true;
+                                        break;
+                                }
                             }
-                            switch (statId1) {
-                                case 110://Vie.
-                                    if (player.getCurPdv() == player.getMaxPdv()) {
-                                        isOk1 = false;
-                                        continue;
-                                    }
-                                    if (player.getCurPdv() + val > player.getMaxPdv())
-                                        val = player.getMaxPdv() - player.getCurPdv();
-                                    player.setPdv(player.getCurPdv() + val);
-                                    if(player.getFight() != null)
-                                        player.getFight().getFighterByPerso(player).setPdv(player.getCurPdv());
-                                    SocketManager.GAME_SEND_STATS_PACKET(player);
-                                    SocketManager.GAME_SEND_Im_PACKET(player, "01;" + val);
-                                    sureIsOk = true;
-                                    break;
-                                case 139://Energie.
-                                    if (player.getEnergy() == 10000) {
-                                        isOk2 = false;
-                                        continue;
-                                    }
-                                    if (player.getEnergy() + val > 10000)
-                                        val = 10000 - player.getEnergy();
-                                    player.setEnergy(player.getEnergy() + val);
-                                    SocketManager.GAME_SEND_STATS_PACKET(player);
-                                    SocketManager.GAME_SEND_Im_PACKET(player, "07;" + val);
-                                    sureIsOk = true;
-                                    break;
-                                case 605://Exp�rience.
-                                    player.addXp((long) (val * Config.INSTANCE.getRATE_XP()));
-                                    SocketManager.GAME_SEND_STATS_PACKET(player);
-                                    SocketManager.GAME_SEND_Im_PACKET(player, "08;" + val);
-                                    break;
-                                case 614://Exp�rience m�tier.
-                                    JobStat job = player.getMetierByID(Integer.parseInt(arg0.split(";")[1]));
-                                    val = val* Config.INSTANCE.getRATE_JOB() ;
-                                    if (job == null) {
-                                        isOk1 = false;
-                                        isOk2 = false;
-                                        continue;
-                                    }
-                                    job.addXp(player, val);
-                                    SocketManager.GAME_SEND_Im_PACKET(player, "017;" + val + "~" + Integer.parseInt(arg0.split(";")[1]));
-                                    sureIsOk = true;
-                                    break;
-                            }
+                            if (arg.split(",").length == 1)
+                                if (!isOk1 || !isOk2)
+                                    isOk = false;
+                                else if (!isOk1 && !isOk2)
+                                    isOk = false;
+                            send = false;
                         }
-                        if (arg.split(",").length == 1)
-                            if (!isOk1 || !isOk2)
-                                isOk = false;
-                            else if (!isOk1 && !isOk2)
-                                isOk = false;
-                        send = false;
-                        break;
+                        else{
+                            if (this.type.split(";").length > 1 && player.getFight() != null) return;
+                            boolean isOk1 = true,
+                                    isOk2 = true;
+                            for (String arg0 : arg.split(",")) {
+                                int val, statId1;
+                                if (arg.contains(";")) {
+                                    statId1 = Integer.parseInt(arg.split(";")[0]);
+                                    val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg.split(";")[0]));
+                                } else {
+                                    statId1 = Integer.parseInt(arg0);
+                                    val = World.world.getGameObject(objet).getRandomValue(World.world.getGameObject(objet).parseStatsString(), Integer.parseInt(arg0));
+                                }
+                                switch (statId1) {
+                                    case 110:{ //Vie.
+                                        int finalval = 0;
+                                        for (int i = 1; i <= qty; i++) {
+                                            if (player.getCurPdv() == player.getMaxPdv()) {
+                                                isOk1 = false;
+                                                continue;
+                                            }
+                                            if (player.getCurPdv() + val > player.getMaxPdv()) {
+                                                val = player.getMaxPdv() - player.getCurPdv();
+                                            }
+                                            finalval += val;
+                                            player.setPdv(player.getCurPdv() + val);
+                                            if (player.getFight() != null)
+                                                player.getFight().getFighterByPerso(player).setPdv(player.getCurPdv());
 
+                                            if(qtyuse != qty){
+                                                if(qty-qtyuse <= i)
+                                                    qtyuse--;
+                                            }
+                                            else{
+                                                qtyuse--;
+                                            }
+                                        }
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "01;" + finalval);
+                                        sureIsOk = true;
+                                        break;
+                                    }
+                                    case 139: {//Energie.
+                                        int finalval = 0;
+                                        for (int i = 1; i <= qty; i++) {
+                                            if (player.getEnergy() == 10000) {
+                                                isOk2 = false;
+                                                continue;
+                                            }
+                                            if (player.getEnergy() + val > 10000)
+                                                val = 10000 - player.getEnergy();
+                                            finalval += val;
+                                            player.setEnergy(player.getEnergy() + val);
+
+                                            if (qtyuse != qty) {
+                                                if (qty - qtyuse <= i)
+                                                    qtyuse--;
+                                            } else {
+                                                qtyuse--;
+                                            }
+                                        }
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "07;" + finalval);
+                                        sureIsOk = true;
+                                        break;
+                                    }
+                                    case 605: {//Exp�rience.
+                                        int finalval = 0;
+                                        for (int i = 1; i <= qty; i++) {
+                                            finalval += (val * Config.INSTANCE.getRATE_XP());
+                                            player.addXp((long) (val * Config.INSTANCE.getRATE_XP()));
+                                            if (qtyuse != qty) {
+                                                if (qty - qtyuse <= i)
+                                                    qtyuse--;
+                                            } else {
+                                                qtyuse--;
+                                            }
+                                        }
+                                        SocketManager.GAME_SEND_STATS_PACKET(player);
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "08;" + finalval);
+                                        sureIsOk = true;
+                                        break;
+                                    }
+                                    case 614: {//Exp�rience m�tier.
+                                        int finalval = 0;
+                                        String parchemin = World.world.getGameObject(objet).parseStatsString();
+                                        JobStat job = player.getMetierByID(Integer.parseInt(parchemin.split("#")[2], 16));
+                                        for (int i = 1; i <= qty; i++) {
+                                            if (job == null) {
+                                                isOk1 = false;
+                                                isOk2 = false;
+                                                continue;
+                                            }
+                                            if (job.get_lvl() >= 100) {
+                                                isOk1 = false;
+                                                isOk2 = false;
+                                                continue;
+                                            }
+                                            val = Integer.parseInt(parchemin.split("#")[3], 16) * Config.INSTANCE.getRATE_JOB();
+                                            finalval +=val;
+                                            job.addXp(player, val);
+                                            if (qtyuse != qty) {
+                                                if (qty - qtyuse <= i)
+                                                    qtyuse--;
+                                            } else {
+                                                qtyuse--;
+                                            }
+                                        }
+                                        SocketManager.GAME_SEND_Im_PACKET(player, "017;" + finalval + "~" + Integer.parseInt(arg0.split(";")[1]));
+                                        sureIsOk = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (arg.split(",").length == 1)
+                                if (!isOk1 || !isOk2)
+                                    isOk = false;
+                                else if (!isOk1 && !isOk2)
+                                    isOk = false;
+                            send = true;
+                        }
+                        break;
                     case 4://Don de Stats.
                         if (player0.getFight() != null) return;
                         for (String arg0 : arg.split(",")) {
@@ -611,15 +746,29 @@ public class ObjectAction {
                         break;
 
                     case 26://Ajout d'objet.
-                        if (player0.getFight() != null) return;
-                        for (String i : arg.split(";")) {
-                            obj = World.world.getObjTemplate(Integer.parseInt(i.split(",")[0])).createNewItem(Integer.parseInt(i.split(",")[1]), false,0);
-                            if (player.addObjet(obj, true))
-                                World.world.addGameObject(obj, true);
+                        canMultiple = true;
+                        if(qty <= 1) {
+                            if (player0.getFight() != null) return;
+                            for (String i : arg.split(";")) {
+                                obj = World.world.getObjTemplate(Integer.parseInt(i.split(",")[0])).createNewItem(Integer.parseInt(i.split(",")[1]), false, 0);
+                                if (player.addObjet(obj, true))
+                                    World.world.addGameObject(obj, true);
+                            }
+                            SocketManager.GAME_SEND_Ow_PACKET(player);
                         }
-                        SocketManager.GAME_SEND_Ow_PACKET(player);
+                        else{
+                            for (int j = 1; j <= qty; j++) {
+                                if (player0.getFight() != null) return;
+                                for (String i : arg.split(";")) {
+                                    obj = World.world.getObjTemplate(Integer.parseInt(i.split(",")[0])).createNewItem(Integer.parseInt(i.split(",")[1]), false, 0);
+                                    if (player.addObjet(obj, true))
+                                        World.world.addGameObject(obj, true);
+                                }
+                                qtyuse--;
+                            }
+                            SocketManager.GAME_SEND_Ow_PACKET(player);
+                        }
                         break;
-
                     case 27://Ajout de titre.
                         if (player0.getFight() != null) return;
                         player.setAllTitle(arg);
@@ -662,12 +811,27 @@ public class ObjectAction {
                         break;
 
                     case 33://Ajout de points boutique.
-                        if (player.getFight() != null) return;
-                        if(player.getAccount().getWebAccount() == null){
-                            player.sendMessage("Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web ");
-                            return;
+                        canMultiple = true;
+                        if(qty <= 1) {
+                            if (player.getFight() != null) return;
+                            if (player.getAccount().getWebAccount() == null) {
+                                player.sendMessage("Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web ");
+                                return;
+                            }
+                            player.getAccount().getWebAccount().setPoints(player.getAccount().getWebAccount().getPoints() + Integer.parseInt(arg));
                         }
-                        player.getAccount().getWebAccount().setPoints(player.getAccount().getWebAccount().getPoints() + Integer.parseInt(arg));
+                        else{
+                            for (int j = 1; j <= qty; j++) {
+                                if (player.getFight() != null) return;
+                                if (player.getAccount().getWebAccount() == null) {
+                                    player.sendMessage("Tu ne peux pas charger tes points boutique car tu n'as pas affilié ton compte à un compte web ");
+                                    return;
+                                }
+                                player.getAccount().getWebAccount().setPoints(player.getAccount().getWebAccount().getPoints() + Integer.parseInt(arg));
+                                qtyuse--;
+                            }
+                        }
+                        sureIsOk = true;
                         break;
 
                     case 34://Fm cac
@@ -752,26 +916,51 @@ public class ObjectAction {
             e.printStackTrace();
         }
 
-        boolean effect = this.haveEffect(World.world.getGameObject(objet).getTemplate().getId(), World.world.getGameObject(objet), player);
-        if (effect)
+        int effect = this.haveEffect(World.world.getGameObject(objet).getTemplate().getId(), World.world.getGameObject(objet), player,qty);
+        if (effect > 0)
             isOk = true;
-        if (isOk)
-            effect = true;
+
+        if(isOk && effect==0)
+            effect = 1;
+
+        if(effect > 1) {
+            canMultiple = true;
+            qtyuse -= effect;
+            send=true;
+        }
+
         if (this.type.split(";").length > 1)
             isOk = true;
         if (objet != -1) {
-            if (send)
-                SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(objet).getTemplate().getId());
-            if (sureIsOk || (isOk && effect && World.world.getGameObject(objet).getTemplate().getId() != 7799)) {
-                if (World.world.getGameObject(objet) != null) {
-                    player0.removeItem(objet, 1, true, true);
+            if(!canMultiple || qty==1) {
+                if(qty > 1)
+                    player0.sendMessage("L'utilisation multiple pour ce type de consommable n'a pas été developpé.");
+
+                if (send)
+                    SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(objet).getTemplate().getId());
+                if (sureIsOk || (isOk && effect > 0 && World.world.getGameObject(objet).getTemplate().getId() != 7799)) {
+                    if (World.world.getGameObject(objet) != null) {
+                        player0.removeItem(objet, 1, true, true);
+                    }
+                }
+            }
+            else{
+                qty = qty-qtyuse;
+                if(qty>0) {
+                    if (send)
+                        SocketManager.GAME_SEND_Im_PACKET(player, "022;" + qty + "~" + World.world.getGameObject(objet).getTemplate().getId());
+                    if (sureIsOk || (isOk && effect > 0 && World.world.getGameObject(objet).getTemplate().getId() != 7799)) {
+                        if (World.world.getGameObject(objet) != null) {
+                            player0.removeItem(objet, qty, true, true);
+                        }
+                    }
                 }
             }
         }
     }
 
-    private boolean haveEffect(int id, GameObject gameObject, Player player) {
-        if (player.getFight() != null) return true;
+    private int haveEffect(int id, GameObject gameObject, Player player,int quantity) {
+        if (player.getFight() != null) return 1;
         switch (id) {
             case 8378://Fragment magique.
                 for (World.Couple<Integer, Integer> couple : ((Fragment) gameObject).getRunes()) {
@@ -791,107 +980,112 @@ public class ObjectAction {
                     }
                 }
                 send = true;
-                return true;
+                return 1;
             case 7799://Le Saut Sifflard
                 player.toogleOnMount();
                 send = false;
-                return false;
-
+                return 0;
             case 10832://Craqueloroche
-                if (player.getFight() != null || player.getCurMap().haveMobFix()) return false;
+                if (player.getFight() != null || player.getCurMap().haveMobFix()) return 0;
                 player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), "483,1,1000", "MiS="
                         + player.getId());
-                return true;
-
+                return 1;
             case 10664://Abragland
-                if (player.getFight() != null || player.getCurMap().haveMobFix()) return false;
+                if (player.getFight() != null || player.getCurMap().haveMobFix()) return 0;
                 player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), "47,1,1000", "MiS="
                         + player.getId());
-                return true;
+                return 1;
 
             case 10665://Coffre de Jorbak
                 player.setCandy(10688);
-                return true;
+                return 1;
 
             case 10670://Parchemin de persimol
                 player.setBenediction(10682);
-                return true;
+                return 1;
 
             case 8435://Ballon Rouge Magique
                 SocketManager.sendPacketToMap(player.getCurMap(), "GA;208;"
                         + player.getId() + ";" + player.getCurCell().getId()
                         + ",2906,11,8,1");
-                return true;
+                return 1;
 
             case 8624://Ballon Bleu Magique
                 SocketManager.sendPacketToMap(player.getCurMap(), "GA;208;"
                         + player.getId() + ";" + player.getCurCell().getId()
                         + ",2907,11,8,1");
-                return true;
+                return 1;
 
             case 8625://Ballon Vert Magique
                 SocketManager.sendPacketToMap(player.getCurMap(), "GA;208;"
                         + player.getId() + ";" + player.getCurCell().getId()
                         + ",2908,11,8,1");
-                return true;
+                return 1;
 
             case 8430://Ballon Jaune Magique
                 SocketManager.sendPacketToMap(player.getCurMap(), "GA;208;"
                         + player.getId() + ";" + player.getCurCell().getId()
                         + ",2909,11,8,1");
-                return true;
+                return 1;
 
             case 8621://Cawotte Maudite
                 player.setGfxId(1109);
                 SocketManager.GAME_SEND_ALTER_GM_PACKET(player.getCurMap(), player);
-                return true;
+                return 1;
 
             case 8626://Nisitik Miditik
                 player.setGfxId(1046);
                 SocketManager.GAME_SEND_ALTER_GM_PACKET(player.getCurMap(), player);
-                return true;
+                return 1;
 
             case 10833://Chapain
                 player.setGfxId(9001);
                 SocketManager.GAME_SEND_ALTER_GM_PACKET(player.getCurMap(), player);
-                return true;
+                return 1;
 
             case 10839://Monstre Pain
-                if (player.getFight() != null || player.getCurMap().haveMobFix()) return false;
+                if (player.getFight() != null || player.getCurMap().haveMobFix()) return 0;
                 player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), "2787,1,1000", "MiS="
                         + player.getId());
-                return true;
+                return 1;
 
             case 8335://Cadeau 1
-                Noel.getRandomObjectOne(player);
-                return true;
+                for(int i = 1;i <= quantity; i++)
+                    Noel.getRandomObjectOne(player);
+                return quantity;
             case 8336://Cadeau 2
-                Noel.getRandomObjectTwo(player);
-                return true;
+                for(int i = 1;i <= quantity; i++)
+                    Noel.getRandomObjectTwo(player);
+                return quantity;
             case 8337://Cadeau 3
-                Noel.getRandomObjectTree(player);
-                return true;
+                for(int i = 1;i <= quantity; i++)
+                    Noel.getRandomObjectTree(player);
+                return quantity;
             case 8339://Cadeau 4
-                Noel.getRandomObjectFour(player);
-                return true;
+                for(int i = 1;i <= quantity; i++)
+                    Noel.getRandomObjectFour(player);
+                return quantity;
             case 8340://Cadeau 5
-                Noel.getRandomObjectFive(player);
-                return true;
+                for(int i = 1;i <= quantity; i++)
+                    Noel.getRandomObjectFive(player);
+                return quantity;
             case 10912://Cadeau nowel 1
-                return false;
+                return 0;
             case 10913://Cadeau nowel 2
-                return false;
+                return 0;
             case 10914://Cadeau nowel 3
-                return false;
+                return 0;
             case 12839://Gemme Spirituel emballée
-                int templateid =  Constant.getRandomGemmesSpritiuels();
-                GameObject obj = World.world.getObjTemplate(templateid).createNewItem(1, false,0);
-                if (player.addObjet(obj, true))
-                    World.world.addGameObject(obj,true);
-                SocketManager.GAME_SEND_Ow_PACKET(player);
-                SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + templateid);
-                return true;
+                for(int i = 1;i <= quantity; i++) {
+                    int templateid = Constant.getRandomGemmesSpritiuels();
+                    GameObject obj = World.world.getObjTemplate(templateid).createNewItem(1, false, 0);
+                    if (player.addObjet(obj, true))
+                        World.world.addGameObject(obj, true);
+                    SocketManager.GAME_SEND_Ow_PACKET(player);
+                    SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + templateid);
+                }
+                return quantity;
         }
-        return false;
+        return 0;
     }
 }

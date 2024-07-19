@@ -118,11 +118,15 @@ public class GuildMember {
         this.rank = rank;
         this.xpGive = xp;
 
+        if(rank ==1)
+            right= 1;
+
         if (right != this.rights && right != 1) //V�rifie si les droits sont pareille ou si des droits de meneur; pour ne pas faire la conversion pour rien
             this.parseIntToRight(right);
         this.rights = right;
 
         Database.getDynamics().getGuildMemberData().update(perso);
+        Database.getDynamics().getGuildMemberData().update(this.player);
     }
 
 

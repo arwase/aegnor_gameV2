@@ -4,6 +4,7 @@ import area.SubArea;
 import area.map.entity.InteractiveDoor;
 import area.map.entity.MountPark;
 import client.Player;
+import common.CryptManager;
 import common.Formulas;
 import common.PathFinding;
 import common.SocketManager;
@@ -77,7 +78,9 @@ public class GameMap {
                         if (map.getMountPark() != null) map.getMountPark().startMoveMounts();
                     }
                     World.world.getCollectors().values().forEach(Collector::moveOnMap);
-                    World.world.bot.refreshActivity();
+                    if(Config.INSTANCE.getDISCORD_BOT()) {
+                        World.world.bot.refreshActivity();
+                    }
                 }, 0, TimeUnit.SECONDS);
 
                 NpcMovable.moveAll();
@@ -128,12 +131,18 @@ public class GameMap {
         this.maxSize = maxSize;
         this.minSize = minSize;
         this.fixSize = fixSize;
+
         if(key.length() > 0)
         {
-            this.mapData = World.world.getEncryptador().decifrarMapData(key, dData);
+            try {
+                this.mapData = CryptManager.decryptMapData(dData, key);
+            }
+            catch (Exception e){
+                System.out.println("Impossible de déchiffrer la map, clé incorrecte ou map déjà déchiffrée:" + this.id + " / " + e.getMessage());
+                this.mapData= dData;
+            }
         }
         else {
-
             this.mapData = dData;
         }
         this.capabilities = capabilities;
@@ -142,7 +151,7 @@ public class GameMap {
         this.backgroundID = backgroundID;
         this.outDoor = outDoor;
         this.maxMerchant = maxMerchant;
-        this.cases = World.world.getCryptManager().decompileMapData(this, dData, sniffed);
+        this.cases = World.world.getCryptManager().decompileMapData(this, this.mapData, sniffed);
         //World.world.getEncryptador().decompilarMapaData(this);
 
         try {
@@ -300,7 +309,7 @@ public class GameMap {
                     }
                     park.getEtable().clear();
                 }
-
+                World.world.sendWebhookInformationsServeur("L'enclos en ["+park.getMap().getX()+","+park.getMap().getY()+"] a été remis en vente.");
                 park.setOwner(0);
                 park.setGuild(null);
                 park.setPrice(3000000);
@@ -706,8 +715,8 @@ public class GameMap {
                     break;
                 }
             }
-
-            if(this.fights.isEmpty()) this.fights = null;
+            //TODO : Pourquoi on supprimerai le tableau en vrai? il est vide
+            //if(this.fights.isEmpty()) this.fights = null;
         }
     }
 
@@ -1229,6 +1238,22 @@ public class GameMap {
         return group;
     }
 
+    public Monster.MobGroup spawnGroupGladiatrool(String groupData) {
+        while(this.mobGroups.get(this.nextObjectId) != null)
+            this.nextObjectId--;
+        int cell = this.getRandomFreeCellId();
+        while (this.containsForbiddenCellSpawn(cell))
+            cell = this.getRandomFreeCellId();
+        Monster.MobGroup group = new Monster.MobGroup(this.nextObjectId,  cell, groupData);
+        if (group.getMobs().isEmpty())
+            return group;
+        this.mobGroups.put(this.nextObjectId, group);
+        group.setIsFix(false);
+        SocketManager.GAME_SEND_MAP_MOBS_GM_PACKET(this, group);
+
+        this.nextObjectId--;
+        return group;
+    }
 
 
     private static class RespawnGroup {
@@ -1407,8 +1432,9 @@ public class GameMap {
 
     public String getGMsPackets() {
         StringBuilder packet = new StringBuilder();
-        cases.stream().filter(cell -> cell != null).forEach(cell -> cell.getPlayers().stream().filter(player ->
-                player != null).forEach(player -> packet.append("GM|+").append(player.parseToGM()).append('\u0000')));
+        cases.stream().filter(cell -> cell != null).forEach(cell -> cell.getPlayers().stream().filter
+                (player ->player != null)
+                .forEach(player -> packet.append("GM|+").append(player.parseToGM()).append('\u0000')));
         return packet.toString();
     }
 
@@ -1697,7 +1723,13 @@ public class GameMap {
         if (!this.fights.isEmpty())
             id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
         this.mobGroups.remove(group.getId());
-        this.fights.add(new Fight(id, this, player, player.difficulty, group));
+
+        if(Constant.isInGladiatorDonjon(this.getId())) {
+            this.fights.add(new Fight(id, this, player, group));
+        } else {
+            this.fights.add(new Fight(id, this, player, player.difficulty, group));
+        }
+
         SocketManager.GAME_SEND_MAP_FIGHT_COUNT_TO_MAP(this);
 
         Fight fight = null;
@@ -1822,6 +1854,8 @@ public class GameMap {
         if (!perso.canAggro())
             return;
         int id = 1;
+        if(this.fights == null)
+            this.fights = new ArrayList<>();
         if (!this.fights.isEmpty())
             id = ((Fight) (this.fights.toArray()[this.fights.size() - 1])).getId() + 1;
         this.fights.add(new Fight(id, this, perso, Prisme));
@@ -2104,8 +2138,12 @@ public class GameMap {
                         if (pathstr == null)
                             return;
                         group.setCellId(cell);
-                        for (Player z : getPlayers())
+                        for (Player z : getPlayers()) {
+                            if(z==null){
+                                continue;
+                            }
                             SocketManager.GAME_SEND_GA_PACKET(z.getGameClient(), "0", "1", group.getId() + "", pathstr);
+                        }
                     }
                     break;
 
@@ -2126,9 +2164,13 @@ public class GameMap {
                     if (pathstr == null)
                         return;
                     group.setCellId(cell);
-                    for (Player z : getPlayers())
+                    for (Player z : getPlayers()) {
+                        if(z==null){
+                            continue;
+                        }
                         SocketManager.GAME_SEND_GA_PACKET(z.getGameClient(), "0", "1", group.getId()
                                 + "", pathstr);
+                    }
                     break;
             }
 

@@ -356,12 +356,14 @@ public class DiscordBot extends ListenerAdapter {
                 int time = 10;
                 int lanch = 1;
                 if (commandParts.length > 2) {
+                    lanch = Integer.parseInt(commandParts[1]);
                     try {
-                        lanch = Integer.parseInt(commandParts[1]);
                         time = Integer.parseInt(commandParts[2]);
                     }
                     catch (Exception ignore){
-
+                        mess = "Pas de temps renseigné 10 par défaut :";
+                        time = 10;
+                        break;
                     }
                 }
 

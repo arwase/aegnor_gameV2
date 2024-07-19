@@ -10,8 +10,7 @@ import java.sql.SQLException;
 
 public class AreaData extends AbstractDAO<Area>
 {
-	public AreaData(HikariDataSource dataSource)
-	{
+	public AreaData(HikariDataSource dataSource) {
 		super(dataSource);
 	}
 
@@ -19,24 +18,19 @@ public class AreaData extends AbstractDAO<Area>
 	public void load(Object obj) {}
 
 	@Override
-	public boolean update(Area area)
-	{
+	public boolean update(Area area) {
 		return false;
 	}
 
 	public void load() {
-		Result result = null;
-		try {
-			result = getData("SELECT * from area_data");
-			ResultSet RS = result.resultSet;
+		String query = "SELECT * FROM area_data";
+		try (Result result = getData(query); ResultSet RS = result.getResultSet()) {
 			while (RS.next()) {
-				Area A = new Area(RS.getInt("id"), RS.getInt("superarea"));
-				World.world.addArea(A);
+				Area area = new Area(RS.getInt("id"), RS.getInt("superarea"));
+				World.world.addArea(area);
 			}
 		} catch (SQLException e) {
-			super.sendError("Area_dataData load", e);
-		} finally	{
-			close(result);
+			super.sendError("AreaData load", e);
 		}
 	}
 }

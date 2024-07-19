@@ -4,6 +4,8 @@ import client.Account;
 import client.Player;
 import common.SocketManager;
 import game.GameClient;
+import game.world.World;
+import kernel.Config;
 import kernel.Main;
 
 import javax.swing.*;
@@ -54,6 +56,7 @@ public abstract class AdminUser {
     }
 
     public Timer createTimer(final int timer) {
+        World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO()," Un reboot a été programmé dans "+timer+ " minutes.",this.getPlayer() );
         ActionListener action = new ActionListener() {
             int time = timer;
 

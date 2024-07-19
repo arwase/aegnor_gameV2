@@ -24,21 +24,19 @@ public class TitleData extends AbstractDAO<TitleData>  {
     }
 
     public void load() {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `titre`;");
-            ResultSet RS = result.resultSet;
-
-            while (RS.next()) {
-                Titre titre = new Titre((RS.getInt("id")), (RS.getString("name")) , (RS.getInt("prix")),(RS.getString("conditions")) );
-                World.world.addTitre(titre);
-
+        String query = "SELECT * FROM `titre`;";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    Titre titre = new Titre(RS.getInt("id"), RS.getString("name"), RS.getInt("prix"), RS.getString("conditions"));
+                    World.world.addTitre(titre);
+                }
             }
         } catch (SQLException e) {
-            super.sendError("Subarea_dataData load", e);
-        } finally {
-            close(result);
+            sendError("TitleData load", e);
         }
     }
+
 }
 

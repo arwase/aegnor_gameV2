@@ -50,7 +50,7 @@ public class Fighter implements Comparable<Fighter> {
     private int nbrDisconnection = 0;
     private boolean isTraqued = false;
     private Stats stats;
-
+    private int curRemovedPa=0, curRemovedPm=0;
 
     private Map<Integer, Integer> state = new HashMap<Integer, Integer>();
 
@@ -120,6 +120,22 @@ public class Fighter implements Comparable<Fighter> {
 
     public boolean canPlay() {
         return this.canPlay;
+    }
+
+    public void setCurRemovedPa(int remove) {
+        this.curRemovedPa = remove;
+    }
+
+    public void setCurRemovedPm(int remove) {
+        this.curRemovedPm = remove;
+    }
+
+    public int getCurRemovedPa() {
+        return this.curRemovedPa;
+    }
+
+    public int getCurRemovedPm() {
+        return this.curRemovedPm;
     }
 
     public void setCanPlay(boolean canPlay) {
@@ -234,7 +250,6 @@ public class Fighter implements Comparable<Fighter> {
         return this.pdvMax + getBuffValue(EffectConstant.STATS_ADD_VITA);
     }
 
-
     public String getResiString() {
         String Neutre = this.stats.get(EffectConstant.STATS_ADD_RP_NEU)+"," ;
         String Terre = this.stats.get(EffectConstant.STATS_ADD_RP_TER)+",";
@@ -246,7 +261,6 @@ public class Fighter implements Comparable<Fighter> {
 
         return Neutre+Terre+Feu+Eau+Agi+EsquiPA+EsquiPM;
     }
-
 
 
     public String getEsquivePM() {
@@ -283,8 +297,8 @@ public class Fighter implements Comparable<Fighter> {
 
     public void addPdv(Fighter caster, int pdv) {
         pdv = Math.abs(pdv);
-        if (pdv > 0)
-            this.getFight().getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> challenge.onFighterAttacked(caster, this));
+        /*if (pdv < 0)
+            this.getFight().getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> challenge.onFighterAttacked(caster, this));*/
         this.pdv += pdv;
     }
 
@@ -367,7 +381,7 @@ public class Fighter implements Comparable<Fighter> {
         if (this.isDeconnected)
             return;
         this.isDeconnected = true;
-        this.turnRemaining = 20;
+        this.turnRemaining = Constant.FIGHT_MAXIMAL_TURN_DECO;
         this.nbrDisconnection++;
     }
 
@@ -693,7 +707,7 @@ public class Fighter implements Comparable<Fighter> {
         }
     }
 
-    public void addBuffOnHit(int effectID,int args1,int args2,int args3,int chance,int turn, int onHitTrigger,Effect s, Fighter caster,int spellID,int impactedTarget){
+    public void addBuffOnHit(int effectID,int args1,int args2,int args3,int chance,int turn, EffectTrigger onHitTrigger,Effect s, Fighter caster,int spellID,int impactedTarget){
         BuffOnHitEffect newBuffOnHit = new BuffOnHitEffect(effectID,turn,args1,args2,args3,chance,caster,spellID,s, onHitTrigger,impactedTarget);
         this.onHitBuffs.add(newBuffOnHit);
     }
@@ -703,8 +717,8 @@ public class Fighter implements Comparable<Fighter> {
     public void addBuff(int effectID, int val, int duration, int args1, int args2, int args3, boolean isUnbuffable, int spellID, Fighter caster, boolean addingTurnIfCanPlay){
         // si c'est une invo statique ca bouge pas
         if(this.mob != null){
-                if(ArrayUtils.contains(Constant.STATIC_INVOCATIONS,this.mob.getTemplate().getId()))
-                    return;
+            if(ArrayUtils.contains(Constant.STATIC_INVOCATIONS,this.mob.getTemplate().getId()))
+                return;
         }
 
         // On mettrai pas un truc , si c'est le tour du joueur on rajoute un tour (au lieu de addingTurnIfCanPlay)?
@@ -783,14 +797,13 @@ public class Fighter implements Comparable<Fighter> {
                 case 782://MIN
                     SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, effectID, id, args1, sValMax, "", "", duration, spellID);
                     break;
-                case 950://MIN
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, effectID, getId(), spellID, "", val+"", "", duration, spellID);
-                    break;
-                case 951://MIN
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, effectID, getId(), spellID, "", val+"", "", duration, spellID);
-                    break;
                 case Constant.SPELL_BOOSTBYDIFF:
                     SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, effectID, id, val, "", "", "", -1, spellID);
+                    break;
+                case 950://MAX
+                case 951://MIN
+                case 265:
+                    //SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, effectID, id, args1, sValMax, "", "", duration, spellID);
                     break;
                 default:
                     if(val == 0 || val == -1)
@@ -802,153 +815,10 @@ public class Fighter implements Comparable<Fighter> {
         }
 
         //Si c'est le jouer actif qui s'autoBuff, on ajoute 1 a la durée
-        this.fightBuffs.add(new Effect(effectID,val,(addingTurnIfCanPlay && this.canPlay?duration+1:duration),args1,args2,args3,caster,spellID,isUnbuffable));
+
+        this.fightBuffs.add(new Effect(effectID,val,(addingTurnIfCanPlay && this.canPlay && duration!= -1 ?duration+1:duration),args1,args2,args3,caster,spellID,isUnbuffable));
 
     }
-
-
-    /*
-    // ON reprend tous !
-    public void addBuff(int id, int val, int duration ,int turn, boolean debuff, int spellID, String args, Fighter caster, boolean addingTurnIfCanPlay) {
-        if(this.mob != null)
-            for(int id1 : Constant.STATIC_INVOCATIONS)
-                if (id1 == this.mob.getTemplate().getId())
-                    return;
-        String minvalue ="";
-        String maxvalue ="";
-         if(args != ""){
-             minvalue = args.split(";")[0];
-             maxvalue = args.split(";")[2];
-        }
-
-        switch(spellID) {
-            case 99:
-            case 5:
-            case 20:
-            case 127:
-            case 89:
-            case 126:
-            case 115:
-            case 192:
-            case 4:
-            case 1:
-            case 6:
-            case 14:
-            case 18:
-            case 7:
-            case 284:
-            case 197:
-            case 704:
-            case 168:
-            case 45:
-            case 159:
-            case 171:
-            case 167:
-            case 511:
-            case 513:
-                debuff = true;
-                break;
-            case 431:
-            case 433:
-            case 437:
-            case 443:
-            case 441:
-            case Constant.SPELL_BOOSTBYDIFF:
-                debuff = false;
-                break;
-        }
-
-        if(id == 606 || id == 607 || id == 608 || id == 609 || id == 611 || id == 125 || id == 114 ||
-                (spellID == 197 && (id == 149 || id == 169 || id == 183 || id == 184 || id == 168 || id == 108))) {
-            debuff = true;
-        }
-
-
-
-        if(ArrayUtils.contains(Constant.BEGIN_TURN_BUFF,id)){
-            String sValMin = args.split(";")[0];
-            String sValMax = args.split(";")[1];
-
-            if(sValMax.equals("-1")){
-                sValMax.equals("");
-            }
-            SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), sValMin,  sValMax , duration,spellID, caster.getId());
-        }
-        else {
-
-            switch (id) {
-                case 6://Renvoie de sort
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), -1, val + "", "10", "", duration, spellID);
-                    break;
-                case 79://Chance éca
-                    val = Integer.parseInt(args.split(";")[0]);
-                    String valMax = args.split(";")[1];
-                    String chance = args.split(";")[2];
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, valMax, chance, "", duration, spellID);
-                    break;
-                case 606:
-                case 607:
-                case 608:
-                case 609:
-                case 611:
-                    // de X sur Y tours
-                    String jet = args.split(";")[5];
-                    int min = Formulas.getMinJet(jet);
-                    int max = Formulas.getMaxJet(jet);
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), min, "" + max, "" + max, "", duration, spellID);
-                    break;
-
-                case 788://Fait apparaitre message le temps de buff sacri Chatiment de X sur Y tours
-                    val = Integer.parseInt(args.split(";")[1]);
-                    String valMax2 = args.split(";")[2];
-                    if (Integer.parseInt(args.split(";")[0]) == 108)
-                        return;
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "" + val, "" + valMax2, "", duration, spellID);
-
-                    break;
-                case 283://Les truc de boost Spell
-                case 284:
-                case 285:
-                case 286:
-                case 287:
-                case 288:
-                case 289:
-                case 290:
-                case 291:
-                case 292:
-                case 293:
-                case 294:
-                    val = Integer.parseInt(args.split(";")[0]);
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), minvalue, "", "" + maxvalue, "", duration, spellID, caster.getId());
-                    break;
-                case 140://Pass tour
-                case 131://Poison de PA
-                case 107://Mot d'épine (2à3), Contre(3)
-                case 108://Mot de Régénération, Tout ou rien
-                case 165://Maîtrises
-                case 781://MAX
-                case 782://MIN
-                    val = Integer.parseInt(args.split(";")[0]);
-                    String valMax1 = args.split(";")[1];
-                    if (valMax1.compareTo("-1") == 0 || spellID == 82 || spellID == 94)
-                        SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", duration, spellID);
-                    else if (valMax1.compareTo("-1") != 0)
-                        SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, valMax1, "", "", duration, spellID);
-                    break;
-                case Constant.SPELL_BOOSTBYDIFF:
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", -1, spellID);
-                    break;
-                default:
-                    SocketManager.GAME_SEND_FIGHT_GIE_TO_FIGHT(this.fight, 7, id, getId(), val, "", "", "", duration, spellID);
-                    break;
-            }
-        }
-
-        //Si c'est le jouer actif qui s'autoBuff, on ajoute 1 a la durée
-        this.fightBuffs.add(new SpellEffect(id,val,(addingTurnIfCanPlay && this.canPlay?duration+1:duration),(addingTurnIfCanPlay && this.canPlay?duration+1:duration),debuff,caster,args,spellID));
-
-    }
-    */
 
     public void debuff(int Spell) {
         Iterator<Effect> it = this.fightBuffs.iterator();
@@ -972,6 +842,10 @@ public class Fighter implements Comparable<Fighter> {
 
     public void debuff() {
         Iterator<Effect> it = this.fightBuffs.iterator();
+
+        if (this.isHide())
+            this.unHide(-1);
+
         while (it.hasNext()) {
             Effect spellEffect = it.next();
 
@@ -982,6 +856,8 @@ public class Fighter implements Comparable<Fighter> {
                 case 443:
                 case 441://Châtiments
                 case Constant.SPELL_BOOSTBYDIFF://SpellDiff
+                case EffectConstant.STATS_SPELL_ADD_DOM://SpellDiff
+                case EffectConstant.STATS_SPELL_ADD_BASE_DAMAGE://SpellDiff
                     continue;
                 case 197://Puissance sylvestre
                 case 52://Cupidité
@@ -990,27 +866,75 @@ public class Fighter implements Comparable<Fighter> {
                     continue;
             }
 
-            if (spellEffect.isUnbuffable()) it.remove();
-            //On envoie les Packets si besoin
-            switch (spellEffect.getEffectID()) {
-                case EffectConstant.STATS_ADD_PA:
-                case EffectConstant.STATS_ADD_PA2:
-                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 101, getId()
-                            + "", getId() + ",-" + spellEffect.getFixvalue(), 101);
-                    break;
 
-                case EffectConstant.STATS_ADD_PM:
-                case EffectConstant.STATS_ADD_PM2:
-                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 127, getId()
-                            + "", getId() + ",-" + spellEffect.getFixvalue(), 127);
-                    break;
+
+            if (spellEffect.isUnbuffable()) {
+                //On envoie les Packets si besoin
+                switch (spellEffect.getEffectID()) {
+                    case EffectConstant.STATS_ADD_PA:
+                    case EffectConstant.STATS_ADD_PA2:
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 101, getId()
+                                + "", getId() + ",-" + spellEffect.getFixvalue(), 101);
+                        if(this.canPlay())
+                            this.setCurPa(this.getFight(),-(spellEffect.getFixvalue()));
+                        break;
+
+                    case EffectConstant.STATS_ADD_PM:
+                    case EffectConstant.STATS_ADD_PM2:
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 127, getId()
+                                + "", getId() + ",-" + spellEffect.getFixvalue(), 127);
+                        if(this.canPlay())
+                            this.setCurPm(this.getFight(),-(spellEffect.getFixvalue()));
+                        break;
+                    case EffectConstant.STATS_REM_PM:
+                    case EffectConstant.STATS_REM_PM2:
+                        int value = 0;
+                        if(this.getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) < 0 )
+                            value = this.getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + spellEffect.getFixvalue();
+                        else{
+                            value = spellEffect.getFixvalue();
+                        }
+
+                        if(value > 0) {
+                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 127, getId()
+                                    + "", getId() + "," + value, 127);
+
+                            if(this.canPlay())
+                                this.setCurPm(this.getFight(),value);
+                        }
+                        break;
+                    case EffectConstant.STATS_REM_PA:
+                    case EffectConstant.STATS_REM_PA2:
+                    case EffectConstant.STATS_REM_PA3:
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 101, getId()
+                                + "", getId() + "," + spellEffect.getFixvalue(), 101);
+                        if(this.canPlay())
+                            this.setCurPa(this.getFight(),(spellEffect.getFixvalue()));
+                        break;
+                }
+                it.remove();
             }
+            else {
+                continue;
+            }
+
         }
         ArrayList<Effect> array = new ArrayList<>(this.fightBuffs);
         if (!array.isEmpty()) {
             // On renvoie les effets qui aurait disparu ?
-            this.fightBuffs.clear();
-            array.stream().filter(spellEffect -> spellEffect != null).forEach(spellEffect -> this.addBuff(spellEffect.getEffectID(), spellEffect.getFixvalue(), spellEffect.getDuration(),spellEffect.getArgs1(),spellEffect.getArgs2(),spellEffect.getArgs3(), spellEffect.isUnbuffable(), spellEffect.getSpell(), this, true));
+            this.rebuff();
+            //this.fightBuffs.clear();
+            //array.stream().filter(spellEffect -> spellEffect != null).forEach(spellEffect -> this.addBuff(spellEffect.getEffectID(), spellEffect.getFixvalue(), spellEffect.getDuration(),spellEffect.getArgs1(),spellEffect.getArgs2(),spellEffect.getArgs3(), spellEffect.isUnbuffable(), spellEffect.getSpell(), this, true));
+        }
+
+        Iterator<BuffOnHitEffect> it2 = this.onHitBuffs.iterator();
+        while (it2.hasNext()) {
+            BuffOnHitEffect entry = it2.next();
+            if (entry == null || entry.getCaster().isDead)
+                continue;
+            if (entry.getBuffOnHitConditions().getUnbuffable()) {
+                it2.remove();
+            }
         }
 
         if (this.perso != null && !this.hasLeft) // Envoie les stats au joueurs
@@ -1020,6 +944,8 @@ public class Fighter implements Comparable<Fighter> {
     public void rebuff() {
         ArrayList<Effect> array = new ArrayList<>(this.fightBuffs);
         if (!array.isEmpty()) {
+            // On renvoie les effets qui aurait disparu ?
+            this.fightBuffs.clear();
             array.stream().filter(spellEffect -> spellEffect != null).forEach(spellEffect -> this.addBuff(spellEffect.getEffectID(), spellEffect.getFixvalue(), spellEffect.getDuration(),spellEffect.getArgs1(),spellEffect.getArgs2(),spellEffect.getArgs3(), spellEffect.isUnbuffable(), spellEffect.getSpell(), this, true));
         }
     }
@@ -1051,7 +977,7 @@ public class Fighter implements Comparable<Fighter> {
                         break;
 
                     case 150://Invisibilit�
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 150, entry.getCaster().getId() + "", getId() + ",0");
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 150, this.getId() + "", getId() + ",0");
                         break;
 
                     case 950: // On retire l'état sur la duration est terminé
@@ -1059,7 +985,7 @@ public class Fighter implements Comparable<Fighter> {
                         if (id == -1)
                             return;
                         setState(id, 0);
-                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 950, entry.getCaster().getId() + "", entry.getCaster().getId() + "," + id + ",0");
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 950, this.getId() + "", this.getId() + "," + id + ",0");
                         break;
                 }
             }
@@ -1206,36 +1132,51 @@ public class Fighter implements Comparable<Fighter> {
     }
 
     public int getPa() {
+        int PA = 0;
+
         switch (this.type) {
             case 1:
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PA);
+                PA = (getTotalStats().getEffect(EffectConstant.STATS_ADD_PA) - getCurRemovedPa());
+                break;
             case 2:
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PA)
-                        + this.mob.getPa();
+                PA = (getTotalStats().getEffect(EffectConstant.STATS_ADD_PA) + this.mob.getPa()) - getCurRemovedPa();
+                break;
             case 5:
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + 6;
+                PA = getTotalStats().getEffect(EffectConstant.STATS_ADD_PA) + 6 - getCurRemovedPa();
+                break;
             case 7:
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + 6;
+                PA = getTotalStats().getEffect(EffectConstant.STATS_ADD_PA) + 6 - getCurRemovedPa();
+                break;
             case 10:
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PA);
+                PA = getTotalStats().getEffect(EffectConstant.STATS_ADD_PA) - getCurRemovedPa();
+                break;
         }
-        return 0;
+        if(PA < 0)
+            PA = 0;
+
+        return PA;
     }
 
     public int getPm() {
+        int PM = 0;
+
         switch (this.type) {
             case 1: // personnage
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM);
-            case 2: // mob
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + this.mob.getPm();
-            case 5: // perco
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + 4;
             case 7: // prisme
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM);
             case 10: // clone
-                return getTotalStats().getEffect(EffectConstant.STATS_ADD_PM);
+                PM = getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) - getCurRemovedPm();
+                break;
+            case 2: // mob
+                PM =getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + this.mob.getPm() - getCurRemovedPm();
+                break;
+            case 5: // perco
+                PM = getTotalStats().getEffect(EffectConstant.STATS_ADD_PM) + 4 - getCurRemovedPm();
+                break;
         }
-        return 0;
+        if(PM < 0)
+            PM = 0;
+
+        return PM;
     }
 
     public int getPros() {
@@ -1293,8 +1234,7 @@ public class Fighter implements Comparable<Fighter> {
                 break;
             }
         }
-        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, EffectConstant.EFFECTID_INVISIBLE, getId()
-                + "", getId() + ",0");
+        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, EffectConstant.EFFECTID_INVISIBLE, getId()+ "", getId() + ",0");
         //On actualise la position
         SocketManager.GAME_SEND_GIC_PACKET_TO_FIGHT(this.fight, 7, this);
     }

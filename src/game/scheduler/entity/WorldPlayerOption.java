@@ -1,8 +1,6 @@
 package game.scheduler.entity;
 
-import database.Database;
 import game.scheduler.Updatable;
-import game.world.World;
 
 public class WorldPlayerOption extends Updatable {
 
@@ -15,8 +13,8 @@ public class WorldPlayerOption extends Updatable {
     @Override
     public void update() {
         if(this.verify()) {
-            Database.getStatics().getAccountData().updateVoteAll();
-            World.world.getOnlinePlayers().stream().filter(player -> player != null && player.isOnline()).forEach(client.Player::checkVote);
+            //Database.getStatics().getAccountData().updateVoteAll();
+            // World.world.getOnlinePlayers().stream().filter(player -> player != null && player.isOnline()).forEach(client.Player::checkVote);
         }
     }
 

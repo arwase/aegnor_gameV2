@@ -23,24 +23,23 @@ public class SubAreaData extends AbstractDAO<SubArea> {
 	{
 		return false;
 	}
-	
+
 	public void load() {
-		Result result = null;
-		try {
-			result = getData("SELECT * FROM `subarea_data`;");
-			ResultSet RS = result.resultSet;
+		String query = "SELECT * FROM `subarea_data`;";
+		try (Result result = getData(query)) {
+			if (result != null && result.getResultSet() != null) {
+				ResultSet RS = result.getResultSet();
+				while (RS.next()) {
+					SubArea SA = new SubArea(RS.getInt("id"), RS.getInt("area"));
+					World.world.addSubArea(SA);
 
-			while (RS.next()) {
-				SubArea SA = new SubArea(RS.getInt("id"), RS.getInt("area"));
-				World.world.addSubArea(SA);
-
-				if (SA.getArea() != null)
-					SA.getArea().addSubArea(SA); //on ajoute la sous zone a la zone
+					if (SA.getArea() != null) {
+						SA.getArea().addSubArea(SA); // On ajoute la sous zone à la zone
+					}
+				}
 			}
 		} catch (SQLException e) {
-			super.sendError("Subarea_dataData load", e);
-		} finally {
-			close(result);
+			sendError("Subarea_dataData load", e);
 		}
 	}
 }

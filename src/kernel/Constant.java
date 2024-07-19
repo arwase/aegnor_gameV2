@@ -19,7 +19,7 @@ public class Constant {
     //DEBUG
     public static final int DEBUG_MAP_LIMIT = 30000;
     //DEBUG
-    public static final int AUTO_CLEAN_MONTH = -6;
+    public static final int AUTO_CLEAN_MONTH = 9;
     //Fight
     public static final int TIME_START_FIGHT = 45000;
     public static final int TIME_BY_TURN = 30000;
@@ -33,12 +33,18 @@ public class Constant {
     public static final int ETAT_HOTOMANI = 104;
     public static final int SPELL_BOOSTBYDIFF = 999;
 
+    public static final int MAX_SPAWN_IN_ARENA = 3;
+
+    public static final int FIGHT_MAXIMAL_TURN = 666;
+    public static final int FIGHT_MAXIMAL_TURN_DECO = 20;
     public static final int FIGHT_TYPE_CHALLENGE = 0;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //D�fies
     public static final int FIGHT_TYPE_AGRESSION = 1;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Aggros
     public static final int FIGHT_TYPE_CONQUETE = 2;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Conquete
-    public static final int FIGHT_TYPE_DOPEUL = 3;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Dopeuls de temple
+    public static final int FIGHT_TYPE_DOPEUL = 3;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        //Dopeuls de temple
     public static final int FIGHT_TYPE_PVM = 4;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //PvM
-    public static final int FIGHT_TYPE_PVT = 5;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            //Percepteur
+    public static final int FIGHT_TYPE_PVT = 5;
+    public static final int FIGHT_TYPE_GLADIATROOL = 8;
+    //Percepteur
     public static final int FIGHT_STATE_INIT = 1;
     public static final int FIGHT_STATE_PLACE = 2;
     public static final int FIGHT_STATE_ACTIVE = 3;
@@ -63,6 +69,24 @@ public class Constant {
     public static final int ITEM_POS_DOFUS6 = 14;
     public static final int ITEM_POS_BOUCLIER = 15;
     public static final int ITEM_POS_DRAGODINDE = 16;
+    //Objets dons, mutations, mal�diction, ..
+    public static final int ITEM_POS_MUTATION = 20;
+    public static final int ITEM_POS_ROLEPLAY_BUFF = 21;
+    public static final int ITEM_POS_PNJ_SUIVEUR = 24;
+    public static final int ITEM_POS_BENEDICTION = 23;
+    public static final int ITEM_POS_MALEDICTION = 22;
+    public static final int ITEM_POS_BONBON = 25;
+    // Tonique pour gladiatrool
+    public static final int ITEM_POS_TONIQUE_EQUILIBRAGE = 65;
+    public static final int ITEM_POS_TONIQUE1 = 66;
+    public static final int ITEM_POS_TONIQUE2 = 67;
+    public static final int ITEM_POS_TONIQUE3 = 68;
+    public static final int ITEM_POS_TONIQUE4 = 69;
+    public static final int ITEM_POS_TONIQUE5 = 70;
+    public static final int ITEM_POS_TONIQUE6 = 71;
+    public static final int ITEM_POS_TONIQUE7 = 72;
+    public static final int ITEM_POS_TONIQUE8 = 73;
+    public static final int ITEM_POS_TONIQUE9 = 74;
 
     // ON PLACE LES WEBHOOK URL !
     public static String moderatorWebhook = "https://discord.com/api/webhooks/1142009964920066128/ysIHq1oBg_v4GKXcD63H_Ja-YTNY_nGUy82-LBD859KBrAx7ioS6xRnV8DZYnU0vfpmT";
@@ -127,13 +151,6 @@ public class Constant {
         }
         return equipement;
     }
-    //Objets dons, mutations, mal�diction, ..
-    public static final int ITEM_POS_MUTATION = 20;
-    public static final int ITEM_POS_ROLEPLAY_BUFF = 21;
-    public static final int ITEM_POS_PNJ_SUIVEUR = 24;
-    public static final int ITEM_POS_BENEDICTION = 23;
-    public static final int ITEM_POS_MALEDICTION = 22;
-    public static final int ITEM_POS_BONBON = 25;
     //Types
     public static final List<Integer> ITEM_TYPE_TO_SELL = Arrays.asList(1,9,12,14,26,43,44,45,66,70,71,86,18,72,77,90,97,113,116,63,64,69,33,42,84,93,112,114,38,95,96,98,108,10,11,13,25,73,75,76,5,6,7,8,19,20,21,22,39,40,50,51,88,87,34,52,60,41,49,62,15,35,36,46,47,48,53,54,55,56,57,58,59,65,68,103,105,106,107,109,110,111,78,2,3,4,16,17,81,83,85);
     public static final int[] ITEM_TYPE_OBJ_BLACK = {1,2,3,4,5,6,7,8,9,10,11,16,17,19,21,22,81};
@@ -333,6 +350,7 @@ public class Constant {
     public static final int[] FILTER_MONSTRE_SPE1 = ArrayUtils.addAll(MONSTRE_TYPE_DIVERS,MONSTRE_TYPE_ARCHI);
     public static final int[] FILTER_MONSTRE_SPE2 = ArrayUtils.addAll(FILTER_MONSTRE_SPE1,MONSTRE_TYPE_HUMAIN);
     public static final int[] FILTER_MONSTRE_SPE = ArrayUtils.addAll(FILTER_MONSTRE_SPE2,MONSTRE_TYPE_RESSOURCE_PROTECTEUR);
+    public static final int[] EXCLUDE_MOBID_TODROP = {404,1088};
 
     public static final int MONSTRES_NON_CLASSE = -1;
     public static final int MONSTRES_INVOCATIONS_DE_CLASSE = 0;
@@ -420,6 +438,12 @@ public class Constant {
     public static int[] EXCEPTION_HOTOMANI_ARCHI = {251,404,423,450,1159};
     public static int[] EXCEPTION_HOTOMANI_MONSTRES = {258,260,251,404,424,450,1090,1091,1092,1094,1088};
 
+    public static int[] EXCEPTION_GLADIATROOL_BOSS = {295,404,423,1159};
+    public static int[] EXCEPTION_GLADIATROOL_ARCHI = {404,423,1159};
+    public static int[] EXCEPTION_GLADIATROOL_MONSTRES = {258,260,404,424,1090,1091,1092,1094,1088};
+
+    public static final List<Integer> GLADIATROOL_FULLMORPHID = Arrays.asList(101,102,103,104,105,106,107,108,109,110,111,112);
+
     public static int[] HOTOMANI_MAPID = {12012,12023,12001,12006,12007,12008,12004,12009};
     public static int[] HOTOMANIDJ_MAPID = {12010,12017,12000,12015,12014,12028};
 
@@ -484,12 +508,12 @@ public class Constant {
     //ITEM ID SPECIFIC REMOVE DROP
     public static final int[] ITEMS_EXCLUDE_DROP = {12782, 12783, 12784, 12785, 12786, 12787, 12788, 12789, 12790, 12791, 12792, 12793, 11745, 11746, 11761};
 
-    public static final int[] SPELLEFFECT_DAMMAGE = {5,8,82,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,130,131,141,671,672,776,275,276,277,278,279};
+    public static final int[] SPELLEFFECT_DAMMAGE = {5,6,8,82,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,130,131,141,671,672,776,275,276,277,278,279,2127};
     public static final int[] SPELLEFFECT_DEBUFF = {77,84,101,116,122,127,132,140,144,145,152,153,154,155,156,157,162,163,168,169,171,177,179,186,215,216,217,218,219,245,246,247,248,249,266,267,268,269,270,271,320,781,172};
     public static final int[] SPELLEFFECT_BUFF = {9,78,79,105,106,107,110,111,112,114,115,117,118,119,120,121,123,124,125,126,128,138,142,150,160,161,164,165,176,178,182,183,184,202,210,211,212,213,214,220,240,241,242,243,244,265,284,285,287,290,293,765,782,787,788,950,951,135,136,606,607,608,609,610,611};
     public static final int[] SPELLEFFECT_HEAL = {81,90,108,143,786};
     public static final int[] SPELLEFFECT_INVO = {180,181,185,200,405,780,201};
-    public static final int[] SPELLEFFECT_MOUVEMENT = {4,6,50,51,783,784};
+    public static final int[] SPELLEFFECT_MOUVEMENT = {4,50,51,783,784};
     public static final int[] SPELLEFFECT_USELESS = {149,666,333,750,751,109};
     public static final int[] SPELLEFFECT_TRAP = {400,401,402,1000,1001,1002};
 
@@ -610,7 +634,7 @@ public class Constant {
     public static String[][] HUNTING_QUESTS = {{"1988", "234", HUNT_DETAILS_DOC, "-1", "-1", "-1", "-1"}, {"1986", "161", HUNT_LETHALINE_DOC, "-1", "-1", "-1", "-1"}, {"1985", "119", HUNT_MARZWEL_DOC, "554", "7353", "117", "2552"}, {"1986", "120", HUNT_PADGREF_DOC, "459", "6870", "29", "2108"}, {"1985", "149", HUNT_FRAKACIA_DOC, "460", "6871", "30", "2109"}, {"1986", "150", HUNT_QILBIL_DOC, "481", "6873", "32", "2111"}, {"1986", "179", HUNT_BRUMEN_DOC, "464", "6874", "33", "2112"}, {"1986", "180", HUNT_OGIVOL_DOC, "462", "6876", "35", "2114"}, {"1985", "269", HUNT_MUSHA_DOC, "552", "7352", "116", "2551"}, {"1986", "270", HUNT_FOUDUGLEN_DOC, "463", "6875", "34", "2113"}, {"1985", "299", HUNT_ROK_DOC, "550", "7351", "115", "2550"}, {"1986", "300", HUNT_AERMYNE_DOC, "446", "7350", "119", "2554"}, {"1985", "329", HUNT_ZATOISHWAN_DOC, "555", "7354", "118", "2553"},};
 
     // SpellPlaces
-    public static List<Character> SPELL_PLACES =  Arrays.asList('b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l');
+    public static List<Character> SPELL_PLACES =  Arrays.asList('a','b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q');
 
     public static int getQuestByMobSkin(int mobSkin) {
         for (int v = 0; v < HUNTING_QUESTS.length; v++)
@@ -2470,61 +2494,6 @@ public class Constant {
         }
     }
 
-    public static int getGlyphColor(int spell) {
-        switch (spell) {
-            case 10://Enflamm�
-            case 2033://Dopeul
-                return 4;//Rouge
-            case 12://Aveuglement
-            case 2034://Dopeul
-                return 3;
-            case 13://Silence
-            case 2035://Dopeul
-                return 6;//Bleu
-            case 15://Immobilisation
-            case 2036://Dopeul
-                return 5;//Vert
-            case 17://Aggressif
-            case 2037://Dopeul
-                return 2;
-            case 3500:
-            case 3501:
-            case 1072:
-            case 1073:
-            case 1078:
-            case 1077:
-            case 949://Karkargo
-                return 0;//Blanc
-            //case 476://Blop
-            default:
-                return 4;
-        }
-    }
-
-    public static int getTrapsColor(int spell) {
-        switch (spell) {
-            case 65://Sournois
-                return 7;
-            case 69://Immobilisation
-                return 10;
-            case 71://Empoisonn�e
-            case 2068://Dopeul
-                return 9;
-            case 73://Repulsif
-                return 12;
-            case 77://Silence
-            case 2071://Dopeul
-                return 11;
-            case 79://Masse
-            case 2072://Dopeul
-                return 8;
-            case 80://Mortel
-                return 13;
-            default:
-                return 7;
-        }
-    }
-
     public static Stats getMountStats(int color, int lvl) {
         Stats stats = new Stats();
         switch (color) {
@@ -2635,8 +2604,15 @@ public class Constant {
                 stats.addOneStat(EffectConstant.STATS_ADD_INTE, lvl / 2);
                 stats.addOneStat(EffectConstant.STATS_ADD_FORC, lvl / 2);
                 break;
-            // Amande-Ebene	| Nami-start
+            //case 37: Amande - Ivoire | Nami-start
             case 37:
+                stats.addOneStat(EffectConstant.STATS_ADD_VITA, Math.round(lvl * 40/100));
+                stats.addOneStat(EffectConstant.STATS_ADD_PERDOM, Math.round(lvl * 40/100));
+                stats.addOneStat(EffectConstant.STATS_ADD_INIT, (int) (lvl *5));
+                stats.addOneStat(EffectConstant.STATS_CREATURE, lvl / 100);
+                break;
+            //Amande-Ebene
+            case 34:
                 stats.addOneStat(EffectConstant.STATS_ADD_INIT, lvl * 5);
                 stats.addOneStat(EffectConstant.STATS_ADD_VITA, lvl / 2);
                 stats.addOneStat(EffectConstant.STATS_ADD_AGIL, (int) (lvl / 1.65));
@@ -4542,6 +4518,23 @@ public class Constant {
     };
 
 
+    public static ArrayList<Integer> getParcheminMetierID() {
+        ArrayList<Integer> gemmespi = new ArrayList<>();
+
+        gemmespi.add(695);
+
+
+        for (int i = 713; i <= 717; i++) {
+                gemmespi.add(i);
+        }
+        gemmespi.add(878);
+        gemmespi.add(879);
+        for (int i = 10382; i <= 10407; i++) {
+            gemmespi.add(i);
+        }
+        return gemmespi;
+    }
+
 
     public static ArrayList<Integer> getGemmesSpritiuelsID() {
         ArrayList<Integer> gemmespi = new ArrayList<>();
@@ -4566,4 +4559,157 @@ public class Constant {
         int randomNum = ISSPIRITGEM.get(randomIndex);
         return randomNum;
     }
+
+    public static boolean isInGladiatorDonjon(int id) {
+        switch (id) {
+            case 15000:
+            case 15008:
+            case 15016:
+            case 15024:
+            case 15032:
+            case 15040:
+            case 15048:
+            case 15056:
+            case 15064:
+            case 15072:
+                return true;
+        }
+        return false;
+    }
+
+    public static final int[] TONIQUE1 = {16002,16003,16004,16005,16006,16007,16008,16009,16010,16011,16012};
+    public static final int[] TONIQUE2 = {16013,16014,16015,16016,16017,16018,16019,16020,16021,16022,16023};
+
+
+
+    public static ArrayList<Integer> getToniques3byclasse(int classeid) {
+        ArrayList<Integer> tonique3 = new ArrayList();
+        int j = 16007+(classeid*20);
+        for(int i = j; i <= (j+19); i++) {
+            tonique3.add(i);
+        }
+
+        return tonique3;
+       /* switch (classeid){
+            case Constant.CLASS_FECA:
+                for(int i = 16027; i <=16046; i++){
+                    tonique3.add(i);
+                }
+                break;
+            case Constant.CLASS_OSAMODAS:
+                for(int i = 16047; i <=16046; i++){
+                    tonique3.add(i);
+                }
+                tonique3 = new int[]{16047,16048,16049,16050,16051,16052,16053,16054,16055,16056,16057,16058,16059,16060,16061,16062,16063,16064,16065,16066};
+                break;
+            case Constant.CLASS_ENUTROF:
+                tonique3 = new int[]{16067,16068,16069,16070,16071,16072,16073,16074,16075,16076,16077,16078,16079,16080,16081,16082,16083,16084,16085,16086};
+                break;
+            case Constant.CLASS_SRAM:
+                tonique3 = new int[]{16087,16088,16089,16090,16091,16092,16093,16094,16095,16096,16097,16098,16099,16100,16101,16102,16103,16104,16105,16106};
+                break;
+            case Constant.CLASS_XELOR:
+                tonique3 = new int[]{16107,16108,16109,16110,16111,16112,16113,16114,16115,16116,16117,16118,16119,16120,16121,16122,16123,16124,16125,16126};
+                break;
+            case Constant.CLASS_ECAFLIP:
+                tonique3 = new int[]{16127,16128,16129,16130,16131,16132,16133,16134,16135,16136,16137,16138,16139,16140,16141,16142,16143,16144,16145,16146};
+                break;
+            case Constant.CLASS_ENIRIPSA:
+                tonique3 = new int[]{16147,16148,16149,16150,16151,16152,16153,16154,16155,16156,16157,16158,16159,16160,16161,16162,16163,16164,16165,16166};
+                break;
+            case Constant.CLASS_IOP:
+                tonique3 = new int[]{16167,16168,16169,16170,16171,16172,16173,16174,16175,16176,16177,16178,16179,16180,16181,16182,16183,16184,16185,16186};
+                break;
+            case Constant.CLASS_CRA:
+                tonique3 = new int[]{16187,16188,16189,16190,16191,16192,16193,16194,16195,16196,16197,16198,16199,16200,16201,16202,16203,16204,16205,16206};
+                break;
+            case Constant.CLASS_SADIDA:
+                tonique3 = new int[]{16207,16208,16209,16210,16211,16212,16213,16214,16215,16216,16217,16218,16219,16220,16221,16222,16223,16224,16225,16226};
+                break;
+            case Constant.CLASS_SACRIEUR:
+                tonique3 = new int[]{16227,16228,16229,16230,16231,16232,16233,16234,16235,16236,16237,16238,16239,16240,16241,16242,16243,16244,16245,16246};
+                break;
+            case Constant.CLASS_PANDAWA:
+                tonique3 = new int[]{16247,16248,16249,16250,16251,16252,16253,16254,16255,16256,16257,16258,16259,16260,16261,16262,16263,16264,16265,16266};
+                break;
+        }
+
+
+        return tonique3;*/
+    }
+
+    public static String getStatStringbyPalier(int palier) {
+        switch (palier) {
+            case 6:
+                return "844#0###0d0+0,6f#1#0#0#0d0+1,7d#fa###0d0+250,7c#32###0d0+50,76#32###0d0+50,7e#32###0d0+50,7b#32###0d0+50,77#32###0d0+50,70#3###0d0+3,8a#1e###0d0+30,b2#5###0d0+5,73#3###0d0+3,d2#1###0d0+1,d5#1###0d0+1,d3#1###0d0+1,d4#1###0d0+1,d6#1###0d0+1";
+            case 8:
+                return "844#0###0d0+0,6f#1#0#0#0d0+1,80#1#0#0#0d0+1,7d#fa###0d0+250,7c#32###0d0+50,76#32###0d0+50,7e#32###0d0+50,7b#32###0d0+50,77#32###0d0+50,70#3###0d0+3,8a#1e###0d0+30,b2#5###0d0+5,73#3###0d0+3,d2#1###0d0+1,d5#1###0d0+1,d3#1###0d0+1,d4#1###0d0+1,d6#1###0d0+1";
+            case 10:
+                return "844#0###0d0+0,7d8#64#0#0#0d0+100,6f#1#0#0#0d0+1,80#1#0#0#0d0+1,7d#fa###0d0+250,7c#32###0d0+50,76#32###0d0+50,7e#32###0d0+50,7b#32###0d0+50,77#32###0d0+50,70#3###0d0+3,8a#1e###0d0+30,b2#5###0d0+5,73#3###0d0+3,d2#1###0d0+1,d5#1###0d0+1,d3#1###0d0+1,d4#1###0d0+1,d6#1###0d0+1";
+            default:
+                return "844#0###0d0+0,7d#fa###0d0+250,7c#32###0d0+50,76#32###0d0+50,7e#32###0d0+50,7b#32###0d0+50,77#32###0d0+50,70#3###0d0+3,8a#1e###0d0+30,b2#5###0d0+5,73#3###0d0+3,d2#1###0d0+1,d5#1###0d0+1,d3#1###0d0+1,d4#1###0d0+1,d6#1###0d0+1";
+        }
+    }
+
+    public static int getClasseByMorphWeapon(int MorphWeapon) {
+        int Classe = MorphWeapon-12781;
+        return Classe;
+    }
+
+    public static int getPalierByNewMap(int Mapid) {
+        switch (Mapid) {
+            case 12277:
+            case 15000:
+                return 1;
+            case 15008:
+                return 2;
+            case 15016:
+                return 3;
+            case 15024:
+                return 4;
+            case 15032:
+                return 5;
+            case 15040:
+                return 6;
+            case 15048:
+                return 7;
+            case 15056:
+                return 8;
+            case 15064:
+                return 9;
+            case 15072:
+                return 10;
+        }
+        return 0;
+    }
+
+    public static boolean isGladiatroolWeapon(int id) {
+        if(id >= 12782 && id <= 12793)
+            return true;
+        return false;
+    }
+
+    public static boolean isToniquePos(int pos) {
+        switch(pos){
+            case ITEM_POS_TONIQUE_EQUILIBRAGE:
+            case ITEM_POS_TONIQUE1:
+            case ITEM_POS_TONIQUE2:
+            case ITEM_POS_TONIQUE3:
+            case ITEM_POS_TONIQUE4:
+            case ITEM_POS_TONIQUE5:
+            case ITEM_POS_TONIQUE6:
+            case ITEM_POS_TONIQUE7:
+            case ITEM_POS_TONIQUE8:
+            case ITEM_POS_TONIQUE9:
+            return true;
+        }
+      return false;
+    }
+
+    public static boolean isGladiatroolMorph(int id) {
+        if(id >= 101 && id <= 112)
+            return true;
+        return false;
+    }
+
 }

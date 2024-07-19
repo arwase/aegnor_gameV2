@@ -126,4 +126,21 @@ public class MonsterData extends AbstractDAO<Monster> {
         }
         return false;
     }
+
+    public boolean updateMonsterIA(int id, int IA) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("UPDATE monsters SET AI_Type = ? WHERE id = ?;");
+            p.setInt(1, IA);
+            p.setInt(2, id);
+            execute(p);
+            return true;
+        } catch (SQLException e) {
+            super.sendError("MonsterData updateMonsterStats", e);
+        } finally {
+            close(p);
+        }
+        return false;
+    }
+
 }

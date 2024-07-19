@@ -18,31 +18,30 @@ public class ClasseData extends AbstractDAO<Classe> {
     }
 
     @Override
-    public boolean update(Classe classe)
-    {
+    public boolean update(Classe classe) {
         return false;
     }
 
     public int load() {
-        Result result = null;
         int numero = 0;
-        try {
-            result = getData("SELECT * from classes");
-            ResultSet RS = result.resultSet;
-            while (RS.next()) {
-                World.world.addClasse(new Classe(RS.getInt("id"), RS.getString("name"),
-                        RS.getString("gfxs"), RS.getString("size"), RS.getInt("mapInit")
-                        , RS.getInt("cellInit"), RS.getInt("pdv")
-                        , RS.getString("boostVita"), RS.getString("boostSage")
-                        , RS.getString("boostForce"), RS.getString("boostIntel"), RS.getString("boostChance")
-                        , RS.getString("boostAgi"), RS.getString("statsInit")
-                        , RS.getString("sorts")));
-                numero++;
+        String query = "SELECT * from classes";
+
+        try (Result result = getData(query)) {
+            if (result != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    World.world.addClasse(new Classe(RS.getInt("id"), RS.getString("name"),
+                            RS.getString("gfxs"), RS.getString("size"), RS.getInt("mapInit")
+                            , RS.getInt("cellInit"), RS.getInt("pdv")
+                            , RS.getString("boostVita"), RS.getString("boostSage")
+                            , RS.getString("boostForce"), RS.getString("boostIntel"), RS.getString("boostChance")
+                            , RS.getString("boostAgi"), RS.getString("statsInit")
+                            , RS.getString("sorts")));
+                    numero++;
+                }
             }
         } catch (SQLException e) {
             super.sendError("ClasseData load", e);
-        } finally {
-            close(result);
         }
         return numero;
     }

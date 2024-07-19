@@ -52,6 +52,19 @@ public class BankData extends AbstractDAO<Object> {
         }
     }
 
+    public void remove(int guid) {
+        PreparedStatement p = null;
+        try {
+            p = getPreparedStatement("DELETE FROM `banks` WHERE `id` = ?");
+            p.setInt(1, guid);
+            execute(p);
+        } catch (SQLException e) {
+            super.sendError("BankData delete", e);
+        } finally {
+            close(p);
+        }
+    }
+
     public String get(int guid) {
         String get = null;
         Result result = null;

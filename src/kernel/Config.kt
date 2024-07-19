@@ -26,10 +26,6 @@ object Config {
     var ENCRYPT_PACKET = ConfigReader.data[ConfigReader.options.encryptPacket]
     var TIME_PER_EVENT: Short = ConfigReader.data[ConfigReader.options.event.timePerEvent].toShort()
 
-    var NAME: String = "Aegnor"
-    var url: String = "https://aegnor.arwase.fr"
-    var startMessage = "Bienvenue sur le serveur $NAME !"
-    var colorMessage = "B9121B"
 
     var START_MAP = ConfigReader.data[ConfigReader.options.start.map]
     var START_CELL = ConfigReader.data[ConfigReader.options.start.cell]
@@ -78,6 +74,12 @@ object Config {
 
     var SERVER_ID: Int = ConfigReader.data[ConfigReader.server.id]
     var SERVER_KEY: String = ConfigReader.data[ConfigReader.server.key]
+    var SERVER_NAME: String = ConfigReader.data[ConfigReader.server.name]
+    var SERVER_VER: String = ConfigReader.data[ConfigReader.server.version]
+
+    var url: String = "https://aegnor.arwase.fr"
+    var startMessage = "Bienvenue sur le serveur $SERVER_NAME - ($SERVER_VER) !"
+    var colorMessage = "B9121B"
 
     var subscription = ConfigReader.data[ConfigReader.options.subscription]
 

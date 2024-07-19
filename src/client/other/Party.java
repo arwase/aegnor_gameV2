@@ -6,6 +6,7 @@ import common.PathFinding;
 import common.SocketManager;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Party {
 
@@ -51,10 +52,26 @@ public class Party {
         player.setParty(null);
         this.players.remove(player);
 
-        for(Player member : this.players) {
-            if(member.follow == player) member.follow = null;
-            if(member.follower.containsKey(player.getId())) member.follower.remove(player.getId());
+        // TODO a voir si ca corrige les bugs
+        Iterator<Player> iterator = this.players.iterator();
+        while (iterator.hasNext()) {
+            Player member = iterator.next();
+            if(member==null)
+                continue;
+
+            if (member.follow == player) {
+                member.follow = null;
+            }
+            if (member.follower.containsKey(player.getId())) {
+                member.follower.remove(player.getId());
+            }
+            //iterator.remove(); // Remove the current element using the iterator
         }
+       /* for(Player member : this.players) {
+            if(member.follow == player) member.follow = null;
+            if(member.follower.containsKey(player.getId()))
+                member.follower.remove(player.getId());
+        }*/
 
         if (this.players.size() == 1) {
             this.players.get(0).setParty(null);

@@ -33,7 +33,7 @@ public class French extends AbstractLang {
         //7
         this.sentences.add(index, "Vous n'êtes pas bloquer.."); index++;
         //8
-        this.sentences.add(index, "<b>" + Config.INSTANCE.getNAME() + " - <a href='" + Config.INSTANCE.getUrl() + "'>Site</a></b>\nEn ligne depuis : #1j #2h #3m #4s."); index++;
+        this.sentences.add(index, "<b>" + Config.INSTANCE.getSERVER_NAME() + " - <a href='" + Config.INSTANCE.getUrl() + "'>Site</a></b>\nEn ligne depuis : #1j #2h #3m #4s."); index++;
         //9
         this.sentences.add(index, "\nJoueurs en ligne : #1"); index++;
         //10
@@ -58,7 +58,7 @@ public class French extends AbstractLang {
         //13
         this.sentences.add(index, "Vous pouvez dès à présent voter, <b><a href='" + Config.INSTANCE.getUrl() + "'>clique ici</a></b> !"); index++;
         //14
-        this.sentences.add(index, "Vous ne pouvez plus combattre jusqu'à nouvelle ordre."); index++;
+        this.sentences.add(index, "Vous ne pouvez plus combattre jusqu'à nouvel ordre."); index++;
         //15
         this.sentences.add(index, "Vous pouvez désormais combattre."); index++;
         //16
@@ -108,7 +108,15 @@ public class French extends AbstractLang {
         this.sentences.add(index,"<b>***COMMANDES PAYANTES***</b> disponibles sont :\n"
                 + "<b>.parcho</b> - (100PB) Permet de te parcho 101 partout.\n"
                 + "<b>.spellboost</b> - (50PB) Donne 15 points de sort.\n"
-                + "<b>.vip</b> - (400PB) Permet de passer VIP.\n");
+                + "<b>.vip</b> - (400PB) Permet de passer VIP.\n"); index++;
         //+ "<b>.objivants</b> - (100PB) Donne cape et coiffe objivants."
+        //21
+        this.sentences.add(index, "Il faut que tu attendes 1 minute avant de pouvoir te retransformer."); index++;
+        //22
+        this.sentences.add(index,"Il faut que tu attendes 10 minutes avant de pouvoir relancer un gladiatrool."); index++;
+        //23
+        this.sentences.add(index,"Il faut d'abord choisir une arme en se positionnant sur une dalle avant de rejoindre le Gladiatrool !"); index++;
+
+
     }
 }

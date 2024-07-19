@@ -5,6 +5,7 @@ import common.SocketManager;
 import database.Database;
 import entity.npc.NpcTemplate;
 import entity.pet.PetEntry;
+import game.action.ExchangeAction;
 import game.world.World;
 import game.world.World.Couple;
 import kernel.Config;
@@ -518,7 +519,6 @@ public class PlayerExchange extends Exchange {
 
                 if(kamas2 > 0) {
                     SocketManager.GAME_SEND_MESSAGE(this.player,"Tu as vendu pour " + (-kamas1 + kamas2) + " kamas d'objets !");
-                    //System.out.println("le joueurs :" +this.player.getName() + "recoit " +kamas2 );
                     this.player.addKamas((-kamas1 + kamas2));
                     SocketManager.GAME_SEND_Ow_PACKET(this.player);
                     SocketManager.GAME_SEND_STATS_PACKET(this.player);
@@ -1213,7 +1213,18 @@ public class PlayerExchange extends Exchange {
                     couple.second = 0;//On met la quantité a 0 pour éviter les problemes
                     continue;
                 }
+
                 GameObject obj = World.world.getGameObject(couple.first);
+                if(this.player.getExchangeAction().getType() == ExchangeAction.TRADING_WITH_NPC_SELL_STUFF){
+                    if (Logging.USE_LOG)
+                        Logging.getInstance().write("SellStuff", "le Joueur :" + this.player.getName() + " ("+this.player.getAccount().getName()+") a supprimé " + couple.second + " x "+ obj.getTemplate().getName() );
+
+                    if(couple.second >= 99999){
+                        if(obj.getTemplate().getType() != Constant.ITEM_TYPE_RUNE_FORGEMAGIE)
+                            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"SUSPICION : Vente de '"+ couple.second+"' : '"+ obj.getTemplate().getName()+"'.",this.player );
+                    }
+                }
+
                 if((obj.getQuantity() - couple.second) < 1) {
                     this.player.removeItem(couple.first);
                     World.world.removeGameObject(World.world.getGameObject(couple.first).getGuid());
@@ -1234,12 +1245,13 @@ public class PlayerExchange extends Exchange {
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "021;" + couple1.second + "~" + couple1.first);
             }
 
-
-
-
             if(kamas2 > 0) {
-                SocketManager.GAME_SEND_MESSAGE(this.player,"Tu as vendu pour " + (-kamas1 + kamas2) + " kamas d'objets !");
-                //System.out.println("le joueurs :" +this.player.getName() + "recoit " +kamas2 );
+                if(this.player.getExchangeAction().getType() == ExchangeAction.TRADING_WITH_NPC_SELL_STUFF){
+                    SocketManager.GAME_SEND_MESSAGE(this.player,"Tu as vendu pour " + (-kamas1 + kamas2) + " kamas d'objets !");
+                    if (Logging.USE_LOG)
+                        Logging.getInstance().write("SellStuff", "le Joueur :" + this.player.getName() + " ("+this.player.getAccount().getName()+") a vendu pour " + (-kamas1 + kamas2) + " ");
+                }
+
                 this.player.addKamas((-kamas1 + kamas2));
                 SocketManager.GAME_SEND_Ow_PACKET(this.player);
                 SocketManager.GAME_SEND_STATS_PACKET(this.player);

@@ -79,7 +79,10 @@ public class GuildMemberData extends AbstractDAO<Object> {
         try {
             p = getPreparedStatement("REPLACE INTO `guild_members` VALUES(?,?,?,?,?,?,?,?,?,?,?)");
             GuildMember gm = player.getGuildMember();
-            if(gm == null) return;
+            if(gm == null) {
+                System.out.println("Etrange on dirait que GuildMember est null");
+                return;
+            }
             p.setInt(1, gm.getPlayerId());
             p.setInt(2, gm.getGuild().getId());
             p.setString(3, player.getName());

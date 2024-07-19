@@ -54,8 +54,14 @@ public class NpcMovable extends Npc {
             if (path == null)
                 return;
 
-            for (Player player : this.map.getPlayers())
-                SocketManager.GAME_SEND_GA_PACKET(player.getGameClient(), "0", "1", String.valueOf(this.getId()), path);
+            for (Player player : this.map.getPlayers()) {
+            	if(player.getGameClient() == null){
+
+            		continue;
+				}
+
+				SocketManager.GAME_SEND_GA_PACKET(player.getGameClient(), "0", "1", String.valueOf(this.getId()), path);
+			}
 
             this.setCellId(oldCell);
         }

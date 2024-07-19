@@ -451,6 +451,17 @@ public class NpcQuestion {
                                 break; // Faire sur l'action id
                         }
                     }
+
+                    // TODO : Faudrait tout reprendre avec une gestion dans la BDD mais j'ai la flemme
+                    if(ok) // en fonction du cac pour le gladiatroll
+                    {
+                        if(answer.getId() == 7769){
+                            GameObject CAC = player.getCAC();
+                            if(CAC == null || !(Constant.isGladiatroolWeapon(CAC.getTemplate().getId())))
+                               ok = false;
+                        }
+                    }
+
                     if (ok) {
                         if (!first)
                             str += ";";

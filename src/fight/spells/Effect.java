@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Effect  {
     // Parametre
+    private int id; // ID de l'effet
     private int effectID; // ID de l'effet
     private boolean isCCEffect; // Si c'est un effet de CC
     private int effectTarget = 0; // Les targets que c'est sensé touché -
@@ -30,7 +31,7 @@ public class Effect  {
     private int args2; // Souvent max (peut être a -1)
     private int args3; // Souvent information complémentaire (peut etre vide)
     private Fighter caster = null;
-
+    //private int randomJet = 0;
     // Paramètre optionnel
     private String jet; // le jet en dé (peut etre vide) (d'ailleurs on va le déprécier je pense, Inutile)
     private int type = EffectConstant.EFFECT_TYPE_SPELL; // 0 = sort, 1 = Cac, (Ajouter d'autre ??), 2 = consommables
@@ -38,11 +39,12 @@ public class Effect  {
 
     // Pour type Spell
     private boolean isSpell = false;
-    private int spellID;  // ID du spell
+    private int spellID=-1;  // ID du spell
     private int gradeSpell; // Grade du spell
     private int chanceToLaunch=0;
     private int turn=0;
-    private int onHitTrigger =-1;   //  A terme faudrait changer le IsOnHitEffect par un 'Declanchement' On aurait 0 = debut de tour, 1= fin de tour, 2 = OnHit (Car y'a des poison en début et en fin en dehors des cas particulier type Nervure)
+    public int trigger =-1;
+    public EffectTrigger onHitTrigger;  //  A terme faudrait changer le IsOnHitEffect par un 'Declanchement' On aurait 0 = debut de tour, 1= fin de tour, 2 = OnHit (Car y'a des poison en début et en fin en dehors des cas particulier type Nervure)
     private boolean isBuff = false;
 
     // Pour Cac
@@ -53,17 +55,17 @@ public class Effect  {
     private boolean isUnbuffable = true;
     private int finalValue = 0;
     private int duration = 0;
-    private boolean isNewTurnEffect = false;
-    private boolean isEndTurnEffect = false;
-    private boolean isDirectEffect = false;
-    private boolean isOnHitEffect = false;
+    public boolean isNewTurnEffect = false;
+    public boolean isEndTurnEffect = false;
+    public boolean isDirectEffect = false;
+    public boolean isOnHitEffect = false;
     private boolean isPoison = false;
 
     // Pour les effetsOnHit
-    private int impactedTarget = 0; // 0 - l'effetOnHit se lance sur celui qui possède l'effet, 1 - se lance sur celui qui 'proc' l'effet
+    public int impactedTarget = 0; // 0 - l'effetOnHit se lance sur celui qui possède l'effet, 1 - se lance sur celui qui 'proc' l'effet
 
     // Un constructeur pour les Effets de Spell au chargement de la BDD
-    public Effect(int ID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int chanceTolaunch, int turn, boolean isCCeffet,String jet,int effectTarget,String onHit){
+    public Effect(int ID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int chanceTolaunch, int turn, boolean isCCeffet,String jet,int effectTarget,int trigger,int triggerID){
         this.effectID = ID;
         this.jet = jet;
         this.areaEffect = areaEffect;
@@ -82,34 +84,25 @@ public class Effect  {
 
         this.isCCEffect = isCCeffet;
 
-        // A voir si c'est pertinent
-        int effetType = -1;
-        if(onHit.contains(";")){
-            String[] table = onHit.split(";");
-            effetType = Integer.parseInt(table[0]);
-            switch (effetType){
-                case 1 :
-                    this.isOnHitEffect = true;
-                    this.onHitTrigger = Integer.parseInt(table[1]);
-                    if(table.length > 2)
-                        this.impactedTarget = Integer.parseInt(table[2]);
-
-                    break;
-                case 2 :
-                    this.isNewTurnEffect = true;
-                    break;
-                case 3 :
-                    isEndTurnEffect = true;
-                    break;
-                default:
-                    isDirectEffect = true;
-                    break;
-            }
-        }
-        else{
-            isDirectEffect = true;
+        switch (trigger){
+            case 1 :
+                this.isOnHitEffect = true;
+                break;
+            case 2 :
+                this.isNewTurnEffect = true;
+                break;
+            case 3 :
+                this.isEndTurnEffect = true;
+                break;
+            case -1 :
+            default :
+                this.isDirectEffect = true;
+                break;
         }
 
+        if(this.isOnHitEffect && triggerID !=-1){
+            this.onHitTrigger = World.world.getEffectTrigger(triggerID);
+        }
     }
 
     // Un constructeur pour les Copy
@@ -138,7 +131,10 @@ public class Effect  {
         this.weaponType = WeaponType;
         this.args1 = args1; // minimum de dégat
         this.args2 = args2; // maximum de dégat
-        this.args3 = -1;
+        this.args3 = 0;
+        this.isCCEffect = false;
+        this.turn = 0;
+
         //this.areaEffect = PathFinding.getCiblesByZoneByWeapon(this, WeaponType, getMap().getCase(cellID), caster.getCell().getId());
         this.type = EffectConstant.EFFECT_TYPE_CAC;
         // Faire une fonction pour avoir la zone selon l'arme utilisée
@@ -147,21 +143,28 @@ public class Effect  {
     }
 
     // Ca c'est un constructeur pour les Objets consommables
-	public Effect(int aID, String aArgs, int aSpell, int aSpellLevel) {
+	public Effect(int aID, String aArgs, int aSpell, int aSpellLevel,boolean transform) {
 		effectID = aID;
-		String args = aArgs;
+		String argsblur = aArgs;
 		spellID = aSpell;
 		gradeSpell = aSpellLevel;
 		turn = 0;
         type = EffectConstant.EFFECT_TYPE_CONSOMMABLE;
 
 		try {
-			args1 = Integer.parseInt(args.split(";")[0],16);
-			args2 = Integer.parseInt(args.split(";")[1],16);
-            args3 = Integer.parseInt(args.split(";")[2]);
-		    turn = Integer.parseInt(args.split(";")[3]);
-			chanceToLaunch = Integer.parseInt(args.split(";")[4]);
-			jet = args.split(";")[5];
+		    if(transform) {
+                args1 = Integer.parseInt(argsblur.split(";")[0], 16);
+                args2 = Integer.parseInt(argsblur.split(";")[1], 16);
+                args3 = Integer.parseInt(argsblur.split(";")[2], 16);
+            }
+		    else{
+                args1 = Integer.parseInt(argsblur.split(";")[0]);
+                args2 = Integer.parseInt(argsblur.split(";")[1]);
+                args3 = Integer.parseInt(argsblur.split(";")[2]);
+            }
+
+            if(argsblur.split(";").length >= 4)
+                jet = argsblur.split(";")[3];
 		} catch (Exception ignored) {
 
 		}
@@ -191,7 +194,6 @@ public class Effect  {
         this.chanceToLaunch = chance;
         this.duration = duration;
         this.caster = caster;
-        this.isUnbuffable = false;
     }
 
     // Une fonction qui va venir appeler tous les Effects d'un spell 1 par 1
@@ -201,457 +203,500 @@ public class Effect  {
 
         int curMin = 0;
         int num = 0;
+
         boolean hasLaunchChanceEffect = false;
 
-        // On parcours tout
-        for (Effect SE : Effets) {
+        List<EffectApplication> AllImpactedFighter = new ArrayList<>();
+        // La on fait une map de toutes les cibles qui vont etre touché par les différents effets afin d'eviter le cas d'un déplacement qui va pas appliqué les dégats a la bonne cible.
+        for(Effect SE : Effets){
+            SE.cell = cellSelected;
+            SE.caster = spellCaster;
             // On cible que les CCs ou non CCs
-            if ((isCC && !SE.IsCCEffet()) || (!isCC && SE.IsCCEffet()))
+            ArrayList<Fighter> ImpactedFighterForThisEffect;
+            if (SE.type != EffectConstant.EFFECT_TYPE_CAC && (isCC && !SE.IsCCEffet()) || (!isCC && SE.IsCCEffet()))
                 continue;
 
-            try {
-                if (fight.getState() >= Constant.FIGHT_STATE_FINISHED)
-                    return;
+            // Si le combat est déja terminé osef
+            if (fight.getState() >= Constant.FIGHT_STATE_FINISHED)
+                return;
 
-                if (SE.getChance() != 0 && SE.getChance() != 100)// Si pas 100%
-                {
-                    if ((jetChance <= curMin || jetChance >= (SE.getChance() + curMin)) || hasLaunchChanceEffect) {
-                        curMin += SE.getChance();
-                        num++;
-                        continue;
-                    }
-                    hasLaunchChanceEffect = true;
+            // Si l'effet a une chance de se produire
+            if (SE.getChance() != 0 && SE.getChance() != 100)// Si pas 100%
+            {
+                if ((jetChance <= curMin || jetChance >= (SE.getChance() + curMin)) || hasLaunchChanceEffect) {
                     curMin += SE.getChance();
+                    num++;
+                    continue;
+                }
+                hasLaunchChanceEffect = true;
+                curMin += SE.getChance();
+            }
+
+            if( SE.type != EffectConstant.EFFECT_TYPE_CAC) {
+                ArrayList<GameCase> finalCells = SE.getCasesImpactedInArea(fight);
+                ImpactedFighterForThisEffect = GameCase.getTargets(finalCells);
+
+                // Cas particulier DO POU on trie les cible dans l'ordre pour etre sur que les effets se passe correctement
+                switch (SE.spellID) {
+                    case 73://Piége répulsif
+                    case 418://Fléche de dispersion
+                    case 151://Soufle
+                    case 165://FlÃ¨che enflammé
+                        ImpactedFighterForThisEffect = SE.trierCibles(ImpactedFighterForThisEffect, fight);
+                        break;
                 }
 
-                SE.applyEffectToFight(fight, spellCaster, cellSelected);
+            }
+            else{
+                ImpactedFighterForThisEffect = PathFinding.getCiblesByZoneByWeapon(fight, SE.weaponType, SE.cell, SE.caster.getCell().getId());
+            }
 
-                // TODO : c'est vraiment pas propre je changerai ca
-                // Si c'est un effet de mouvement on ajoute la change la cellule choisi pour la cellule du dernier effet de sort qui a été mis a jour
-                //if (SE.getEffectID() == 5 || SE.getEffectID() == 8 || ArrayUtils.contains(Constant.SPELLEFFECT_MOUVEMENT,SE.getEffectID()) ) {
-                    //System.out.println("On change la cellule choisi pour les autre effet :" + cellSelected +" : " + SE.getCell());
-                //    cellSelected = SE.getCell();
-                //}
+                if(ArrayUtils.contains(EffectConstant.NONEEDTARGET_EFFECT,SE.getEffectID())){
+                    EffectApplication EA = new EffectApplication(SE);
+                    AllImpactedFighter.add(EA);
+                }
+                else{
+                    if(!ImpactedFighterForThisEffect.isEmpty()){
+                        EffectApplication EA = new EffectApplication(SE);
+                        for (Fighter cible : ImpactedFighterForThisEffect) {
+                            EA.addTarget(cible);
+                        }
+                        AllImpactedFighter.add(EA);
+                    }
+                }
 
-                num++;
-            } catch (Exception e) {
+        }
+
+        // On parcour le tableau précédemment créé pour s'assurer de ne pas perdre d'information
+        for (EffectApplication SA : AllImpactedFighter) {
+            try {
+                Effect test = SA.getEffect();
+                int dmge = Formulas.getRandomJet(test.args1, test.args2, test.caster);
+                if(!SA.getTargets().isEmpty()) {
+
+                    // Ici on check les challenges
+                    ArrayList<Fighter> cibleChall = new ArrayList<>();
+                    cibleChall.addAll(SA.getTargets());
+                    if (fight.getType() != Constant.FIGHT_TYPE_CHALLENGE && fight.getAllChallenges().size() > 0) {
+                        fight.getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> challenge.onFightersAttacked(cibleChall, test.caster, test, test.spellID, false));
+                    }
+
+                    // Si le sort a un effet qui s'applique sur toutes les personnes directement (don de vie)
+                    if(ArrayUtils.contains(EffectConstant.NEEDALLTARGET_EFFECT,test.getEffectID())){
+                        test.applyEffectOnAllTargetDirectly(fight,cibleChall);
+                    }
+                    else{
+                        for (Fighter target : SA.getTargets()) {
+                            test.applyEffectOnTarget(fight, target, dmge);
+
+                            // Si la cible est morte après l'effet
+                            /*if (target.getPdv() <= 0 && !target.isDead()) {
+                                target.setPdv(0);
+                                fight.onFighterDie(target, test.caster);
+                            }*/
+                        }
+                    }
+                }
+                else{
+                    // Si le sort a un effet qui s'applique sur toutes les personnes mais en recaultant différentes chose a chaque fois
+                    test.applyEffectWithoutTarget(fight,dmge);
+                }
+
+                // Si la cible est morte après l'effet
+                if (test.caster.getPdv() <= 0 && !test.caster.isDead()) {
+                    test.caster.setPdv(0);
+                    fight.onFighterDie(test.caster, test.caster);
+                }
+            }
+            catch (Exception e){
                 e.printStackTrace();
             }
         }
-
-
     }
 
-    // Fonction pour appliquer les Effect selon l'effect ID et le type
-    public void applyEffectToFight(Fight fight, Fighter perso, GameCase cell) {
-        this.cell = cell;
-        this.caster = perso;
-        this.elem = EffectConstant.getElemSwitchEffect(this.getEffectID());
-
-        // Si c'est un sort qui ne necessite pas de cible on lance directement
-        if(ArrayUtils.contains(EffectConstant.NONEEDTARGET_EFFECT,this.getEffectID())){
-            switch (this.getEffectID()){
-                case 4://Téléportation (Fuite/Bond du félin/ Bond du iop)
-                    applyEffect_4(fight);
-                    break;
-                case 50://Porter
-                    applyEffect_50(fight);
-                    break;
-                case 51://jeter
-                    applyEffect_51(fight);
-                    break;
-                case 109://Dommage pour le lanceur
-                    applyEffect_109(fight);
-                    break;
-                case 120://Bonus PA au lanceur
-                    applyEffect_AddAP(caster, fight);
-                    break;
-                case 180://Double du sram
-                    applyEffect_180(fight);
-                    break;
-                case 181://Invoque une créature
-                case 200: //Contrôle Invocation
-                    applyEffect_181(fight);
-                    break;
-                case 185://Invoque une creature statique
-                    applyEffect_185(fight);
-                    break;
-                case 400://Créer un  piège
-                    applyEffect_400(fight);
-                    break;
-                case 401://Créer une glyphe
-                case 402://Glyphe des Blop
-                    applyEffect_402(fight);
-                    break;
-                case 780://laisse spirituelle
-                    applyEffect_780(fight);
-                    break;
-                case 783://Pousse jusqu'a la case visé sans do pou
-                    applyEffect_783(fight);
-                    break;
-                case 784://Raulebaque
-                    applyEffect_784(fight);
-                    break;
-                default:
-                    GameServer.a("Pas d'effet de spell " + effectID + " Dev pour le spell " + spellID + " sans target necessaire");
-                    break;
-            }
-        }
-        // Sinon on calcul les personnages impactés
-        else{
-            ArrayList<Fighter> cibles = null;
-            if(type!=EffectConstant.EFFECT_TYPE_CAC) {
-                ArrayList<GameCase> finalCells = this.getCasesImpactedInArea(fight);
-                cibles = GameCase.getTargets(finalCells);
-            }
-            else{
-                cibles = PathFinding.getCiblesByZoneByWeapon(fight, weaponType, cell, caster.getCell().getId());
-            }
-
-            // Cas particulier DO POU on trie les cible dans l'ordre pour etre sur que les effets se passe correctement
-            switch (this.spellID) {
-                case 73://Piége répulsif
-                case 418://Fléche de dispersion
-                case 151://Soufle
-                case 165://FlÃ¨che enflammé
-                    cibles = this.trierCibles(cibles, fight);
-                    break;
-            }
-
-            //Si l'effet a besoin de toutes les cibles d'un coup on va passer directement les cibles a l'effet
-            if(ArrayUtils.contains(EffectConstant.NEEDALLTARGET_EFFECT,this.getEffectID())){
-                switch (this.getEffectID()){
-                    case 90://Transfert de vie
-                        applyEffect_90(cibles,fight);
-                        break;
-                    default:
-                        GameServer.a("Pas d'effet de spell " + this.getEffectID() + " Dev pour le spell " + this.spellID + " qui necessite toutes les cibles d'un coup");
-                        break;
-                }
-            }
-            // sinon on boucle sur toutes les cibles
-            else{
-                for (Fighter target : cibles) {
-                    // Cas particuliers si la cible a des effets spécifique (type sacrifice)
-                    if (ArrayUtils.contains(EffectConstant.IS_DIRECTDAMMAGE_EFFECT, this.effectID) && this.turn == 0) {
-                        // On débuff invisibilité si c'est un sort de dégat direct
-                        if (caster.isHide())
-                            caster.unHide(this.spellID);
-                        // On gère les cas spécifique de protection de target
-                        target = getRealTargetSwitchBuff(fight,target);
-                    }
-
-                    // si c'est un effet direct
-                    if(!this.isOnHitEffect) {
-                        applyEffectOnTarget(fight,target);
-                    }
-                    //
-                    else{
-                        // On va créé un nouvel effet sans la condition
-                        // On créé un buff caché qui se lance quand tapé
-                        Effect CopySpell = null;
-                        switch (effectID){
-                            case 89 :
-                                CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster);
-                                target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
-                                break;
-                            case EffectConstant.EFFECTID_PASSTURN :
-                                CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster);
-                                break;
-                            case 950 :
-                            case 951 :
-                                CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
-                                break;
-                            default:
-                                CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
-                                //target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
-                                break;
-                        }
-                        int duration = this.turn;
-                        if(( caster == target) && target.canPlay())
-                            duration += 1;
-                        target.addBuffOnHit(this.effectID,this.args1,this.args2,this.args3,this.chanceToLaunch,duration,this.onHitTrigger,CopySpell,this.caster, this.spellID, this.impactedTarget);
-                        // On rajoute quand meme le buff pour l'avoir dans la barre d'effet
-
-                        break;
-                    }
-
-                    // Si la cible est morte après l'effet
-                    if (target.getPdv() <= 0) {
-                        target.setPdv(0);
-                        fight.onFighterDie(target, target);
-                    }
-
-                    // Si la cible est morte après l'effet
-                    if (caster.getPdv() <= 0) {
-                        caster.setPdv(0);
-                        fight.onFighterDie(caster, caster);
-                    }
-
-                    /*if(!target.isDead())
-                        applyOnHitBuffEffect(fight, target, effectID,caster);*/
-
-                }
-            }
-
-
+    // Le switch pour les effets sans cible necessaire
+    public void applyEffectWithoutTarget(Fight fight, int dmge){
+        switch (this.getEffectID()){
+            case 4://Téléportation (Fuite/Bond du félin/ Bond du iop)
+                this.applyEffect_4(fight);
+                break;
+            case 50://Porter
+                this.applyEffect_50(fight);
+                break;
+            case 51://jeter
+                this.applyEffect_51(fight);
+                break;
+            case 109://Dommage pour le lanceur
+                this.applyEffect_109(fight,dmge);
+                break;
+            case 120://Bonus PA au lanceur
+                this.applyEffect_AddAP(this.caster, fight,dmge);
+                break;
+            case 180://Double du sram
+                this.applyEffect_180(fight);
+                break;
+            case 181://Invoque une créature
+            case 200: //Contrôle Invocation
+                this.applyEffect_181(fight);
+                break;
+            case 185://Invoque une creature statique
+                this.applyEffect_185(fight);
+                break;
+            case 400://Créer un  piège
+                this.applyEffect_400(fight);
+                break;
+            case 401://Créer une glyphe
+            case 402://Glyphe des Blop
+                this.applyEffect_402(fight);
+                break;
+            case 780://laisse spirituelle
+                this.applyEffect_780(fight);
+                break;
+            case 783://Pousse jusqu'a la case visé sans do pou
+                this.applyEffect_783(fight);
+                break;
+            case 784://Raulebaque
+                this.applyEffect_784(fight);
+                break;
+            default:
+                GameServer.a("Pas d'effet de spell " + this.effectID + " Dev pour le spell " + this.spellID + " sans target necessaire");
+                break;
         }
     }
 
-    // L'enorme switch Case pour les différents effet de sorts
-    private void applyEffectOnTarget(Fight fight, Fighter target){
+    // Le switch pour les effets avec toutes les cibles directement necessaire
+    public void applyEffectOnAllTargetDirectly(Fight fight, ArrayList<Fighter> cibles){
+        switch (this.getEffectID()){
+            case 90://Transfert de vie
+                applyEffect_90(cibles,fight);
+                break;
+            default:
+                GameServer.a("Pas d'effet de spell " + this.getEffectID() + " Dev pour le spell " + this.spellID + " qui necessite toutes les cibles d'un coup");
+                break;
+        }
+    }
+
+    // L'enorme switch Case pour les différents effet de sorts qui necessite la cible
+    public void applyEffectOnTarget(Fight fight, Fighter target, int dmge){
         boolean isCac = false;
         if(this.type == 1){
             isCac = true;
         }
+        this.elem = EffectConstant.getElemSwitchEffect(this.getEffectID());
 
-        switch (this.getEffectID()) {
-            // Les effets de déplacement avec cible
-            case 5://Repousse de X case
-                applyEffect_5(target, fight);
-                break;
-            case 6://Attire de X case
-                applyEffect_6(target, fight);
-                break;
-            case 8://Echange les place de 2 joueur
-                applyEffect_8(target, fight);
-                break;
-            // Les effets spéciaux de MP
-            case 77://Vol de PM
-                applyEffect_77(target, fight);
-                break;
-            case 78://Bonus PM
-                applyEffect_AddMP(target, fight,false);
-                break;
-            case 127://Retrait PM
-                applyEffect_RetMP(target, fight);
-                break;
-            case 128://+PM
-                applyEffect_AddMP(target, fight,true);
-                break;
-            case 169://Perte PM non esquivable
-                applyEffect_169(target, fight);
-                break;
-                // Les effets spéciaux de PA
-            case 84://Vol de PA
-                applyEffect_84(target, fight);
-                break;
-            case 101://Retrait PA
-                applyEffect_RetAP(target, fight);
-                break;
-            case 111://+ X PA
-                applyEffect_AddAP(target, fight);
-                break;
-            case 168://Perte PA non esquivable
-                applyEffect_168(target, fight);
-                break;
-            // Les effets de Heal
-            case 81:// Cura, PDV devueltos
-                applyEffect_81(target, fight,  isCac);
-                break;
-            case 108://Soin
-                applyEffect_108(target, fight, isCac);
-                break;
-            case 143:// PDV rendu (soin sans boost de intel mais juste de +soin ???)
-                applyEffect_143(target, fight);
-                break;
-            // Les effets de dégat
-            case 82://Vol de Vie fixe
-                applyEffect_82(target, fight);
-                break;
-            case 85://Dommage Eau %vie
-            case 86://Dommage Terre %vie
-            case 87://Dommage Air %vie
-            case 88://Dommage feu %vie
-            case 89://Dommage neutre %vie
-                applyEffect_PerVitaDmg(target, fight);
-                break;
-            case 91://Vol de Vie Eau
-            case 92://Vol de Vie Terre
-            case 93://Vol de Vie Air
-            case 94://Vol de Vie feu
-            case 95://Vol de Vie neutre
-                applyEffect_LifeSteal(target, fight, isCac);
-                break;
-            case 96://Dommage Eau
-            case 97://Dommage Terre
-            case 98://Dommage Air
-            case 99://Dommage feu
-            case 100://Dommage neutre
-                applyEffect_DamageElem(target, fight, isCac);
-                break;
-            case 671://Dommages : X% de la vie de l'attaquant (neutre) - Juste au lanceur non ???
-                applyEffect_671(target, fight);
-                break;
-            case 672://Dommages : X% de la vie de l'attaquant (neutre) - A la cellule visé
-                applyEffect_672(target, fight);
-                break;
-            // Les effets de portée
-            case 116://Malus PO
-            case 117://Bonus PO
-                applyEffect_PO(target, fight);
-                break;
-            case 320://Vol de PO
-                applyEffect_320(fight, target);
-                break;
-            // Les boost en valeur définie au lancement
-            case 105://Dommages réduits de X
-            case 110://+ X vie
-            case 112://+Dom
-            case 114://Multiplie les dommages par X
-            case 115://+Cc
-            case 118://Bonus force
-            case 119://Bonus Agilité
-            case 121://+Dom
-            case 122://+EC
-            case 123://+Chance
-            case 124://+Sagesse
-            case 125://+Vitalité
-            case 126://+Intelligence
-            case 138://%dom
-            case 142://Dommages physique
-            case 144:// - Dommages (pas bosté)
-            case 145://Malus Dommage
-            case 152:// - Chance
-            case 153:// - Vita
-            case 154:// - Agi
-            case 155:// - Intel
-            case 156:// - Sagesse
-            case 157:// - Force
-            case 160:// + Esquive PA
-            case 161:// + Esquive PM
-            case 162:// - Esquive PA
-            case 163:// - Esquive PM
-            case 171://Malus CC
-            case 176:// + prospection
-            case 177:// - prospection
-            case 178:// + soin
-            case 179:// - soin
-            case 182://+ Crea Invoc
-            case 183://Resist Magique
-            case 184://Resist Physique
-            case 186://Diminue les dommages %
-            case 210://Resist % terre
-            case 211://Resist % eau
-            case 212://Resist % air
-            case 213://Resist % feu
-            case 214://Resist % neutre
-            case 215://Faiblesse % terre
-            case 216://Faiblesse % eau
-            case 217://Faiblesse % air
-            case 218://Faiblesse % feu
-            case 219://Faiblesse % neutre
-            case 265://Reduit les Dom de X
-                applyEffect_Buff(target, fight,true);
-                break;
-            // Les effets speciaux
-            case 130://Vol de kamas
-                applyEffect_130(fight, target);
-                break;
-            case 131://Poison : X Pdv  par PA
-                applyEffect_131(target);
-                break;
-            case 132://Enleve les envoutements
-                applyEffect_132(target, fight);
-                break;
-            case 140://Passer le tour
-                applyEffect_140(target);
-                break;
-            case 141://Tue la cible
-                applyEffect_141(fight, target);
-                break;
-            case 149://Change l'apparence
-                applyEffect_149(fight, target);
-                break;
-            case 150://Invisibilité
-                applyEffect_150(fight, target);
-                break;
-            case 164:// Daños reducidos en x%
-            case 220:// Renvoie dommage
-                applyEffect_BuffMinValue(target);
-                break;
-            case 165:// Maîtrises
-                applyEffect_165();
-                break;
-            case 202://Perception
-                applyEffect_202(fight, target);
-                break;
-            case 266://Vol Chance
-                applyEffect_266(fight, target);
-                break;
-            case 267://Vol vitalité
-                applyEffect_267(fight, target);
-                break;
-            case 268://Vol agitlité
-                applyEffect_268(fight, target);
-                break;
-            case 269://Vol intell
-                applyEffect_269(fight, target);
-                break;
-            case 270://Vol sagesse
-                applyEffect_270(fight, target);
-                break;
-            case 275://TODO : pas dev
-                break;
-            case 276://TODO : pas dev
-                break;
-            case 277://TODO : pas dev
-                break;
-            case 278://TODO : pas dev
-                break;
-            case 279://TODO : pas dev
-                break;
-            // Tout ca c'est des boost sans valeur, juste un sort avec effet pris en compte plus tard
-            case 9://Esquive une attaque en reculant de 1 case
-            case 79:// + X chance(%) dommage subis * Y sinon soigné de dommage *Z
-            case 106://Renvoie de sort
-            case 107://Renvoie de dom
-            case 765://Sacrifice
-            case 281://Augmente la portée du sort
-            case 282://Rend la portée du sort #1 modifiable
-            case 283://+#3 de dommages sur le sort #1
-            case 284://+#3 de soins sur le sort #1
-            case 285://Réduit de #3 le coût en PA du sort #1
-            case 286://Réduit de #3 le délai de relance du sort #1
-            case 287://#3 aux CC sur le sort #1
-            case 288://Désactive le lancer en ligne du sort #1
-            case 289://Désactive la ligne de vue du sort #1
-            case 290://Augmente de #3 le nombre de lancer maximal par tour du sort #1
-            case 291://Augmente de #3 le nombre de lancer maximal par cible du sort #1
-            case 292://Fixe à #3 le délai de relance du sort #1
-            case 293://Boost les dégats d'un sort apres lancement (géré autre part également).
-            case 294://Diminue la portée du sort #1 de #3
-            case 776://%erosion
-            case 781://Minimize les effets aléatoires
-            case 782://Maximise les effets aléatoires
-                applyEffect_SpellBuff(target);
-                break;
-            case 405://tue une invoque pour en ajouter une
-                applyEffect_405(target, fight);
-                break;
-            case 666://Pas d'effet complémentaire
-                break;
-            case 670: // TODO : pas dev mais jamais utilisé par dofus
-                break;
-            case 786://EFFET : Soin le caster après l'attaque
-                applyEffect_786(fight);
-                break;
-            case 787://Applique un sort sur la cible
-                //applyEffect_787(target, fight);
-                break;
-            case 788://Chatiment de X sur Y tours
-                applyEffect_788(target);
-                break;
-            case 950://Applique Etat X
-                applyEffect_950(fight, target);
-                break;
-            case 951://Enleve Etat X
-                applyEffect_951(fight, target);
-                break;
-            default:
-                GameServer.a("Pas d'effet de spell " + effectID + " Dev pour le spell " + spellID);
-                break;
+        // Cas particuliers si la cible a des effets spécifique (type sacrifice)
+        if (ArrayUtils.contains(EffectConstant.IS_DIRECTDAMMAGE_EFFECT, this.effectID) && this.turn == 0) {
+            // On débuff invisibilité si c'est un sort de dégat direct
+            if (caster.isHide())
+                caster.unHide(this.spellID);
+            // On gère les cas spécifique de protection de target
+            target = getRealTargetSwitchBuff(fight,target);
         }
+        if(!this.isOnHitEffect) {
+            switch (this.getEffectID()) {
+                // Les effets de déplacement avec cible
+                case 5://Repousse de X case
+                    applyEffect_5(target, fight);
+                    break;
+                case 6://Attire de X case
+                    applyEffect_6(target, fight);
+                    break;
+                case 2127://s'Attire de X case (on verra plus tard pour inverser)
+                    applyEffect_6(target, fight);
+                    break;
+                case 8://Echange les place de 2 joueur
+                    applyEffect_8(target, fight);
+                    break;
+                // Les effets spéciaux de MP
+                case 77://Vol de PM
+                    applyEffect_77(target, fight, dmge);
+                    break;
+                case 78://Bonus PM
+                    applyEffect_AddMP(target, fight, false, dmge);
+                    break;
+                case 127://Retrait PM
+                    applyEffect_RetMP(target, fight, dmge);
+                    break;
+                case 128://+PM
+                    applyEffect_AddMP(target, fight, true, dmge);
+                    break;
+                case 169://Perte PM non esquivable
+                    applyEffect_169(target, fight, dmge);
+                    break;
+                // Les effets spéciaux de PA
+                case 84://Vol de PA
+                    applyEffect_84(target, fight, dmge);
+                    break;
+                case 101://Retrait PA
+                    applyEffect_RetAP(target, fight, dmge);
+                    break;
+                case 111://+ X PA
+                    applyEffect_AddAP(target, fight, dmge);
+                    break;
+                case 168://Perte PA non esquivable
+                    applyEffect_168(target, fight, dmge);
+                    break;
+                // Les effets de Heal
+                case 81:// Cura, PDV devueltos
+                    applyEffect_81(target, fight, isCac, dmge);
+                    break;
+                case 108://Soin
+                    applyEffect_108(target, fight, isCac, dmge);
+                    break;
+                case 143:// PDV rendu (soin sans boost de intel mais juste de +soin ???)
+                    applyEffect_143(target, fight, dmge);
+                    break;
+                // Les effets de dégat
+                case 82://Vol de Vie fixe
+                    applyEffect_82(target, fight, dmge);
+                    break;
+                case 85://Dommage Eau %vie
+                case 86://Dommage Terre %vie
+                case 87://Dommage Air %vie
+                case 88://Dommage feu %vie
+                case 89://Dommage neutre %vie
+                    applyEffect_PerVitaDmg(target, fight, dmge);
+                    break;
+                case 91://Vol de Vie Eau
+                case 92://Vol de Vie Terre
+                case 93://Vol de Vie Air
+                case 94://Vol de Vie feu
+                case 95://Vol de Vie neutre
+                    applyEffect_LifeSteal(target, fight, isCac, dmge);
+                    break;
+                case 96://Dommage Eau
+                case 97://Dommage Terre
+                case 98://Dommage Air
+                case 99://Dommage feu
+                case 100://Dommage neutre
+                    applyEffect_DamageElem(target, fight, isCac, dmge);
+                    break;
+                case 671://Dommages : X% de la vie de l'attaquant (neutre) - Juste au lanceur non ???
+                    applyEffect_671(target, fight, dmge);
+                    break;
+                case 672://Dommages : X% de la vie de l'attaquant (neutre) - A la cellule visé
+                    applyEffect_672(target, fight);
+                    break;
+                // Les effets de portée
+                case 116://Malus PO
+                case 117://Bonus PO
+                    applyEffect_PO(target, fight, dmge);
+                    break;
+                case 320://Vol de PO
+                    applyEffect_320(fight, target, dmge);
+                    break;
+                // Les boost en valeur définie au lancement
+                case 105://Dommages réduits de X (Non Elementaire)
+                case 110://+ X vie
+                case 112://+Dom
+                case 114://Multiplie les dommages par X
+                case 115://+Cc
+                case 118://Bonus force
+                case 119://Bonus Agilité
+                case 121://+Dom
+                case 122://+EC
+                case 123://+Chance
+                case 124://+Sagesse
+                case 125://+Vitalité
+                case 126://+Intelligence
+                case 138://%dom
+                case 142://Dommages physique
+                case 144:// - Dommages (pas bosté)
+                case 145://Malus Dommage
+                case 152:// - Chance
+                case 153:// - Vita
+                case 154:// - Agi
+                case 155:// - Intel
+                case 156:// - Sagesse
+                case 157:// - Force
+                case 160:// + Esquive PA
+                case 161:// + Esquive PM
+                case 162:// - Esquive PA
+                case 163:// - Esquive PM
+                case 171://Malus CC
+                case 176:// + prospection
+                case 177:// - prospection
+                case 178:// + soin
+                case 179:// - soin
+                case 182://+ Crea Invoc
+                case 183://Resist Magique
+                case 184://Resist Physique
+                case 186://Diminue les dommages %
+                case 210://Resist % terre
+                case 211://Resist % eau
+                case 212://Resist % air
+                case 213://Resist % feu
+                case 214://Resist % neutre
+                case 215://Faiblesse % terre
+                case 216://Faiblesse % eau
+                case 217://Faiblesse % air
+                case 218://Faiblesse % feu
+                case 219://Faiblesse % neutre
+                case 240://Resistance fix terre
+                case 241://Resistance fix eau
+                case 242://Resistance fix air
+                case 243://Resistance fix feu
+                case 244://Resistance fix neutre
+                case 245://Faiblesse fix terre
+                case 246://Faiblesse fix eau
+                case 247://Faiblesse fix air
+                case 248://Faiblesse fix feu
+                case 249://Faiblesse fix neutre
+                case 265://Reduit les Dom de X (Elementaire)
+                    applyEffect_Buff(target, fight, true, dmge);
+                    break;
+                // Les effets speciaux
+                case 130://Vol de kamas
+                    applyEffect_130(fight, target, dmge);
+                    break;
+                case 131://Poison : X Pdv  par PA
+                    applyEffect_131(target);
+                    break;
+                case 132://Enleve les envoutements
+                    applyEffect_132(target, fight);
+                    break;
+                case 140://Passer le tour
+                    applyEffect_140(target);
+                    break;
+                case 141://Tue la cible
+                    applyEffect_141(fight, target);
+                    break;
+                case 149://Change l'apparence
+                    applyEffect_149(fight, target);
+                    break;
+                case 150://Invisibilité
+                    applyEffect_150(fight, target);
+                    break;
+                case 164:// Daños reducidos en x%
+                case 220:// Renvoie dommage
+                    applyEffect_BuffMinValue(target);
+                    break;
+                case 165:// Maîtrises
+                    applyEffect_165();
+                    break;
+                case 202://Perception
+                    applyEffect_202(fight, target);
+                    break;
+                case 266://Vol Chance
+                    applyEffect_266(fight, target, dmge);
+                    break;
+                case 267://Vol vitalité
+                    applyEffect_267(fight, target, dmge);
+                    break;
+                case 268://Vol agitlité
+                    applyEffect_268(fight, target, dmge);
+                    break;
+                case 269://Vol intell
+                    applyEffect_269(fight, target, dmge);
+                    break;
+                case 270://Vol sagesse
+                    applyEffect_270(fight, target, dmge);
+                    break;
+                case 271://Vol force
+                    applyEffect_271(fight, target, dmge);
+                    break;
+                case 275://TODO : pas dev
+                    break;
+                case 276://TODO : pas dev
+                    break;
+                case 277://TODO : pas dev
+                    break;
+                case 278://TODO : pas dev
+                    break;
+                case 279://TODO : pas dev
+                    break;
+                // Tout ca c'est des boost sans valeur, juste un sort avec effet pris en compte plus tard
+                case 9://Esquive une attaque en reculant de 1 case
+                case 79:// + X chance(%) dommage subis * Y sinon soigné de dommage *Z
+                case 106://Renvoie de sort
+                case 107://Renvoie de dom
+                case 765://Sacrifice
+                case 281://Augmente la portée du sort
+                case 282://Rend la portée du sort #1 modifiable
+                case 283://+#3 de dommages sur le sort #1
+                case 284://+#3 de soins sur le sort #1
+                case 285://Réduit de #3 le coût en PA du sort #1
+                case 286://Réduit de #3 le délai de relance du sort #1
+                case 287://#3 aux CC sur le sort #1
+                case 288://Désactive le lancer en ligne du sort #1
+                case 289://Désactive la ligne de vue du sort #1
+                case 290://Augmente de #3 le nombre de lancer maximal par tour du sort #1
+                case 291://Augmente de #3 le nombre de lancer maximal par cible du sort #1
+                case 292://Fixe à #3 le délai de relance du sort #1
+                case 294://Diminue la portée du sort #1 de #3
+                case 750://Capture d'ame
+                case 776://%erosion
+                case 781://Minimize les effets aléatoires
+                case 782://Maximise les effets aléatoires
+                    applyEffect_SpellBuff(target);
+                    break;
+                case 293://Boost les dégats d'un sort apres lancement (géré autre part également).
+                    applyEffect_SpellBuffUnbuffable(target);
+                    break;
+                case 405://tue une invoque pour en ajouter une
+                    applyEffect_405(target, fight);
+                    break;
+                case 666://Pas d'effet complémentaire
+                    break;
+                case 670: // TODO : pas dev mais jamais utilisé par dofus
+                    break;
+                case 786://EFFET : Soin le caster après l'attaque
+                    applyEffect_786(fight);
+                    break;
+                case 787://Applique un sort sur la cible
+                    //applyEffect_787(target, fight);
+                    break;
+                case 788://Chatiment de X sur Y tours
+                    applyEffect_788(target);
+                    break;
+                case 950://Applique Etat X
+                    applyEffect_950(fight, target);
+                    break;
+                case 951://Enleve Etat X
+                    applyEffect_951(fight, target);
+                    break;
+                default:
+                    GameServer.a("Pas d'effet de spell " + effectID + " Dev pour le spell " + spellID);
+                    break;
+            }
+        }
+        else{
+            // On va créé un nouvel effet sans la condition
+            // On créé un buff caché qui se lance quand tapé
+            Effect CopySpell = null;
+            switch (effectID){
+                case 89 :
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
+                    break;
+                case EffectConstant.EFFECTID_PASSTURN :
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    break;
+                case 108 : // Les soins en OnHit se lance tous directement ?
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    break;
+                case 950 :
+                case 951 :
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    break;
+                default:
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    //target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
+                    break;
+            }
+            int duration = this.turn;
+            if(( caster == target) && target.canPlay())
+                duration += 1;
+            target.addBuffOnHit(this.effectID,this.args1,this.args2,this.args3,this.chanceToLaunch,duration,this.onHitTrigger,CopySpell,this.caster, this.spellID, this.impactedTarget);
+            // On rajoute quand meme le buff pour l'avoir dans la barre d'effet
+        }
+
+        // Si la cible est morte après l'effet
+        if (target.getPdv() <= 0 && !target.isDead()) {
+            target.setPdv(0);
+            fight.onFighterDie(target, this.caster);
+        }
+
     }
 
     // Nouvelle fonction pour appliquer les buffs onHit, Donc la on fait un truc qui va juste checker les BuffOnHit rempli dans la liste et si le déclanchement est validé en fonction de l'effect ID lancé
@@ -674,10 +719,24 @@ public class Effect  {
             }
 
             // On check si l'effect_ID est dans les IDs de déclanchement voulu
-            if(ArrayUtils.contains(onHitEffect.getBuffOnHitConditions(),this.effectID)) {
+            if(onHitEffect.getBuffOnHitConditions().getEffectsTriggering().contains(this.effectID)) {
                 //System.out.println("Il y en a un " + this.effectID + " / " + onHitEffect.getSpellEffectToApply().getEffectID() );
                 Effect toApply = onHitEffect.getSpellEffectToApply();
                 switch(onHitEffect.getEffectID()){
+                    case 786 : // Arbre de Vie, soin celui qui le tape
+                        if(damageDone < 1){
+                            continue;
+                        }
+                        int healFinal = damageDone;
+                        int pdvMax = caster.getPdvMax();
+                        if ((healFinal + caster.getPdv()) > pdvMax)
+                            healFinal = pdvMax - caster.getPdv();
+                        if (healFinal < 1)
+                            healFinal = 0;
+
+                        caster.removePdv(caster, -healFinal);
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 108, target.getId() + "", caster.getId() + "," + healFinal, this.effectID);
+                        break;
                     case 788 :
                         if(damageDone<1){
                             continue;
@@ -730,170 +789,24 @@ public class Effect  {
                         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, target.getId() + "", target.getId() + "," + etatId2 + ",0");
                         break;
                     default :
-                        if(onHitEffect.getImpactedTarget() == 1) {
-                            System.out.println("On hit sur target" + onHitEffect.getSpellEffectToApply().effectID);
-                            onHitEffect.getSpellEffectToApply().applyEffectOnTarget(fight,caster);
+                        int dmg = Formulas.getRandomJet(onHitEffect.getSpellEffectToApply().getArgs1(),onHitEffect.getSpellEffectToApply().getArgs2(),caster);
+                        if(onHitEffect.getBuffOnHitConditions().getTarget() == 1) {
+                            //System.out.println("On hit sur target" + onHitEffect.getSpellEffectToApply().effectID);
+                            onHitEffect.getSpellEffectToApply().applyEffectOnTarget(fight,caster,dmg);
                         }
                         else {
-                            System.out.println("On hit sur caster" + onHitEffect.getSpellEffectToApply().effectID);
-                            onHitEffect.getSpellEffectToApply().applyEffectOnTarget(fight,target);
+                            //System.out.println("On hit sur caster" + onHitEffect.getSpellEffectToApply().effectID);
+                            onHitEffect.getSpellEffectToApply().applyEffectOnTarget(fight,target,dmg);
                         }
                         break;
                 }
-
             }
-
-
         }
-           /* switch (onHitEffect.getBuffType()){
-                case 1 : { // Dégat infligé
-                    if( (onHitEffect.getBuffOnHitConditions().contains(-1) && ArrayUtils.contains(EffectConstant.IS_DIRECTDAMMAGE_EFFECT,EffectID) && turn == 0 ) || onHitEffect.getBuffOnHitConditions().contains(EffectID)){
-                        // -1 a appliqué sans condition d'élément
-                        // ou a appliqué si l'effet est dans le tableau des effets attendu
-                       Effect toApply = onHitEffect.getSpellEffectToApply();
-
-                       // alors on prend bien l'effet du Buff mais a terme on utilise celui du sort
-                        switch (onHitEffect.getEffectID()){
-                            //Ca heal si ca passe
-                            case 108 :
-                                int gain3 = toApply.getArgs1();
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId() + "", target.getId() + "," + gain3 + "," + 5, elem);
-                                target.setPdv(target.getPdv() + gain3);
-                                if(target.getPlayer() != null) SocketManager.GAME_SEND_STATS_PACKET(target.getPlayer());
-                                break;
-                            // Les resistances :
-                            case 210 :
-                            case 211 :
-                            case 212 :
-                            case 213 :
-                            case 214 :
-                            case 215 :
-                            case 216 :
-                            case 217 :
-                            case 218 :
-                                int min = toApply.getArgs1();
-                                int duration = toApply.getDuration();
-                                target.addBuff(toApply.getEffectID(), min, duration, toApply.getArgs1(), toApply.getArgs1(), toApply.getArgs1(), true, toApply.getSpell(), caster, true);
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId()+ "", target.getId() + "," + min + "," + duration, toApply.getEffectID());
-                                break;
-                            case 786 : // (soin du caster sur Attaque) Soin Sylvestre
-                                int prct = toApply.getArgs3(), gain2 = Math.round(this.damageDone * prct / 100);
-                                int statSoin = 108;
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, statSoin, caster.getId() + "", target.getId() + "," + gain2 + "," + 5, elem);
-                                caster.setPdv(target.getPdv() + gain2);
-                                if(caster.getPlayer() != null) SocketManager.GAME_SEND_STATS_PACKET(caster.getPlayer());
-                                break;
-                            // Les chatiments (cas exceptionnel ou toApply.getEffectID != onHitEffect.getEffectID() )
-                            case 788 :
-                                if(this.damageDone<1){
-                                    continue;
-                                }
-                                int taux = (caster.getPlayer() == null ? 1 : 2), gain = this.damageDone / taux, max = 0;
-                                int stat = toApply.getArgs1();
-                                try {
-                                    max = toApply.getArgs2();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                    continue;
-                                }
-
-                                //on retire au max possible la valeur déjà gagné sur le chati
-                                int oldValue = (target.getChatiValue().get(stat) == null ? 0 : target.getChatiValue().get(stat));
-                                max -= oldValue;
-                                //Si gain trop grand, on le reduit au max
-                                if (gain > max) gain = max;
-                                //On met a jour les valeurs des chatis
-                                int newValue = oldValue + gain;
-
-                                if (stat == 108) {
-                                    // Chatiment vitalesque sans doute a reprendre
-                                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, stat, caster.getId() + "", target.getId() + "," + gain + "," + 5, elem);
-                                    target.setPdv(target.getPdv() + gain);
-                                    if(target.getPlayer() != null) SocketManager.GAME_SEND_STATS_PACKET(target.getPlayer());
-                                } else {
-                                    target.getChatiValue().put(stat, newValue);
-                                    target.addBuff(stat, gain, toApply.getDuration(), toApply.getArgs1(), -1, -1, true, toApply.getSpell(), caster, true);
-                                    SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, stat, caster.getId() + "", target.getId() + "," + gain + "," + 5, elem);
-                                }
-                                break;
-                            case 950 : // on ajoute un état
-                                int etatId = toApply.getArgs3();
-                                target.setState(etatId, toApply.getDuration());
-                                target.addBuff(toApply.getEffectID(), etatId, toApply.getDuration(), toApply.getArgs1(), -1, -1, false, toApply.getSpell(), caster, true);
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, onHitEffect.getEffectID(), caster.getId() + "", target.getId() + "," + etatId + ",1", toApply.getEffectID() );
-                                break;
-                            case 951 : // on supprime un état
-                                if (!target.haveState(toApply.getArgs3()))
-                                    continue;
-                                //on enleve l'�tat
-                                int etatId2 = toApply.getArgs3();
-                                target.setState(etatId2, 0);
-                                target.debuffState(etatId2);
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, onHitEffect.getEffectID(), caster.getId() + "", target.getId() + "," + etatId2 + ",0", toApply.getEffectID());
-                                break;
-                            default : // tous les autre cas basiques
-                                int random = toApply.getArgs1();
-                                // Si jamais valeur aléatoire en OnHit mais pas sur que ca existe actuellement
-                                if(toApply.getArgs2() != -1){
-                                    Random r = new Random();
-                                    int low = toApply.getArgs1();
-                                    int high = toApply.getArgs2();
-                                    int result = r.nextInt(high-low) + low;
-                                    random =   result;
-                                }
-                                target.addBuff(toApply.getEffectID(), random, toApply.getDuration(), toApply.getArgs1(), toApply.getArgs2(), toApply.getArgs3(), true, toApply.getSpell(), caster, true);
-                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId()+ "", target.getId() + "," + random + "," + toApply.getDuration(), toApply.getEffectID());
-                                break;
-                        }
-                    }
-                    else{
-                        //System.out.println(" pas les conditons " + EffectID);
-                    }
-                    break;
-                }
-                case 2 : { // ret PA/PM
-                    if(onHitEffect.getBuffOnHitConditions().contains(-1) || onHitEffect.getBuffOnHitConditions().contains(EffectID)){
-                        Effect toApply = onHitEffect.getSpellEffectToApply();
-                        if(toApply.getEffectID() != 108) {
-                            target.addBuff(toApply.getEffectID(), toApply.getArgs1(), toApply.getDuration(), toApply.getArgs1(), toApply.getArgs2(), toApply.getArgs3(), true, toApply.getSpell(), target, true);
-                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId() + "", target.getId() + "," + toApply.getArgs1() + "," + toApply.getDuration(), toApply.getEffectID());
-                        }
-                        else {
-                            int gain3 = toApply.getArgs1();
-                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId() + "", target.getId() + "," + gain3 + "," + 5, elem);
-                            target.setPdv(target.getPdv() + gain3);
-                            if(target.getPlayer() != null) SocketManager.GAME_SEND_STATS_PACKET(target.getPlayer());
-                        }
-                    }
-                    break;
-                }
-                case 3 : { // Si soin (cas pas encore géré car pas vu encore)
-                    if(onHitEffect.getBuffOnHitConditions().contains(-1) || onHitEffect.getBuffOnHitConditions().contains(EffectID)){
-                        Effect toApply = onHitEffect.getSpellEffectToApply();
-                        if(toApply.getEffectID() != 108) {
-                            target.addBuff(toApply.getEffectID(), toApply.getArgs1(), toApply.getDuration(), toApply.getArgs1(), toApply.getArgs2(), toApply.getArgs3(), true, toApply.getSpell(), target, true);
-                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId() + "", target.getId() + "," + toApply.getArgs1() + "," + toApply.getDuration(), toApply.getEffectID());
-                        }
-                        else {
-                            int gain3 = toApply.getArgs1();
-                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, toApply.getEffectID(), caster.getId() + "", target.getId() + "," + gain3 + "," + 5, elem);
-                            target.setPdv(target.getPdv() + gain3);
-                            if(target.getPlayer() != null) SocketManager.GAME_SEND_STATS_PACKET(target.getPlayer());
-                        }
-                    }
-
-                    break;
-                }
-                default: {
-                    break;
-                }
-            }
-        }*/
     }
 
-    private void applyEffect_PO(Fighter target, Fight fight)//Malus PO
+    private void applyEffect_PO(Fighter target, Fight fight,int dmg)//Malus PO
     {
-        int val = Formulas.getRandomJet(args1,args2,caster, target);
+        int val = Formulas.getAlteredJet(dmg,args2, target);
         target.addBuff(effectID, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, caster.getId()+ "", target.getId() + "," + val + "," + turn, this.effectID);
 
@@ -902,8 +815,8 @@ public class Effect  {
 			target.getTotalStats().addOneStat(effectID, val);*/
     }
 
-    private void applyEffect_320(Fight fight, Fighter target) {
-        int value = Formulas.getRandomJet(args1,args2,caster, target);
+    private void applyEffect_320(Fight fight, Fighter target,int dmg) {
+        int value = Formulas.getAlteredJet(dmg,args2, target);
 
         target.addBuff(EffectConstant.STATS_REM_PO, value, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PO, caster.getId()+ "", target.getId() + "," + value + "," + turn, this.effectID);
@@ -919,9 +832,9 @@ public class Effect  {
     }
 
     //Buff avec valeur a calculer car variable
-    private int applyEffect_Buff(Fighter target, Fight fight,boolean isUnbuffable)
+    private int applyEffect_Buff(Fighter target, Fight fight,boolean isUnbuffable,int dmg)
     {
-        int val = Formulas.getRandomJet(args1,args2,caster, target);
+        int val = Formulas.getAlteredJet(dmg,args2, target);
         target.addBuff(effectID, val, turn, args1,args2,args3, isUnbuffable, spellID, caster, true);
         sendClientBuff(fight,effectID,val,target.getId(),false);
         return val;
@@ -931,6 +844,12 @@ public class Effect  {
     private void applyEffect_SpellBuff(Fighter target) {
         target.addBuff(effectID, -1, turn, args1,args2,args3, true, spellID, caster, true);
     }
+
+    // On rajouter un buff boost
+    private void applyEffect_SpellBuffUnbuffable(Fighter target) {
+        target.addBuff(effectID, -1, turn, args1,args2,args3, false, spellID, caster, true);
+    }
+
 
     // Teleportation
     private void applyEffect_4(Fight fight) { // Teleportation
@@ -949,8 +868,6 @@ public class Effect  {
 
     // On pousse
     private void applyEffect_5(Fighter target, Fight fight) {
-
-
         // si c'est une invo statique ca bouge pas
         if (target.getMob() != null){
             if(ArrayUtils.contains(Constant.STATIC_INVOCATIONS,target.getMob().getTemplate().getId()))
@@ -1184,8 +1101,8 @@ public class Effect  {
     }
 
     // Vol PM - Fini !
-    private void applyEffect_77(Fighter target, Fight fight) {
-        int value = applyEffect_RetMP(target,fight);
+    private void applyEffect_77(Fighter target, Fight fight, int dmge) {
+        int value = applyEffect_RetMP(target,fight,dmge);
 
         if (value < 1)
             return;
@@ -1201,43 +1118,51 @@ public class Effect  {
     }
 
     //Bonus PM (debuffable) (Presque pas utilisé) - Fini !
-    private void applyEffect_AddMP(Fighter target, Fight fight,boolean isUnbuffable) {
-        int val = applyEffect_Buff(target,fight,isUnbuffable);
+    private void applyEffect_AddMP(Fighter target, Fight fight,boolean isUnbuffable,int dmg) {
+        int val = applyEffect_Buff(target,fight,isUnbuffable, dmg);
         if (target.canPlay())
             target.setCurPm(fight, val);
 
-        sendClientBuff(fight,effectID,val,target.getId(),false);
+        //sendClientBuff(fight,effectID,val,target.getId(),false);
     }
 
     //Retrait PM (debuffable) - Fini !
-    private int applyEffect_RetMP(Fighter target, Fight fight) {
-
-        int value = Formulas.getRandomJet(args1,args2,caster,target);
+    private int applyEffect_RetMP(Fighter target, Fight fight,int dmg) {
+        int value = Formulas.getAlteredJet(dmg,args2, target);
         int retrait = Formulas.getPointsLost('m', value, caster, target);
 
         if ((value - retrait) > 0)
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 309, caster.getId()+ "", target.getId() + "," + (value - retrait), this.effectID);
 
-        if (retrait > 0) {
-            target.addBuff(effectID, value, turn, args1,args2,args3, true, spellID, caster, true);
-            sendClientBuff(fight,EffectConstant.STATS_REM_PM,value,target.getId(),true);
+        if (retrait <= 0)
+            return 0;
+
+        if(turn != 0) {
+            target.addBuff(effectID, retrait, turn, args1, args2, args3, true, spellID, caster, true);
+            sendClientBuff(fight, EffectConstant.STATS_REM_PM, retrait, target.getId(), true);
+        }
+        else{
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PM, caster.getId()+ "", target.getId() + "," + -(retrait), this.effectID);
+            // Si le prochain tour du joueurs c'est le tour actuel on le place directement,
+            if(fight.getFighterByOrdreJeu() == target) {
+                target.setCurPm(fight, -retrait);
+            }
+            else{ // sinon on le prépare pour son debut de prochain tour prochain
+                target.setCurRemovedPm(target.getCurRemovedPm() + retrait);
+            }
         }
 
-        if(target.canPlay())
-            target.setCurPm(fight, -retrait);
-
         applyEffectAfterHit(fight,target,caster,retrait);
-
         return value;
     }
 
     // Refait a tester // - PA, no esquivables
-    private void applyEffect_168(Fighter cible, Fight fight) {
-        int value = Formulas.getRandomJet(args1,args2,caster,cible);
+    private void applyEffect_168(Fighter cible, Fight fight,int dmg) {
+        int value = Formulas.getAlteredJet(dmg,args2, cible);
         cible.addBuff(effectID, value, turn, args1,args2,args3, true, spellID, caster, true);
 
-        if (turn <= 1 )
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, cible.getId()+ "", cible.getId() + ",-" + value, this.effectID);
+        //if (turn <= 1 )
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PA, cible.getId()+ "", cible.getId() + ",-" + value, this.effectID);
 
         if (fight.getFighterByOrdreJeu() == cible)
             fight.setCurFighterPa(fight.getCurFighterPa() - value);
@@ -1246,22 +1171,32 @@ public class Effect  {
     }
 
     // Refait a tester // - PM, no esquivables
-    private void applyEffect_169(Fighter cible, Fight fight) {
-        int value = Formulas.getRandomJet(args1,args2,caster,cible);
-        cible.addBuff(effectID, value, turn, args1,args2,args3, true, spellID, caster, true);
-        if (turn <= 1 )
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, cible.getId() + "", cible.getId() + ",-" + value, this.effectID);
+    private void applyEffect_169(Fighter cible, Fight fight,int dmg) {
+        int value = Formulas.getAlteredJet(dmg,args2, cible);
 
-        if (fight.getFighterByOrdreJeu() == cible)
-            fight.setCurFighterPm(fight.getCurFighterPm() - value);
+        // Si c'est un buff c'est pour plusieurs tours ou infini si -1 (et potentiellement débuffable)
+        if (turn != 0 ) {
+            cible.addBuff(effectID, value, turn, args1, args2, args3, true, spellID, caster, true);
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PM, cible.getId() + "", cible.getId() + ",-" + value, this.effectID);
+        } // Si c'est juste pour le prochain tour du joueur,
+        else{
+            // Si le prochain tour du joueurs c'est le tour actuel on le place directement,
+            if(fight.getFighterByOrdreJeu() == cible) {
+                fight.setCurFighterPm(fight.getCurFighterPm() - value);
+            }
+            else{ // sinon on le prépare pour son debut de prochain tour prochain
+                cible.setCurRemovedPm(cible.getCurRemovedPm() + value);
+            }
+        }
 
+        // C'est c'est juste qu'on vérifie si la cible a un effet on Hit qui proc sur du retrait PM potentiellement
         applyEffectAfterHit(fight,cible,caster,value);
     }
 
     // Heal (PV rendu)
-    private void applyEffect_81(Fighter target, Fight fight, boolean isCaC) {
+    private void applyEffect_81(Fighter target, Fight fight, boolean isCaC,int dmg) {
         if (turn == 0) {
-            int heal = Formulas.getRandomJet(args1,args2, caster,target);
+            int heal = Formulas.getAlteredJet(dmg,args2, target);
 
             // Why ??????   heal = getMaxMinSpell(cible, heal);
             int pdvMax = target.getPdvMax();
@@ -1281,9 +1216,9 @@ public class Effect  {
     }
 
     // Vol de vie (valeur fixe)
-    private void applyEffect_82(Fighter target, Fight fight) {
+    private void applyEffect_82(Fighter target, Fight fight,int dmg) {
         if (turn == 0) {
-            int finalDommage = Formulas.getRandomJet(args1,args2, caster, target);
+            int finalDommage = Formulas.getAlteredJet(dmg,args2, target);
             //finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
             if (finalDommage > target.getPdv())
                 finalDommage = target.getPdv();//Target va mourrir
@@ -1306,19 +1241,30 @@ public class Effect  {
     }
 
     // Vol PA corrigé !
-    private void applyEffect_84(Fighter target, Fight fight) {
-        int value = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_84(Fighter target, Fight fight,int dmg) {
+        int value = Formulas.getAlteredJet(dmg,args2, target);
         int val = Formulas.getPointsLost('a', value, caster, target);
         if (val < value)
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 308, caster.getId() + "", target.getId() + "," + (value - val), this.effectID);
 
         if (val < 1)
             return;
-        //if(turn ==0) // Pour les cas de vol pendant 1 tour
-        // TODO : Pour le tour en cours on rajoute un tour ? (il faudrait oui)
 
-        target.addBuff(effectID, val, turn+1, args1,args2,args3, true, spellID, caster, true);
-        sendClientBuff(fight,EffectConstant.STATS_REM_PA,val,target.getId(),true);
+        if(turn != 0) {
+            target.addBuff(effectID, val, turn, args1, args2, args3, true, spellID, caster, true);
+            sendClientBuff(fight, EffectConstant.STATS_ADD_PA, val, target.getId(), true);
+        }
+        else{
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PA, target.getId() + "", target.getId() + ",-" + val, this.effectID);
+            // Si le prochain tour du joueurs c'est le tour actuel on le place directement,
+            if(fight.getFighterByOrdreJeu() == target) {
+                fight.setCurFighterPa(fight.getCurFighterPm() - value);
+            }
+            else{ // sinon on le prépare pour son debut de prochain tour prochain
+                target.setCurRemovedPa(target.getCurRemovedPa() + value);
+            }
+        }
+
         applyEffectAfterHit(fight,target,caster,val);
 
         int num = val;
@@ -1335,7 +1281,7 @@ public class Effect  {
     }
 
     // Dommage %vita pour le lanceur (Type Furie, Mot Stimulant)
-    private void applyEffect_PerVitaDmg(Fighter target, Fight fight) {
+    private void applyEffect_PerVitaDmg(Fighter target, Fight fight,int dmge) {
         if (turn == 0) {
             int resP =0;
             int resF =0;
@@ -1392,7 +1338,7 @@ public class Effect  {
 
             }
 
-            int dmg = Formulas.getRandomJet(args1,args2, caster, target);//%age de pdv inflig�
+            int dmg = Formulas.getAlteredJet(dmge,args2, target);//%age de pdv inflig�
             int val = Math.round(caster.getPdv() / 100 * dmg);//Valeur des d�gats
             //retrait de la r�sist fixe
             val -= resF;
@@ -1434,7 +1380,7 @@ public class Effect  {
     // Don de vie
     private void applyEffect_90(ArrayList<Fighter> cibles, Fight fight) {
 
-        int value = Formulas.getRandomJet(args1,args2,null,null);
+        int value = Formulas.getRandomJet(args1,args2,caster);
         int val = Math.round(value * (caster.getPdv() / 100));
 
         //Calcul des Doms recus par le lanceur
@@ -1469,9 +1415,9 @@ public class Effect  {
     }
 
     // Du soin fixe qui ne prend en compte que les bonus /malus en soin (sans l'intel)
-    private void applyEffect_143(Fighter cible, Fight fight) {
+    private void applyEffect_143(Fighter cible, Fight fight,int dmge) {
         if (turn <= 0) {
-            int val = Formulas.getRandomJet(args1, args2, caster, cible);
+            int val = Formulas.getAlteredJet(dmge,args2, cible);
             if(val == -1)return;
 
             int heals = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_SOIN) - caster.getTotalStats().getEffect(EffectConstant.STATS_REM_SOIN);
@@ -1494,21 +1440,18 @@ public class Effect  {
 
     //Vol de vie (tout elem confondu)
     private void applyEffect_LifeSteal(Fighter target, Fight fight,
-                                       boolean isCaC) {
+                                       boolean isCaC,int dmge) {
         if (!isBuff) {
-            int dmg = Formulas.getRandomJet(args1,args2,caster,target);
+            int dmg = Formulas.getAlteredJet(dmge,args2, target);
             int finalDommage = this.calculFinalDommage(fight, caster, target, this.elem, dmg, false, isCaC, spellID);
             finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,caster,fight,this.elem);
             //Peut etre du Heal si Chance d'eca du coup
 
-            System.out.println(finalDommage);
-
-
             if(finalDommage >= 0) {
                 if (finalDommage > target.getPdv())
                     finalDommage = target.getPdv();//Target va mourrir
-                target.removePdv(caster, finalDommage);
 
+                target.removePdv(caster, finalDommage);
                 sendClientDamage(fight, target.getId(), finalDommage);
 
                 int steal = Math.round(finalDommage/2);
@@ -1529,24 +1472,19 @@ public class Effect  {
 
     //Attaque elementaire basique
     private void applyEffect_DamageElem(Fighter target, Fight fight,
-                                        boolean isCaC)
+                                        boolean isCaC,int dmge)
     {
-
         if (turn == 0) {
-            int dmg = Formulas.getRandomJet(args1,args2, caster, target);
-
+            int dmg = Formulas.getAlteredJet(dmge,args2, target);
             int finalDommage = this.calculFinalDommage(fight, caster, target, this.elem, dmg, false, isCaC, spellID);
             finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,caster,fight,this.elem);
 
-            if (finalDommage > target.getPdv())
-                finalDommage = target.getPdv();//Target va mourrir
-            target.removePdv(caster, finalDommage);
-
             if(finalDommage >= 0) {
+                if (finalDommage > target.getPdv())
+                    finalDommage = target.getPdv();//Target va mourrir
+                target.removePdv(caster, finalDommage);
                 sendClientDamage(fight, target.getId(), finalDommage);
-            }
-            else{
-                sendClientHeal(fight, target.getId(), finalDommage);
+
             }
 
             applyEffectAfterHit(fight,target,caster,finalDommage);
@@ -1556,29 +1494,40 @@ public class Effect  {
         }
     }
 
-    private void applyEffect_RetAP(Fighter target, Fight fight) {
-        int value = Formulas.getRandomJet(args1,args2, caster, target);
+    private void applyEffect_RetAP(Fighter target, Fight fight,int dmge) {
+        int value = Formulas.getAlteredJet(dmge,args2, target);
         int remove = Formulas.getPointsLost('a', value, caster, target);
 
         if ((value - remove) > 0)
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 308, caster.getId() + "", target.getId() + "," + (value - remove), this.effectID);
 
-        if (remove > 0) {
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 101, target.getId() + "", target.getId() + ",-" + remove, this.effectID);
-            if(turn != 0)
-                target.addBuff(effectID, remove, turn, args1,args2,args3, true, spellID, caster, true);
-                //target.addBuff(effectID, remove, turns, turns, false, spell, args, caster, false);
-        }
-        applyEffectAfterHit(fight,target,caster,remove);
+        if(remove < 0)
+            return;
 
-        if (fight.getFighterByOrdreJeu() == target)
-            fight.setCurFighterPa(fight.getCurFighterPa() - remove);
+
+
+        if(turn != 0) {
+            target.addBuff(effectID, remove, turn, args1, args2, args3, true, spellID, caster, true);
+            sendClientBuff(fight, EffectConstant.STATS_REM_PA, remove, target.getId(), true);
+        }
+        else{
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PA, target.getId() + "", target.getId() + ",-" + remove, this.effectID);
+            // Si le prochain tour du joueurs c'est le tour actuel on le place directement,
+            if(fight.getFighterByOrdreJeu() == target) {
+                fight.setCurFighterPa(fight.getCurFighterPa() - remove);
+            }
+            else{ // sinon on le prépare pour son debut de prochain tour prochain
+                target.setCurRemovedPa(target.getCurRemovedPa() + remove);
+            }
+        }
+
+        applyEffectAfterHit(fight,target,caster,remove);
     }
 
     // Heal  TODO : Why ????   if (isCaC) return;
-    private void applyEffect_108(Fighter cible, Fight fight, boolean isCaC) {
+    private void applyEffect_108(Fighter cible, Fight fight, boolean isCaC,int dmge) {
         if (turn <= 0) {
-            int heal = Formulas.getRandomJet(args1,args2, caster,cible);
+            int heal = Formulas.getAlteredJet(dmge,args2, cible);
 
             // Why ??????   heal = getMaxMinSpell(cible, heal);
             int pdvMax = cible.getPdvMax();
@@ -1597,9 +1546,9 @@ public class Effect  {
     }
 
     //Dommage pour le lanceur (pas tout le temps fixe) - Ca n'existe pas en buff
-    private void applyEffect_109(Fight fight)
+    private void applyEffect_109(Fight fight,int dmge)
     {
-            int dmg = Formulas.getRandomJet(args1,args2, caster, caster);
+            int dmg = Formulas.getAlteredJet(dmge,args2, caster);
             int finalDommage = calculFinalDommage(fight, caster, caster, -1, dmg, false, false, spellID);
             //finalDommage = applyOnHitBuffs(finalDommage, caster, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
 
@@ -1612,8 +1561,8 @@ public class Effect  {
     }
 
     // Vol de kamas ca n'existe pas en buff
-    private void applyEffect_130(Fight fight, Fighter target) {
-        int kamas = Formulas.getRandomJet(args1,args2, caster, target);
+    private void applyEffect_130(Fight fight, Fighter target,int dmge) {
+        int kamas = Formulas.getAlteredJet(dmge,args2, target);
         if (caster.getPlayer() == null) return;
 
         if (target.getPlayer() != null) {
@@ -1644,7 +1593,6 @@ public class Effect  {
     // On Unbuff
     private void applyEffect_132(Fighter target, Fight fight) {
         target.debuff();
-        if (target.isHide()) target.unHide(spellID);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 132, caster.getId() + "", target.getId() + "", this.effectID);
         target.rebuff();
         //target.toRebuff =true;
@@ -1658,7 +1606,7 @@ public class Effect  {
 
     // On tue tout simplement
     private void applyEffect_141(Fight fight, Fighter target) {
-        fight.onFighterDie(target, target);
+        fight.onFighterDie(target, caster);
     }
 
     // Change l'apparence
@@ -1711,8 +1659,8 @@ public class Effect  {
     }
 
     // Don PA
-    private void applyEffect_AddAP(Fighter target, Fight fight) {
-        int val = applyEffect_Buff(target,fight,true);
+    private void applyEffect_AddAP(Fighter target, Fight fight,int dmge) {
+        int val = applyEffect_Buff(target,fight,true,dmge);
         //Gain de PA pendant le tour de jeu
         if (target.canPlay() && target == caster)
             target.setCurPa(fight, val);
@@ -1813,6 +1761,10 @@ public class Effect  {
         if (id == -1 || level == -1 || MG == null)
             return;
 
+        if(fight.getType() == Constant.FIGHT_TYPE_PVM && caster.getMob() != null && caster.getTeam() == 1) {
+            if(fight.getdifficulty() > 0)
+                MG.GrowMGByDiff(fight.getdifficulty());
+        }
         MG.setInFightID(fight.getNextLowerFighterGuid());
 
         Fighter F;
@@ -1850,8 +1802,12 @@ public class Effect  {
         String gm = F.getGmPacket('+', true).substring(3);
         String gtl = fight.getGTL();
         try {
-            if (this.caster.getMob() != null)
+            if (this.caster.getMob() != null) {
                 Thread.sleep(1000);
+                if(fight.getdifficulty() > 0 && fight.getType() == Constant.FIGHT_TYPE_PVM && caster.getTeam() == 1) {
+                    F.buffMobByDiff(fight.getdifficulty());
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1916,8 +1872,8 @@ public class Effect  {
     }
 
     // On vol des stats brute EAU
-    private void applyEffect_266(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_266(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_CHAN, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_CHAN, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -1931,8 +1887,8 @@ public class Effect  {
     }
 
     // On vol des stats brute VIE
-    private void applyEffect_267(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_267(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_VITA, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_VITA, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -1946,8 +1902,8 @@ public class Effect  {
     }
 
     // On vol des stats brute AGI
-    private void applyEffect_268(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_268(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_AGIL, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_AGIL, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -1961,8 +1917,8 @@ public class Effect  {
     }
 
     // On vol des stats brute INT
-    private void applyEffect_269(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_269(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_INTE, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_INTE, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -1976,8 +1932,8 @@ public class Effect  {
     }
 
     // On vol des stats brute SAG
-    private void applyEffect_270(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_270(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_SAGE, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_SAGE, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -1991,8 +1947,8 @@ public class Effect  {
     }
 
     // On vol des stats brute FOR
-    private void applyEffect_271(Fight fight, Fighter target) {
-        int val = Formulas.getRandomJet(args1,args2, caster,target);
+    private void applyEffect_271(Fight fight, Fighter target,int dmge) {
+        int val = Formulas.getAlteredJet(dmge,args2, target);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_FORC, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_FORC, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2068,13 +2024,13 @@ public class Effect  {
 
     // D'abord il tue puis l'invoque si il y en a une dans la zone et la remplace par un invoque
     private void applyEffect_405(Fighter target,Fight fight) {
-        fight.onFighterDie(target, target);
+        fight.onFighterDie(target, caster);
         applyEffect_181(fight);
     }
 
     // Dommage %vita pour le lanceur mais non typé (donc prend pas en compte les résistances)
-    private void applyEffect_671(Fighter target, Fight fight) {
-        applyEffect_PerVitaDmg(target, fight);
+    private void applyEffect_671(Fighter target, Fight fight,int dmge) {
+        applyEffect_PerVitaDmg(target, fight,dmge);
     }
 
     //Punition (donc dégat en fonction du % de PV restant)
@@ -2302,14 +2258,7 @@ public class Effect  {
     // TODO Nope ca c'est arbre de soin
     private void applyEffect_786(Fight fight) {
 
-        // On créé le buff pour l'affichage en jeu
-        caster.addBuff(effectID, -1, turn, args1,args2,args3, false, spellID, caster, true);
 
-        // On créé un buff caché qui se lance quand tapé
-        Effect chatiment = new Effect(effectID,0,args3,args2,0,0,caster,spellID,true); // On créer un tout nouveau buff pour ce chatiment
-
-        // On ajoute a la liste des buffOnHit de la target
-        caster.addBuffOnHit(effectID,args1,args2,args3,0,turn,5,chatiment,caster,spellID,1);
     }
 
     // TODO a reprendre
@@ -2340,21 +2289,21 @@ public class Effect  {
         Effect chatiment = new Effect(args1,0,args3,args2,0,0,caster,spellID,true); // On créer un tout nouveau buff pour ce chatiment
 
         // On ajoute a la liste des buffOnHit de la target
-        target.addBuffOnHit(effectID,args1,args2,args3,0,turn,5,chatiment,caster,spellID,0);
+        target.addBuffOnHit(effectID,args1,args2,args3,0,turn,World.world.getEffectTrigger(5), chatiment,caster,spellID,0);
     }
 
     // Applique un état
     private void applyEffect_950(Fight fight, Fighter target) {
         int etatId = this.getArgs3();
-        if (turn <= 0) {
+        if (turn == 0) {
             target.setState(etatId, turn);
             //target.addBuff(this.getEffectID(), etatId, turn, args1, -1, -1, false, spellID, caster, true);
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, this.getEffectID(), caster.getId()+ "", target.getId() + "," + etatId + ",1", this.effectID);
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, this.getEffectID(), target.getId()+ "", target.getId() + "," + etatId + ",1", this.effectID);
         }
         else{
             target.setState(etatId, turn);
+            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, this.getEffectID(), target.getId() + "", target.getId() + "," + etatId + ",1", this.effectID);
             target.addBuff(this.getEffectID(), etatId, turn, args1, -1, -1, false, spellID, caster, true);
-            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, this.getEffectID(), caster.getId() + "", target.getId() + "," + etatId + ",1", this.effectID);
         }
     }
 
@@ -2368,7 +2317,7 @@ public class Effect  {
 
         target.setState(etatId, 0);
         target.debuffState(etatId);
-        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, caster.getId() + "", target.getId() + "," + etatId + ",0", this.getEffectID());
+        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, target.getId() + "", target.getId() + "," + etatId + ",0", this.getEffectID());
     }
 
 
@@ -2376,7 +2325,8 @@ public class Effect  {
         this.turn = 0;
         this.isPoison = true;
         // TODO : pas sur la a controller du coup non
-        this.applyEffectOnTarget(fight,fighter);
+        int dmge = Formulas.getRandomJet(args1,args2,caster);
+        this.applyEffectOnTarget(fight,fighter, dmge);
 
         //this.applyEffectToFight(fight, this.caster, fighter.getCell());
     }
@@ -2396,6 +2346,7 @@ public class Effect  {
                                 finalDommage = -(finalDommage * coefHeal);
                                 if (-finalDommage > (target.getPdvMax() - target.getPdv()))
                                     finalDommage = -(target.getPdvMax() - target.getPdv());
+
                                 target.removePdv(caster, finalDommage);
                                 sendClientHeal(fight, target.getId(), finalDommage);
                             } else//Dommage
@@ -2494,6 +2445,13 @@ public class Effect  {
             fighter.removePdv(fighter, dgt);
             dgt = -(dgt);
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, this.getCaster().getId() + "", fighter.getId() + "," + dgt);
+
+            // Si la cible est morte après l'effet
+            if (fighter.getPdv() <= 0 && !fighter.isDead()) {
+                fighter.setPdv(0);
+                fight.onFighterDie(fighter, fighter);
+            }
+
 
     }
 
@@ -2637,6 +2595,10 @@ public class Effect  {
         return this.effectTarget;
     }
 
+    public void setEffectTarget(int effectTarget) {
+        this.effectTarget = effectTarget;
+    }
+
     public int getEffectID() {
         return this.effectID;
     }
@@ -2701,7 +2663,8 @@ public class Effect  {
     }
 
     public int decrementDuration() {
-        duration -= 1;
+        if(duration != 0)
+            duration -= 1;
         return duration;
     }
 
@@ -2760,5 +2723,30 @@ public class Effect  {
         }, time, TimeUnit.MILLISECONDS);
     }
 
+
+
 }
+
+class EffectApplication {
+    private Effect effect;
+    private List<Fighter> targets;
+
+    public EffectApplication(Effect effect) {
+        this.effect = effect;
+        this.targets = new ArrayList<>();
+    }
+
+    public void addTarget(Fighter target) {
+        this.targets.add(target);
+    }
+
+    public Effect getEffect() {
+        return effect;
+    }
+
+    public List<Fighter> getTargets() {
+        return targets;
+    }
+}
+
 

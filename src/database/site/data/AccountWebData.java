@@ -5,14 +5,13 @@ import client.Account;
 import client.AccountWeb;
 import com.zaxxer.hikari.HikariDataSource;
 import database.Database;
-import database.statics.AbstractDAO;
+import database.site.AbstractDAO;
 import game.world.World;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class AccountWebData extends AbstractDAO<AccountWeb> {
 
@@ -21,36 +20,55 @@ public class AccountWebData extends AbstractDAO<AccountWeb> {
         logger.setLevel(Level.ERROR);
     }
 
-    @Override
     public void load(Object accountid) {
-        Result result = null;
-        try {
-            result = super.getData("SELECT * from users RIGHT JOIN dofus129_in_game_web_account_relations on dofus129_in_game_web_account_relations.azuriom_id = users.id WHERE dofus129_in_game_web_account_relations.dofus_id = " + accountid );
-            ResultSet RS = result.resultSet;
-            if(RS != null){
+        String query = "SELECT * from users where id = " + accountid;
+        try (Result result = super.getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
                 while (RS.next()) {
-                    Map<Integer, Integer> accountsID = new HashMap<>();
-                    AccountWeb test = World.world.getWebAccount( RS.getInt("id"));
-                    if( test == null) {
+                    AccountWeb test = World.world.getWebAccount(RS.getInt("id"));
+                    if (test == null) {
+                        if (RS.getString("name").contains("Deleted")) continue;
                         if (RS.getString("email").isEmpty()) continue;
 
-                        accountsID.put(0,RS.getInt("dofus_id"));
-                        AccountWeb C = new AccountWeb(RS.getInt("id"), RS.getString("email").toLowerCase(), RS.getString("name"), RS.getInt("is_banned"), RS.getString("last_login_ip"), RS.getString("last_login_at"), RS.getInt("money"),accountsID, RS.getInt("role_id"));
+                        AccountWeb C = new AccountWeb(RS.getInt("id"), RS.getString("email").toLowerCase(), RS.getString("name"), RS.getInt("is_banned"), RS.getString("last_login_ip"), RS.getTimestamp("last_login_at"), RS.getInt("money"), RS.getInt("role_id"));
                         World.world.addWebAccount(C);
-                        World.world.ReassignAccountWebToAccount(C);
-                    }
-                    else{
-                        test.addAccountId(RS.getInt("dofus_id"));
                     }
                 }
-            }
-            else{
-                //System.out.println("Pas de compte web associé à "+ accountid);
+            } else {
+                System.out.println("Pas de compte web associé à " + accountid);
             }
         } catch (Exception e) {
             super.sendError("AccountWebData load by account id", e);
-        } finally {
-            close(result);
+        }
+    }
+
+    public void loadWebAccountFromGameAccount(Account account) {
+        if (account == null) {
+            return;
+        }
+
+        String query = "SELECT * from users RIGHT JOIN dofus129_in_game_web_account_relations on dofus129_in_game_web_account_relations.azuriom_id = users.id WHERE dofus129_in_game_web_account_relations.dofus_id = " + account.getId();
+        try (Result result = super.getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    AccountWeb test = World.world.getWebAccount(RS.getInt("id"));
+                    if (test == null) {
+                        if (RS.getString("name").contains("Deleted")) continue;
+                        if (RS.getString("email").isEmpty()) continue;
+
+                        test = new AccountWeb(RS.getInt("id"), RS.getString("email").toLowerCase(), RS.getString("name"), RS.getInt("is_banned"), RS.getString("last_login_ip"), RS.getTimestamp("last_login_at"), RS.getInt("money"), RS.getInt("role_id"));
+                        World.world.addWebAccount(test);
+                    }
+                    test.addAccount(account);
+                    account.setWebaccount(test);
+                }
+            } else {
+                System.out.println("Pas de compte web associé à " + account.getId());
+            }
+        } catch (SQLException e) {
+            super.sendError("AccountWebData loadWebAccountFromGameAccount", e);
         }
     }
 
@@ -60,45 +78,66 @@ public class AccountWebData extends AbstractDAO<AccountWeb> {
     }
 
     public void load() {
-        Result result = null;
+        String query = "SELECT * from users";
+        try (Result result = super.getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (RS.getString("email") == null) continue;
+                    if (RS.getString("name").contains("Deleted")) continue;
 
-        try {
-            result = super.getData("SELECT * from users RIGHT JOIN dofus129_in_game_web_account_relations on dofus129_in_game_web_account_relations.azuriom_id = users.id");
-            ResultSet RS = result.resultSet;
-
-            while (RS.next()) {
-                Map<Integer, Integer> accountsID = new HashMap<>();
-                if(RS.getString("email") == null) continue;
-
-                AccountWeb test = World.world.getWebAccount( RS.getInt("id"));
-                if( test == null) {
-                    accountsID.put(0, RS.getInt("dofus_id"));
-                    AccountWeb a = new AccountWeb(RS.getInt("id"), RS.getString("email").toLowerCase(), RS.getString("name"), RS.getInt("is_banned"), RS.getString("last_login_ip"), RS.getString("last_login_at"), RS.getInt("money"), accountsID, RS.getInt("role_id"));
+                    AccountWeb a = new AccountWeb(RS.getInt("id"), RS.getString("email").toLowerCase(), RS.getString("name"), RS.getInt("is_banned"), RS.getString("last_login_ip"), RS.getTimestamp("last_login_at"), RS.getInt("money"), RS.getInt("role_id"));
                     World.world.addWebAccount(a);
                 }
-                else{
-                    test.addAccountId(RS.getInt("dofus_id"));
-                }
-
             }
         } catch (Exception e) {
             super.sendError("AccountWebData load", e);
-        } finally {
-            close(result);
+        }
+    }
+
+    public void syncGameAccountWithWebAccount() {
+        String query = "SELECT * from dofus129_in_game_web_account_relations";
+        try (Result result = super.getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (RS.getInt("azuriom_id") == 0 || RS.getInt("dofus_id") == 0) continue;
+
+                    AccountWeb test = World.world.getWebAccount(RS.getInt("azuriom_id"));
+                    if (test == null) {
+                        load(RS.getInt("azuriom_id"));
+                        test = World.world.getWebAccount(RS.getInt("azuriom_id"));
+                        if (test == null) {
+                            // Compte Web non trouvé ou supprimé pour compte Game
+                            continue;
+                        }
+                    }
+
+                    Account a = World.world.getAccount(RS.getInt("dofus_id"));
+                    if (a == null) {
+                        Database.getStatics().getAccountData().load(RS.getInt("dofus_id"));
+                        a = World.world.getAccount(RS.getInt("dofus_id"));
+                        if (a == null) {
+                            System.out.println("Compte Game non trouvé ou supprimé pour compte azuriom :" + RS.getInt("azuriom_id"));
+                            continue;
+                        }
+                    }
+                    test.addAccount(a);
+                    a.setWebaccount(test);
+                }
+            }
+        } catch (Exception e) {
+            super.sendError("AccountWebData syncGameAccountWithWebAccount", e);
         }
     }
 
     public boolean delete(int accountID) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE from dofus129_in_game_web_account_relations WHERE dofus_id = " + accountID);
-            p.execute();
-
+        String query = "DELETE from dofus129_in_game_web_account_relations WHERE dofus_id = " + accountID;
+        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
+            executeUpdate(wrapper);
             return true;
         } catch (SQLException e) {
-            super.sendError("PlayerData delete", e);
-        } finally {
-            close(p);
+            super.sendError("AccountWebData delete", e);
         }
         return false;
     }
@@ -117,97 +156,47 @@ public class AccountWebData extends AbstractDAO<AccountWeb> {
     }
 
     public void updatePointsWithoutUsersDb(int id, int points) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE users SET money = ? WHERE id = ?");
+        String query = "UPDATE users SET money = ? WHERE id = ?";
+        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
+            PreparedStatement p = wrapper.getPreparedStatement();
             p.setInt(1, points);
             p.setInt(2, id);
-            execute(p);
+            executeUpdate(wrapper);
         } catch (SQLException e) {
             super.sendError("AccountWebData updatePoints", e);
-        } finally {
-            close(p);
         }
     }
 
     public int loadRoleWithUsersDb(int accountID) {
-        Result result = null;
-        int role = 1;
-        try {
-            result = super.getData("SELECT role_id FROM users WHERE id = " + accountID);
-            if(result != null) {
-                ResultSet RS = result.resultSet;
+        String query = "SELECT role_id FROM users WHERE id = " + accountID;
+        try (Result result = super.getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
                 if (RS.next()) {
-                    role = RS.getInt("role_id");
+                    return RS.getInt("role_id");
                 }
             }
         } catch (SQLException e) {
-            super.sendError("AccountData loadPoints", e);
-        } finally {
-            close(result);
+            super.sendError("AccountWebData loadRoleWithUsersDb", e);
         }
-        return role;
+        return 1; // Valeur par défaut si aucune donnée n'est trouvée ou en cas d'erreur
     }
 
     public int loadPointsWithUsersDb(int accountID) {
-        Result result = null;
-        int points = 0, user = -1;
-        try {
-            result = super.getData("SELECT money FROM users WHERE id = " + accountID);
-            if(result != null) {
-                ResultSet RS = result.resultSet;
-                if (RS.next()) {
-                    points = RS.getInt("money");
+        String query = "SELECT money FROM users WHERE id = ?";
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1, accountID);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("money");
                 }
             }
-            else{
-                points = -1;
-            }
         } catch (SQLException e) {
-            super.sendError("AccountData loadPoints", e);
-        } finally {
-            close(result);
+            super.sendError("AccountWebData loadPointsWithUsersDb", e);
         }
-        return points;
+        return 0;
     }
-
-    /*
-    public void updatePointsWithUsersDb(int id, int points) {
-        PreparedStatement p = null;
-        int user = -1;
-        try {
-            Result result = super.getData("SELECT guid, users FROM `accounts` WHERE `guid` LIKE '" + id + "'");
-            ResultSet RS = result.resultSet;
-            if (RS.next()) user = RS.getInt("users");
-            close(result);
-
-            if(user != -1) {
-                p = getPreparedStatement("UPDATE `users` SET `points` = ? WHERE `id` = ?;");
-                p.setInt(1, points);
-                p.setInt(2, id);
-                execute(p);
-            }
-        } catch (SQLException e) {
-            super.sendError("AccountData updatePoints", e);
-        } finally {
-            close(p);
-        }
-    }
-    public int loadPointsWithoutUsersDb(int user) {
-        Result result = null;
-        int points = 0;
-        try {
-            result = super.getData("SELECT * from accounts WHERE `account` LIKE '"
-                    + user + "'");
-            ResultSet RS = result.resultSet;
-            if (RS.next()) {
-                points = RS.getInt("points");
-            }
-        } catch (SQLException e) {
-            super.sendError("AccountData loadPoints", e);
-        } finally {
-            close(result);
-        }
-        return points;
-    }*/
 }

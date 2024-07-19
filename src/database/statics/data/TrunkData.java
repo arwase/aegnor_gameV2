@@ -29,61 +29,56 @@ public class TrunkData extends AbstractDAO<Trunk> {
 		return false;
 	}
 
-	public int load() {
-		Result result = null;
-		int nbr = 0;
-		try {
-			result = getData("SELECT * from coffres");
-			ResultSet RS = result.resultSet;
-			while (RS.next()) {
-                Trunk trunk = new Trunk(RS.getInt("id"), RS.getInt("id_house"), RS.getShort("mapid"), RS.getInt("cellid"));
-				World.world.addTrunk(trunk);
-                Database.getDynamics().getTrunkData().exist(trunk);
-				nbr++;
-			}
-		} catch (SQLException e) {
-			super.sendError("CoffreData load", e);
-		} finally {
-			close(result);
-		}
-		return nbr;
-	}
+    public int load() {
+        String query = "SELECT * from coffres";
+        int nbr = 0;
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    Trunk trunk = new Trunk(RS.getInt("id"), RS.getInt("id_house"), RS.getShort("mapid"), RS.getInt("cellid"));
+                    World.world.addTrunk(trunk);
+                    Database.getDynamics().getTrunkData().exist(trunk);
+                    nbr++;
+                }
+            }
+        } catch (SQLException e) {
+            sendError("CoffreData load", e);
+        }
+        return nbr;
+    }
+
 
     public void insert(Trunk trunk) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("INSERT INTO `coffres` (`id`, `id_house`, `mapid`, `cellid`) " +
-                    "VALUES (?, ?, ?, ?)");
+        String query = "INSERT INTO `coffres` (`id`, `id_house`, `mapid`, `cellid`) VALUES (?, ?, ?, ?)";
+        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
+            PreparedStatement p = wrapper.getPreparedStatement();
             p.setInt(1, trunk.getId());
             p.setInt(2, trunk.getHouseId());
             p.setInt(3, trunk.getMapId());
             p.setInt(4, trunk.getCellId());
-            execute(p);
+            executeUpdate(wrapper);
 
             Database.getDynamics().getTrunkData().insert(trunk);
         } catch (SQLException e) {
-            super.sendError("Coffre insert", e);
-        } finally {
-            close(p);
+            sendError("Coffre insert", e);
         }
     }
 
+
     public int getNextId() {
-        Result result = null;
+        String query = "SELECT MAX(id) AS max FROM `coffres`";
         int guid = -1;
-        try {
-            result = getData("SELECT MAX(id) AS max FROM `coffres`");
-            ResultSet RS = result.resultSet;
-
-            boolean found = RS.first();
-
-            if (found)
-                guid = RS.getInt("max") + 1;
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (RS.first()) {
+                    guid = RS.getInt("max") + 1;
+                }
+            }
         } catch (SQLException e) {
-            super.sendError("CoffreData getNextId", e);
+            sendError("CoffreData getNextId", e);
             Main.INSTANCE.stop("unknown");
-        } finally {
-            close(result);
         }
         return guid;
     }

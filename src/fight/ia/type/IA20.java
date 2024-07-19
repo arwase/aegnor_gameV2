@@ -2,7 +2,7 @@ package fight.ia.type;
 
 import fight.Fight;
 import fight.Fighter;
-import fight.ia.AbstractIA;
+import fight.ia.AbstractNeedSpell;
 import fight.ia.util.Function;
 
 import java.util.ArrayList;
@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * Created by Locos on 04/10/2015.
  */
-public class IA20 extends AbstractIA  {
+public class IA20 extends AbstractNeedSpell {
 
     private byte attack = 0;
 
@@ -23,7 +23,7 @@ public class IA20 extends AbstractIA  {
     @Override
     public void apply() {
         if (!this.stop && this.fighter.canPlay() && this.count > 0) {
-            Fighter nearestEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 5);
+            Fighter nearestEnnemy = Function.getInstance().getNearestEnnemynbrcasemaxNoHide(this.fight, this.fighter, 0, 10);
             Fighter highestEnnemy = Function.getInstance().getNearestEnnemynbrcasemax(this.fight, this.fighter, 0, 30);
             List<Short> cells = new ArrayList<>();
             int attack = 0, tp = 0;
@@ -44,9 +44,25 @@ public class IA20 extends AbstractIA  {
 
 
             if(!action && !cells.isEmpty()) {
+                if(cells.contains((short) this.fighter.getCell().getId())) {
+                    tp = Function.getInstance().tpIfPossibleKaskargo(this.fight, this.fighter, nearestEnnemy);
+                    action = true;
+                }
+
+            }
+
+            if( this.fighter.getCurPa(this.fight) > 0 && nearestEnnemy != null && !action) {
+                int num = Function.getInstance().attackIfPossible(this.fight, this.fighter, this.highests);
+                if(num != -1 && num != 0) {
+                    action = true;
+                }
+            }
+
+            if(!action && !cells.isEmpty()) {
                 if(cells.contains((short) this.fighter.getCell().getId()))
                     tp = Function.getInstance().tpIfPossibleKaskargo(this.fight, this.fighter, nearestEnnemy);
             }
+
             if(tp != 0) action = true;
             if(!action) Function.getInstance().moveNearIfPossible(this.fight, this.fighter, highestEnnemy);
 

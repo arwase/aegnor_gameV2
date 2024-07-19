@@ -24,7 +24,7 @@ public class Spanish extends AbstractLang {
         this.sentences.add(index, "Lista del staff conectado :"); index++; //5
         this.sentences.add(index, "No hay ningún miembro del staff conectado."); index++; //6
         this.sentences.add(index, "No estás atascado..."); index++; //7
-        this.sentences.add(index, "<b>" + Config.INSTANCE.getNAME() + "</b>\nOnline desde : #1j #2h #3m #4s."); index++; //8
+        this.sentences.add(index, "<b>" + Config.INSTANCE.getSERVER_NAME() + "</b>\nOnline desde : #1j #2h #3m #4s."); index++; //8
         this.sentences.add(index, "\nJugadores online : #1"); index++; //9
         this.sentences.add(index, "\nJugadores únicos conectados : #1"); index++; //10
         this.sentences.add(index, "\nMayoría en línea : #1"); index++; //11

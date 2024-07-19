@@ -5,6 +5,7 @@ import client.other.Stats;
 import common.Formulas;
 import common.SocketManager;
 import database.Database;
+import entity.monster.Monster;
 import entity.pet.PetEntry;
 import fight.spells.Effect;
 import fight.spells.EffectConstant;
@@ -392,6 +393,8 @@ public class ObjectTemplate {
             item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null), new ArrayList<Effect>(), new HashMap<Integer, Integer>(), Dopeul.generateStatsTrousseau(), 0,0, -1);
         } else if (getType() == Constant.ITEM_TYPE_FAMILIER) {
             item = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, (useMax ? generateNewStatsFromTemplate(World.world.getPets(this.getId()).getJet(), false, 0) : new Stats(false, null)), new ArrayList<>(), new HashMap<>(), World.world.getPets(getId()).generateNewtxtStatsForPets(), 0,0, -1);
+            if(item == null)
+                return null;
             //Ajouter du Pets_data SQL et World
             long time = System.currentTimeMillis();
             World.world.addPetsEntry(new PetEntry(id, getId(), time, 0, 10, 0, false));
@@ -427,7 +430,13 @@ public class ObjectTemplate {
                         String[] splitted = getStrTemplate().split(",");
                         for (String s : splitted) {
                             String[] stats = s.split("#");
-                            int statID = Integer.parseInt(stats[0], 16);
+                            int statID = 0;
+                            try {
+                                statID = Integer.parseInt(stats[0], 16);
+                            }
+                            catch(Exception e){
+                                continue;
+                            }
                             if (statID == Constant.STATS_RESIST) {
                                 String ResistanceIni = stats[1];
                                 Stat.put(statID, ResistanceIni);
@@ -725,7 +734,7 @@ public class ObjectTemplate {
                 String[] split = stats.split("#");
                 int id = Integer.parseInt(split[0], 16);
 
-                if (id >= 281 && id <= 294) {
+                if (EffectConstant.IS_SPELL_BOOST_EFFECT(id)) {
                     spellStats.add(stats);
                 }
             }
@@ -763,6 +772,7 @@ public class ObjectTemplate {
                 //Si c'est un Effet Actif
                 if (a == statID)
                     follow = false;
+
             if (!follow)//Si c'ï¿½tait un effet Actif d'arme
                 continue;
             if (statID == Constant.STATS_RESIST)
@@ -776,7 +786,7 @@ public class ObjectTemplate {
                     isStatsInvalid = true;
                     break;
                 case 615:
-                    itemStats.addOneStat(statID, Integer.parseInt(stats[3], 16));
+                    itemStats.addOneStat(statID, Formulas.stringToInt(stats[3], true));
                     break;
             }
             if (isStatsInvalid)
@@ -785,19 +795,20 @@ public class ObjectTemplate {
             int value = 1;
             try {
                 switch (rarete) {
-                    case 0:
-                    case 1:{
+                    case 0: // Rareté 0/1 normal
+                    case 1:
                         if(stats.length > 4) {
                             jet = stats[4];
                             int min = Integer.parseInt(stats[1], 16);
-                            int max = Integer.parseInt(stats[2], 16);
+                            int max = 0;
+                            if(!stats[2].isEmpty())
+                                max = Integer.parseInt(stats[2], 16);
+
                             value = Formulas.getRandomJet(jet);
                             if (useMax) {
                                 if(PositiveStat) {
                                     try {
                                         //on prend le jet max
-                                         min = Integer.parseInt(stats[1], 16);
-                                         max = Integer.parseInt(stats[2], 16);
                                         value = min;
                                         if (max != 0)
                                             value = max;
@@ -807,12 +818,10 @@ public class ObjectTemplate {
                                     }
                                 }
                                 else{
+                                    // Stat négative donc le minimum
                                     try {
                                         //on prend le jet max
-                                        min = Integer.parseInt(stats[1], 16);
                                         value = min;
-                                        if (min != 0)
-                                            value = min;
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                         value = Formulas.getRandomJet(jet);
@@ -821,19 +830,19 @@ public class ObjectTemplate {
                             }
                         }
                         break;
-                    }
-                    case 2 :{
+                    case 2 : // Rareté 3 Rare
                         if(stats.length > 4) {
                             jet = stats[4];
                             int min = Integer.parseInt(stats[1], 16);
-                            int max = Integer.parseInt(stats[2], 16);
+                            int max = 0;
+                            if(!stats[2].isEmpty())
+                                max = Integer.parseInt(stats[2], 16);
+
                             value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                             if (useMax) {
                                 if(PositiveStat) {
                                     try {
                                         //on prend le jet max
-                                        min = Integer.parseInt(stats[1], 16);
-                                        max = Integer.parseInt(stats[2], 16);
                                         value = min;
                                         if (max != 0)
                                             value = max;
@@ -845,7 +854,6 @@ public class ObjectTemplate {
                                 else{
                                     try {
                                         //on prend le jet max
-                                        min = Integer.parseInt(stats[1], 16);
                                         value = min;
                                         if (min != 0)
                                             value = min;
@@ -857,13 +865,14 @@ public class ObjectTemplate {
                             }
                         }
                         break;
-                    }
-                    case 3 :{
+                    case 3 : // Rareté 3 JP
                         if(PositiveStat) {
                             try {
                                 //on prend le jet max
                                 int min = Integer.parseInt(stats[1], 16);
-                                int max = Integer.parseInt(stats[2], 16);
+                                int max = 0;
+                                if(!stats[2].isEmpty())
+                                    max = Integer.parseInt(stats[2], 16);
                                 value = min;
                                 if (max != 0)
                                     value = max;
@@ -885,13 +894,13 @@ public class ObjectTemplate {
                             }
                         }
                         break;
-                    }
-                    case 4 :
-                    case 5 : {
+                    case 4 : // Rareté 4 Legendaire
+                    case 5 : // Rareté 5 Primal
                         if(stats.length > 4) {
-                            jet = stats[4];
                             int min = Integer.parseInt(stats[1], 16);
-                            int max = Integer.parseInt(stats[2], 16);
+                            int max = 0;
+                            if(!stats[2].isEmpty())
+                                max = Integer.parseInt(stats[2], 16);
                             value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                             if (useMax) {
                                 try {
@@ -901,7 +910,6 @@ public class ObjectTemplate {
                                     value = Formulas.getRandomJetWithRarity(min, max, rarete,PositiveStat);
                                 }
                             }
-                        }
                         break;
                     }
 
@@ -924,8 +932,6 @@ public class ObjectTemplate {
 
         String[] splitted = statsTemplate.split(",");
         for (String s : splitted) {
-
-
             String[] stats = s.split("#");
             int statID = Integer.parseInt(stats[0], 16);
 
@@ -936,6 +942,7 @@ public class ObjectTemplate {
                 int weaponType = this.getType();
                 int weaponId = this.getId();
                 Effets.add(new Effect(statID,weaponId,weaponType,jet,min,max));
+                continue;
             }
 
             // Mais c'est de la merde ca ! ca sert a quoi si c'est tous la meme chose ?
@@ -946,11 +953,13 @@ public class ObjectTemplate {
                 case 614:
                     String min = stats[1];
                     String max = stats[2];
+                    String args3 = stats[3];
                     String jet = "";
                     if(stats.length >= 5)
                         jet = stats[4];
-                    String args = min + ";" + max + ";-1;-1;0;" + jet;
-                    Effets.add(new Effect(statID, args, 0, -1));
+
+                    String args = min + ";" + max + ";"+args3+";" + jet;
+                    Effets.add(new Effect(statID, args, 0, -1,true));
                     break;
             }
         }
@@ -1013,10 +1022,77 @@ public class ObjectTemplate {
             }
         }
         else {
-            for (ObjectAction action : this.getOnUseActions())
-                action.apply(player, target, objectId, cellId);
+            for (ObjectAction action : this.getOnUseActions()){
+                //action.apply(player, target, objectId, cellId);
+            }
+
         }
     }
+
+    public void applyAction(Player player, Player target, int objectId, short cellId,int quantity) {
+        if (World.world.getGameObject(objectId) == null) return;
+        if (World.world.getGameObject(objectId).getQuantity() < quantity)
+            return;
+        if (World.world.getGameObject(objectId).getTemplate().getType() == Constant.ITEM_TYPE_PIERRE_AME_PLEINE) {
+
+            if (!SoulStone.isInArenaMap(player.getCurMap().getId())){
+                player.sendMessage("This map is not an arena");
+                return;
+            }
+
+            SoulStone soulStone = (SoulStone) World.world.getGameObject(objectId);
+            try {
+                int i = 0;
+                for(Monster.MobGroup test : player.getCurMap().getMobGroups().values() ){
+                    if (test.getCondition().equals("MiS=" + player.getId()))
+                        i++;
+                }
+
+                if(i >= Constant.MAX_SPAWN_IN_ARENA){
+                    player.sendMessage("Vous ne pouvez pas spawn plus de 3 groupes");
+                    return;
+                }
+
+                player.getCurMap().spawnNewGroup(true, player.getCurCell().getId(), soulStone.parseGroupData(), "MiS=" + player.getId());
+                SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(objectId).getTemplate().getId());
+                player.removeItem(objectId, 1, true, true);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else if (World.world.getGameObject(objectId).getTemplate().getType() == Constant.ITEM_TYPE_POTION_FAMILIER){
+            String conditions = World.world.getGameObject(objectId).getTemplate().getConditions();
+            player = target != null ? target : player;
+            if( conditions.indexOf( (player.getObjetByPos(Constant.ITEM_POS_FAMILIER).getTemplate().getId()+"" )) == -1){
+                player.sendMessage("Vous n'avez pas votre familier d'équipé");
+                return;
+            }
+            if (player.getFight() != null) return;
+            GameObject obj = World.world.getGameObject(objectId);
+
+            if (obj == null)
+                return;
+            GameObject pets = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
+            if (pets == null)
+                return;
+            PetEntry MyPets = World.world.getPetsEntry(pets.getGuid());
+            if (MyPets == null)
+                return;
+            try {
+                player.removeItem(objectId, 1, true, true);
+                MyPets.giveEpo(player);
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        else {
+            for (ObjectAction action : this.getOnUseActions())
+                action.apply(player, target, objectId, cellId,quantity);
+        }
+    }
+
 
     public synchronized void newSold(int amount, int price) {
         long oldSold = getSold();
@@ -1081,7 +1157,7 @@ public class ObjectTemplate {
                     int rarete = rarity;
 
                     item = new GameObject(id, getId(), qua, Constant.ITEM_POS_NO_EQUIPED, generateNewStatsFromTemplate(this.getStrTemplate(), useMax,rarete), getEffectTemplate(getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarete,-1);
-
+                    item.getSpellStats().addAll(this.getSpellStatsTemplate());
                 }
 
             }
@@ -1109,5 +1185,18 @@ public class ObjectTemplate {
 
     public int getMoney() {
         return money;
+    }
+
+    public GameObject createNewTonique(int posTonique,String StatsToadd) {
+
+        GameObject item = new GameObject(-1, getId(), 1, posTonique, generateNewStatsFromTemplate(StatsToadd, true,0), new ArrayList<>(), new HashMap<>(), new HashMap<>(),0,0, 0);
+        item.getSpellStats().addAll(this.getSpellStatsTemplate());
+        return item;
+    }
+
+    public GameObject createNewToniqueEquilibrage(Stats stats) {
+        GameObject item = new GameObject(-1, getId(), 1, Constant.ITEM_POS_TONIQUE_EQUILIBRAGE, stats, new ArrayList<>(), new HashMap<>(), new HashMap<>(),0,0, 0);
+        //item.getSpellStats().addAll(this.getSpellStatsTemplate());
+        return item;
     }
 }

@@ -7,7 +7,6 @@ import game.GameClient;
 import game.world.World;
 import hdv.HdvEntry;
 import kernel.Config;
-import kernel.Constant;
 import object.GameObject;
 
 import java.util.*;
@@ -39,12 +38,13 @@ public class Account {
     private int vip = 0;
     private AccountWeb accountweb;
     private int _accWebID;
+    public String creationDate;
 
     public Account(int guid, String name, String pseudo,
                    String answer, boolean banned,
                    String lastIp, String lastConnectionDate, String friends,
                    String enemy, long subscriber, long muteTime, String mutePseudo,
-                   String lastVoteIP, String heureVote, int vip,int accountwebid,int oldpoints) {
+                   String lastVoteIP, String heureVote, int vip,int oldpoints, String creationDate) {
         this.id = guid;
         this.name = name;
         this.pseudo = pseudo;
@@ -52,76 +52,7 @@ public class Account {
         this.banned = banned;
         this.lastIP = lastIp;
         this.lastConnectionDate = lastConnectionDate;
-        this.hdvsItems = World.world.getMyItems(guid);
-        this.oldpoints = oldpoints;
-        this.subscriber = subscriber;
-        this.muteTime = muteTime;
-        this.mutePseudo = mutePseudo;
-        this.lastVoteIP = lastVoteIP;
-        this.vip = vip;
-        this._accWebID = accountwebid;
-        this.accountweb = World.world.getWebAccount(accountwebid);
-
-        if (heureVote.equalsIgnoreCase("")) this.heureVote = 0;
-        else this.heureVote = Long.parseLong(heureVote);
-
-        //Chargement de la liste d'amie
-        if(!friends.equalsIgnoreCase("")) {
-            for (String f : friends.split(";")) {
-                try {
-                    this.friends.add(Integer.parseInt(f));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        //Chargement de la liste d'Enemy
-        if (!enemy.equalsIgnoreCase("")) {
-            for (String e : enemy.split(";")) {
-                try {
-                    this.enemys.add(Integer.parseInt(e));
-                } catch (Exception e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
-        //Chargement de la banque
-        String bank = Database.getDynamics().getBankData().get(guid);
-        if (bank == null) {
-            Database.getDynamics().getBankData().add(guid);
-        } else {
-            this.bankKamas = Integer.parseInt(bank.split("@")[0]);
-            String allItem = "";
-            try {
-                allItem = bank.split("@")[1];
-            } catch (Exception e2) {
-            }
-            if (!allItem.equals("")) {
-                for (String item : allItem.split("\\|")) {
-                    if (!item.equals("")) {
-                        GameObject obj = World.world.getGameObject(Integer.parseInt(item));
-                        if (obj != null)
-                            this.bank.add(obj);
-                    }
-                }
-            }
-        }
-        if (!Database.getDynamics().getGiftData().existByAccount(guid))
-            Database.getDynamics().getGiftData().create(guid);
-    }
-
-    public Account(int guid, String name, String pseudo,
-                   String answer, boolean banned,
-                   String lastIp, String lastConnectionDate, String friends,
-                   String enemy, long subscriber, long muteTime, String mutePseudo,
-                   String lastVoteIP, String heureVote, int vip,int oldpoints) {
-        this.id = guid;
-        this.name = name;
-        this.pseudo = pseudo;
-        this.answer = answer;
-        this.banned = banned;
-        this.lastIP = lastIp;
-        this.lastConnectionDate = lastConnectionDate;
+        this.creationDate = creationDate;
         this.hdvsItems = World.world.getMyItems(guid);
         this.oldpoints = oldpoints;
         this.subscriber = subscriber;
@@ -247,15 +178,12 @@ public class Account {
     public void setVip(int i) { this.vip = i;}
 
     public AccountWeb getWebAccount() {
-        if(accountweb == null && Config.INSTANCE.getAZURIOM()) {
-            Database.getSites().getAccountWebData().load(id);
-            if(World.world.getWebAccountBygameAccountid(id) != null) {
-                accountweb = World.world.getWebAccountBygameAccountid(id);
-                _accWebID = accountweb.getId();
-            }
-            else {
-                this.getCurrentPlayer().sendMessage("Tu n'as pas encore créé de compte web");
-                return null;
+        if (accountweb == null && Config.INSTANCE.getAZURIOM()) {
+            try {
+                Database.getSites().getAccountWebData().loadWebAccountFromGameAccount(this);
+            } catch (Exception e) {
+                // Log and handle the exception appropriately
+                e.printStackTrace();
             }
         }
         return accountweb;
@@ -408,6 +336,12 @@ public class Account {
             World.world.removePlayer(this.getPlayers().get(guid));
     }
 
+    /*public void deleteBanque(int guid) {
+        if (this.getPlayers().containsKey(guid))
+            World.world.removePlayer(this.getPlayers().get(guid));
+    }
+
+
     public void deleteAccount(int guid) {
         if (this.getPlayers().containsKey(guid))
             World.world.removePlayer(this.getPlayers().get(guid));
@@ -415,7 +349,7 @@ public class Account {
 
     public void deleteAccount() {
          World.world.removeAccount(this.id);
-    }
+    }*/
 
 
     public void sendOnline() {
@@ -626,22 +560,31 @@ public class Account {
 
     public void resetAllChars() {
         for (Player player : this.getPlayers().values()) {
-            if (player.getFight() != null) {
+            try {
+                if (player.getFight() != null) {
+                    if (player.getParty() != null)
+                        player.getParty().leave(player);
+                    player.setOnline(true);
+                }
+
+                if (player.getExchangeAction() != null)
+                    GameClient.leaveExchange(player);
+
                 if (player.getParty() != null)
                     player.getParty().leave(player);
-                player.setOnline(true);
+
+                if (player.getCurCell() != null && player.getCurCell().getPlayers() != null && player.getCurCell().getPlayers().contains(player))
+                    player.getCurCell().removePlayer(player);
+
+                if (player.getCurMap() != null && player.isOnline())
+                    SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(player.getCurMap(), player.getId());
+
+                player.setOnline(false);
             }
-
-            if (player.getExchangeAction() != null)
-                GameClient.leaveExchange(player);
-            if (player.getParty() != null)
-                player.getParty().leave(player);
-            if (player.getCurCell() != null)
-                player.getCurCell().removePlayer(player);
-            if (player.getCurMap() != null && player.isOnline())
-                SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(player.getCurMap(), player.getId());
-
-            player.setOnline(false);
+            catch (Exception e){
+                e.printStackTrace();
+                System.out.println("Impossible de déconnecter proprement le compte "+this.getName()+" et son personnage "+ player.getName() + " : "+e.getMessage());
+            }
         }
     }
 

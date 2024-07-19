@@ -84,6 +84,6 @@ public abstract class AbstractIA implements IA {
                 time -= 20;
                 Thread.sleep(20);
             } catch (InterruptedException e) {}*/
-        executor.schedule(runnable,time < 50 ? 50 : time,TimeUnit.MILLISECONDS);
+        executor.schedule(runnable,time < 500 ? 500 : time,TimeUnit.MILLISECONDS);
     }
 }

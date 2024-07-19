@@ -241,76 +241,24 @@ public class Formulas {
         }
     }
 
-    public static int getRandomJet(String jet, Fighter caster, Fighter target)//1d5+6
+    public static int getAlteredJet(int jet,int max, Fighter target)//1d5+6
     {
-        if(target != null & target.hasBuff(782))
-        {
-            return Formulas.getMaxJet(jet);
+        // Pour les valeurs fixes
+        if(max == -1){
+            return jet;
         }
-        else if(caster != null & caster.hasBuff(781))
-        {
-            return Formulas.getMinJet(jet);
+        if(max <= jet)
+            return jet;
+
+
+        if(target != null && target.hasBuff(EffectConstant.EFFECTID_MAXIMUMDAMAGE)){
+            return max;
         }
-        else {
-            try {
-                int num = 0;
-                int splited = jet.split("d").length;
-                if (jet.split("d").length > 1) {
-                    int des = Integer.parseInt(jet.split("d")[0]);
-                    int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
-                    int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
-                    if (faces == 0 && add == 0) {
-                        num = getRandomValue(0, des);
-                    } else {
-                        for (int a = 0; a < des; a++) {
-                            num += getRandomValue(1, faces);
-                        }
-                    }
-                    num += add;
-                    return num;
-                }
-                return Integer.parseInt(jet);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-                return -1;
-            }
-        }
+
+        return jet;
     }
 
-    public static int getRandomJet(String jet, Fighter caster)//1d5+6
-    {
-        assert caster != null;
-        if(caster.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE))
-        {
-            return Formulas.getMinJet(jet);
-        }
-        else {
-            try {
-                int num = 0;
-                int splited = jet.split("d").length;
-                if (jet.split("d").length > 1) {
-                    int des = Integer.parseInt(jet.split("d")[0]);
-                    int faces = Integer.parseInt(jet.split("d")[1].split("\\+")[0]);
-                    int add = Integer.parseInt(jet.split("d")[1].split("\\+")[1]);
-                    if (faces == 0 && add == 0) {
-                        num = getRandomValue(0, des);
-                    } else {
-                        for (int a = 0; a < des; a++) {
-                            num += getRandomValue(1, faces);
-                        }
-                    }
-                    num += add;
-                    return num;
-                }
-                return Integer.parseInt(jet);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-                return -1;
-            }
-        }
-    }
-
-    public static int getRandomJet(int min,int max, Fighter caster, Fighter target)//1d5+6
+    public static int getRandomJet(int min,int max, Fighter caster)//1d5+6
     {
         // Pour les valeurs fixes
         if(max == -1){
@@ -324,14 +272,10 @@ public class Formulas {
             return min;
         }
         else {
-            if(target != null && target.hasBuff(EffectConstant.EFFECTID_MAXIMUMDAMAGE)){
-                return max;
-            }
-
             try {
                 // je trouve ca plus simple
                 Random random = new Random();
-                return random.nextInt(max - min) + min;
+                return random.nextInt(max - min + 1) + min;
 
             } catch (NumberFormatException e) {
                 e.printStackTrace();
@@ -361,7 +305,7 @@ public class Formulas {
             }
             return Integer.parseInt(jet);
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            System.out.println("Pas de valeur approprié pour le jet + "+jet + " :"+e.getMessage());
             return -1;
         }
     }
@@ -651,7 +595,27 @@ public class Formulas {
                 : (s.substring(0, s.length() - 1));
     }
 
+    public static int stringToInt(String str,boolean hexa) {
+        // Check if the string is empty
+        if (str.isEmpty()) {
+            return 0;
+        }
 
+        // Convert the string to int
+        try {
+            if(hexa) {
+                return Integer.parseInt(str,16);
+            }
+            else{
+                return Integer.parseInt(str);
+            }
+        } catch (NumberFormatException e) {
+            // Handle the case where the string is not a valid integer
+            e.printStackTrace();
+            //System.err.println("Invalid input: " + str);
+            return 0; // or throw an exception if appropriate
+        }
+    }
 
     public static int calculFinalDommagee(Fight fight, Fighter caster,
                                          Fighter target, int statID, int jet, boolean isHeal, boolean isCaC,
@@ -767,6 +731,8 @@ public class Formulas {
 
                 break;
         }
+
+
         //On bride la resistance a 50% si c'est un joueur
         if (target.getMob() == null && respT > 50)
             respT = 50;
@@ -810,7 +776,6 @@ public class Formulas {
             }
             a = (((100 + i) / 100) * (j / 100));
         }
-
 
 
         num = a * mulT * (jet * ((100 + statC + perdomC + (multiplier * 100)) / 100))
@@ -891,7 +856,7 @@ public class Formulas {
 
                 if (caster.getPdv() <= renvoie) {
                     caster.removePdv(caster, renvoie);
-                    fight.onFighterDie(caster, caster);
+                    //fight.onFighterDie(caster, caster);
                 } else
                     caster.removePdv(caster, renvoie);
 
@@ -900,6 +865,8 @@ public class Formulas {
             }
         }
 
+
+        //Armures feca
         int reduc = (int) ((num / (float) 100) * respT);//Reduc %resis
         if (!isHeal)
             num -= reduc;
@@ -909,7 +876,7 @@ public class Formulas {
         if (!isHeal)
             if (armor > 0)
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 105, caster.getId()
-                        + "", target.getId() + "," + armor, 105);
+                        + "", target.getId() + "," + armor);
 
         if (!isHeal)
             num -= resfT;//resis fixe
@@ -965,7 +932,8 @@ public class Formulas {
 
     private static int getArmorResist(Fighter target, int statID) {
         int armor = 0;
-        for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE)) {
+
+        for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE_ELEM)) {
             Fighter fighter;
 
             switch (SE.getSpell()) {
@@ -1025,6 +993,7 @@ public class Formulas {
                     / 100;
             armor += a;
         }
+
         for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE)) {
             int intell = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
             int carac = 0;
@@ -1048,6 +1017,7 @@ public class Formulas {
                     / 100;
             armor += a;
         }
+
         return armor;
     }
 
@@ -1180,6 +1150,7 @@ public class Formulas {
         return toReturn;
     }
 
+    // TODO : gestion nulle il faudrait utilisé le boost 750 dans le sort plutot que le niveau du sort.
     public static int totalCaptChance(int pierreChance, Player p) {
         int sortChance = 0;
 
@@ -1758,5 +1729,23 @@ public class Formulas {
             chances.add(2, p3);
         }
         return chances;
+    }
+
+    public static int[] getRandomsInt(int[] table,int nb)
+    {
+        int[] randomInts = new int[nb];
+        Random random = new Random();
+
+        // Shuffle the array using Fisher-Yates algorithm
+        for (int i = table.length - 1; i >= 1; i--) {
+            int j = random.nextInt(i + 1);
+            int temp = table[j];
+            table[j] = table[i];
+            table[i] = temp;
+        }
+
+        // Copy the first 7 elements of the shuffled array to the randomInts array
+        System.arraycopy(table, 0, randomInts, 0, nb);
+        return randomInts;
     }
 }

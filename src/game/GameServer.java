@@ -7,6 +7,7 @@ import client.Player;
 import com.sun.istack.NotNull;
 import database.Database;
 import exchange.ExchangeClient;
+import game.scheduler.entity.WorldSave;
 import game.world.World;
 import kernel.Config;
 import org.apache.mina.core.service.IoAcceptor;
@@ -26,6 +27,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static game.world.World.sendWebhookInformationsServeur;
+
 public class GameServer {
 
     public static short MAX_PLAYERS = 700;
@@ -36,6 +39,7 @@ public class GameServer {
     private final static @NotNull Logger log = (Logger) LoggerFactory.getLogger(GameServer.class);
 
     private final @NotNull IoAcceptor acceptor;
+    private int status = 0;
 
    // static {
 
@@ -81,7 +85,7 @@ public class GameServer {
             acceptor.dispose();
             acceptor.unbind();
         }
-
+        sendWebhookInformationsServeur("Le serveur est éteint pour maintenance");
         log.error("The game server was stopped.");
     }
 
@@ -99,7 +103,27 @@ public class GameServer {
     }
 
     public void setState(int state) {
+        this.status = state;
         ExchangeClient.INSTANCE.send("SS" + state);
+    }
+
+    public int getState() {
+        return this.status;
+    }
+
+    public void closeServerForPlayers() {
+       this.kickAll(false);
+       WorldSave.cast(0);
+       this.setState(0);
+       Database.getStatics().getServerData().loggedZero();
+
+    }
+
+    public void openServerForPlayers() {
+        this.kickAll(false);
+        WorldSave.cast(0);
+        this.setState(1);
+        Database.getStatics().getServerData().loggedZero();
     }
 
     public static Account getAndDeleteWaitingAccount(int id){
@@ -123,12 +147,7 @@ public class GameServer {
     }
 
     public void kickAll(boolean kickGm) {
-
-
-
-
         for (Player player : World.world.getOnlinePlayers()) {
-
             if (player != null && player.getGameClient() != null) {
                 if (player.getGroupe() != null && !player.getGroupe().isPlayer() && kickGm)
                     continue;
@@ -139,12 +158,9 @@ public class GameServer {
         }
 
         for (Account client : waitingClients){
-            client.getGameClient().kick();
+            if(client.getGameClient() != null) {
+                client.getGameClient().kick();
+            }
         }
-
     }
-
-
-
-
 }

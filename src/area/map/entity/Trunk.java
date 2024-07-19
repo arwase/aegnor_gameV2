@@ -315,7 +315,6 @@ public class Trunk {
         GameObject PersoObj = P.getSimilarItem(TrunkObj);
         String str = "";
         int newQua = TrunkObj.getQuantity() - qua;
-        //System.out.println( "Objt similaire : " + PersoObj);
         if (PersoObj == null)//Si le joueur n'avait aucun item similaire
         {
             //S'il ne reste rien dans le coffre

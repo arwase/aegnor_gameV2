@@ -3,9 +3,6 @@ package fight.spells;
 import kernel.Constant;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class EffectConstant {
 
 
@@ -13,6 +10,7 @@ public class EffectConstant {
     public static final int EFFECTID_REVERSECHANCE = 79;
 
     public static final int EFFECTID_REDUCEDAMAGE = 105;
+    public static final int EFFECTID_REDUCEDAMAGE_ELEM = 265;
     public static final int EFFECTID_RETURNSPELL = 106;
     public static final int EFFECTID_RETURNDAMAGE = 107;
     public static final int EFFECTID_AP_POISON = 131;
@@ -23,10 +21,10 @@ public class EffectConstant {
     public static final int EFFECTID_EROSION =776;
     public static final int EFFECTID_MINIMUMDAMAGE = 781;
     public static final int EFFECTID_MAXIMUMDAMAGE = 782;
-
+    public static final int EFFECTID_BOOST_CAP = 750;
 
     public static final int[] IS_DIRECTDAMMAGE_EFFECT = {82,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,109,275,276,277,278,279,670,671,672};
-    public static final int[] NONEEDTARGET_EFFECT = {4,180,181,185,200,400,401,402,780,50,51,120,109,783};
+    public static final int[] NONEEDTARGET_EFFECT = {4,180,181,185,200,400,401,402,780,50,51,120,109,783,784};
     public static final int[] NEEDALLTARGET_EFFECT = {90};
 
     //Elements
@@ -38,38 +36,23 @@ public class EffectConstant {
     public static final int ELEMENT_AIR = 4;
 
 
-    public static final int[] TRIGGER_ONATTAK_EAU = {85,91,96,275};
-    public static final int[] TRIGGER_ONATTAK_TERRE = {86,92,97,276};
-    public static final int[] TRIGGER_ONATTAK_AIR = {87,93,98,277};
-    public static final int[] TRIGGER_ONATTAK_FEU = {88,94,99,278};
-    public static final int[] TRIGGER_ONATTAK_NEUTRE = {89,95,100,670,671,672,279};
-    public static final int[] TRIGGER_ONATTAK_NOELEM = {82,109};
-    public static final int[] TRIGGER_ONATTAK_TEMP = ArrayUtils.addAll(TRIGGER_ONATTAK_EAU,TRIGGER_ONATTAK_FEU);
-    public static final int[] TRIGGER_ONATTAK_TEMP2 = ArrayUtils.addAll(TRIGGER_ONATTAK_TEMP,TRIGGER_ONATTAK_AIR);
-    public static final int[] TRIGGER_ONATTAK_TEMP1 = ArrayUtils.addAll(TRIGGER_ONATTAK_TEMP2,TRIGGER_ONATTAK_TERRE);
-    public static final int[] TRIGGER_ONATTAK_TEMP0 = ArrayUtils.addAll(TRIGGER_ONATTAK_TEMP1,TRIGGER_ONATTAK_NEUTRE);
-    public static final int[] TRIGGER_ONATTAK_DAMMAGE = ArrayUtils.addAll(TRIGGER_ONATTAK_TEMP0,TRIGGER_ONATTAK_NOELEM);
-    public static final int[] TRIGGER_ONATTAK_RETPA = {84,101,168};
-    public static final int[] TRIGGER_ONATTAK_RETPM = {127,169,77};
-    public static final int[] TRIGGER_ONATTAK_RET = ArrayUtils.addAll(TRIGGER_ONATTAK_RETPM,TRIGGER_ONATTAK_RETPA);
-    public static final int[] TRIGGER_ONHEAL = {81,108,143,646};
-
-    public static Map<Integer, int[]> ALL_TRIGGERS = getAllTriggers();
-
-    public static Map<Integer, int[]> getAllTriggers() {
-        Map<Integer, int[]> test = new HashMap<>();
-        test.put(0, TRIGGER_ONATTAK_NEUTRE);
-        test.put(1, TRIGGER_ONATTAK_EAU);
-        test.put(2, TRIGGER_ONATTAK_TERRE);
-        test.put(3, TRIGGER_ONATTAK_AIR);
-        test.put(4, TRIGGER_ONATTAK_FEU);
-        test.put(5, TRIGGER_ONATTAK_DAMMAGE);
-        test.put(6, TRIGGER_ONATTAK_RET);
-        test.put(7, TRIGGER_ONATTAK_RETPA);
-        test.put(8, TRIGGER_ONATTAK_RETPM);
-        test.put(9, TRIGGER_ONHEAL);
-        return test;
-    }
+    // Différent triggers de déclanchement des OnHit Effect
+    public static final int[] EFFECTS_ATTAK_EAU = {85,91,96,275};
+    public static final int[] EFFECTS_ATTAK_TERRE = {86,92,97,276};
+    public static final int[] EFFECTS_ATTAK_AIR = {87,93,98,277};
+    public static final int[] EFFECTS_ATTAK_FEU = {88,94,99,278};
+    public static final int[] EFFECTS_ATTAK_NEUTRE = {89,95,100,670,671,672,279};
+    public static final int[] EFFECTS_ATTAK_NOELEM = {82,109};
+    public static final int[] EFFECTS_ATTAK_PHYSICAL = ArrayUtils.addAll(EFFECTS_ATTAK_TERRE,EFFECTS_ATTAK_NEUTRE);
+    public static final int[] EFFECTS_ATTAK_TEMP0 = ArrayUtils.addAll(EFFECTS_ATTAK_AIR,EFFECTS_ATTAK_EAU);
+    public static final int[] EFFECTS_ATTAK_MAGICAL = ArrayUtils.addAll(EFFECTS_ATTAK_TEMP0,EFFECTS_ATTAK_FEU);
+    public static final int[] EFFECTS_ATTAK_DAMMAGE = ArrayUtils.addAll(EFFECTS_ATTAK_MAGICAL,EFFECTS_ATTAK_PHYSICAL);
+    public static final int[] EFFECTS_ATTAK_DAMMAGE_WITHNOELEM = ArrayUtils.addAll(EFFECTS_ATTAK_DAMMAGE,EFFECTS_ATTAK_NOELEM);
+    public static final int[] EFFECTS_RETPA = {84,101,168};
+    public static final int[] EFFECTS_RETPM = {127,169,77};
+    public static final int[] EFFECTS_RET_PO = {116,320};
+    public static final int[] EFFECTS_RET = ArrayUtils.addAll(EFFECTS_RETPM,EFFECTS_RETPA);
+    public static final int[] EFFECTS_HEAL = {81,108,143,646};
 
     //Effects
     public static final int STATS_ADD_PM2 = 78;
@@ -108,10 +91,12 @@ public class EffectConstant {
     public static final int STATS_ADD_MFLEE = 161;
     public static final int STATS_REM_AFLEE = 162;
     public static final int STATS_REM_MFLEE = 163;
+    public static final int STATS_REM_PERDOM = 164;
     public static final int STATS_ADD_MAITRISE = 165;
     public static final int STATS_REM_PA2 = 168;
     public static final int STATS_REM_PM2 = 169;
     public static final int STATS_REM_CC = 171;
+    public static final int STATS_REM_PHYDOM = 173;
     public static final int STATS_ADD_INIT = 174;
     public static final int STATS_REM_INIT = 175;
     public static final int STATS_ADD_PROS = 176;
@@ -120,7 +105,8 @@ public class EffectConstant {
     public static final int STATS_REM_SOIN = 179;
     public static final int STATS_CREATURE = 182;
     public static final int STATS_ADD_PRED = 184;
-    public static final int STATS_ADD_MRED = 184;
+    public static final int STATS_ADD_MRED = 183;
+    public static final int STATS_REM_PDOM = 186;
     public static final int STATS_ADD_RP_TER = 210;
     public static final int STATS_ADD_RP_EAU = 211;
     public static final int STATS_ADD_RP_AIR = 212;
@@ -185,11 +171,6 @@ public class EffectConstant {
             STATS_REM_RP_PVP_AIR,STATS_REM_RP_PVP_EAU,STATS_REM_RP_PVP_FEU,STATS_REM_RP_PVP_NEU,STATS_REM_RP_PVP_TER
     };
 
-    public static final int[] EFFECTS_HEAL = {};
-    public static final int[] EFFECTS_DAMMAGE = {};
-    public static final int[] EFFECTS_RET_AP = {};
-    public static final int[] EFFECTS_RET_MP = {};
-
     // Buff de Sort Classe
     public static final int STATS_SPELL_ADD_PO = 281;
     public static final int STATS_SPELL_PO_MODIF = 282;
@@ -205,11 +186,14 @@ public class EffectConstant {
     public static final int STATS_SPELL_FIXE_DURATION_DELAY = 292;
     public static final int STATS_SPELL_ADD_BASE_DAMAGE = 293;
     public static final int STATS_SPELL_REM_PO = 294;
-    public static final int STATS_PO_MODIFIABLE_SPELL = 282; //11a#idSpell en Hexa#0#0#0d0+idSpell
-    public static final int STATS_ADD_DO_SPELL = 283; //11b#0#0#+Do en Hexa#0d0+idSpell
-    public static final int STATS_REDUCE_SPELL_DELAY = 286; //11e#0#0#+Nb Delais Reduit en Hexa#0d0+idSpell
-    public static final int STATS_ADD_CC_SPELL = 287;//11f#0#0#+CC en Hexa#0d0+idSpell
-    public static final int STATS_LAUNCHABLE_IN_LINE = 288; //120#idSpellEnHexa#0#0#0d0+idSpell
+
+
+    public static boolean IS_SPELL_BOOST_EFFECT(int effect) {
+        if(effect >= STATS_SPELL_ADD_PO && effect <= STATS_SPELL_REM_PO)
+            return true;
+
+        return false;
+    }
 
 
     //ETAT

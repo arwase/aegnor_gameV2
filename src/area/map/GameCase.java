@@ -133,32 +133,57 @@ public class GameCase {
         return this.loS && hide;
     }
 
-    public void addPlayer(Player player) {
-        if (this.players == null)
+    public synchronized void addPlayer(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        if (this.players == null) {
             this.players = new ArrayList<>();
-        if(!this.players.contains(player))
-            this.players.add(player);
+        }
+
+        if (!this.players.contains(player)) {
+            try {
+                this.players.add(player);
+            } catch (Exception e) {
+                System.out.println("Error adding player: " + e.getMessage());
+                e.printStackTrace();
+                return;
+            }
+        } else {}
     }
 
-    public void removePlayer(Player player) {
-        if (this.players != null && player != null) {
+    public synchronized void removePlayer(Player player) {
+        if(player == null)
+            return;
+
+        if(this.players == null)
+            this.players = new ArrayList<>();
+
+        if (this.players != null && !this.players.isEmpty()) {
             if(this.players.contains(player)){
                 try {
                     this.players.remove(player);
-                }
-                catch (Exception e){
-                    System.out.println( "Error lors du retrait du champion " + e);
+                } catch (Exception e) {
+                    System.out.println("Error during player removal: " + e.getMessage());
+                    e.printStackTrace();
+                    return;
                 }
             }
-
-            if (this.players.isEmpty()) this.players = null;
+            else {
+                System.out.println("Player not found in list: " + player + " / " + this.players);
+            }
         }
+        else {}
+
+        if (this.players != null && this.players.isEmpty()) this.players = null;
     }
 
-    public List<Player> getPlayers() {
+    public synchronized List<Player> getPlayers() {
         if (this.players == null)
             return new ArrayList<>();
-        return players;
+
+        return this.players;
     }
 
     public void addFighter(Fighter fighter) {
@@ -1106,8 +1131,8 @@ public class GameCase {
                         trunk.setOwnerId(player.getInHouse().getOwnerId());
                         trunk.setKey("-");
                         trunk.setKamas(0);
-                        Database.getStatics().getTrunkData().insert(trunk);
                         World.world.addTrunk(trunk);
+                        Database.getStatics().getTrunkData().insert(trunk);
                     }
                 }
                 if(player.getInHouse() != null && trunk.getOwnerId() != player.getAccID() && trunk.getHouseId() == player.getInHouse().getId() && player.getId() == player.getInHouse().getOwnerId()) {

@@ -22,7 +22,6 @@ public class EventData extends AbstractDAO<Account> {
 
     @Override
     public void load(Object obj) {
-
     }
 
     @Override
@@ -31,14 +30,12 @@ public class EventData extends AbstractDAO<Account> {
     }
 
     public Event[] load() {
-        Result result = null;
         Event[] events = new Event[this.getNumberOfEvent()];
+        String query = "SELECT * FROM `world.event.type`;";
 
-        try {
-            result = getData("SELECT * FROM `world.event.type`;");
-
+        try (Result result = getData(query)) {
             if (result != null) {
-                ResultSet RS = result.resultSet;
+                ResultSet RS = result.getResultSet();
                 byte i = 0;
 
                 while (RS.next()) {
@@ -50,58 +47,49 @@ public class EventData extends AbstractDAO<Account> {
                     }
                 }
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             super.sendError("EventData load", e);
-        } finally {
-            close(result);
         }
         return events;
     }
 
     private byte getNumberOfEvent() {
-        Result result = null;
         byte numbers = 0;
+        String query = "SELECT COUNT(id) AS numbers FROM `world.event.type`;";
 
-        try {
-            result = getData("SELECT COUNT(id) AS numbers FROM `world.event.type`;");
-
+        try (Result result = getData(query)) {
             if (result != null) {
-                ResultSet RS = result.resultSet;
-                RS.next();
-                numbers = RS.getByte("numbers");
+                ResultSet RS = result.getResultSet();
+                if (RS.next()) {
+                    numbers = RS.getByte("numbers");
+                }
             }
-        } catch(SQLException e) {
+        } catch (SQLException e) {
             super.sendError("EventData getNumberOfEvent", e);
-        } finally {
-            close(result);
         }
         return numbers;
     }
 
     private byte loadFindMeRow() {
-        Result result = null;
         byte numbers = 0;
+        String query = "SELECT COUNT(id) AS numbers FROM `world.event.findme`;";
 
-        try {
-            result = getData("SELECT COUNT(id) AS numbers FROM `world.event.findme`;");
-
+        try (Result result = getData(query)) {
             if (result != null) {
-                ResultSet RS = result.resultSet;
-                while(RS.next()) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
                     EventFindMe.FindMeRow row = new EventFindMe.FindMeRow(RS.getShort("map"), RS.getShort("cell"), RS.getString("indices").split("\\|"));
                 }
                 numbers = RS.getByte("numbers");
             }
-        } catch(SQLException e) {
-            super.sendError("EventData getNumberOfEvent", e);
-        } finally {
-            close(result);
+        } catch (SQLException e) {
+            super.sendError("EventData loadFindMeRow", e);
         }
         return numbers;
     }
 
     private Event getEventById(byte id, ResultSet result) throws SQLException {
-        switch(id) {
+        switch (id) {
             case 1:
                 return new EventSmiley(id, result.getByte("maxPlayers"), result.getString("name"), result.getString("description"), EventReward.parse(result.getString("firstWinner")));
             default:

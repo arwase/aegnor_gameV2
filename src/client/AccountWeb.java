@@ -1,37 +1,32 @@
 package client;
 
-import command.administration.Group;
-import common.SocketManager;
 import database.Database;
-import game.GameClient;
 import game.world.World;
-import hdv.HdvEntry;
-import kernel.Config;
-import object.GameObject;
 
-import java.util.*;
+import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AccountWeb {
     private int id;
-    private Map<Integer, Integer> accountsID = new HashMap<>();
+    private Map<Integer, Account> gameAccounts = new HashMap<>();
     private String name;
     private String lastIP = "";
-    private String lastConnectionDate = "";
+    private Timestamp lastConnectionDate = null;
     private String mail = "";
     private int is_banned;
     private int money;
     private int role;
 
     public AccountWeb(int id, String mail , String name, int is_banned,
-                      String lastIp, String lastConnectionDate, int money, Map<Integer, Integer> accountsID, int role) {
+                      String lastIp, Timestamp lastConnectionDate, int money, int role) {
         this.id = id;
         this.mail = mail;
         this.name = name;
         this.is_banned = is_banned;
         this.lastIP = lastIP;
         this.lastConnectionDate = lastConnectionDate;
-        this.accountsID = accountsID;
         this.role = role;
     }
 
@@ -63,7 +58,7 @@ public class AccountWeb {
         lastIP = i;
     }
 
-    public String getLastConnectionDate() {
+    public Timestamp getLastConnectionDate() {
         return lastConnectionDate;
     }
 
@@ -88,12 +83,13 @@ public class AccountWeb {
         Database.getSites().getAccountWebData().updatePoints(id, money);
     }
 
-    public void addAccountId(int accountID){
-        accountsID.put(accountsID.size(),accountID);
+    public void addAccount(Account account){
+        if(gameAccounts.get(account.getId()) == null)
+            gameAccounts.put(account.getId(),account);
     }
 
-    public Map<Integer, Integer> getAccountsId(){
-       return this.accountsID;
+    public Map<Integer, Account> getAccountsId(){
+       return this.gameAccounts;
     }
 
 

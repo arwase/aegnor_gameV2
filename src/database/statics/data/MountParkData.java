@@ -24,87 +24,63 @@ public class MountParkData extends AbstractDAO<MountPark>
     }
 
 	@Override
-	public boolean update(MountPark MP)
-	{
-		PreparedStatement p = null;
-		try {
-			p = getPreparedStatement("UPDATE `mountpark_data` SET `cellMount` =?, `cellPorte`=?, `cellEnclos`=? WHERE `mapid`=?");
+	public boolean update(MountPark MP) {
+		String query = "UPDATE `mountpark_data` SET `cellMount` =?, `cellPorte`=?, `cellEnclos`=? WHERE `mapid`=?";
+		try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+			PreparedStatement p = stmt.getPreparedStatement();
 			p.setInt(1, MP.getMountcell());
 			p.setInt(2, MP.getDoor());
 			p.setString(3, MP.parseStringCellObject());
 			p.setInt(4, MP.getMap().getId());
-			execute(p);
+			p.executeUpdate();
 			return true;
 		} catch (SQLException e) {
-			super.sendError("Mountpark_dataData update", e);
-		} finally {
-			close(p);
+			sendError("Mountpark_dataData update", e);
 		}
 		return false;
 	}
 
-	public int load()
-	{
+	public int load() {
 		int nbr = 0;
-		Result result = null;
-		try
-		{
-			result = getData("SELECT * from mountpark_data");
-			ResultSet RS = result.resultSet;
-			while (RS.next())
-			{
-				GameMap map = World.world.getMap(RS.getShort("mapid"));
-				if (map == null)
-					continue;
-				MountPark MP = new MountPark(map, RS.getInt("cellid"), RS.getInt("size"), RS.getInt("priceBase"), RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
-				World.world.addMountPark(MP);
-				Database.getDynamics().getMountParkData().exist(MP);
-				nbr++;
+		String query = "SELECT * from mountpark_data";
+		try (Result result = getData(query)) {
+			if (result != null) {
+				ResultSet RS = result.getResultSet();
+				while (RS.next()) {
+					GameMap map = World.world.getMap(RS.getShort("mapid"));
+					if (map == null)
+						continue;
+					MountPark MP = new MountPark(map, RS.getInt("cellid"), RS.getInt("size"), RS.getInt("priceBase"), RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
+					World.world.addMountPark(MP);
+					Database.getDynamics().getMountParkData().exist(MP);
+					nbr++;
+				}
 			}
-		}
-		catch (SQLException e)
-		{
-			super.sendError("Mountpark_dataData load", e);
-		}
-		finally
-		{
-			close(result);
+		} catch (SQLException e) {
+			sendError("Mountpark_dataData load", e);
 		}
 		return nbr;
 	}
 
-	public void reload(int i)
-	{
-		Result result = null;
-		try
-		{
-			result = getData("SELECT * from mountpark_data");
-			ResultSet RS = result.resultSet;
-			while (RS.next())
-			{
-                GameMap map = World.world.getMap(RS.getShort("mapid"));
-				if (map == null)
-					continue;
-				if (RS.getShort("mapid") != i)
-					continue;
-				if (!World.world.getMountPark().containsKey(RS.getShort("mapid")))
-				{
-					MountPark MP = new MountPark(map, RS.getInt("cellid"), RS.getInt("size"), RS.getInt("priceBase"), RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
-					World.world.addMountPark(MP);
-				}
-				else
-				{
-					World.world.getMountPark().get(RS.getShort("mapid")).setInfos(map, RS.getInt("cellid"), RS.getInt("size"),RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
+	public void reload(int i) {
+		String query = "SELECT * from mountpark_data";
+		try (Result result = getData(query)) {
+			if (result != null) {
+				ResultSet RS = result.getResultSet();
+				while (RS.next()) {
+					GameMap map = World.world.getMap(RS.getShort("mapid"));
+					if (map == null || RS.getShort("mapid") != i)
+						continue;
+					if (!World.world.getMountPark().containsKey(RS.getShort("mapid"))) {
+						MountPark MP = new MountPark(map, RS.getInt("cellid"), RS.getInt("size"), RS.getInt("priceBase"), RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
+						World.world.addMountPark(MP);
+					} else {
+						World.world.getMountPark().get(RS.getShort("mapid")).setInfos(map, RS.getInt("cellid"), RS.getInt("size"), RS.getInt("cellMount"), RS.getInt("cellporte"), RS.getString("cellEnclos"), RS.getInt("sizeObj"));
+					}
 				}
 			}
-		}
-		catch (SQLException e)
-		{
-			super.sendError("Mountpark_dataData reload", e);
-		}
-		finally
-		{
-			close(result);
+		} catch (SQLException e) {
+			sendError("Mountpark_dataData reload", e);
 		}
 	}
 }

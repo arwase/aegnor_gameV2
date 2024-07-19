@@ -9,10 +9,7 @@ import database.statics.AbstractDAO;
 import fight.spells.EffectConstant;
 import game.world.World;
 import kernel.Config;
-import kernel.Constant;
 import kernel.Main;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,193 +23,205 @@ public class PlayerData extends AbstractDAO<Player> {
     }
 
     public int getNextId() {
-        Result result = null;
-        int guid = 0;
-        try {
-            result = getData("SELECT id FROM players ORDER BY id DESC LIMIT 1");
-            ResultSet RS = result.resultSet;
-
-            if (!RS.first())
-                guid = 1;
-            else
-                guid = RS.getInt("id") + 1;
+        String query = "SELECT id FROM players ORDER BY id DESC LIMIT 1";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (!RS.first()) {
+                    return 1;
+                } else {
+                    return RS.getInt("id") + 1;
+                }
+            }
         } catch (SQLException e) {
-            super.sendError("PlayerData getNextId", e);
-        } finally {
-            close(result);
+            sendError("PlayerData getNextId", e);
         }
-        return guid;
+        return 0;
     }
 
     public void load() {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM players");
-            ResultSet RS = result.resultSet;
-            while (RS.next()) {
-                if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
-                    continue;
+        String query = "SELECT * FROM players";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
+                        continue;
 
-                HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
+                    HashMap<Integer, Integer> stats = new HashMap<>();
+                    stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                    stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                    stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                    stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                    stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                    stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
 
-                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                    Player perso = new Player(
+                            RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"),
+                            RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"),
+                            RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"),
+                            RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"),
+                            RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"),
+                            RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"),
+                            RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"),
+                            RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"),
+                            RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"),
+                            RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"),
+                            RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"),
+                            RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho")
+                    );
 
+                    World.world.addPlayer(perso);
+                    if (perso.isShowSeller())
+                        World.world.addSeller(perso);
 
-                Player perso = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
-
-                perso.VerifAndChangeItemPlace();
-                World.world.addPlayer(perso);
-                if (perso.isShowSeller())
-                    World.world.addSeller(perso);
-
-                // FAILLE : Statistique trop élevés (Anciennement faille sur Dj familier)
-                if(RS.getInt("vitalite") > 2091 || RS.getInt("force") > 465 || RS.getInt("sagesse") > 432 || RS.getInt("intelligence") > 465 || RS.getInt("chance") > 465 || RS.getInt("agilite") > 465  ){
-                    perso.banAccount();
-                    World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de faille statistique, supérieurs aux jets maximum",perso );
-                }
-
-
-                if(Config.INSTANCE.getAUTO_CLEAN()) {
-                    LocalDateTime now = LocalDateTime.now();
-                    LocalDate firstDate = now.toLocalDate();
-                    LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
-                    String dateactuelle = perso.getAccount().getLastConnectionDate();
-                    String[] table = dateactuelle.split("~");
-                    LocalDate lastConnection = LocalDate.parse(table[0] + "-" + table[1] + "-" + table[2]);
-
-                    if (lastConnection.isBefore(UnUsedDate)) {
-                        System.out.println("Le perso " + RS.getString("name") + " doit être supprimé car le compte n'est plus utilisé depuis plus de 6 mois :" + lastConnection + " avant " + UnUsedDate);
-                        perso.getAccount().deletePlayer(perso.getId());
+                    if (RS.getInt("vitalite") > 2091 || RS.getInt("force") > 465 || RS.getInt("sagesse") > 432 ||
+                            RS.getInt("intelligence") > 465 || RS.getInt("chance") > 465 || RS.getInt("agilite") > 465) {
+                        perso.banAccount();
+                        World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),
+                                "TO BAN : Suspicion de Tentative de faille statistique, supérieurs aux jets maximum", perso);
                     }
                 }
-
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData load", e);
+            sendError("PlayerData load", e);
             Main.INSTANCE.stop("unknown");
-        } finally {
-            close(result);
         }
     }
 
+
     public Player load(int obj) {
-        Result result = null;
-        Player player = null;
-        try {
-            result = getData("SELECT * FROM players WHERE id = '" + obj + "'");
-            ResultSet RS = result.resultSet;
-            while (RS.next()) {
-                if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
-                    continue;
+        String query = "SELECT * FROM players WHERE id = '" + obj + "'";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
+                        continue;
 
-                HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
-                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
+                    HashMap<Integer, Integer> stats = new HashMap<>();
+                    stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                    stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                    stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                    stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                    stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                    stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
 
-                Player oldPlayer = World.world.getPlayer((int) obj);
-                player = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
+                    Player oldPlayer = World.world.getPlayer((int) obj);
+                    Player player = new Player(
+                            RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"),
+                            RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"),
+                            RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"),
+                            RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"),
+                            RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"),
+                            RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"),
+                            RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"),
+                            RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"),
+                            RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"),
+                            RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"),
+                            RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"),
+                            RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho")
+                    );
 
-                if(oldPlayer != null)
-                    player.setNeededEndFight(oldPlayer.needEndFight(), oldPlayer.hasMobGroup());
+                    if (oldPlayer != null)
+                        player.setNeededEndFight(oldPlayer.needEndFight(), oldPlayer.hasMobGroup());
 
-                player.VerifAndChangeItemPlace();
-                World.world.addPlayer(player);
-                int guild = Database.getDynamics().getGuildMemberData().isPersoInGuild(RS.getInt("id"));
+                    player.VerifAndChangeItemPlace();
+                    World.world.addPlayer(player);
+                    int guild = Database.getDynamics().getGuildMemberData().isPersoInGuild(RS.getInt("id"));
 
-                if (guild >= 0)
-                    player.setGuildMember(World.world.getGuild(guild).getMember(RS.getInt("id")));
+                    if (guild >= 0)
+                        player.setGuildMember(World.world.getGuild(guild).getMember(RS.getInt("id")));
 
+                    return player; // Return here as we found the player
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData load id", e);
+            sendError("PlayerData load id", e);
             Main.INSTANCE.stop("unknown");
-        } finally {
-            close(result);
         }
-        return player;
+        return null;
     }
 
     public void loadByAccountId(int id) {
-        try {
-            Account account = World.world.getAccount(id);
-            if (account != null)
-                if (account.getPlayers() != null)
-                    account.getPlayers().values().stream().filter(p -> p != null).forEach(World.world::verifyClone);
-        } catch (Exception e) {
-            super.sendError("PlayerData loadByAccountId clone", e);
+        Account account = World.world.getAccount(id);
+        if (account != null && account.getPlayers() != null) {
+            account.getPlayers().values().stream()
+                    .filter(p -> p != null)
+                    .forEach(World.world::verifyClone);
         }
 
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM players WHERE account = '" + id + "'");
-            ResultSet RS = result.resultSet;
-            while (RS.next()) {
-                if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
-                    continue;
+        String query = "SELECT * FROM players WHERE account = '" + id + "'";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (RS.getInt("server") != Config.INSTANCE.getSERVER_ID())
+                        continue;
 
-                Player p = World.world.getPlayer(RS.getInt("id"));
-                if (p != null) {
-                    if (p.getFight() != null) {
+                    Player p = World.world.getPlayer(RS.getInt("id"));
+                    if (p != null && p.getFight() != null) {
                         continue;
                     }
-                }
 
-                HashMap<Integer, Integer> stats = new HashMap<Integer, Integer>();
+                    HashMap<Integer, Integer> stats = new HashMap<>();
+                    stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
+                    stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
+                    stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
+                    stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
+                    stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
+                    stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
 
-                stats.put(EffectConstant.STATS_ADD_VITA, RS.getInt("vitalite"));
-                stats.put(EffectConstant.STATS_ADD_FORC, RS.getInt("force"));
-                stats.put(EffectConstant.STATS_ADD_SAGE, RS.getInt("sagesse"));
-                stats.put(EffectConstant.STATS_ADD_INTE, RS.getInt("intelligence"));
-                stats.put(EffectConstant.STATS_ADD_CHAN, RS.getInt("chance"));
-                stats.put(EffectConstant.STATS_ADD_AGIL, RS.getInt("agilite"));
-                Player player = new Player(RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"), RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"), RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"), RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"), RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"), RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"), RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"), RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"), RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"), RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"), RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"), RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho"));
+                    Player player = new Player(
+                            RS.getInt("id"), RS.getString("name"), RS.getInt("groupe"), RS.getInt("sexe"),
+                            RS.getInt("class"), RS.getInt("color1"), RS.getInt("color2"), RS.getInt("color3"),
+                            RS.getLong("kamas"), RS.getInt("spellboost"), RS.getInt("capital"), RS.getInt("energy"),
+                            RS.getInt("level"), RS.getLong("xp"), RS.getInt("size"), RS.getInt("gfx"), RS.getByte("alignement"),
+                            RS.getInt("account"), stats, RS.getByte("seeFriend"), RS.getByte("seeAlign"), RS.getByte("seeSeller"),
+                            RS.getString("canaux"), RS.getShort("map"), RS.getInt("cell"), RS.getString("objets"),
+                            RS.getString("storeObjets"), RS.getInt("pdvper"), RS.getString("spells"), RS.getString("savepos"),
+                            RS.getString("jobs"), RS.getInt("mountxpgive"), RS.getInt("mount"), RS.getInt("honor"),
+                            RS.getInt("deshonor"), RS.getInt("alvl"), RS.getString("zaaps"), RS.getByte("title"),
+                            RS.getInt("wife"), RS.getString("morphMode"), RS.getString("allTitle"), RS.getString("emotes"),
+                            RS.getLong("prison"), false, RS.getString("parcho"), RS.getLong("timeDeblo"), RS.getBoolean("noall"),
+                            RS.getString("deadInformation"), RS.getByte("needRestat"), RS.getLong("totalKills"), RS.getInt("isParcho")
+                    );
 
-                if(p != null)
+                    if (p != null)
                         player.setNeededEndFight(p.needEndFight(), p.hasMobGroup());
-                player.VerifAndChangeItemPlace();
-                World.world.addPlayer(player);
-                int guild = Database.getDynamics().getGuildMemberData().isPersoInGuild(RS.getInt("id"));
-                if (guild >= 0)
-                    player.setGuildMember(World.world.getGuild(guild).getMember(RS.getInt("id")));
+
+                    player.VerifAndChangeItemPlace();
+                    World.world.addPlayer(player);
+                    int guild = Database.getDynamics().getGuildMemberData().isPersoInGuild(RS.getInt("id"));
+                    if (guild >= 0)
+                        player.setGuildMember(World.world.getGuild(guild).getMember(RS.getInt("id")));
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData loadByAccountId", e);
+            sendError("PlayerData loadByAccountId", e);
             Main.INSTANCE.stop("unknown");
-        } finally {
-            close(result);
         }
     }
 
     public String loadTitles(int guid) {
-        Result result = null;
-        String title = "";
-        try {
-            result = getData("SELECT * FROM players WHERE id = '" + guid + "';");
-            ResultSet RS = result.resultSet;
-            if (RS.next()) {
-                title = RS.getString("allTitle");
+        String query = "SELECT * FROM players WHERE id = '" + guid + "';";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (RS.next()) {
+                    return RS.getString("allTitle");
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData loadTitles", e);
-        } finally {
-            close(result);
+            sendError("PlayerData loadTitles", e);
         }
-        return title;
+        return "";
     }
 
     public boolean add(Player perso) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("INSERT INTO players(`id`, `name`, `sexe`, `class`, `color1`, `color2`, `color3`, `kamas`, `spellboost`, `capital`, `energy`, `level`, `xp`, `size`, `gfx`, `account`, `cell`, `map`, `spells`, `objets`, `storeObjets`, `morphMode`, `server`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'','','0',?)");
+        String query = "INSERT INTO players(`id`, `name`, `sexe`, `class`, `color1`, `color2`, `color3`, `kamas`, `spellboost`, `capital`, `energy`, `level`, `xp`, `size`, `gfx`, `account`, `cell`, `map`, `spells`, `objets`, `storeObjets`, `morphMode`, `server`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'','','0',?)";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setInt(1, perso.getId());
             p.setString(2, perso.getName());
             p.setInt(3, perso.getSexe());
@@ -233,36 +242,38 @@ public class PlayerData extends AbstractDAO<Player> {
             p.setInt(18, perso.getCurMap().getId());
             p.setString(19, perso.parseSpellToDB());
             p.setInt(20, Config.INSTANCE.getSERVER_ID());
-            execute(p);
+            p.executeUpdate();
             return true;
         } catch (SQLException e) {
-            super.sendError("PlayerData add", e);
-        } finally {
-            close(p);
+            sendError("PlayerData add", e);
         }
         return false;
     }
 
-    public boolean delete(Player perso) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE FROM players WHERE id = ?");
-            p.setInt(1, perso.getId());
-            execute(p);
 
-            if (!perso.getItemsIDSplitByChar(",").equals(""))
-                for(String id : perso.getItemsIDSplitByChar(",").split(","))
+    public boolean delete(Player perso) {
+        String query = "DELETE FROM players WHERE id = ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
+            p.setInt(1, perso.getId());
+            p.executeUpdate();
+
+            if (!perso.getItemsIDSplitByChar(",").isEmpty()) {
+                for (String id : perso.getItemsIDSplitByChar(",").split(",")) {
                     Database.getStatics().getObjectData().delete(Integer.parseInt(id));
-            if (!perso.getStoreItemsIDSplitByChar(",").equals(""))
-                for(String id : perso.getStoreItemsIDSplitByChar(",").split(","))
+                }
+            }
+            if (!perso.getStoreItemsIDSplitByChar(",").isEmpty()) {
+                for (String id : perso.getStoreItemsIDSplitByChar(",").split(",")) {
                     Database.getStatics().getObjectData().delete(Integer.parseInt(id));
-            if (perso.getMount() != null)
+                }
+            }
+            if (perso.getMount() != null) {
                 Database.getStatics().getMountData().delete(perso.getMount().getId());
+            }
             return true;
         } catch (SQLException e) {
-            super.sendError("PlayerData delete", e);
-        } finally {
-            close(p);
+            sendError("PlayerData delete", e);
         }
         return false;
     }
@@ -273,13 +284,13 @@ public class PlayerData extends AbstractDAO<Player> {
     @Override
     public boolean update(Player player) {
         if (player == null) {
-            super.sendError("PlayerData update", new Exception("perso is null"));
+            sendError("PlayerData update", new Exception("perso is null"));
             return false;
         }
 
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `kamas`= ?, `spellboost`= ?, `capital`= ?, `energy`= ?, `level`= ?, `xp`= ?, `size` = ?, `gfx`= ?, `alignement`= ?, `honor`= ?, `deshonor`= ?, `alvl`= ?, `vitalite`= ?, `force`= ?, `sagesse`= ?, `intelligence`= ?, `chance`= ?, `agilite`= ?, `seeFriend`= ?, `seeAlign`= ?, `seeSeller`= ?, `canaux`= ?, `map`= ?, `cell`= ?, `pdvper`= ?, `spells`= ?, `objets`= ?, `storeObjets`= ?, `savepos`= ?, `zaaps`= ?, `jobs`= ?, `mountxpgive`= ?, `mount`= ?, `title`= ?, `wife`= ?, `morphMode`= ?, `allTitle` = ?, `emotes` = ?, `prison` = ?, `parcho` = ?, `timeDeblo` = ?, `noall` = ?, `deadInformation` = ?, `needRestat` = ?, `totalKills` = ?, `isParcho` = ? WHERE `players`.`id` = ? LIMIT 1");
+        String query = "UPDATE `players` SET `kamas`= ?, `spellboost`= ?, `capital`= ?, `energy`= ?, `level`= ?, `xp`= ?, `size` = ?, `gfx`= ?, `alignement`= ?, `honor`= ?, `deshonor`= ?, `alvl`= ?, `vitalite`= ?, `force`= ?, `sagesse`= ?, `intelligence`= ?, `chance`= ?, `agilite`= ?, `seeFriend`= ?, `seeAlign`= ?, `seeSeller`= ?, `canaux`= ?, `map`= ?, `cell`= ?, `pdvper`= ?, `spells`= ?, `objets`= ?, `storeObjets`= ?, `savepos`= ?, `zaaps`= ?, `jobs`= ?, `mountxpgive`= ?, `mount`= ?, `title`= ?, `wife`= ?, `morphMode`= ?, `allTitle` = ?, `emotes` = ?, `prison` = ?, `parcho` = ?, `timeDeblo` = ?, `noall` = ?, `deadInformation` = ?, `needRestat` = ?, `totalKills` = ?, `isParcho` = ? WHERE `players`.`id` = ? LIMIT 1";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setLong(1, player.getKamas());
             p.setInt(2, player.get_spellPts());
             p.setInt(3, player.get_capital());
@@ -334,15 +345,14 @@ public class PlayerData extends AbstractDAO<Player> {
             p.setLong(45, player.getTotalKills());
             p.setInt(46, player.getisParcho());
             p.setInt(47, player.getId());
-            execute(p);
+            p.executeUpdate();
+
             if (player.getGuildMember() != null)
                 Database.getDynamics().getGuildMemberData().update(player);
             if (player.getMount() != null)
                 Database.getStatics().getMountData().update(player.getMount());
-        } catch (Exception e) {
-            super.sendError("PlayerData update", e);
-        } finally {
-            close(p);
+        } catch (SQLException e) {
+            sendError("PlayerData update", e);
         }
 
         if (player.getQuestPerso() != null && !player.getQuestPerso().isEmpty())
@@ -352,218 +362,194 @@ public class PlayerData extends AbstractDAO<Player> {
     }
 
     public void updateInventory(Player perso){
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `objets` = ? WHERE `id`= ?");
+        String query = "UPDATE `players` SET `objets` = ? WHERE `id`= ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setString(1, perso.parseObjetsToDB());
             p.setInt(2, perso.getId());
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateInfos", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateInfos", e);
         }
     }
 
+
     public void updateInfos(Player perso) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `name` = ?, `sexe`=?, `class`= ?, `spells`= ? WHERE `id`= ?");
+        String query = "UPDATE `players` SET `name` = ?, `sexe`=?, `class`= ?, `spells`= ? WHERE `id`= ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setString(1, perso.getName());
             p.setInt(2, perso.getSexe());
             p.setInt(3, perso.getClasse());
             p.setString(4, perso.parseSpellToDB());
             p.setInt(5, perso.getId());
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateInfos", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateInfos", e);
         }
     }
 
-    public void UPDATE_PLAYER_COLORS(Player player) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `color1` = ?, `color2` = ?, `color3` = ? WHERE `id` = ?;");
 
+    public void UPDATE_PLAYER_COLORS(Player player) {
+        String query = "UPDATE `players` SET `color1` = ?, `color2` = ?, `color3` = ? WHERE `id` = ?;";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setInt(1, player.getColor1());
             p.setInt(2, player.getColor2());
             p.setInt(3, player.getColor3());
             p.setInt(4, player.getId());
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData UPDATE_PLAYER_COLORS", e);
-        } finally {
-            close(p);
+            sendError("PlayerData UPDATE_PLAYER_COLORS", e);
         }
     }
 
     public void updateGroupe(int group, String name) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `groupe` = ? WHERE `name` = ?;");
-
+        String query = "UPDATE `players` SET `groupe` = ? WHERE `name` = ?;";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setInt(1, group);
             p.setString(2, name);
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateGroupe", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateGroupe", e);
         }
     }
 
     public void updateGroupe(Player perso) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `groupe` = ? WHERE `id`= ?");
+        String query = "UPDATE `players` SET `groupe` = ? WHERE `id`= ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             int id = (perso.getGroupe() != null) ? perso.getGroupe().getId() : -1;
             p.setInt(1, id);
             p.setInt(2, perso.getId());
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateGroupe", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateGroupe", e);
         }
     }
 
     public void updateTimeTaverne(Player player) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE players SET `timeDeblo` = ? WHERE `id` = ?");
+        String query = "UPDATE players SET `timeDeblo` = ? WHERE `id` = ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setLong(1, player.getTimeTaverne());
             p.setInt(2, player.getId());
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateTimeDeblo", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateTimeDeblo", e);
         }
     }
 
     public void updateTitles(int guid, String title) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE players SET `allTitle` = ? WHERE `id` = ?");
+        String query = "UPDATE players SET `allTitle` = ? WHERE `id` = ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setString(1, title);
             p.setInt(2, guid);
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateTitles", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateTitles", e);
         }
     }
 
     public void updateLogged(int guid, int logged) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE players SET `logged` = ? WHERE `id` = ?");
+        String query = "UPDATE players SET `logged` = ? WHERE `id` = ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setInt(1, logged);
             p.setInt(2, guid);
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateLogged", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateLogged", e);
         }
     }
 
     public void updateAllLogged(int guid, int logged) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `players` SET `logged` = ? WHERE `account` = ?");
+        String query = "UPDATE `players` SET `logged` = ? WHERE `account` = ?";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
             p.setInt(1, logged);
             p.setInt(2, guid);
-            execute(p);
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData updateAllLogged", e);
-        } finally {
-            close(p);
+            sendError("PlayerData updateAllLogged", e);
         }
     }
 
     public boolean exist(String name) {
-        Result result = null;
-        boolean exist = false;
-        try {
-            result = getData("SELECT COUNT(*) AS exist FROM players WHERE name LIKE '" + name + "';");
-            ResultSet RS = result.resultSet;
-            if (RS.next()) {
-                if (RS.getInt("exist") > 0)
-                    exist = true;
+        String query = "SELECT COUNT(*) AS exist FROM players WHERE name LIKE '" + name + "';";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (RS.next() && RS.getInt("exist") > 0) {
+                    return true;
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData exist", e);
-        } finally {
-            close(result);
+            sendError("PlayerData exist", e);
         }
-        return exist;
+        return false;
     }
 
     public String haveOtherPlayer(int account) {
-        Result result = null;
-        String servers = "";
-        try {
-            result = getData("SELECT server FROM players WHERE account = '"
-                    + account + "' AND NOT server = '" + Config.INSTANCE.getSERVER_ID() + "'");
-            ResultSet RS = result.resultSet;
-            while (RS.next()) {
-                servers += (servers.isEmpty() ? RS.getInt("server") : ","
-                        + RS.getInt("server"));
+        String query = "SELECT server FROM players WHERE account = '"
+                + account + "' AND NOT server = '" + Config.INSTANCE.getSERVER_ID() + "'";
+        StringBuilder servers = new StringBuilder();
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                while (RS.next()) {
+                    if (servers.length() > 0) {
+                        servers.append(",");
+                    }
+                    servers.append(RS.getInt("server"));
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData haveOtherPlayer", e);
-        } finally {
-            close(result);
+            sendError("PlayerData haveOtherPlayer", e);
         }
-        return servers;
+        return servers.toString();
     }
 
     public void reloadGroup(Player p) {
-        Result result = null;
-        try {
-            result = getData("SELECT groupe FROM players WHERE id = '"
-                    + p.getId() + "'");
-            ResultSet RS = result.resultSet;
-            if (RS.next()) {
-                int group = RS.getInt("groupe");
-                Group g = Group.getGroupeById(group);
-                p.setGroupe(g, false);
+        String query = "SELECT groupe FROM players WHERE id = '" + p.getId() + "'";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (RS.next()) {
+                    int group = RS.getInt("groupe");
+                    Group g = Group.getGroupeById(group);
+                    p.setGroupe(g, false);
+                }
             }
         } catch (SQLException e) {
-            super.sendError("PlayerData reloadGroup", e);
-        } finally {
-            close(result);
+            sendError("PlayerData reloadGroup", e);
         }
     }
 
     public byte canRevive(Player player) {
-        Result result = null;
-        byte revive = 0;
-        try {
-            result = getData("SELECT id, revive FROM players WHERE `id` = '"
-                    + player.getId() + "';");
-            ResultSet RS = result.resultSet;
-            while (RS.next())
-                revive = RS.getByte("revive");
+        String query = "SELECT id, revive FROM players WHERE `id` = '" + player.getId() + "';";
+        try (Result result = getData(query)) {
+            if (result != null && result.getResultSet() != null) {
+                ResultSet RS = result.getResultSet();
+                if (RS.next()) {
+                    return RS.getByte("revive");
+                }
+            }
         } catch (SQLException e) {
-            super.sendError("PlayerData canRevive", e);
-        } finally {
-            close(result);
+            sendError("PlayerData canRevive", e);
         }
-        return revive;
+        return 0;
     }
 
     public void setRevive(Player player) {
-        try {
-            PreparedStatement p = getPreparedStatement("UPDATE players SET `revive` = 0 WHERE `id` = '" + player.getId() + "';");
-            execute(p);
-            close(p);
+        String query = "UPDATE players SET `revive` = 0 WHERE `id` = '" + player.getId() + "';";
+        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
+            PreparedStatement p = stmt.getPreparedStatement();
+            p.executeUpdate();
         } catch (SQLException e) {
-            super.sendError("PlayerData setRevive", e);
+            sendError("PlayerData setRevive", e);
         }
     }
 }

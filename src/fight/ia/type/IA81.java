@@ -36,16 +36,6 @@ public class IA81 extends AbstractNeedSpell  {
             ArrayList<Fighter> AllyToHeal = Function.getInstance().getAlliesToHeal(this.fight, this.fighter,80);
             Fighter AllyToBuff = Function.getInstance().getAllyToBuff(this.fight, this.fighter);
 
-            /*
-            for (SpellGrade spell : this.heals){
-                System.out.println("Heal + " + spell.getSpell().getName());
-            }
-            for (SpellGrade spell : this.buffs){
-                System.out.println("Buff + " + spell.getSpell().getName());
-            }
-            for (SpellGrade spell : this.highests){
-                System.out.println("Dmg + " + spell.getSpell().getName());
-            }*/
 
             // On essaie le heal de zone
             if(AllyToHeal.size() >= 2){

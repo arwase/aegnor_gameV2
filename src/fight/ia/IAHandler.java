@@ -36,7 +36,7 @@ public class IAHandler {
                 //region select ia
                 switch (mobGrade.getTemplate().getIa()) {
                     case 1://IA BASIQUE attaque,pm,attaque,pm
-                        ia = new IA27(fight, fighter, (byte) 4);
+                        ia = new IA27(fight, fighter, (byte) 6);
                         break;
                     case 2://IA Dragonnet rouge
                         ia = new IA2(fight, fighter, (byte) 6);
@@ -262,6 +262,9 @@ public class IAHandler {
                         break;
                     case 81://IA Soutient Heal allié, Heal Perso, Boost Allié, Boost Perso, Tape et reste proche d'allié ou ennemie si plus d'allié
                         ia = new IA81(fight, fighter, (byte) 6);
+                        break;
+                    case 82://IA Invocation + boost Invocation + se place pour taper et Tape
+                        ia = new IA82(fight, fighter, (byte) 6);
                         break;
                 }
                 //endregion

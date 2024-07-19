@@ -40,7 +40,7 @@ public class HdvLine {
 
     public boolean haveSameStats(HdvEntry toAdd) {
         return this.getStrStats().equalsIgnoreCase(toAdd.getGameObject().parseStatsStringSansUserObvi())
-                && toAdd.getGameObject().getTemplate().getType() != 85;//R�cup�re les stats de l'objet et compare avec ceux de la ligne
+                && toAdd.getGameObject().getTemplate().getType() != 85 && this.getRarity() == toAdd.getGameObject().getRarity() ;//R�cup�re les stats de l'objet et compare avec ceux de la ligne
     }
 
     public void sort(byte index) {

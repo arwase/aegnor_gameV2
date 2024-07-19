@@ -40,7 +40,7 @@ public class GameHandler implements IoHandler {
                 e.printStackTrace();
                 World.world.logger.error("packet " + arg1 + " error to decrypt");
                 if (Logging.USE_LOG)
-                    Logging.getInstance().write("Error", "packet error to decrypt -" + arg1 + " - " + e.getMessage()+ " - " +(client.getPlayer() == null ? "" : client.getPlayer().getName()) );
+                    Logging.getInstance().write("Error", "packet error to decrypt -" + arg1 + " - " + e.getMessage()+ " - " + (client.getSession() == null ? "No session" : client.getSession().getId()) + " - " + (client.getPlayer() == null ? "" : client.getPlayer().getName()) );
             }
             if (packet != null) packet = packet.replace("\n", "");
             else packet = (String) arg1;
@@ -80,12 +80,12 @@ public class GameHandler implements IoHandler {
                 if (Config.INSTANCE.getENCRYPT_PACKET() && !packet.startsWith("AT") && !packet.startsWith("HG"))
                     packet = World.world.getCryptManager().decryptMessage(packet, client.getPreparedKeys()).replace("\n", "");
                 if (packet.startsWith("am") || packet.startsWith("GDM") || packet.startsWith("ASK") || packet.startsWith("AB") ) {
-                    if(packet.length() > 16) {
-                        World.world.logger.trace((client.getPlayer() == null ? "" : client.getPlayer().getName()) + " --> " + packet.substring(0, 15) + "...");
-                    }
-                    else{
+                    //if(packet.length() > 16) {
+                        //World.world.logger.trace((client.getPlayer() == null ? "" : client.getPlayer().getName()) + " --> " + packet.substring(0, 15) + "...");
+                    //}
+                    //else{
                         World.world.logger.trace((client.getPlayer() == null ? "" : client.getPlayer().getName()) + " --> " + packet);
-                    }
+                   // }
                 }
                 else{
                     World.world.logger.trace((client.getPlayer() == null ? "" : client.getPlayer().getName()) + " --> " + packet);

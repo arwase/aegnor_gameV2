@@ -5,6 +5,7 @@ import area.SubArea;
 import area.map.GameMap;
 import area.map.entity.*;
 import area.map.entity.InteractiveObject.InteractiveObjectTemplate;
+import area.map.labyrinth.Gladiatrool;
 import area.map.labyrinth.Hotomani;
 import area.map.labyrinth.Minotoror;
 import area.map.labyrinth.PigDragon;
@@ -15,7 +16,8 @@ import client.AccountWeb;
 import client.Classe;
 import client.Player;
 import client.other.Stats;
-import command.AzuriomCommands;
+import command.administration.Command;
+import command.administration.Group;
 import common.*;
 import database.Database;
 import entity.Collector;
@@ -28,8 +30,13 @@ import entity.npc.NpcTemplate;
 import entity.pet.Pet;
 import entity.pet.PetEntry;
 import exchange.transfer.DataQueue;
+import fight.spells.Effect;
+import fight.spells.EffectTrigger;
 import fight.spells.Spell;
+import fight.spells.SpellGrade;
+import game.GameClient;
 import game.GameServer;
+import game.scheduler.entity.WorldPub;
 import guild.Guild;
 import guild.GuildMember;
 import hdv.Hdv;
@@ -42,13 +49,14 @@ import object.ObjectTemplate;
 import object.entity.Fragment;
 import object.entity.SoulStone;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.slf4j.LoggerFactory;
 import other.DiscordBot;
 import other.Sets;
 import other.Titre;
+import quest.Quest;
+import quest.QuestObjectif;
 import quest.QuestPlayer;
+import quest.QuestStep;
 import util.TimerWaiter;
 import util.lang.Lang;
 
@@ -59,7 +67,10 @@ import java.awt.event.ActionListener;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,6 +93,9 @@ public class World {
 
     private Map<Integer, ExpLevel> experiences = new HashMap<>();
     private Map<Integer, Spell> spells = new HashMap<>();
+    private Map<Integer, EffectTrigger> spellstriggers = new HashMap<>();
+    private Map<String, SpellGrade> spellsgrades = new HashMap<>();
+    private Map<Integer, Effect> spellseffects = new HashMap<>();
     private Map<Integer, ObjectTemplate> ObjTemplates = new HashMap<>();
     private Map<Integer, Monster> MobTemplates = new HashMap<>();
     private Map<Integer, NpcTemplate> npcsTemplate = new HashMap<>();
@@ -118,7 +132,20 @@ public class World {
     private Map<Integer, Classe> Classes = new HashMap<>();
     public ArrayList<House> houseToClear = new ArrayList<>();
     public DiscordBot bot = new DiscordBot();
+    private boolean isOnline = false;
+    private final Set<GameClient> clients = Collections.synchronizedSet(new HashSet<>());
 
+    public void addClient(GameClient client) {
+        clients.add(client);
+    }
+
+    public void removeClient(GameClient client) {
+        clients.remove(client);
+    }
+
+    public Set<GameClient> getClients() {
+        return clients;
+    }
 
     private boolean timerStart = false;
     private Timer timer;
@@ -213,15 +240,15 @@ public class World {
         return accountsWeb.get(id);
     }
 
-    public AccountWeb getWebAccountBygameAccountid(int id) {
+    /*public AccountWeb getWebAccountBygameAccountid(int id) {
         for (AccountWeb account : accountsWeb.values()){
-            for (int accountID : account.getAccountsId().values()){
+            for (int accountID : account.getAccounts().values()){
                 if (id == accountID)
                     return account;
             }
         }
         return null;
-    }
+    }*/
 
     public Collection<AccountWeb> getWebAccounts() {
         return accountsWeb.values();
@@ -290,7 +317,11 @@ public class World {
     }
 
     public List<Player> getOnlinePlayers() {
-        return players.values().stream().filter(player -> player.isOnline() && player.getGameClient() != null).collect(Collectors.toList());
+        List<Player> playerlist = new ArrayList<>();
+        //if(isOnline) {
+            playerlist =  players.values().stream().filter(player -> player.isOnline() && player.getGameClient() != null).collect(Collectors.toList());
+        //}
+        return playerlist;
     }
     //endregion
 
@@ -419,59 +450,96 @@ public class World {
         Database.getStatics().getWorldEntityData().load(null);
         logger.debug("The max id of all entities were done successfully.");
 
+        logger.debug("Loading Pet Template...");
         Database.getDynamics().getPetTemplateData().load();
-        logger.debug("The templates of pets were loaded successfully.");
+        logger.debug("... The " + Pets.size() +" templates of pets were loaded successfully.");
 
+        logger.debug("Loading administration commands...");
         Database.getStatics().getCommandData().load(null);
-        logger.debug("The administration commands were loaded successfully.");
+        logger.debug("... The " + Command.commands.size() +" administration commands were loaded successfully.");
 
+        logger.debug("Loading administration groups...");
         Database.getStatics().getGroupData().load(null);
-        logger.debug("The administration groups were loaded successfully.");
+        logger.debug("... The " + Group.getGroups().size() +" administration groups were loaded successfully.");
 
+        logger.debug("Loading informations messages ...");
         Database.getStatics().getPubData().load(null);
-        logger.debug("The pubs were loaded successfully.");
+        logger.debug("... The " + WorldPub.pubs.size() +" informations messages were loaded successfully.");
 
+        logger.debug("Loading incarnations ...");
         Database.getDynamics().getFullMorphData().load();
-        logger.debug("The incarnations were loaded successfully.");
+        logger.debug("... The " + fullmorphs.size() +" incarnations were loaded successfully.");
 
+        logger.debug("Loading extra-monsters ...");
         Database.getDynamics().getExtraMonsterData().load();
-        logger.debug("The extra-monsters were loaded successfully.");
+        logger.debug("... The " + extraMonstre.size() +" extra-monsters were loaded successfully.");
 
+        logger.debug("Loading Level step experiences ...");
         Database.getDynamics().getExperienceData().load();
-        logger.debug("The experiences were loaded successfully.");
+        logger.debug("... The " + experiences.size() +" level steps experiences were loaded successfully.");
 
+        logger.debug("Loading Spells templates (Retro value) ...");
         Database.getDynamics().getSpellData().load();
-        logger.debug("The spells were loaded successfully.");
+        logger.debug("... The "+ spells.size() + " spells templates were loaded successfully.");
 
+        logger.debug("Loading Spells grade (Retro value) ...");
+        Database.getDynamics().getSpellGradeData().load();
+        logger.debug("... The "+ spellsgrades.size() + " spells grade were loaded successfully.");
+
+        logger.debug("Loading Trigger Spells effects templates (Retro value) ...");
+        Database.getDynamics().getTriggerSpellEffectData().load();
+        logger.debug("... The "+ spellstriggers.size() + " Trigger SpellsEffects templates were loaded successfully.");
+
+        logger.debug("Loading Spells effects (Retro value) ...");
+        Database.getDynamics().getSpellEffectData().load();
+        logger.debug("... All spells effects were loaded successfully.");
+
+        logger.debug("Affecting Type to SpellGrade ...");
+        for (SpellGrade Sg : spellsgrades.values()) {
+            Sg.setTypeSwitchSpellEffects();
+        }
+        logger.debug("... All SpellGrade have been Typed successfully.");
+
+        logger.debug("Loading Monster's templates ...");
         Database.getDynamics().getMonsterData().load();
-        logger.debug("The monsters were loaded successfully.");
+        logger.debug("... The "+ MobTemplates.size() +" monster's templates were loaded successfully.");
 
+        logger.debug("Loading object's templates ...");
         Database.getDynamics().getObjectTemplateData().load();
-        logger.debug("The template objects were loaded successfully.");
+        logger.debug("... The "+ ObjTemplates.size() +" object's templates were loaded successfully.");
+        logger.debug("... "+Boutique.items.size()+" Boutique object's were loaded successfully.");
 
+        logger.debug("Loading already generated objects...");
         Database.getStatics().getObjectData().load();
-        logger.debug("The objects were loaded successfully.");
+        logger.debug("... The "+ objects.size() +" generated objects were loaded successfully.");
 
+        logger.debug("Loading NPC template ...");
         Database.getDynamics().getNpcTemplateData().load();
-        logger.debug("The non-player characters were loaded successfully.");
+        logger.debug("... The "+ npcsTemplate.size()+ " NPC template were loaded successfully.");
 
+        logger.debug("Loading NPC's questions ...");
         Database.getDynamics().getNpcQuestionData().load();
-        logger.debug("The n-p-c questions were loaded successfully.");
+        logger.debug("... The "+ questions.size() +" NPC's questions were loaded successfully.");
 
+        logger.debug("Loading NPC's answers ...");
         Database.getDynamics().getNpcAnswerData().load();
-        logger.debug("The n-p-c answers were loaded successfully.");
+        logger.debug("... The "+ answers.size() +" NPC's answers were loaded successfully.");
 
+        logger.debug("Loading Quest Goals ...");
         Database.getDynamics().getQuestObjectiveData().load();
-        logger.debug("The quest goals were loaded successfully.");
+        logger.debug("... The "+ QuestObjectif.getQuestObjectifList().size() +" quest goals were loaded successfully.");
 
+        logger.debug("Loading Quest steps ...");
         Database.getDynamics().getQuestStepData().load();
-        logger.debug("The quest steps were loaded successfully.");
+        logger.debug("... The "+ QuestStep.getQuestStepList().size() +" quest steps were loaded successfully.");
 
+        logger.debug("Loading Quest data ...");
         Database.getDynamics().getQuestData().load();
-        logger.debug("The quests data were loaded successfully.");
+        logger.debug("... The "+ Quest.getQuestList().size() +" quests data were loaded successfully.");
 
+        logger.debug("Adding Quest data to NPC ...");
         Database.getDynamics().getNpcTemplateData().loadQuest();
-        logger.debug("The adding of quests on non-player characters was done successfully.");
+        logger.debug("... All the quests have been added on non-player characters.");
 
         Database.getDynamics().getPrismData().load();
         logger.debug("The prisms were loaded successfully.");
@@ -529,27 +597,40 @@ public class World {
         Database.getDynamics().getAnimationData().load();
         logger.debug("The animations were loaded successfully.");
 
-        Database.getSites().getAccountWebData().load();
-        logger.debug("The accountsWeb were loaded successfully.");
+        if(Config.INSTANCE.getAZURIOM()) {
+            logger.debug("Loading Web Accounts ...");
+            Database.getSites().getAccountWebData().load();
+            logger.debug("... "+ accountsWeb.size()+ " Web Accounts were loaded successfully.");
+        }
 
+        logger.debug("Loading Game Accounts ...");
         Database.getStatics().getAccountData().load();
-        logger.debug("The accounts were loaded successfully.");
+        logger.debug("... "+accounts.size()+" Game Accounts were loaded successfully.");
 
+        if(Config.INSTANCE.getAZURIOM()) {
+            Database.getSites().getAccountWebData().syncGameAccountWithWebAccount();
+            logger.debug("Linkage between GameAccount and WebAccount done successfully.");
+        }
+
+        logger.debug("Loading Players ...");
         Database.getStatics().getPlayerData().load();
-        logger.debug("The players were loaded successfully.");
+        logger.debug("The "+ players.size()+" players were loaded successfully.");
+
+        logger.debug("Loading Players Quests ...");
+        Database.getStatics().getQuestPlayerData().loadAll();
+        logger.debug("The Players Quests were loaded successfully.");
 
         Database.getDynamics().getGuildMemberData().load();
         logger.debug("The guilds and guild members were loaded successfully.");
 
-        clearInactiveGuilds();
-        logger.debug("Nettoyage des guildes vides ou inactives terminé.");
-
         if(Config.INSTANCE.getAUTO_CLEAN()){
             clearInactiveAccounts();
-
             logger.debug("Nettoyage des comptes vides ou inactifs terminé.");
             //TODO Supprimer les comptes inactifs
             //TODO Supprimer les liens web des compte supprimés
+
+            clearInactiveGuilds();
+            logger.debug("Nettoyage des guildes vides ou inactives terminé.");
         }
 
         Database.getStatics().getTitleData().load();
@@ -617,6 +698,8 @@ public class World {
         Minotoror.initialize();
         logger.debug("Initialization of the dungeon : Hotomani.");
         Hotomani.initialize();
+        logger.debug("Initialization of the dungeons : Gladiatrool.");
+        Gladiatrool.initialize();
         logger.debug("Initialisation de la boutique IG.");
         Boutique.initPacket();
 
@@ -629,12 +712,15 @@ public class World {
 
         if(Config.INSTANCE.getAZURIOM()) {
             logger.debug("Initialisation Connection with Azuriom.");
-            new AzuriomCommands(2333).start();
+            //new AzuriomCommands(2333).start();
         }
 
+        if(Config.INSTANCE.getDISCORD_BOT()) {
+            bot.start();
+            logger.debug("Initialisation Connection with Discord.");
+        }
 
-        bot.start();
-        logger.debug("Initialisation Connection with Discord.");
+        sendWebhookInformationsServeur("Le serveur de jeu est désormais accessible !");
 
         if(Config.INSTANCE.getLOG()){
             logger.setLevel(Level.ALL);
@@ -642,11 +728,10 @@ public class World {
         else{
             logger.setLevel(Level.DEBUG);
         }
-
-
-
     }
 
+
+    // L'ensemble des fonction ci dessous concerne le nettoyage automatique
     private void clearInactiveHousesTrunk() {
         if(!houseToClear.isEmpty()) {
             for (House house : houseToClear) {
@@ -665,39 +750,157 @@ public class World {
     }
 
     private void clearInactiveAccounts() {
-        int i = 0;
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate firstDate = now.toLocalDate();
-        LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
-        Map<Integer, Account> Test = accounts;
+        int accountCleared = 0;
+        int playerCleared = 0;
+        LocalDate currentDate = LocalDate.now();
+        LocalDate UnUsedDate = currentDate.minus(Constant.AUTO_CLEAN_MONTH, ChronoUnit.MONTHS);
+        ZonedDateTime MaximumDate = UnUsedDate.atStartOfDay(ZoneId.systemDefault());
+
         ArrayList<Integer> ids = new ArrayList<>();
+        ArrayList<Account> allAccounts = new ArrayList<>();
+        allAccounts.addAll(accounts.values());
 
-        for (Entry<Integer, Account> account : Test.entrySet()){
-            Account account1 = account.getValue();
-            Boolean isInactifAccount = true;
-            if(!account1.getPlayers().isEmpty()){
-                break;
-            }
+        for (Account account : allAccounts) {
+            if (Config.INSTANCE.getAUTO_CLEAN()) {
+                if (Config.INSTANCE.getAZURIOM()) {
+                    AccountWeb wA = account.getWebAccount();
+                    if (wA != null) {
+                        Timestamp timeStamp = wA.getLastConnectionDate();
+                        if (timeStamp != null) {
+                            Instant insant = timeStamp.toInstant();
+                            // Convertir l'Instant en ZonedDateTime
+                            ZonedDateTime zonedDateTimeFromMysql = insant.atZone(ZoneId.systemDefault());
+                            if (zonedDateTimeFromMysql.isBefore(MaximumDate)) {
+                                if (wA.getRole() != 1) {
+                                    System.out.println("Le compte " + account.getName() + " doit être supprimé mais ne le sera pas car Donateur ou au dessus");
+                                } else {
+                                    //if (perso.getGroupe() == null) {
+                                    LocalDateTime now = LocalDateTime.now();
+                                    LocalDate firstDate = now.toLocalDate();
+                                    LocalDate UnUsedDate3 = firstDate.plusMonths(-(Constant.AUTO_CLEAN_MONTH));
+                                    String dateactuelle = account.getLastConnectionDate();
+                                    LocalDate datecreation = LocalDate.parse(account.creationDate);
+                                    if(!dateactuelle.isEmpty()) {
+                                        String[] table = dateactuelle.split("~");
+                                        LocalDate lastConnection = LocalDate.parse(table[0] + "-" + table[1] + "-" + table[2]);
+                                        if (lastConnection.isBefore(UnUsedDate3)) {
+                                            System.out.println("Le compte " + account.getName() + " va etre supprimé car ne s'est plus connecté depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois :" + zonedDateTimeFromMysql + " / Derniere connexion au jeu " + lastConnection);
+                                            fullClearAccount(account);
+                                            accountCleared++;
+                                        }
+                                    }
+                                    else {
+                                        //World.world.sendWebhookInformationsServeur("Le compte **" + account.getPseudo() + "** est supprimé car ne s'est jamais connecté et créé depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois :" + datecreation);
+                                        System.out.println("Le compte " + account.getPseudo() + " doit être supprimé car le compte ne s'est jamais connecté et créé depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois : " + datecreation);
+                                        fullClearAccount(account);
+                                        accountCleared++;
+                                    }
+                                    //}
+                                }
+                            }
+                        } else {
+                            System.out.println("Etrangement pas de dernière connexion au compte Web " + wA.getName());
+                        }
+                    } else {
 
-            if(isInactifAccount){
-                String dateactuelle = account1.getLastConnectionDate();
-                String[] table =   dateactuelle.split("~");
-                LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
-                if(lastConnection.isAfter(UnUsedDate) ){
-                    break;
+                        //if (perso.getGroupe() == null) {
+                            LocalDateTime now = LocalDateTime.now();
+                            LocalDate firstDate = now.toLocalDate();
+                            LocalDate UnUsedDate3 = firstDate.plusMonths(-(Constant.AUTO_CLEAN_MONTH));
+                            String dateactuelle = account.getLastConnectionDate();
+                            LocalDate datecreation = LocalDate.parse(account.creationDate);
+                            if(!dateactuelle.isEmpty()) {
+                                String[] table = dateactuelle.split("~");
+                                LocalDate lastConnection = LocalDate.parse(table[0] + "-" + table[1] + "-" + table[2]);
+                                //System.out.println("Pas de compte Web associé au compte " + account.getName() + " dernière connexion en jeu " + lastConnection);
+                                if (lastConnection.isBefore(UnUsedDate3)) {
+                                    //World.world.sendWebhookInformationsServeur("Le compte **" + account.getPseudo() + "** est supprimé car ne s'est plus connecté depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois :" + lastConnection);
+                                    System.out.println("Le compte " + account.getPseudo() + " doit être supprimé car le compte n'est plus utilisé depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois : Derniere connexion au jeu " + lastConnection);
+                                    fullClearAccount(account);
+                                    accountCleared++;
+                                }
+                            }
+                            else{
+                                if(datecreation.isBefore(UnUsedDate3)){
+                                    //World.world.sendWebhookInformationsServeur("Le compte **" + account.getPseudo() + "** est supprimé car ne s'est jamais connecté et créé depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois :" + datecreation);
+                                    System.out.println("Le compte " + account.getPseudo() + " doit être supprimé car le compte ne s'est jamais connecté et créé depuis plus de " + Constant.AUTO_CLEAN_MONTH + " mois : " + datecreation);
+                                    fullClearAccount(account);
+                                    accountCleared++;
+                                }
+                            }
+
+
+                        //}
+                    }
                 }
+
             }
 
-            if(isInactifAccount) {
-                System.out.println("Nettoyage du compte " + account1.getName() );
-                for ( GameObject curObj : account1.getBank()) {
-                    World.world.removeGameObject(curObj.getGuid());
-                }
-
-                Database.getSites().getAccountWebData().delete(account1.getId());
-                removeAccount(account1.getId());
-            }
         }
+
+        System.out.println(accountCleared + " comptes purgés");
+        System.out.println(playerCleared + " personnages purgés");
+    }
+
+    private Map<String,Integer> fullClearAccount(Account account){
+        Map<String,Integer> clearance = new HashMap<>();
+
+        // On supprime tous les joueurs associés au compte et ses dépences
+        int nb = clearAllPlayerFromAccount(account);
+        clearance.put("Players",nb);
+
+        // Faudrait supprimer aussi les mount avec leur inventaires. (ca c'est les joueurs pas les accounts)
+
+        // On supprime toutes les dépences lié au compte (Banque, Maison ??, Coffre ??, )
+        clearAccountBank(account);
+        clearance.put("BankObj",nb);
+
+        // On supprime le lien avec le site Web
+        if(account.getWebAccount() != null) {
+            Database.getSites().getAccountWebData().delete(account.getId());
+        }
+
+        // En very last on supprime en bdd
+        Database.getStatics().getAccountData().delete(account);
+
+        // On supprime aussi de la liste world
+        accounts.remove(account.getId());
+
+        return clearance;
+    }
+
+    private int clearAllPlayerFromAccount(Account account){
+        int i = 0;
+        // Créer une copie de la map originale
+        Map<Integer,Player> copiedMap = new HashMap<>(account.getPlayers());
+
+        // Supprimer les entrées une par une de la copie
+        Iterator<Map.Entry<Integer,Player>> iterator = copiedMap.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer,Player> entry = iterator.next();
+            System.out.println("Suppression du personnage " + entry.getValue().getName() + " car associé au compte");
+            account.deletePlayer(entry.getValue().getId());
+            account.getPlayers().remove(entry.getValue().getId());
+            i++;
+        }
+        return i;
+    }
+
+    private int clearAccountBank(Account account){
+        int nbObj = 0;
+        // On supprime les objets dans la banque
+        for (GameObject obj : account.getBank() ) {
+            if(obj.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+                World.world.removePets(obj.getGuid());
+            }
+            World.world.removeGameObject(obj.getGuid());
+            nbObj++;
+        }
+
+        // On supprime la banque
+        Database.getDynamics().getBankData().remove(account.getId());
+
+        return nbObj;
     }
 
     public void addExtraMonster(int idMob, String superArea,
@@ -835,6 +1038,7 @@ public class World {
     public void addArea(Area area) {
         areas.put(area.getId(), area);
     }
+
     public void addClasse(Classe classe) {
         Classes.put(classe.getId(), classe);
     }
@@ -994,16 +1198,32 @@ public class World {
                 wife.setWife(0);
             }
         }
-
         Map<Integer,QuestPlayer> qps = player.getQuestPerso();
         for(QuestPlayer qp : qps.values()){
             qp.removeQuestPlayer();
         }
 
-        player.remove();
+        deletePlayerMountAndObj(player);
+
         SuppressPerso(player.getId());
+        player.removeFromDDB();
         players.remove(player.getId());
     }
+
+    public void deletePlayerMountAndObj(Player player){
+
+        for(Mount mount : World.world.getMounts().values()){
+            if(mount.getOwner() == player.getId()){
+                for(GameObject obj : mount.getObjects().values() ){
+                    World.world.removeGameObject(obj.getGuid());
+                }
+                Database.getStatics().getMountData().delete(player.getMount().getId());
+                World.world.removeMount(player.getMount().getId());
+                player.setMount(null);
+            }
+        }
+    }
+
 
     public void unloadPerso(Player perso) {
         unloadPerso(perso.getId());//UnLoad du perso+item
@@ -1050,12 +1270,35 @@ public class World {
         return experiences.get(_lvl + 1).bandits;
     }
 
+
     public void addSort(Spell sort) {
         spells.put(sort.getSpellID(), sort);
     }
 
+    public void addSortGrade(SpellGrade sort) {
+        spellsgrades.put(sort.getSpellID()+"_"+sort.getLevel(), sort);
+    }
+
     public Spell getSort(int id) {
         return spells.get(id);
+    }
+
+
+
+    public Spell getSpellbyName(String name) {
+        for(Spell s: this.spells.values()){
+            if(s.getName().equals(name))
+                return s;
+        }
+        return null;
+    }
+
+    public void addEffectTrigger(EffectTrigger trigger) {
+        spellstriggers.put(trigger.getTriggerID(), trigger);
+    }
+
+    public EffectTrigger getEffectTrigger(int id) {
+        return spellstriggers.get(id);
     }
 
     public void addObjTemplate(ObjectTemplate obj) {
@@ -1192,6 +1435,30 @@ public class World {
             fullmorphs.get(morphID).put("initiative", args[9]);
             fullmorphs.get(morphID).put("stats", args[10]);
             fullmorphs.get(morphID).put("donjon", args[11]);
+            if(Constant.isGladiatroolMorph(morphID)){
+                fullmorphs.get(morphID).put("do", args[12]);
+                fullmorphs.get(morphID).put("doper", args[13]);
+                fullmorphs.get(morphID).put("invo", args[14]);
+                fullmorphs.get(morphID).put("esPA", args[15]);
+                fullmorphs.get(morphID).put("esPM", args[16]);
+                fullmorphs.get(morphID).put("resiNeu", args[17]);
+                fullmorphs.get(morphID).put("resiTer", args[18]);
+                fullmorphs.get(morphID).put("resiFeu", args[19]);
+                fullmorphs.get(morphID).put("resiEau", args[20]);
+                fullmorphs.get(morphID).put("resiAir", args[21]);
+                fullmorphs.get(morphID).put("PO", args[22]);
+                fullmorphs.get(morphID).put("soin", args[23]);
+                fullmorphs.get(morphID).put("crit", args[24]);
+                fullmorphs.get(morphID).put("rfixNeu", "0");
+                fullmorphs.get(morphID).put("rfixTer", "0");
+                fullmorphs.get(morphID).put("rfixFeu", "0");
+                fullmorphs.get(morphID).put("rfixEau", "0");
+                fullmorphs.get(morphID).put("rfixAir", "0");
+                fullmorphs.get(morphID).put("renvoie", "0");
+                fullmorphs.get(morphID).put("dotrap", "0");
+                fullmorphs.get(morphID).put("perdotrap", "0");
+                fullmorphs.get(morphID).put("dophysique", "0");
+            }
         }
     }
 
@@ -1297,10 +1564,10 @@ public class World {
         players.values().stream().filter(player -> player.getAccID() == account.getId()).forEach(player -> player.setAccount(account));
     }
 
-    public void ReassignAccountWebToAccount(AccountWeb accountweb) {
+    /*public void ReassignAccountWebToAccount(AccountWeb accountweb) {
         Database.getStatics().getAccountData().loadByAccountWebId(accountweb.getId());
         accounts.values().stream().filter(account -> account.getAccWebID() == accountweb.getId()).forEach(account -> account.setWebaccount(accountweb));
-    }
+    }*/
 
     public int getZaapCellIdByMapId(short i) {
         for (Entry<Integer, Integer> zaap : Constant.ZAAPS.entrySet()) {
@@ -1583,7 +1850,7 @@ public class World {
         int i = 0;
         LocalDateTime now = LocalDateTime.now();
         LocalDate firstDate = now.toLocalDate();
-        LocalDate UnUsedDate = firstDate.plusMonths(Constant.AUTO_CLEAN_MONTH);
+        LocalDate UnUsedDate = firstDate.plusMonths(-Constant.AUTO_CLEAN_MONTH);
         Map<Integer, Guild> Test = Guildes;
         ArrayList<Integer> ids = new ArrayList<>();
 
@@ -1594,22 +1861,33 @@ public class World {
             if(Members.size() != 0){
                 for (Player player : Members) {
                     String dateactuelle = guild.getValue().getMember(player.getId()).getLastCo();
-                    String[] table =   dateactuelle.split("~");
+                    String[] table = dateactuelle.split("~");
                     LocalDate lastConnection =LocalDate.parse(table[0]+"-"+table[1]+"-"+table[2]);
-                    if(player.getGuildMember().getRank() ==1){
-                        hasMeneur = true;
+                    GuildMember test = player.getGuildMember();
+                    if(test != null && test.getRank() == 1){
+                        if(!hasMeneur)
+                            hasMeneur = true;
                     }
+
+                    if(test.getRank() != 1 && test.getRights() == 1){
+                        test.setAllRights(test.getRank(), (byte) test.getXpGive(), 29694, test.getPlayer());//1 => Meneur (Tous droits);
+                        System.out.println("On reset les droits de "+test.getPlayer().getName()+" car droit 1 alors que pas meneur");
+                    }
+
 
                     if(lastConnection.isAfter(UnUsedDate) ){
                         isInactifGuild = false;
-                        break ;
+                        //break ;
                     }
-                }
 
+                    if(!isInactifGuild && hasMeneur)
+                        break;
+                }
             }
 
             if(isInactifGuild){
                 System.out.println("La guilde " + guild.getValue().getName() +" est inactive, on supprime");
+                sendWebhookInformationsServeur("Suppression de la guilde **" + guild.getValue().getName() +"** car vide");
                 ids.add(guild.getValue().getId());
             }
 
@@ -1626,6 +1904,7 @@ public class World {
                 }
 
                 if(higherRank != null) {
+                    sendWebhookInformationsServeur("Nouveau meneur '**" + higherRank.getPlayer().getName() + "**' pour la guilde **"+  higherRank.getGuild().getName()+ "**");
                     System.out.println("La guilde " + higherRank.getGuild().getName() + " n'a plus de meneur actif :" + higherRank.getPlayer().getName() + " choisi pour le remplacer");
                     higherRank.setAllRights(1, (byte) 0, 1, higherRank.getPlayer());//1 => Meneur (Tous droits);
                 }
@@ -1649,6 +1928,7 @@ public class World {
     public synchronized void addPrisme(Prism Prisme) {
         Prismes.put(Prisme.getId(), Prisme);
     }
+
     public Classe getClasse(int id)
     {
         return Classes.get(id);
@@ -2029,7 +2309,9 @@ public class World {
     }
 
     public void reloadPlayerGroup() {
-        GameServer.getClients().stream().filter(client -> client != null && client.getPlayer() != null).forEach(client -> Database.getStatics().getPlayerData().reloadGroup(client.getPlayer()));
+        GameServer.getClients().stream()
+                .filter(client -> client != null && client.getPlayer() != null)
+                .forEach(client -> Database.getStatics().getPlayerData().reloadGroup(client.getPlayer()));
     }
 
     public void reloadDrops() {
@@ -2063,7 +2345,7 @@ public class World {
             }
 
             try {
-               getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+               getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(ArrayUtils.contains(Constant.EXCLUDE_MOBID_TODROP, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
                        && (getLvlMoyenMonstre(monster) >= finalI && getLvlMoyenMonstre(monster) <= finalI + 9)).forEach(arrayMonstre::add);
            }
            catch (Exception e){
@@ -2074,7 +2356,7 @@ public class World {
                 int k=1;
                 do {
                     int finalK = k;
-                    getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+                    getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType()))  && !(ArrayUtils.contains(Constant.EXCLUDE_MOBID_TODROP, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
                             && (getLvlMoyenMonstre(monster) >= finalI && getLvlMoyenMonstre(monster) <= finalI + 9+ finalK)).forEach(arrayMonstre::add);
                     k++;
                 }
@@ -2691,7 +2973,7 @@ public class World {
                     connection.setDoOutput(true);
                     connection.addRequestProperty("User-Agent", "Aegnor Webhook 1.0");
 
-                    String jsonMessage = "{\"content\":\"" + "'**(" + player.getName() + ")**' : " +  message + "\"}";
+                    String jsonMessage = "{\"content\":\"" + "**" + player.getName() + "** : " +  message + "\"}";
                     try (OutputStream os = connection.getOutputStream()) {
                         byte[] input = jsonMessage.getBytes("utf-8");
                         os.write(input, 0, input.length);
@@ -2711,7 +2993,37 @@ public class World {
         }
     }
 
+    public static void sendWebhookInformationsServeur(String message) {
+        try {
+            if(Config.INSTANCE.getDISCORD_WH()) {
+                if(!Config.INSTANCE.getDISCORD_CHANNEL_INFO().isEmpty()) {
+                    URL url = new URL(Config.INSTANCE.getDISCORD_CHANNEL_INFO());
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type", "application/json");
+                    connection.setDoOutput(true);
+                    connection.addRequestProperty("User-Agent", "Aegnor Webhook 1.0");
+
+                    String jsonMessage = "{\"content\":\"" + "**" + Config.INSTANCE.getSERVER_NAME() + "** : " +  message + "\"}";
+                    try (OutputStream os = connection.getOutputStream()) {
+                        byte[] input = jsonMessage.getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+
+                    int responseCode = connection.getResponseCode();
+                    if (responseCode != 204) {
+                        if (Logging.USE_LOG) {
+                            Logging.getInstance().write("WebHookFail", message + " | Webhook Response Code:" + responseCode);
+                        }
+                    }
+                    connection.disconnect();
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public void sendMessageToAll(String message) {
         TimerWaiter.addNext(() -> World.world.getOnlinePlayers().stream()
@@ -2851,7 +3163,6 @@ public class World {
         Sets.put(set.getId(), set);
     }
 
-
     // POUR LA GESTION DES REBOOT
     public void reboot(int launch,int min){
         int time = 30, OffOn = 0;
@@ -2865,7 +3176,7 @@ public class World {
 
         if (OffOn == 1 && isTimerStart() )// demande de demarer le reboot
         {
-            System.out.println("Reboot deja en cours");
+            //System.out.println("Reboot deja en cours");
         } else if (OffOn == 1 && !isTimerStart()) {
             if (time <= 5) {
                 for(Player player : World.world.getOnlinePlayers()) {
@@ -2882,7 +3193,6 @@ public class World {
             if (time <= 1)
                 timeMSG = "minute";
             SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " " + timeMSG);
-            System.out.println("Reboot programmé.");
         } else if (OffOn == 0 && isTimerStart() ) {
             getTimer().stop();
             setTimerStart(false);
@@ -2891,9 +3201,8 @@ public class World {
                 player.sendServerMessage(Lang.get(player, 15));
             }
             Main.INSTANCE.setFightAsBlocked(false);
-            System.out.println("Reboot arrêté.");
         } else if (OffOn == 0 && !isTimerStart() ) {
-            System.out.println("Aucun reboot n'est lancé.");
+            //System.out.println("Aucun reboot n'est lancé.");
         }
     }
 
@@ -2914,6 +3223,7 @@ public class World {
     }
 
     public Timer createTimer(final int timer) {
+        sendWebhookInformationsServeur("Un reboot a été programmé dans "+timer+ " minutes.");
         ActionListener action = new ActionListener() {
             int time = timer;
 
@@ -2923,7 +3233,7 @@ public class World {
                     SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minute");
                 else
                     SocketManager.GAME_SEND_Im_PACKET_TO_ALL("115;" + time + " minutes");
-                if (time <= 0) Main.INSTANCE.stop("Shutdown by WebSite");
+                if (time <= 0) Main.INSTANCE.stop("Shutdown by WebSite or DiscordBot");
             }
         };
         return new Timer(60000, action);
@@ -2934,6 +3244,18 @@ public class World {
         ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
         getMonstres().stream().filter(monster -> monster != null && !(ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
                 && !(ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_HOTOMANI_MONSTRES, monster.getId())) && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+    public ArrayList<Monster.MobGrade> getMobgradeBetweenLvlGladia(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && !(org.apache.commons.lang.ArrayUtils.contains(Constant.FILTER_MONSTRE_SPE, monster.getType())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
+                && !(org.apache.commons.lang.ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(org.apache.commons.lang.ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_MONSTRES, monster.getId())) && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
 
         for(Monster mob : arrayMonstre){
             arrayMobgrade.add(mob.getGrade(5));
@@ -2953,6 +3275,19 @@ public class World {
         return arrayMobgrade;
     }
 
+    public ArrayList<Monster.MobGrade> getArchiMobgradeBetweenLvlGladia(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && (org.apache.commons.lang.ArrayUtils.contains(Constant.MONSTRE_TYPE_ARCHI, monster.getType())) && !(org.apache.commons.lang.ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_ARCHI, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty())
+                && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+
     public ArrayList<Monster.MobGrade> getBossMobgradeBetweenLvl(int min, int max){
         ArrayList<Monster> arrayMonstre = new ArrayList<>();
         ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
@@ -2965,6 +3300,19 @@ public class World {
         return arrayMobgrade;
     }
 
+    public ArrayList<Monster.MobGrade> getBossMobgradeBetweenLvlGladia(int min, int max){
+        ArrayList<Monster> arrayMonstre = new ArrayList<>();
+        ArrayList<Monster.MobGrade> arrayMobgrade = new ArrayList<>();
+        getMonstres().stream().filter(monster -> monster != null && (ArrayUtils.contains(Constant.BOSS_ID, monster.getId())) && !(ArrayUtils.contains(Constant.EXCEPTION_GLADIATROOL_BOSS, monster.getId())) && !(monster.getGrade(1).getSpells().keySet().isEmpty()) && (monster.getAlign() == -1)
+                && (getLvlMax(monster) >= min && getLvlMax(monster) < max)).forEach(arrayMonstre::add);
+
+        for(Monster mob : arrayMonstre){
+            arrayMobgrade.add(mob.getGrade(5));
+        }
+        return arrayMobgrade;
+    }
+
+
     public int getLvlMax(Monster monstre){
         int levelmoyen = monstre.getGrade(5).getLevel();
         return levelmoyen;
@@ -2972,8 +3320,6 @@ public class World {
 
     public void removeAccount(int guid) {
             accounts.remove(guid);
-
-
     }
 
     public static class Drop {

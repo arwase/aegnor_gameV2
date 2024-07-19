@@ -21,31 +21,25 @@ public class BanIpData extends AbstractDAO<Object> {
     }
 
     public boolean add(String ip) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("INSERT INTO `banip` VALUES (?)");
-            p.setString(1, ip);
-            execute(p);
+        String query = "INSERT INTO `banip` VALUES (?)";
+        try (PreparedStatementWrapper ps = getPreparedStatement(query)) {
+            ps.getPreparedStatement().setString(1, ip);
+            executeUpdate(ps);
             return true;
         } catch (SQLException e) {
             super.sendError("BanipData add", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public boolean delete(String ip) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE FROM `banip` WHERE `ip` = ?");
-            p.setString(1, ip);
-            execute(p);
+        String query = "DELETE FROM `banip` WHERE `ip` = ?";
+        try (PreparedStatementWrapper ps = getPreparedStatement(query)) {
+            ps.getPreparedStatement().setString(1, ip);
+            executeUpdate(ps);
             return true;
         } catch (SQLException e) {
             super.sendError("BanipData delete", e);
-        } finally {
-            close(p);
         }
         return false;
     }
