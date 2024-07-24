@@ -622,8 +622,10 @@ public class Fighter implements Comparable<Fighter> {
         this.addBuffStats(EffectConstant.STATS_ADD_RP_EAU,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_RP_TER,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_RP_NEU,5*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
-        this.addBuffStats(EffectConstant.STATS_ADD_PM,pmmoyen +fightDiff-1,Constant.SPELL_BOOSTBYDIFF,this);
-        this.addBuffStats(EffectConstant.STATS_ADD_PA,pamoyen +fightDiff-1,Constant.SPELL_BOOSTBYDIFF,this);
+        if(!this.isInvocation()) {
+            this.addBuffStats(EffectConstant.STATS_ADD_PM,pmmoyen +fightDiff-1,Constant.SPELL_BOOSTBYDIFF,this);
+            this.addBuffStats(EffectConstant.STATS_ADD_PA, pamoyen + fightDiff - 1, Constant.SPELL_BOOSTBYDIFF, this);
+        }
         this.addBuffStats(EffectConstant.STATS_ADD_PERDOM,10*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_PO,fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_CC,4*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);

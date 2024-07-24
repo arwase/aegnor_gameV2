@@ -232,6 +232,7 @@ public class GameCase {
             if (aCell == null) continue;
             Fighter f = aCell.getFirstFighter();
             if (f == null) continue;
+            if (f.isDead()) continue;
             cibles.add(f);
         }
         return cibles;

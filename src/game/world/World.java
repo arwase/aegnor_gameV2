@@ -498,6 +498,7 @@ public class World {
         for (SpellGrade Sg : spellsgrades.values()) {
             Sg.setTypeSwitchSpellEffects();
         }
+
         logger.debug("... All SpellGrade have been Typed successfully.");
 
         logger.debug("Loading Monster's templates ...");

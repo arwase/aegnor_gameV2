@@ -190,7 +190,6 @@ public class SpellGrade {
 
             for (Effect effect : this.getEffects()) {
                 // Effet de buff
-
                 if (Arrays.stream(Constant.SPELLEFFECT_BUFF).anyMatch(value -> value == effect.getEffectID())) {
                     if (effect.getEffectID() == 950 || effect.getEffectID() == 951) {
                         tableau[1] += 6000;

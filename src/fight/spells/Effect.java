@@ -106,8 +106,8 @@ public class Effect  {
     }
 
     // Un constructeur pour les Copy
-    public Effect(int ID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int turn, boolean isCCeffet,String jet,int effectTarget, Fighter caster){
-        this.effectID = ID;
+    public Effect(int effectID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int turn, boolean isCCeffet,String jet,int effectTarget, Fighter caster, int type, int WeaponType, int WeaponID){
+        this.effectID = effectID;
         this.jet = jet;
         this.areaEffect = areaEffect;
         this.effectTarget = effectTarget;
@@ -121,11 +121,14 @@ public class Effect  {
         this.duration = turn;
         this.isCCEffect = isCCeffet;
         this.caster = caster;
+        this.type = type;
+        this.weaponType = WeaponType;
+        this.weaponID = WeaponID;
     }
 
     // Un constructeur pour les effets d'armes
-    public Effect(int ID, int WeaponID, int WeaponType,String jet, int args1, int args2){
-        this.effectID = ID;
+    public Effect(int effectID, int WeaponID, int WeaponType,String jet, int args1, int args2){
+        this.effectID = effectID;
         this.jet = jet;
         this.weaponID = WeaponID;
         this.weaponType = WeaponType;
@@ -139,7 +142,6 @@ public class Effect  {
         this.type = EffectConstant.EFFECT_TYPE_CAC;
         // Faire une fonction pour avoir la zone selon l'arme utilisée
         //this.areaEffect = getAreaEffect();
-
     }
 
     // Ca c'est un constructeur pour les Objets consommables
@@ -196,8 +198,21 @@ public class Effect  {
         this.caster = caster;
     }
 
+    public static List<Effect> CopyAllEffect(List<Effect> effects){
+        List<Effect> copy = new ArrayList<>();
+        for(Effect effect : effects){
+            Effect newEffect = effect.getCopy();
+            copy.add(newEffect);
+        }
+        return copy;
+    }
+
+    public Effect getCopy() {
+        return new Effect(this.effectID, this.spellID, this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect, this.turn, this.isCCEffect,this.jet,this.effectTarget, this.caster,this.type,this.weaponType,this.weaponID);
+    }
+
     // Une fonction qui va venir appeler tous les Effects d'un spell 1 par 1
-    public static void applyAllEffectFromList(Fight fight,List <Effect> Effets, boolean isCC, Fighter spellCaster, GameCase cellSelected){
+    public static void applyAllEffectFromList(Fight fight,List<Effect> Effets, boolean isCC, Fighter spellCaster, GameCase cellSelected){
         //On calcul la chance au cas ou c'est un sort avec de la chance
         int jetChance = Formulas.getRandomValue(0, 99);
 
@@ -207,8 +222,10 @@ public class Effect  {
         boolean hasLaunchChanceEffect = false;
 
         List<EffectApplication> AllImpactedFighter = new ArrayList<>();
+
+        List<Effect> copyOfEffects = CopyAllEffect(Effets);
         // La on fait une map de toutes les cibles qui vont etre touché par les différents effets afin d'eviter le cas d'un déplacement qui va pas appliqué les dégats a la bonne cible.
-        for(Effect SE : Effets){
+        for(Effect SE : copyOfEffects){
             SE.cell = cellSelected;
             SE.caster = spellCaster;
             // On cible que les CCs ou non CCs
@@ -382,6 +399,10 @@ public class Effect  {
         if(this.type == 1){
             isCac = true;
         }
+
+        if(target.isDead())
+            return;
+
         this.elem = EffectConstant.getElemSwitchEffect(this.getEffectID());
 
         // Cas particuliers si la cible a des effets spécifique (type sacrifice)
@@ -391,6 +412,12 @@ public class Effect  {
                 caster.unHide(this.spellID);
             // On gère les cas spécifique de protection de target
             target = getRealTargetSwitchBuff(fight,target);
+
+            if(!this.isPoison) {
+                // On gère les cas spécifique type Dérobade
+                getRealEffectSwitchBuff(fight, target);
+            }
+
         }
         if(!this.isOnHitEffect) {
             switch (this.getEffectID()) {
@@ -666,21 +693,21 @@ public class Effect  {
             Effect CopySpell = null;
             switch (effectID){
                 case 89 :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
                     target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
                     break;
                 case EffectConstant.EFFECTID_PASSTURN :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
                     break;
                 case 108 : // Les soins en OnHit se lance tous directement ?
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
                     break;
                 case 950 :
                 case 951 :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
                     break;
                 default:
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
                     //target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
                     break;
             }
@@ -1396,6 +1423,8 @@ public class Effect  {
 
         //Application du soin
         for (Fighter target : cibles) {
+            if(target.isDead())
+                continue;
             // Si le soin est au dessus
             if ((val + target.getPdv()) > target.getPdvMax())
                 val = target.getPdvMax() - target.getPdv();
@@ -1476,8 +1505,8 @@ public class Effect  {
     {
         if (turn == 0) {
             int dmg = Formulas.getAlteredJet(dmge,args2, target);
-            int finalDommage = this.calculFinalDommage(fight, caster, target, this.elem, dmg, false, isCaC, spellID);
-            finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,caster,fight,this.elem);
+            int finalDommage = this.calculFinalDommage(fight, this.caster, target, this.elem, dmg, false, isCaC, spellID);
+            finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,this.caster,fight,this.elem);
 
             if(finalDommage >= 0) {
                 if (finalDommage > target.getPdv())
@@ -1487,10 +1516,10 @@ public class Effect  {
 
             }
 
-            applyEffectAfterHit(fight,target,caster,finalDommage);
+            applyEffectAfterHit(fight,target,this.caster,finalDommage);
 
         } else {
-            target.addBuff(effectID, 0, turn, args1,args2,args3, true, spellID, caster,true);//on applique un buff
+            target.addBuff(this.effectID, 0, this.turn, this.args1,this.args2,this.args3, true, this.spellID, this.caster,true);//on applique un buff
         }
     }
 
@@ -1804,8 +1833,8 @@ public class Effect  {
         try {
             if (this.caster.getMob() != null) {
                 Thread.sleep(1000);
-                if(fight.getdifficulty() > 0 && fight.getType() == Constant.FIGHT_TYPE_PVM && caster.getTeam() == 1) {
-                    F.buffMobByDiff(fight.getdifficulty());
+                if(fight.getdifficulty() > 1 && fight.getType() == Constant.FIGHT_TYPE_PVM && caster.getTeam() == 1) {
+                    F.buffMobByDiff(fight.getdifficulty()-1);
                 }
             }
         } catch (Exception e) {
@@ -2385,6 +2414,62 @@ public class Effect  {
                         caster.removePdv(caster, renvoie);
                         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId() + "", caster.getId() + ",-" + renvoie, elementId);
                         break;
+
+                    /*case EffectConstant.EFFECTID_DEROBADE:
+                        if (this.isPoison)
+                            continue;
+                        if (caster == target || Formulas.getRandomValue(0, 99) + 1 >= buff.getArgs1() )
+                            continue;
+
+                        int distance = PathFinding.getDistanceBetween(fight.getMap(), target.getCell().getId(), caster.getCell().getId());
+                        int nbCell = buff.getArgs2();
+
+                        if (distance > 1) {
+                            continue;
+                        }
+                        if (nbCell == 0)
+                            continue;
+                        int exCase = target.getCell().getId(), newCellId = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), nbCell);
+
+                        if (newCellId < 0) { // blocked
+                            int a = -newCellId;
+                            a = nbCell - a;
+                            newCellId = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a);
+                            if (newCellId == 0) {
+                                finalDommage = Formulas.getRandomValue(28, 33);
+                                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, target.getId() + "", target.getId() + "," + newCellId);
+                                break;
+                            }
+                            if (fight.getMap().getCase(newCellId) == null)
+                                continue;
+                        }
+                        if (newCellId == 0) continue;
+
+                        GameCase cacheCell = target.getCell();
+                        cacheCell.getFighters().clear();
+
+                        target.setCell(fight.getMap().getCase(newCellId));
+                        target.getCell().addFighter(target);
+                        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 5, target.getId() + "", target.getId() + "," + newCellId);
+
+                        Fighter holding = target.getIsHolding();
+                        if (holding != null) {
+                            holding.setState(EffectConstant.ETAT_PORTE, 0);
+                            target.setState(EffectConstant.ETAT_PORTEUR, 0);
+                            holding.setHoldedBy(null);
+                            target.setIsHolding(null);
+                            holding.setCell(cacheCell);
+                            cacheCell.addFighter(holding);
+                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, target.getId() + "", target.getId() + "," + EffectConstant.ETAT_PORTEUR + ",0");
+                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 950, holding.getId() + "", holding.getId() + "," + EffectConstant.ETAT_PORTE + ",0");
+                            SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 51, target.getId() + "", cacheCell.getId() + "");
+                        }
+
+                        this.checkTraps(fight, target, (short) 1200);
+                        if (exCase != newCellId)
+                            finalDommage = 0;
+                        break;*/
+
                 }
             }
         }
@@ -2487,6 +2572,29 @@ public class Effect  {
         return target;
     }
 
+    private void getRealEffectSwitchBuff(Fight fight,Fighter target){
+
+        // Si il a dérobade on change l'effet pour dégat de poussée ?
+        if(target.hasBuff(EffectConstant.EFFECTID_DEROBADE)){
+            Effect buff = target.getBuff(EffectConstant.EFFECTID_DEROBADE);
+            int distance = PathFinding.getDistanceBetween(fight.getMap(), target.getCell().getId(), caster.getCell().getId());
+            int nbCell = buff.getArgs2();
+
+            if (distance > 1) {
+                return;
+            }
+            if (nbCell == 0)
+                return;
+
+            this.effectID = 5;
+            this.chanceToLaunch = buff.args1;
+            this.args1 = buff.args2;
+        }
+
+
+    }
+
+
     private ArrayList<GameCase> getCasesImpactedInArea(Fight fight){
         ArrayList<GameCase> cells = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), caster.getCell().getId(), this.getAreaEffect());
         ArrayList<GameCase> finalCells = new ArrayList<GameCase>();
@@ -2576,7 +2684,7 @@ public class Effect  {
 
     private void sendClientHeal(Fight fight, int targetId, int value){
         int heal = Math.abs(value);
-        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 108, targetId + "", caster.getId() + "," + heal, this.effectID);
+        SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 108, caster.getId() + "", targetId + "," + heal, 108);
     }
 
     public boolean IsCCEffet (){

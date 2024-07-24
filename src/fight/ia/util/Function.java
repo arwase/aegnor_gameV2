@@ -3673,8 +3673,10 @@ public class Function {
                 SS2 = S;
             }
         }
+
         if (curTarget > 0 && cell >= 15 && cell <= 463 && SS2 != null)
         {
+            //System.out.println("CellID " + cell);
             int attack = fight.tryCastSpell(fighter, SS2, cell);
             if (attack == 0)
                 return SS2.getSpell().getDuration();
@@ -4685,8 +4687,6 @@ public class Function {
         if (fight == null || fighter == null)
             return 0;
 
-
-
         if (spell.isLineLaunch() && line == false)
         {
             if (!PathFinding.casesAreInSameLine(fight.getMap(), fighter.getCell().getId(), launchCell, 'z', 70) && !PathFinding.isNextTo(fight.getMap(), fighter.getCell().getId(), launchCell))
@@ -4731,10 +4731,12 @@ public class Function {
                 int cellsnb = 0;
                 ArrayList<GameCase> cells = new ArrayList<>();
                 for (Effect se : spell.getEffects()) {
-                    ArrayList<GameCase> celltemp = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), launchCell, se.getAreaEffect());
-                    if(celltemp.size() > cellsnb){
-                        cellsnb = celltemp.size();
-                        cells = celltemp;
+                    if(ArrayUtils.contains(EffectConstant.IS_DIRECTDAMMAGE_EFFECT,se.getEffectID()) ) {
+                        ArrayList<GameCase> celltemp = PathFinding.getCellListFromAreaString(fight.getMap(), cell.getId(), launchCell, se.getAreaEffect());
+                        if (celltemp.size() > cellsnb) {
+                            cellsnb = celltemp.size();
+                            cells = celltemp;
+                        }
                     }
                 }
 
