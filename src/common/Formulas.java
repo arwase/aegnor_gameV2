@@ -284,6 +284,75 @@ public class Formulas {
         }
     }
 
+    public static double getWeightByStat(int effectID){
+        double weight = 0;
+        //Familier
+        switch (effectID){
+            case EffectConstant.STATS_ADD_VITA:
+                weight= 0.2; // + 600 PP Max
+                break;
+            case EffectConstant.STATS_ADD_PROS:
+                weight= 1.2; // + 100 PP Max
+                break;
+            case EffectConstant.STATS_ADD_PODS:
+                weight= 0.02; // + 6000 pods Max
+                break;
+            case EffectConstant.STATS_ADD_INIT:
+                weight= 0.05; // + 2400 Ini Max
+                break;
+            case EffectConstant.STATS_ADD_INTE:
+            case EffectConstant.STATS_ADD_FORC:
+            case EffectConstant.STATS_ADD_CHAN:
+            case EffectConstant.STATS_ADD_AGIL:
+                weight= 1; // + 120 stats Max
+                break;
+            case EffectConstant.STATS_ADD_PERDOM:
+                weight= 1.2; // + 100 stats Max
+                break;
+            case EffectConstant.STATS_ADD_SOIN:
+            case EffectConstant.STATS_ADD_DOMA:
+            case EffectConstant.STATS_ADD_DOMA2:
+            case EffectConstant.STATS_RETDOM:
+                weight= 8; // + 15 soin/do Max/renvoieDO
+                break;
+            case EffectConstant.STATS_ADD_RP_AIR:
+            case EffectConstant.STATS_ADD_RP_EAU:
+            case EffectConstant.STATS_ADD_RP_FEU:
+            case EffectConstant.STATS_ADD_RP_NEU:
+            case EffectConstant.STATS_ADD_RP_TER:
+                weight= 4; // + 30 % res Max
+                break;
+            case EffectConstant.STATS_ADD_SAGE:
+                weight= 3; // + 80 sag Max
+                break;
+            case EffectConstant.STATS_ADD_FINALDMG:
+                weight= 10; // + 12% dommage finaux Max
+                break;
+            case EffectConstant.STATS_ADD_CC:
+                weight= 12; // + 10 CC
+                break;
+            case EffectConstant.STATS_ADD_PA:
+                weight= 90; // + 1 PA Max
+                break;
+            case EffectConstant.STATS_ADD_PO:
+                weight= 40; // + 1 PM Max
+                break;
+            case EffectConstant.STATS_ADD_PM:
+                weight= 70; // + 1 PM Max
+                break;
+            case Constant.STATS_PETS_PDV:
+            case Constant.STATS_PETS_POIDS:
+            case Constant.STATS_PETS_REPAS:
+            case Constant.STATS_PETS_DATE:
+            case Constant.STATS_PETS_EPO:
+            case Constant.STATS_PETS_SOUL: // Pas de poid
+            default:
+                break;
+        }
+
+        return weight;
+    }
+
     public static int getRandomJet(String jet)//1d5+6
     {
         try {
@@ -309,6 +378,34 @@ public class Formulas {
             return -1;
         }
     }
+
+    // Method to check if adding two integers would overflow
+    public static boolean willIntAdditionOverflow(int a, int b) {
+        // Check if both are positive and result is negative
+        if (a > 0 && b > 0 && (a > Integer.MAX_VALUE - b)) {
+            return true;
+        }
+        // Check if both are negative and result is positive
+        if (a < 0 && b < 0 && (a < Integer.MIN_VALUE - b)) {
+            return true;
+        }
+        return false;
+    }
+
+    // Method to check if adding two integers would overflow
+    public static boolean willLongAdditionOverflow(long a, long b) {
+        // Check if both are positive and result is negative
+        if (a > 0 && b > 0 && (a > Long.MAX_VALUE - b)) {
+            return true;
+        }
+        // Check if both are negative and result is positive
+        if (a < 0 && b < 0 && (a < Long.MIN_VALUE - b)) {
+            return true;
+        }
+        return false;
+    }
+
+
 
     public static int getMiddleJet(Effect ss)//Corrigé pour 0d0+XXXX
     {

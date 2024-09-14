@@ -1,6 +1,7 @@
 package entity.pet;
 
 import common.Formulas;
+import game.world.World;
 import kernel.Constant;
 
 import java.util.ArrayList;
@@ -18,25 +19,37 @@ public class Pet {
     private int max;
     private int gain;
     private int deadtemplate;
+    private int chenilCertificat;
     private int epo;
     private Map<Integer, ArrayList<Integer>> categ = new HashMap<>();    // si type 3 StatID|categID#categID;StatID2| ...
     private Map<Integer, ArrayList<Integer>> template = new HashMap<>();    // si type 2 StatID|templateId#templateId#;StatID2| ...
     private Map<Integer, ArrayList<Map<Integer, Integer>>> monster = new HashMap<>();    // si type 1 StatID|monsterID,qua#monsterID,qua;StatID2|monsterID,qua#monsterID,qua ...
-    private String statsMax,jet;
+    private String jet;
 
-    public Pet(int Tid, int type, String gap, String statsUp, int max, int gain, int Dtemplate, int epo, String jet) {
-
+    public Pet(int Tid, int type, String gap, String statsUp, int max, int gain, int Dtemplate, int epo, int chenilCertificat, String jet) {
         this.templateId = Tid;
         this.type = type;
         this.gap = gap;
         this.statsUp = statsUp;
-        this.statsMax = statsMax;
         decompileStatsUpItem();
         this.max = max;
         this.gain = gain;
+        this.chenilCertificat = chenilCertificat;
         this.deadtemplate = Dtemplate;
         this.epo = epo;
         this.jet = jet;
+    }
+
+    public int getChenilCertificatId() {
+        return this.chenilCertificat;
+    }
+
+    public Pet getPetFromChenilCertificat(int CertificatID) {
+        for(Pet pet : World.world.getPets()){
+            if(pet.getChenilCertificatId() == CertificatID)
+                return pet;
+        }
+        return null;
     }
 
     public int getTemplateId() {
@@ -75,22 +88,14 @@ public class Pet {
         return this.monster;
     }
 
-    public String getStatsMax() {
-        return statsMax;
-    }
-
-    public void setStatsMax() {
-        this.jet =	this.statsMax;
-    }
-
-
-    public int getNumbMonster(int StatID, int monsterID) {
+    public double getNumbMonster(int StatID, int monsterID) {
         for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet()) {
             if (ID.getKey() == StatID) {
                 for (Map<Integer, Integer> entry : ID.getValue()) {
                     for (Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
                         if (monsterEntry.getKey() == monsterID) {
-                            return monsterEntry.getValue();
+                            double test = (double)((double)monsterEntry.getValue()/10.0D);
+                            return test;
                         }
                     }
                 }
@@ -98,9 +103,6 @@ public class Pet {
         }
         return 0;
     }
-
-
-
 
     public void decompileStatsUpItem() {
         if (this.type == 3 || this.type == 2) {

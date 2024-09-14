@@ -2,23 +2,16 @@ package command;
 
 
 import client.Player;
-import common.SocketManager;
 import game.scheduler.entity.WorldSave;
 import game.world.World;
 import jakarta.xml.bind.DatatypeConverter;
-import kernel.Config;
-import kernel.Main;
 import util.lang.Lang;
-import game.GameClient;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.swing.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -46,7 +39,7 @@ public class AzuriomCommands implements Runnable {
             listen_socket = PEMImporter.createSSLFactory(new File(CERTIFICATE_PATH), KEYSTORE_PASSWORD).createServerSocket(port);
         } catch (Exception e) {
             System.err.println(e.getMessage());
-            System.exit(-1);
+            //System.exit(-1);
         }
     }
 

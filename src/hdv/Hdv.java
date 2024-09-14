@@ -207,6 +207,7 @@ public class Hdv {
             }
         } catch (Exception ignored)
         {
+            System.out.println("Error when check categorie "+ categID + " on HDV " + this.getHdvId());
             ignored.printStackTrace();
         }
         return categ;

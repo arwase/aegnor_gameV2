@@ -1451,7 +1451,9 @@ public class Function {
         if (fight == null || fighter == null)
             return false;
 
-        if (fighter.nbInvocation() >= fighter.getTotalStats().getEffect(EffectConstant.STATS_CREATURE))
+        int nbinvoactu = fighter.nbInvocation();
+        int nbinvoMax =  fighter.getTotalStats().getEffect(EffectConstant.STATS_CREATURE);
+        if (nbinvoactu >= nbinvoMax)
             return false;
 
         Fighter nearest = Cible;
@@ -3650,14 +3652,13 @@ public class Function {
         for (Map.Entry<Integer, Fighter> t : ennemyList.entrySet())
         {
             SS = getBestSpellForTargetDopeul(fight, fighter, t.getValue(), fighter.getCell().getId(), Spell);
-
             if (SS != null)
             {
                 target = t.getValue();
                 break;
             }
         }
-        int curTarget = 0, cell = 0;
+        int curTarget = 0, cell = 0, influance = 0;
         SpellGrade SS2 = null;
         for (SpellGrade S : Spell)
         {
@@ -3666,11 +3667,22 @@ public class Function {
                 continue;
             int nbTarget = targetVal / 1000;
             int cellID = targetVal - nbTarget * 1000;
-            if (nbTarget > curTarget)
+
+            if ((nbTarget > curTarget))
             {
+                influance = Function.getInfl(fight,S,fighter);
                 curTarget = nbTarget;
                 cell = cellID;
                 SS2 = S;
+            }
+            else {
+                int nextInfluance = Function.getInfl(fight,S,fighter);
+                if(nextInfluance > influance){
+                   influance = Function.getInfl(fight,S,fighter);
+                   cell = cellID;
+                   SS2 = S;
+               }
+
             }
         }
 
@@ -4170,8 +4182,6 @@ public class Function {
         return targetCell + bestSS.getSpellID() * 1000;
     }
 
-
-
     public ArrayList<SpellGrade> getLaunchableSort(Fighter fighter, Fight fight, int distMin)
     {
         if (fight == null || fighter == null)
@@ -4236,7 +4246,7 @@ public class Function {
 
 
         // Custom comparator based on return values of yourFunction
-        Comparator<SpellGrade> comparator = Comparator.comparingInt(a -> getInfl(fight, a));
+        Comparator<SpellGrade> comparator = Comparator.comparingInt(a -> getInfl(fight, a,fighter));
 
         // Sorting the list using the custom comparator
         Collections.sort(sorts, comparator);
@@ -4365,42 +4375,82 @@ public class Function {
     }
 
 
-    public static int getInfl(Fight fight, SpellGrade SS)
+    public static int getInfl(Fight fight, SpellGrade SS, Fighter fighter)
     {
         if (fight == null)
             return 0;
         int inf = 0;
         for (Effect SE : SS.getEffects())
         {
-
+            int elem =-1,statToCheck =-1, factor=0;
             switch (SE.getEffectID())
             {
+                case 5 :
+                    inf += 1000;
+                    break;
+                case 77://Vol de PM
+                case 127://Retrait PM
+                case 169://Perte PM non esquivable
+                    inf += 3000 * Formulas.getMiddleJet(SE); // RetPM
+                    break;
+                case 84://Vol de PA
+                case 101://Retrait PA
+                case 168://Perte PA non esquivable
+                    inf += 4000 * Formulas.getMiddleJet(SE); // RetPA
+                    break;
+                case 116://Malus PO
+                case 320://Vol de PO
+                    inf += 2500 * Formulas.getMiddleJet(SE); // RetPO
+                    break;
                 case 85:
                 case 86:
                 case 87:
                 case 88:
                 case 89:
-                    inf += 400 * Formulas.getMiddleJet(SE);
+                    factor = fighter.getPdv();
+                    inf += (factor+100) * Formulas.getMiddleJet(SE); // Dommage en % de vie
                     break;
+                case 82://Vol de Vie fixe
                 case 91:
                 case 92:
                 case 93:
                 case 94:
                 case 95:
-                    inf += 600 * Formulas.getMiddleJet(SE);
+                    elem = EffectConstant.getElemSwitchEffect(SE.getEffectID());
+                    statToCheck = EffectConstant.getStatIDSwitchElem(elem);
+                    if(statToCheck != -1){
+                        factor = fighter.getTotalStats().getEffect(statToCheck);
+                    }
+                    inf += (200+factor) * Formulas.getMiddleJet(SE); // Vol de vie elementaire
                     break;
                 case 96:
                 case 97:
                 case 98:
                 case 99:
                 case 100:
-                    inf += 500 * Formulas.getMiddleJet(SE);
+                    elem = EffectConstant.getElemSwitchEffect(SE.getEffectID());
+                    statToCheck = EffectConstant.getStatIDSwitchElem(elem);
+                    if(statToCheck != -1){
+                       factor = fighter.getTotalStats().getEffect(statToCheck);
+                    }
+                    inf += (100+factor) * Formulas.getMiddleJet(SE); // Dommage elementaire
                     break;
-                case 131:
-                    inf += 300 * Formulas.getMiddleJet(SE);
+                // Les effets speciaux
+                case 131://Poison : X Pdv  par PA
+                    inf += 300 * Formulas.getMiddleJet(SE); // Dommage elementaire
                     break;
-                case 140:
-                    inf += 50000 ;
+                case 132://Enleve les envoutements
+                    inf += 5000;
+                    break;
+                case 140://Passer le tour
+                    inf += 50000;
+                    break;
+                case 141://Tue la cible
+                    inf += 60000;
+                    break;
+                case 279: // Dommage en % de vie restant
+                    factor = fighter.getPdvMax() - fighter.getPdv();
+                    inf += (factor+100) * Formulas.getMiddleJet(SE);
                     break;
                 default:
                     inf += Formulas.getMiddleJet(SE);
@@ -4492,7 +4542,7 @@ public class Function {
                 int usedPA[] = {0, 0};
                 if (!fight.canCastSpell1(F, SS.getValue(), T.getCell(), launch))
                     continue;
-                curInfl = getInfl(fight, SS.getValue());
+                curInfl = getInfl(fight, SS.getValue(),F);
                 //if(curInfl == 0)continue;
                 if (curInfl > inflMax)
                 {
@@ -4510,7 +4560,7 @@ public class Function {
                         continue;
                     if (!fight.canCastSpell1(F, SS2.getValue(), T.getCell(), launch))
                         continue;
-                    curInfl = getInfl(fight, SS2.getValue());
+                    curInfl = getInfl(fight, SS2.getValue(),F);
                     //if(curInfl == 0)continue;
                     if ((Infl1 + curInfl) > inflMax)
                     {
@@ -4528,7 +4578,7 @@ public class Function {
                         if (!fight.canCastSpell1(F, SS3.getValue(), T.getCell(), launch))
                             continue;
 
-                        curInfl = getInfl(fight, SS3.getValue());
+                        curInfl = getInfl(fight, SS3.getValue(),F);
                         //if(curInfl == 0)continue;
                         if ((curInfl + Infl1 + Infl2) > inflMax)
                         {
@@ -4562,7 +4612,7 @@ public class Function {
             if (!fight.canCastSpell1(F, SS, T.getCell(), launch))
                 continue;
 
-            curInfl = getInfl(fight, SS);
+            curInfl = getInfl(fight, SS,F);
             if(curInfl == 0)continue;
 
             if (curInfl > inflMax)
@@ -4632,7 +4682,7 @@ public class Function {
             int usedPA[] = {0, 0};
             if (!fight.canCastSpell1(F, SS.getValue(), T.getCell(), launch))
                 continue;
-            curInfl = getInfl(fight, SS.getValue());
+            curInfl = getInfl(fight, SS.getValue(),F);
             if(curInfl == 0)continue;
             if (curInfl > inflMax)
             {
@@ -4650,7 +4700,7 @@ public class Function {
                     continue;
                 if (!fight.canCastSpell1(F, SS2.getValue(), T.getCell(), launch))
                     continue;
-                curInfl = getInfl(fight, SS2.getValue());
+                curInfl = getInfl(fight, SS2.getValue(),F);
                 if(curInfl == 0)continue;
                 if ((Infl1 + curInfl) > inflMax)
                 {
@@ -4668,7 +4718,7 @@ public class Function {
                     if (!fight.canCastSpell1(F, SS3.getValue(), T.getCell(), launch))
                         continue;
 
-                    curInfl = getInfl(fight, SS3.getValue());
+                    curInfl = getInfl(fight, SS3.getValue(),F);
                     if(curInfl == 0)continue;
                     if ((curInfl + Infl1 + Infl2) > inflMax)
                     {
@@ -4911,4 +4961,7 @@ public class Function {
 
         return maxPo;
     }
+
+
+
 }

@@ -2,7 +2,7 @@ package database.statics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
 import command.administration.Group;
-import database.dynamics.AbstractDAO;
+import database.statics.AbstractDAO;
 import kernel.Main;
 
 import java.sql.ResultSet;
@@ -16,18 +16,16 @@ public class GroupData extends AbstractDAO<Group> {
 
     @Override
     public void load(Object obj) {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `administration.groups`;");
-            ResultSet RS = result.resultSet;
+        String query = "SELECT * FROM `administration.groups`;";
+        try (Result result = getData(query)) {
+            ResultSet RS = result.getResultSet();
 
-            while (RS.next())
+            while (RS.next()) {
                 new Group(RS.getInt("id"), RS.getString("name"), RS.getBoolean("isPlayer"), RS.getString("commands"));
+            }
         } catch (SQLException e) {
             super.sendError("GroupData load", e);
             Main.INSTANCE.stop("unknown");
-        } finally {
-            close(result);
         }
     }
 

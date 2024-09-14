@@ -1,6 +1,7 @@
 package entity.pet;
 
 import client.Player;
+import common.Formulas;
 import common.SocketManager;
 import database.Database;
 import game.world.World;
@@ -122,36 +123,7 @@ public class PetEntry {
             return 0;
         int cumul = 0;
         for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-            if (entry.getKey() == Integer.parseInt("320", 16)) // Vita du familier
-            {
-            }
-            else if (entry.getKey() == Integer.parseInt("326", 16)) // Poids du familier
-            {
-            }
-            else if (entry.getKey() == Integer.parseInt("328", 16)) // Date du familier
-            {
-            }
-            else if (entry.getKey() == Integer.parseInt("8a", 16)) // %dom
-                cumul = cumul + (2 * entry.getValue());
-            else if (entry.getKey() == Integer.parseInt("7c", 16)) // sagesse
-                cumul = cumul + (3 * entry.getValue());
-            else if (entry.getKey() == Integer.parseInt("d2", 16)
-                    || entry.getKey() == Integer.parseInt("d3", 16)
-                    || entry.getKey() == Integer.parseInt("d4", 16)
-                    || entry.getKey() == Integer.parseInt("d5", 16)
-                    || entry.getKey() == Integer.parseInt("d6", 16)) // %resist
-                cumul = cumul + (4 * entry.getValue());
-            else if (entry.getKey() == Integer.parseInt("b2", 16)
-                    || entry.getKey() == Integer.parseInt("70", 16)) // soin et dommages
-                cumul = cumul + (8 * entry.getValue());
-            else if (entry.getKey() == Integer.parseInt("7d8", 16))// % do Finaux
-                cumul = cumul + (10 * entry.getValue());
-            else if (entry.getKey() == Integer.parseInt("6f", 16)
-                    || entry.getKey() == Integer.parseInt("80", 16)) // PA et PM
-                cumul = cumul + (100 * entry.getValue());
-            else
-                cumul = cumul + (entry.getValue());
-
+            cumul = (int) (cumul + Math.round(Formulas.getWeightByStat(entry.getKey()) * entry.getValue()));
         }
         this.Poids = cumul;
         return this.Poids;
@@ -199,7 +171,6 @@ public class PetEntry {
     }
 
     public void eat(Player p, int min, int max, int statsID, GameObject feed) {
-        //System.out.println("On passe la ?");
         GameObject obj = World.world.getGameObject(this.objectId);
         if (obj == null)
             return;
@@ -216,7 +187,6 @@ public class PetEntry {
             return;
         if (this.quaEat >= 1) {
             //Update de l'item
-
             if ((this.getIsEupeoh() ? pets.getMax() * 1.5 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +50% le jet maximum
             {
                 if (obj.getStats().getEffects().containsKey(statsID)) {
@@ -232,96 +202,6 @@ public class PetEntry {
             this.quaEat = 0;
         }
         SocketManager.GAME_SEND_Im_PACKET(p, "032");
-
-        /*
-        if (this.corpulence <= 0)//Si il est maigrichon (X repas rat�s) on peu le nourrir plusieurs fois
-        {
-            //Update du petsEntry
-            this.lastEatDate = System.currentTimeMillis();
-            //this.corpulence++;
-            this.quaEat++;
-            this.corpulence = 0;
-            //Update de l'item
-            obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
-            obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
-            //SocketManager.GAME_SEND_Im_PACKET(p, "029");
-            SocketManager.GAME_SEND_Im_PACKET(p, "032");
-            if (this.quaEat >= 1) {
-                //Update de l'item
-                if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
-                {
-                    if (obj.getStats().getEffects().containsKey(statsID)) {
-                        int value = obj.getStats().getEffects().get(statsID)
-                                + World.world.getPets(World.world.getGameObject(this.objectId).getTemplate().getId()).getGain();
-                        if (value > this.getMaxStat())
-                            value = this.getMaxStat();
-                        obj.getStats().getEffects().remove(statsID);
-                        obj.getStats().addOneStat(statsID, value);
-                    } else
-                        obj.getStats().addOneStat(statsID, pets.getGain());
-                }
-                this.quaEat = 0;
-            }
-        } else if (((this.lastEatDate + (min * 3600000)) > System.currentTimeMillis())
-                && this.corpulence >= 0)//Si il n'est pas maigrichon, et on le nourri trop rapidement
-        {
-            //Update du petsEntry
-            this.lastEatDate = System.currentTimeMillis();
-            //this.corpulence++;
-            //Update de l'item
-            obj.getTxtStat().remove(Constant.STATS_PETS_POIDS);
-            obj.getTxtStat().put(Constant.STATS_PETS_POIDS, Integer.toString(this.corpulence));
-            this.corpulence = 0;
-            this.quaEat++;
-            //SocketManager.GAME_SEND_Im_PACKET(p, "026");
-            SocketManager.GAME_SEND_Im_PACKET(p, "032");
-
-
-            if (this.quaEat >= 1) {
-                //Update de l'item
-                if ((this.getIsEupeoh() ? pets.getMax() * 1.1 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +10% le jet maximum
-                {
-                    if (obj.getStats().getEffects().containsKey(statsID)) {
-                        int value = obj.getStats().getEffects().get(statsID)
-                                + World.world.getPets(World.world.getGameObject(this.objectId).getTemplate().getId()).getGain();
-                        if (value > this.getMaxStat())
-                            value = this.getMaxStat();
-                        obj.getStats().getEffects().remove(statsID);
-                        obj.getStats().addOneStat(statsID, value);
-                    } else
-                        obj.getStats().addOneStat(statsID, pets.getGain());
-                }
-                this.quaEat = 0;
-            }
-        } else if (((this.lastEatDate + (min * 3600000)) < System.currentTimeMillis())
-                && this.corpulence >= 0)//Si il n'est pas maigrichon, et que le temps minimal est �coul�
-        {
-            //Update du petsEntry
-            this.lastEatDate = System.currentTimeMillis();
-            this.corpulence = 0;
-            if (statsID != 0)
-                this.quaEat++;
-            else
-                return;
-            if (this.quaEat >= 1) {
-                //Update de l'item
-
-                if ((this.getIsEupeoh() ? pets.getMax() * 1.5 : pets.getMax()) > this.getCurrentStatsPoids())//Si il est sous l'emprise d'EPO on augmente de +50% le jet maximum
-                {
-                    if (obj.getStats().getEffects().containsKey(statsID)) {
-                        int value = obj.getStats().getEffects().get(statsID)
-                                + World.world.getPets(World.world.getGameObject(this.objectId).getTemplate().getId()).getGain();
-                        if (value > this.getMaxStat())
-                            value = this.getMaxStat();
-                        obj.getStats().getEffects().remove(statsID);
-                        obj.getStats().addOneStat(statsID, value);
-                    } else
-                        obj.getStats().addOneStat(statsID, pets.getGain());
-                }
-                this.quaEat = 0;
-            }
-            SocketManager.GAME_SEND_Im_PACKET(p, "032");
-        }*/
 
         if (this.pdv <= 0) {
             this.pdv = 0;
@@ -360,9 +240,9 @@ public class PetEntry {
         Pet pet = World.world.getPets(obj.getTemplate().getId());
         if (pet == null || (pet.getType() != 1))
             return;
+
         //Ajout a l'item les SoulStats tu�s
         try {
-
                 for (Entry<Integer, Integer> entry : souls.entrySet()) {
                     int soul = entry.getKey();
                     int count = entry.getValue();
@@ -385,12 +265,14 @@ public class PetEntry {
                         for (Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
                             if (pet.getNumbMonster(ent.getKey(), monsterEntry.getKey()) != 0) {
                                 int pts = 0;
+
                                 for (Entry<Integer, Integer> list : obj.getSoulStat().entrySet())
-                                    pts += ((int) Math.floor(list.getValue() / pet.getNumbMonster(ent.getKey(), list.getKey())) * pet.getGain());
+                                    pts += ((int) Math.floor(list.getValue() / pet.getNumbMonster(ent.getKey(), list.getKey())) * (pet.getGain()*3));
 
                                 if (pts > 0) {
-                                    if (pts > this.getMaxStat())
-                                        pts = this.getMaxStat();
+                                    if (pts > Math.round(this.getMaxStat()/Formulas.getWeightByStat(ent.getKey())) )
+                                        pts = (int) Math.round(this.getMaxStat()/Formulas.getWeightByStat(ent.getKey()));
+
                                     if (obj.getStats().getEffects().containsKey(ent.getKey())) {
                                         int nbr = obj.getStats().getEffects().get(ent.getKey());
                                         if (nbr - pts > 0)
@@ -428,8 +310,9 @@ public class PetEntry {
         if (this.lastEatDate + (max * 3600000) < System.currentTimeMillis())//Oublier de le nourrir
         {
             //On calcul le nombre de repas oublier arrondi au sup�rieur :
-            int nbrepas = (int) Math.floor((System.currentTimeMillis() - this.lastEatDate)
-                    / (max * 3600000));
+            //int nbrepas = (int) Math.floor((System.currentTimeMillis() - this.lastEatDate)
+            //        / (max * 3600000));
+
             //Perte corpulence
             //this.corpulence = this.corpulence - nbrepas;
 

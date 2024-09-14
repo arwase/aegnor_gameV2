@@ -21,6 +21,7 @@ public class Guild {
     private Map<Integer, GuildMember> members = new TreeMap<>();
     private Map<Integer, SpellGrade> spells = new HashMap<>(); // <Id, Level>
     private Map<Integer, Integer> stats = new HashMap<>(); // <Effect, Quantity>
+    private Map<Short, Long> delayCollectors = new HashMap<>();
 
     public Guild(String name, String emblem) {
         this.id = Database.getStatics().getGuildData().getNextId();
@@ -116,6 +117,11 @@ public class Guild {
         }
         return false;
     }
+
+    public Map<Short, Long> getDelayCollectors() {
+        return delayCollectors;
+    }
+
 
     public String getName() {
         return this.name;

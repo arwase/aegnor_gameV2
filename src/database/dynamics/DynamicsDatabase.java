@@ -135,8 +135,8 @@ public class DynamicsDatabase {
             config.addDataSourceProperty("user", Config.INSTANCE.getUserDB());
             config.addDataSourceProperty("password", Config.INSTANCE.getPassDB());
             config.setAutoCommit(true); // AutoCommit, c'est cool
-            config.setMaximumPoolSize(10);
-            config.setMinimumIdle(1);
+            config.setMaximumPoolSize(10); // Ajustez en fonction de vos besoins
+            config.setMinimumIdle(2);
             this.dataSource = new HikariDataSource(config);
 
             if (!Database.tryConnection(this.dataSource)) {

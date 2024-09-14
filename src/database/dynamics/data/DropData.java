@@ -76,7 +76,7 @@ public class DropData extends AbstractDAO<World.Drop> {
             close(result);
         }
     }
-    public boolean  insertDrop(int monsterID, int objID, int pp, double taux, int action, String objName, String mobName)
+    public boolean  insertDrop(int monsterID, int objID, int pp, double taux, String action, String objName, String mobName)
     {
         PreparedStatement p = null;
         try {
@@ -101,7 +101,7 @@ public class DropData extends AbstractDAO<World.Drop> {
             p2.setDouble(8, taux);
             p2.setDouble(9, taux);
             p2.setInt(10, pp);
-            p2.setInt(11, action);
+            p2.setString(11, action);
             execute(p2);
             return true;
         } catch (SQLException e) {

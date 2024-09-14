@@ -940,7 +940,7 @@ public class Monster {
                         if (MG.level >= min && MG.level <= max)
                             mgs.add(MG);
 
-                        if(min >= m.getGrade(5).getLevel() ){
+                        if(min >= m.getGrade(5).getLevel() && m.getId() != 394 ){
                             mgs.add(m.getGrade(5));
                             break;
                         }

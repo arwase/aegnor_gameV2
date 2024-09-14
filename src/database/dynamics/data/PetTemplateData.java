@@ -30,8 +30,7 @@ public class PetTemplateData extends AbstractDAO<Pet> {
             ResultSet RS = result.resultSet;
             while (RS.next()) {
                 i++;
-
-                World.world.addPets(new Pet(RS.getInt("TemplateID"), RS.getInt("Type"), RS.getString("Gap"), RS.getString("StatsUp"), RS.getInt("Max"), RS.getInt("Gain"), RS.getInt("DeadTemplate"), RS.getInt("Epo"), RS.getString("jet")));
+                World.world.addPets(new Pet(RS.getInt("TemplateID"), RS.getInt("Type"), RS.getString("Gap"), RS.getString("StatsUp"), RS.getInt("Max"), RS.getInt("Gain"), RS.getInt("DeadTemplate"), RS.getInt("Epo"), RS.getInt("ChenilCertificat"), RS.getString("jet")));
             }
         } catch (SQLException e) {
             super.sendError("PetData load", e);

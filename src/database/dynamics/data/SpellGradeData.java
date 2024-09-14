@@ -41,7 +41,6 @@ public class SpellGradeData extends AbstractDAO<SpellGrade> {
                 }
 
                 SpellGrade spellgrade = new SpellGrade(spellid,gradeid,RS.getInt("paCost"),RS.getInt("poMin"),RS.getInt("poMax"),RS.getInt("ratioCC"),RS.getInt("ratioEC"),RS.getBoolean("isLine"),RS.getBoolean("needLOS"),RS.getBoolean("needEmptyC"),RS.getBoolean("isPoModif"),RS.getInt("maxByTurn"),RS.getInt("maxByTarget"),RS.getInt("CD"),RS.getInt("lvlLearn"),RS.getBoolean("endTurn"),ForbiddenStates,RS.getInt("stateNeed"));
-
                 World.world.addSortGrade(spellgrade);
 
                 Spell spell = World.world.getSort(spellid);

@@ -32,7 +32,7 @@ public class Noel {
             template = Integer.parseInt(objectOne.split(",")[Formulas.getRandomValue(0, objectOne.split(",").length - 1)]);
         }
         GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-        if (player.addObjet(obj, true))
+        if(player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
         SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + template);
@@ -49,7 +49,7 @@ public class Noel {
             template = Integer.parseInt(objectTwo.split(",")[Formulas.getRandomValue(0, objectTwo.split(",").length - 1)]);
         }
         GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-        if (player.addObjet(obj, true))
+        if(player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
         SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + template);
@@ -66,7 +66,7 @@ public class Noel {
             template = Integer.parseInt(objectTree.split(",")[Formulas.getRandomValue(0, objectTree.split(",").length - 1)]);
         }
         GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-        if (player.addObjet(obj, true))
+        if(player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
         SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + template);
@@ -83,7 +83,7 @@ public class Noel {
             template = Integer.parseInt(objectFour.split(",")[Formulas.getRandomValue(0, objectFour.split(",").length - 1)]);
         }
         GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-        if (player.addObjet(obj, true))
+        if(player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
         SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + template);
@@ -100,7 +100,7 @@ public class Noel {
             template = Integer.parseInt(objectFive.split(",")[Formulas.getRandomValue(0, objectFive.split(",").length - 1)]);
         }
         GameObject obj = World.world.getObjTemplate(template).createNewItem(1, false,0);
-        if (player.addObjet(obj, true))
+        if(player.addObjet(obj, true))
             World.world.addGameObject(obj, true);
         SocketManager.GAME_SEND_Ow_PACKET(player);
         SocketManager.GAME_SEND_Im_PACKET(player, "021;" + 1 + "~" + template);

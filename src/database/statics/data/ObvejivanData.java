@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import database.statics.AbstractDAO;
 import object.GameObject;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,11 +25,10 @@ public class ObvejivanData extends AbstractDAO<GameObject> {
 
     public void add(GameObject obvijevan, GameObject object) {
         String query = "INSERT INTO `world.entity.obvijevans`(`id`, `template`) VALUES(?, ?);";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, object.getGuid());
             p.setInt(2, obvijevan.getTemplate().getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (Exception e) {
             sendError("ObvejivanData add", e);
         }
@@ -39,23 +39,24 @@ public class ObvejivanData extends AbstractDAO<GameObject> {
         String deleteQuery = "DELETE FROM `world.entity.obvijevans` WHERE id = ?;";
         int template = -1;
 
-        try (PreparedStatementWrapper selectStmt = getPreparedStatement(selectQuery)) {
-            PreparedStatement selectPs = selectStmt.getPreparedStatement();
-            selectPs.setInt(1, object.getGuid());
-            try (ResultSet resultSet = selectPs.executeQuery()) {
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(selectQuery)) {
+            p.setInt(1, object.getGuid());
+            try (ResultSet resultSet = p.executeQuery()) {
                 if (resultSet.next()) {
                     template = resultSet.getInt("template");
                     if (delete) {
-                        try (PreparedStatementWrapper deleteStmt = getPreparedStatement(deleteQuery)) {
-                            PreparedStatement deletePs = deleteStmt.getPreparedStatement();
+                        try (Connection conn2 = dataSource.getConnection(); PreparedStatement deletePs = conn2.prepareStatement(deleteQuery)) {
                             deletePs.setInt(1, object.getGuid());
-                            deletePs.executeUpdate();
+                            executeUpdate(deletePs);
+                        }
+                        catch (SQLException e) {
+                            sendError("ObvejivanData Delete", e);
                         }
                     }
                 }
             }
         } catch (SQLException e) {
-            sendError("ObvejivanData getAndDelete", e);
+            sendError("ObvejivanData get", e);
         }
         return template;
     }

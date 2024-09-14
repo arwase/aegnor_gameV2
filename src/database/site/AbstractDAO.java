@@ -6,7 +6,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import database.DAO;
 import database.Database;
 import kernel.Main;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
@@ -15,13 +14,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 
     protected final Object locker = new Object();
     protected HikariDataSource dataSource;
-    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [blue]");
-    protected Logger logger2 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.PoolBase");
-    protected Logger logger3 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.HikariPool");
-    protected Logger logger4 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariDataSource");
-    protected Logger logger5 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariConfig");
-    protected Logger logger6 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.util.DriverDataSource");
-    protected Logger logger7 = (Logger) LoggerFactory.getLogger(ProtocolCodecFilter.class);
+    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [siteBDD]");
 
     public AbstractDAO(HikariDataSource dataSource) {
         this.dataSource = dataSource;
@@ -92,7 +85,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 
     protected void sendError(String msg, Exception e) {
         e.printStackTrace();
-        logger.error("Error statics database " + msg + " : " + e.getMessage());
+        logger.error("Error sites database " + msg + " : " + e.getMessage());
     }
 
     public class PreparedStatementWrapper implements AutoCloseable {

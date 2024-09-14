@@ -16,6 +16,7 @@ import client.AccountWeb;
 import client.Classe;
 import client.Player;
 import client.other.Stats;
+import command.AzuriomCommands;
 import command.administration.Command;
 import command.administration.Group;
 import common.*;
@@ -51,7 +52,7 @@ import object.entity.SoulStone;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.LoggerFactory;
 import other.DiscordBot;
-import other.Sets;
+import other.QuickSets;
 import other.Titre;
 import quest.Quest;
 import quest.QuestObjectif;
@@ -109,7 +110,7 @@ public class World {
     private Map<Integer, ArrayList<Couple<Integer, Integer>>> Crafts = new HashMap<>();
     private Map<Integer, ObjectSet> ItemSets = new HashMap<>();
     private Map<Integer, Titre> titres = new HashMap<>();
-    private Map<Integer, Sets> Sets = new HashMap<>();
+    private Map<Integer, QuickSets> QuickSets = new HashMap<>();
     private Map<Integer, Guild> Guildes = new HashMap<>();
     private Map<Integer, Hdv> Hdvs = new HashMap<>();
     private Map<Integer, Map<Integer, ArrayList<HdvEntry>>> hdvsItems = new HashMap<>();
@@ -128,7 +129,7 @@ public class World {
     private Map<Integer, Map<String, Map<String, Integer>>> extraMonstre = new HashMap<>();
     private Map<Integer, GameMap> extraMonstreOnMap = new HashMap<>();
     private Map<Integer, area.map.entity.Tutorial> Tutorial = new HashMap<>();
-    private Map<Short, Long> delayCollectors = new HashMap<>();
+
     private Map<Integer, Classe> Classes = new HashMap<>();
     public ArrayList<House> houseToClear = new ArrayList<>();
     public DiscordBot bot = new DiscordBot();
@@ -150,9 +151,6 @@ public class World {
     private boolean timerStart = false;
     private Timer timer;
 
-    public Map<Short, Long> getDelayCollectors() {
-        return delayCollectors;
-    }
 
     private HouseManager houseManager = new HouseManager();
 
@@ -287,16 +285,16 @@ public class World {
         return titres;
     }
 
-    public Map<Integer, Sets> getSets() {
-        return Sets;
+    public Map<Integer, QuickSets> getQuickSets() {
+        return QuickSets;
     }
 
-    public Sets getSetsById(int id) {
-        return Sets.get(id);
+    public QuickSets getSetsById(int id) {
+        return QuickSets.get(id);
     }
 
-    public Sets getSetByPersoIDandNB(int persoid, int nb) {
-        for (Sets set : Sets.values()) {
+    public QuickSets getSetByPersoIDandNB(int persoid, int nb) {
+        for (QuickSets set : QuickSets.values()) {
             if(set.getNb() == nb && set.getPlayerId() == persoid){
                 return set;
             }
@@ -304,8 +302,8 @@ public class World {
         return null;
     }
 
-    public List<Sets> getSetsByPlayer(int persoid) {
-        return Sets.values().stream().filter(set -> set.getPlayerId() == persoid).collect(Collectors.toList());
+    public List<QuickSets> getSetsByPlayer(int persoid) {
+        return QuickSets.values().stream().filter(set -> set.getPlayerId() == persoid).collect(Collectors.toList());
     }
 
     public Titre getTitreById(int id) {
@@ -346,17 +344,19 @@ public class World {
         return new CopyOnWriteArrayList<>(objects.values());
     }
 
-
-
-    public void addGameObject(GameObject gameObject, boolean saveSQL) {
+    public void addGameObjectInWorld(GameObject gameObject) {
         if (gameObject != null) {
+            // Si on créé l'item car il existait pas on le rajoute aux items du monde
             objects.put(gameObject.getGuid(), gameObject);
-            if (saveSQL){
-                //gameObject.modification = 0;
+        }
+    }
+
+    public void addGameObject(GameObject gameObject, boolean toCreate) {
+        if (gameObject != null) {
+            // Si on créé l'item car il existait pas on le rajoute aux items du monde
+            if (toCreate) {
+                addGameObjectInWorld(gameObject);
                 Database.getStatics().getObjectData().insert(gameObject);
-            }
-            else{
-                gameObject.modification = -1;
             }
         }
     }
@@ -624,15 +624,7 @@ public class World {
         Database.getDynamics().getGuildMemberData().load();
         logger.debug("The guilds and guild members were loaded successfully.");
 
-        if(Config.INSTANCE.getAUTO_CLEAN()){
-            clearInactiveAccounts();
-            logger.debug("Nettoyage des comptes vides ou inactifs terminé.");
-            //TODO Supprimer les comptes inactifs
-            //TODO Supprimer les liens web des compte supprimés
 
-            clearInactiveGuilds();
-            logger.debug("Nettoyage des guildes vides ou inactives terminé.");
-        }
 
         Database.getStatics().getTitleData().load();
         logger.debug("The titles were loaded successfully.");
@@ -660,6 +652,17 @@ public class World {
         logger.debug("The statics trunks were loaded successfully.");
         Database.getDynamics().getTrunkData().load();
         logger.debug("The dynamics trunks were loaded successfully.");
+
+        if(Config.INSTANCE.getAUTO_CLEAN()){
+            clearInactiveAccounts();
+            logger.debug("Nettoyage des comptes vides ou inactifs terminé.");
+            //TODO Supprimer les comptes inactifs
+            //TODO Supprimer les liens web des compte supprimés
+
+            clearInactiveGuilds();
+            logger.debug("Nettoyage des guildes vides ou inactives terminé.");
+
+        }
 
         clearInactiveHousesTrunk();
 
@@ -713,7 +716,7 @@ public class World {
 
         if(Config.INSTANCE.getAZURIOM()) {
             logger.debug("Initialisation Connection with Azuriom.");
-            //new AzuriomCommands(2333).start();
+            new AzuriomCommands(2333).start();
         }
 
         if(Config.INSTANCE.getDISCORD_BOT()) {
@@ -1645,8 +1648,6 @@ public class World {
         else {
             return new GameObject(id, template, qua, pos, stats, 0,rarity, mimibiote);
         }
-
-
     }
 
     public Map<Integer, Integer> getChangeHdv() {
@@ -1669,6 +1670,7 @@ public class World {
         changeHdv.put(4630, 2221); // HDV Boulangers
         changeHdv.put(5311, 4179); // HDV Mineurs
         changeHdv.put(4629, 4299); // HDV Paysans
+        changeHdv.put(-1, 1); // HDV Global
         return changeHdv;
     }
 
@@ -1906,7 +1908,6 @@ public class World {
 
                 if(higherRank != null) {
                     sendWebhookInformationsServeur("Nouveau meneur '**" + higherRank.getPlayer().getName() + "**' pour la guilde **"+  higherRank.getGuild().getName()+ "**");
-                    System.out.println("La guilde " + higherRank.getGuild().getName() + " n'a plus de meneur actif :" + higherRank.getPlayer().getName() + " choisi pour le remplacer");
                     higherRank.setAllRights(1, (byte) 0, 1, higherRank.getPlayer());//1 => Meneur (Tous droits);
                 }
 
@@ -3160,8 +3161,8 @@ public class World {
         titres.put(titre.getId(), titre);
     }
 
-    public void addSets(Sets set) {
-        Sets.put(set.getId(), set);
+    public void addSets(QuickSets set) {
+        QuickSets.put(set.getId(), set);
     }
 
     // POUR LA GESTION DES REBOOT
@@ -3321,6 +3322,10 @@ public class World {
 
     public void removeAccount(int guid) {
             accounts.remove(guid);
+    }
+
+    public void updateGameObject(GameObject obj) {
+
     }
 
     public static class Drop {

@@ -14,7 +14,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 
     protected final Object locker = new Object();
     protected HikariDataSource dataSource;
-    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [D]");
+    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [DynamicBDD]");
 
     public AbstractDAO(HikariDataSource dataSource) {
         this.dataSource = dataSource;

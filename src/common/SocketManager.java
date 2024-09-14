@@ -659,7 +659,14 @@ public class SocketManager {
     public static void GAME_SEND_FIGHT_PLAYER_READY_TO_FIGHT(Fight fight,
                                                              int teams, int guid, boolean b) {
         String packet = "GR" + (b ? "1" : "0") + guid;
-        if (fight.getState() != 2)
+        int fightState = -1;
+        try{
+            fightState = fight.getState();
+        }
+        catch(Exception e){
+            return;
+        }
+        if (fightState != 2)
             return;
         for (Fighter f : fight.getFighters(teams)) {
             if (f.getPlayer() == null || !f.getPlayer().isOnline())

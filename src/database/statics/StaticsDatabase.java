@@ -38,7 +38,7 @@ public class StaticsDatabase {
     private TrunkData trunkData;
     private WorldEntityData worldEntityData;
     private TitleData titleData;
-    private SetsData setsData;
+    private QuickSetsData quickSetsData;
 
 
     private void initializeData() {
@@ -64,7 +64,7 @@ public class StaticsDatabase {
         this.questPlayerData = new QuestPlayerData(this.dataSource);
         this.worldEntityData = new WorldEntityData(this.dataSource);
         this.titleData = new TitleData(this.dataSource);
-        this.setsData = new SetsData(this.dataSource);
+        this.quickSetsData = new QuickSetsData(this.dataSource);
     }
 
     public boolean initializeConnection() {
@@ -79,9 +79,10 @@ public class StaticsDatabase {
             config.addDataSourceProperty("databaseName", Config.INSTANCE.getLoginNameDB());
             config.addDataSourceProperty("user", Config.INSTANCE.getLoginUserDB());
             config.addDataSourceProperty("password", Config.INSTANCE.getLoginPassDB());
-            config.setAutoCommit(true); // AutoCommit, c'est cool
-            config.setMaximumPoolSize(20);
-            config.setMinimumIdle(1);
+            config.setAutoCommit(true); // AutoCommit, c'est de base
+            config.setMaximumPoolSize(10); // Ajustez en fonction de vos besoins
+            config.setMinimumIdle(3);
+
             this.dataSource = new HikariDataSource(config);
 
             if (!Database.tryConnection(this.dataSource)) {
@@ -189,7 +190,7 @@ public class StaticsDatabase {
 
     public TitleData getTitleData() { return titleData;}
 
-    public SetsData getSetsData() {
-        return setsData;
+    public QuickSetsData getSetsData() {
+        return quickSetsData;
     }
 }

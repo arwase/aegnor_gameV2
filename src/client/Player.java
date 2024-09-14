@@ -47,7 +47,7 @@ import object.ObjectTemplate;
 import org.apache.commons.lang3.ArrayUtils;
 import other.Action;
 import other.Dopeul;
-import other.Sets;
+import other.QuickSets;
 import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
@@ -615,7 +615,7 @@ public class Player {
         if (Config.INSTANCE.getSERVER_KEY().equals("aegnor")) {
             for (ObjectTemplate t : World.world.getItemSet(5).getItemTemplates()) {
                 GameObject obj = t.createNewItem(1, true,5);
-                if (perso.addObjet(obj, true))
+                if(perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
             }
             ObjectTemplate template = World.world.getObjTemplate(10207);
@@ -624,7 +624,7 @@ public class Player {
                 if(object != null) {
                     object.getTxtStat().clear();
                     object.getTxtStat().putAll(Dopeul.generateStatsTrousseau());
-                    if (perso.addObjet(object, true))
+                    if(perso.addObjet(object, true))
                         World.world.addGameObject(object, true);
                 }
             }
@@ -1178,7 +1178,7 @@ public class Player {
         return _allTitle;
     }
 
-    public List<Sets> getAllSets(Player player) {
+    public List<QuickSets> getAllSets(Player player) {
         World.world.getSetsByPlayer(player.getId());
         return World.world.getSetsByPlayer(player.getId());
     }
@@ -1396,7 +1396,22 @@ public class Player {
     }
 
     public void setKamas(long l) {
-        this.kamas = l;
+        if(l < 0) {
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String str = "";
+            int i = 0;
+            for (StackTraceElement caller : stackTrace ) {
+                i++;
+                str += "["+ i +"] :" + "De " + caller.getMethodName() + "/" + caller.getClassName() + " && ";
+                if(i > 4)
+                    break;
+            }
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de retrait de "+l+" kamas alors qu'il n'en n'avait que "+this.getKamas() +" : Trace" + str, this);
+            this.banAccount();
+        }
+        else{
+            this.kamas = l;
+        }
     }
 
     public Map<Integer, Effect> get_buff() {
@@ -2057,7 +2072,7 @@ public class Player {
                         SocketManager.GAME_SEND_Im_PACKET(this, "025");
                     continue;
                 }
-                if (pets.getType() == 0 || pets.getType() == 1)
+                if (pets.getType() == 0 || pets.getType() == 1 || pets.getType() == -1)
                     continue;
 
                 p.updatePets(this, Integer.parseInt(pets.getGap().split(",")[1]));
@@ -2802,6 +2817,7 @@ public class Player {
                     obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantitê de l'objet existant
                     if (isOnline)
                         SocketManager.GAME_SEND_OBJECT_QUANTITY_PACKET(this, obj);
+                    Database.getStatics().getObjectData().update(obj);
                     return false;
                 }
             }
@@ -3996,12 +4012,28 @@ public class Player {
     }
 
     public long getBankKamas() {
+
         return account.getBankKamas();
     }
 
     public void setBankKamas(long i) {
-        account.setBankKamas(i);
-        Database.getDynamics().getBankData().update(account);
+        if(i < 0) {
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            String str = "";
+            int j = 0;
+            for (StackTraceElement caller : stackTrace ) {
+                j++;
+                str += "["+ j +"] :" + "De " + caller.getMethodName() + "/" + caller.getClassName() + " && ";
+                if(j > 4)
+                    break;
+            }
+            World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),"BAN : Tentative de retrait de "+i+" kamas alors qu'il n'en n'avait que "+this.getKamas() +" : Trace" + str, this);
+            this.banAccount();
+        }
+        else{
+            account.setBankKamas(i);
+            Database.getDynamics().getBankData().update(account);
+        }
     }
 
     public String parseBankPacket() {
@@ -5499,10 +5531,10 @@ public class Player {
     public String SetsPacket(){
         String packetToSend = "Os";
         int playerid = this.getId();
-        List<Sets> sets = World.world.getSetsByPlayer(playerid);
+        List<QuickSets> sets = World.world.getSetsByPlayer(playerid);
         //int i =0;
         if(sets != null) {
-            for (Sets set : sets) {
+            for (QuickSets set : sets) {
                 //if(i!=0){
                 //  packetToSend += "*";
                 //}

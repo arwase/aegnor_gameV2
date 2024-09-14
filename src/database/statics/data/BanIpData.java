@@ -3,6 +3,7 @@ package database.statics.data;
 import com.zaxxer.hikari.HikariDataSource;
 import database.statics.AbstractDAO;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -22,9 +23,9 @@ public class BanIpData extends AbstractDAO<Object> {
 
     public boolean add(String ip) {
         String query = "INSERT INTO `banip` VALUES (?)";
-        try (PreparedStatementWrapper ps = getPreparedStatement(query)) {
-            ps.getPreparedStatement().setString(1, ip);
-            executeUpdate(ps);
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setString(1, ip);
+            executeUpdate(statement);
             return true;
         } catch (SQLException e) {
             super.sendError("BanipData add", e);
@@ -34,8 +35,8 @@ public class BanIpData extends AbstractDAO<Object> {
 
     public boolean delete(String ip) {
         String query = "DELETE FROM `banip` WHERE `ip` = ?";
-        try (PreparedStatementWrapper ps = getPreparedStatement(query)) {
-            ps.getPreparedStatement().setString(1, ip);
+        try (Connection conn = dataSource.getConnection(); PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setString(1, ip);
             executeUpdate(ps);
             return true;
         } catch (SQLException e) {

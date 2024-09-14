@@ -937,7 +937,7 @@ public class GameCase {
                     SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), this);
                     int qua = Formulas.getRandomValue(1, 5);//On a entre 1 et 10 eaux
                     GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false,0);
-                    if (player.addObjet(obj, true))
+                    if(player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
                 }, this.getObject().getUseDuration(), TimeUnit.MILLISECONDS);
@@ -972,7 +972,7 @@ public class GameCase {
                     SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(player.getCurMap(), this);
                     int qua = Formulas.getRandomValue(1, 10);//On a entre 1 et 10 eaux
                     GameObject obj = World.world.getObjTemplate(311).createNewItem(qua, false,0);
-                    if (player.addObjet(obj, true))
+                    if(player.addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_IQ_PACKET(player, player.getId(), qua);
                 }, this.getObject().getUseDuration(), TimeUnit.MILLISECONDS);
@@ -1228,7 +1228,7 @@ public class GameCase {
                 SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(perso.getCurMap(), this);
                 int qua = Formulas.getRandomValue(1, 5);//On a entre 1 et 5 patates
                 GameObject obj = World.world.getObjTemplate(537).createNewItem(qua, false,0);
-                if (perso.addObjet(obj, true))
+                if(perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
                 SocketManager.GAME_SEND_IQ_PACKET(perso, perso.getId(), qua);
                 break;
@@ -1242,15 +1242,11 @@ public class GameCase {
                 SocketManager.GAME_SEND_GDF_PACKET_TO_MAP(perso.getCurMap(), this);
                 qua = Formulas.getRandomValue(1, 10);//On a entre 1 et 10 eaux
                 obj = World.world.getObjTemplate(311).createNewItem(qua, false,0);
-                if (perso.addObjet(obj, true))
+                if(perso.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
                 SocketManager.GAME_SEND_IQ_PACKET(perso, perso.getId(), qua);
                 break;
         }
-    }
-
-    public void celdaNornmal() {
-
     }
 
     public Boolean isActivate() {

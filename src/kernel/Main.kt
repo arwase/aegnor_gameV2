@@ -98,7 +98,6 @@ object Main {
     private fun closeServer() {
         if (Config.isRunning) {
             GameServer.INSTANCE.setState(0)
-            Config.isRunning = false
             GameServer.INSTANCE.kickAll(true)
             WorldSave.cast(0)
             if (!Config.HEROIC) {
@@ -108,6 +107,7 @@ object Main {
                 }*/
             }
             Database.getStatics().serverData.loggedZero()
+            //Config.isRunning = false
         }
         GameServer.INSTANCE.stop()
         logger.info("The server is now closed.")

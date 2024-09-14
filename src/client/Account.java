@@ -89,7 +89,7 @@ public class Account {
         if (bank == null) {
             Database.getDynamics().getBankData().add(guid);
         } else {
-            this.bankKamas = Integer.parseInt(bank.split("@")[0]);
+            this.bankKamas = Long.parseLong(bank.split("@")[0]);
             String allItem = "";
             try {
                 allItem = bank.split("@")[1];
@@ -502,11 +502,19 @@ public class Account {
     public boolean recoverItem(int lineId) {
         if (this.currentPlayer == null || this.currentPlayer.getExchangeAction() == null)
             return false;
+
+
         if ((Integer) this.currentPlayer.getExchangeAction().getValue() >= 0)
             return false;
 
         //int hdvID = Math.abs((Integer) this.currentPlayer.getExchangeAction().getValue());//R�cup�re l'ID de l'HDV
-        int hdvID = World.world.getHdv(this.currentPlayer.getCurMap().getId()).getHdvId();
+        int hdvID =-1;
+        if(Config.INSTANCE.getHDV_GLOBAL()){
+            hdvID = World.world.getHdv(-1).getHdvId();
+        }
+        else{
+            hdvID = World.world.getHdv(this.currentPlayer.getCurMap().getId()).getHdvId();
+        }
 
         HdvEntry entry = null;
         try {
@@ -533,9 +541,9 @@ public class Account {
         GameObject obj = entry.getGameObject();
 
         if (this.currentPlayer.addObjetSimiler(obj, true, -1)) {
-            World.world.removeGameObject(obj.getGuid());
+            World.world.removeGameObject(obj.getGuid()); // On delete l'iD car fusionné avec ceux deja présent
         } else {
-            this.currentPlayer.addObjet(obj);
+            this.currentPlayer.addObjet(obj);       // On ajoute l'objet au joueur
         }
         Database.getDynamics().getHdvObjectData().delete(entry.getGameObject().getGuid());
         World.world.getHdv(hdvID).delEntry(entry);//Retire l'item de l'HDV

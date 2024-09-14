@@ -7,27 +7,25 @@ import database.statics.AbstractDAO;
 import game.world.World;
 import kernel.Main;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class TrunkData extends AbstractDAO<Trunk> {
 
-    public TrunkData(HikariDataSource dataSource)
-	{
-		super(dataSource);
-	}
-
-	@Override
-	public void load(Object obj)
-	{
+    public TrunkData(HikariDataSource dataSource) {
+        super(dataSource);
     }
 
-	@Override
-	public boolean update(Trunk t)
-	{
-		return false;
-	}
+    @Override
+    public void load(Object obj) {
+    }
+
+    @Override
+    public boolean update(Trunk t) {
+        return false;
+    }
 
     public int load() {
         String query = "SELECT * from coffres";
@@ -48,23 +46,20 @@ public class TrunkData extends AbstractDAO<Trunk> {
         return nbr;
     }
 
-
     public void insert(Trunk trunk) {
         String query = "INSERT INTO `coffres` (`id`, `id_house`, `mapid`, `cellid`) VALUES (?, ?, ?, ?)";
-        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
-            PreparedStatement p = wrapper.getPreparedStatement();
-            p.setInt(1, trunk.getId());
-            p.setInt(2, trunk.getHouseId());
-            p.setInt(3, trunk.getMapId());
-            p.setInt(4, trunk.getCellId());
-            executeUpdate(wrapper);
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query) ) {
+            statement.setInt(1, trunk.getId());
+            statement.setInt(2, trunk.getHouseId());
+            statement.setInt(3, trunk.getMapId());
+            statement.setInt(4, trunk.getCellId());
+            executeUpdate(statement);
 
             Database.getDynamics().getTrunkData().insert(trunk);
         } catch (SQLException e) {
             sendError("Coffre insert", e);
         }
     }
-
 
     public int getNextId() {
         String query = "SELECT MAX(id) AS max FROM `coffres`";
@@ -78,7 +73,7 @@ public class TrunkData extends AbstractDAO<Trunk> {
             }
         } catch (SQLException e) {
             sendError("CoffreData getNextId", e);
-            Main.INSTANCE.stop("unknown");
+            Main.INSTANCE.stop(e.getMessage());
         }
         return guid;
     }

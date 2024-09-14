@@ -2029,12 +2029,32 @@ public class Fight {
                 turnTotal++;
             }
 
-            setCurFighterPa(current.getPa());
-            setCurFighterPm(current.getPm());
-            setCurFighterUsedPa();
-            setCurFighterUsedPm();
-            current.setCurRemovedPa(0);
-            current.setCurRemovedPm(0);
+            // Gestion des glyphes
+            if(!current.isDead()) {
+                ArrayList<Glyph> glyphs = new ArrayList<>(this.getAllGlyphs());// Copie du tableau
+                for (Glyph glyph : glyphs) {
+                    if (glyph.getCaster().getId() == current.getId()) {
+                        if (glyph.decrementDuration() == 0) {
+                            getAllGlyphs().remove(glyph);
+                            glyph.disappear();
+                            continue;
+                        }
+                    }
+
+                    if (ArrayUtils.contains(glyph.getCellsZone().toArray(), current.getCell()))
+                        glyph.onTrapped(current);
+
+                }
+            }
+
+            if(!current.isDead()) {
+                setCurFighterPa(current.getPa());
+                setCurFighterPm(current.getPm());
+                setCurFighterUsedPa();
+                setCurFighterUsedPm();
+                current.setCurRemovedPa(0);
+                current.setCurRemovedPm(0);
+            }
 
             if(!current.isDead())
                 current.applyBeginningTurnBuff(this);
@@ -2084,6 +2104,7 @@ public class Fight {
                 }
             }
 
+
             current.refreshLaunchedSort();
 
             SocketManager.GAME_SEND_GAMETURNSTART_PACKET_TO_FIGHT(this, 7, current.getId(), Constant.TIME_BY_TURN, turnTotal);
@@ -2092,21 +2113,7 @@ public class Fight {
             // On actualise les sorts launch
             this.turn = new Turn(this, current);
 
-            // Gestion des glyphes
-            ArrayList<Glyph> glyphs = new ArrayList<>(this.getAllGlyphs());// Copie du tableau
-            for (Glyph glyph : glyphs) {
-                if (glyph.getCaster().getId() == current.getId()) {
-                    if (glyph.decrementDuration() == 0) {
-                        getAllGlyphs().remove(glyph);
-                        glyph.disappear();
-                        continue;
-                    }
-                }
 
-                if(ArrayUtils.contains(glyph.getCellsZone().toArray(),current.getCell()))
-                    glyph.onTrapped(current);
-
-            }
 
             if ((getType() == Constant.FIGHT_TYPE_PVM) && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector()
                     || getType() == Constant.FIGHT_TYPE_DOPEUL && (getAllChallenges().size() > 0) && !current.isInvocation() && !current.isDouble() && !current.isCollector())
@@ -3956,7 +3963,7 @@ public class Fight {
         if(this.getState() == Constant.FIGHT_STATE_INIT || this.getState() == Constant.FIGHT_STATE_PLACE) {
             player.setReady(true);
             player.getFight().verifIfAllReady();
-            SocketManager.GAME_SEND_FIGHT_PLAYER_READY_TO_FIGHT(player.getFight(), 3, player.getId(), true);
+            SocketManager.GAME_SEND_FIGHT_PLAYER_READY_TO_FIGHT(this, 3, player.getId(), true);
             return true;
         }
 
@@ -4612,8 +4619,6 @@ public class Fight {
             GameObject obj = player.getObjetByPos(Constant.ITEM_POS_FAMILIER);
             if (obj != null) {
                 Map<Integer, Integer> souls = new HashMap<>();
-                //Map<Integer, Integer> soulsdiff = new HashMap<>();
-                //int nbOfDiff = 0;
 
                 for (Fighter f : looseTeam) {
                     if (f.getMob() == null)
@@ -4626,18 +4631,11 @@ public class Fight {
                     else
                         souls.put(id, 1);
 
-                   /* if( this.getdifficulty() > 0 ){
-                        nbOfDiff++;
-                    }*/
-
                 }
-                //soulsdiff.put(this.getdifficulty(),nbOfDiff);
-
                 if (!souls.isEmpty()) {
                     PetEntry pet = World.world.getPetsEntry(obj.getGuid());
                     if (pet != null) {
                         pet.eatSouls(player, souls);
-                        //pet.eatDiffs(player, soulsdiff);
                     }
                 }
             }
@@ -5695,7 +5693,7 @@ public class Fight {
                                     continue;
 
                                 if(fightdifficulty == 4){
-                                    if(objectTemplate.getType() != Constant.ITEM_TYPE_DOFUS && objectTemplate.getId() != 12780 && objectTemplate.getId() != 12885 && objectTemplate.getType() != Constant.ITEM_TYPE_RUNE_FORGEMAGIE  )
+                                    if(objectTemplate.getType() != Constant.ITEM_TYPE_DOFUS && objectTemplate.getType() != Constant.ITEM_TYPE_FAMILIER && objectTemplate.getId() != 12780 && objectTemplate.getId() != 12885 && objectTemplate.getType() != Constant.ITEM_TYPE_RUNE_FORGEMAGIE  )
                                         continue;
                                 }
 
@@ -5972,7 +5970,7 @@ public class Fight {
                                         World.world.addGameObject(newObj, true);
                                 }
 
-                                if(newObj.getTemplate().getType() == Constant.ITEM_TYPE_CERTIF_MONTURE && newObj.getTemplate().getId() != 7807 && newObj.getTemplate().getId() != 7809 && newObj.getTemplate().getId() != 7864){
+                                if(newObj.getTemplate().getType() == Constant.ITEM_TYPE_CERTIF_MONTURE && newObj.getTemplate().getId() != 7807 && newObj.getTemplate().getId() != 7809 && newObj.getTemplate().getId() != 7864 && player!= null){
                                     Mount mount = new Mount(Constant.getMountColorByParchoTemplate(newObj.getTemplate().getId()), player.getId(), false);
                                     newObj.clearStats();
                                     newObj.getStats().addOneStat(995, - (mount.getId()));

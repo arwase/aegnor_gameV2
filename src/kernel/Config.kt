@@ -13,6 +13,8 @@ object Config {
     var HEROIC = ConfigReader.data[ConfigReader.mode.heroic]
     var DISCORD_BOT = ConfigReader.data[ConfigReader.mode.discordBot]
     var DISCORD_WH = ConfigReader.data[ConfigReader.mode.discordWebhooks]
+    var HDV_GLOBAL = ConfigReader.data[ConfigReader.mode.hdvGlobal]
+
     var TEAM_MATCH = ConfigReader.data[ConfigReader.options.teamMatch]
     var DEATH_MATCH = ConfigReader.data[ConfigReader.options.deathMatch]
     var AUTO_EVENT = ConfigReader.data[ConfigReader.options.event.active]

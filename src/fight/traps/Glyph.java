@@ -70,8 +70,6 @@ public class Glyph {
 
     public void onTrapped(Fighter target) {
             Spell spell = World.world.getSort(this.spell);
-            
-
             String str = this.spell + "," + this.cell.getId() + ", 0, 1, 1," + this.caster.getId();
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this.fight, 7, 307, target.getId() + "", str);
             this.trapSpell.applySpellEffectToFight(this.fight, this.caster, target.getCell(), false, true);

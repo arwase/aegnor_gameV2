@@ -211,7 +211,7 @@ public class Trunk {
         if (((Trunk) P.getExchangeAction().getValue()).getId() != getId())
             return;
 
-        if (this.object.size() >= 10000) // Le plus grand c'est pour si un admin ajoute des objets via la bdd...
+        if (this.object.size() >= 200) // Le plus grand c'est pour si un admin ajoute des objets via la bdd...
         {
             SocketManager.GAME_SEND_MESSAGE(P, "Le nombre d'objets maximal de ce coffre à été atteint !");
             return;

@@ -323,10 +323,11 @@ public class Collector {
     public void reloadTimer() {
         if(World.world.getGuild(getGuildId()) == null)
             return;
-        Long time = World.world.getDelayCollectors().get(this.getMap());
+        Guild guild = World.world.getGuild(getGuildId());
+        Long time = guild.getDelayCollectors().get(this.getMap());
         if (time != null)
             return;
-        World.world.getDelayCollectors().put(this.getMap(), this.getDate());
+        guild.getDelayCollectors().put(this.getMap(), this.getDate());
     }
 
     public long getDate() {

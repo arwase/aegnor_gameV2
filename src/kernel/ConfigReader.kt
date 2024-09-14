@@ -81,6 +81,7 @@ object ConfigReader {
         val heroic by booleanType
         val discordBot by booleanType
         val discordWebhooks by booleanType
+        val hdvGlobal by booleanType
     }
 
     object discord : PropertyGroup() {

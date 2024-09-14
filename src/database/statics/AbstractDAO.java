@@ -4,9 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.zaxxer.hikari.HikariDataSource;
 import database.DAO;
-import database.Database;
-import kernel.Main;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
@@ -15,13 +12,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
 
     protected final Object locker = new Object();
     protected HikariDataSource dataSource;
-    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [blue]");
-    protected Logger logger2 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.PoolBase");
-    protected Logger logger3 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.pool.HikariPool");
-    protected Logger logger4 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariDataSource");
-    protected Logger logger5 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.HikariConfig");
-    protected Logger logger6 = (Logger) LoggerFactory.getLogger("com.zaxxer.hikari.util.DriverDataSource");
-    protected Logger logger7 = (Logger) LoggerFactory.getLogger(ProtocolCodecFilter.class);
+    protected Logger logger = (Logger) LoggerFactory.getLogger(AbstractDAO.class + " - [staticBDD]");
 
     public AbstractDAO(HikariDataSource dataSource) {
         this.dataSource = dataSource;
@@ -31,7 +22,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
     protected Result getData(String query) {
         synchronized (locker) {
             try (Connection connection = dataSource.getConnection();
-                 Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE)) {
+                 Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY)) {
 
                 if (!query.endsWith(";")) {
                     query = query + ";";
@@ -41,7 +32,6 @@ public abstract class AbstractDAO<T> implements DAO<T> {
                 logger.debug("SQL request executed successfully {}", query);
 
                 return new Result(connection, statement, resultSet);
-
             } catch (SQLException e) {
                 logger.error("Can't execute SQL Request :" + query, e);
                 return null;
@@ -49,43 +39,24 @@ public abstract class AbstractDAO<T> implements DAO<T> {
         }
     }
 
-    protected PreparedStatementWrapper getPreparedStatement(String query) throws SQLException {
-        try {
-            Connection connection = dataSource.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(query);
-            return new PreparedStatementWrapper(connection, preparedStatement);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            logger.error("Can't get datasource connection", e);
-            dataSource.close();
-            if (!Database.getSites().initializeConnection())
-                Main.INSTANCE.stop("statics prepared statement failed");
-            throw e;
-        }
-    }
-
-    public void execute(PreparedStatementWrapper statementWrapper) {
+    public void execute(PreparedStatement statement) {
         synchronized (locker) {
-            try (PreparedStatementWrapper wrapper = statementWrapper) {
-                PreparedStatement statement = wrapper.getPreparedStatement();
-                statement.execute();
-                logger.debug("SQL request executed successfully {}", statement.toString());
+            try (PreparedStatement stmt = statement) {
+                stmt.execute();
+                logger.debug("SQL request executed successfully {}", stmt);
             } catch (SQLException e) {
-                e.printStackTrace();
-                logger.error("Can't execute SQL Request :" + statementWrapper.getPreparedStatement().toString(), e);
+                logger.error("Can't execute SQL Request :" + statement, e);
             }
         }
     }
 
-    public void executeUpdate(PreparedStatementWrapper statementWrapper) {
+    public void executeUpdate(PreparedStatement statement) {
         synchronized (locker) {
-            try (PreparedStatementWrapper wrapper = statementWrapper) {
-                PreparedStatement statement = wrapper.getPreparedStatement();
-                int affectedRows = statement.executeUpdate();
+            try (PreparedStatement stmt = statement) {
+                int affectedRows = stmt.executeUpdate();
                 logger.debug("SQL request executed successfully, affected rows: {}", affectedRows);
             } catch (SQLException e) {
-                e.printStackTrace();
-                logger.error("Can't execute SQL Request :" + statementWrapper.getPreparedStatement().toString(), e);
+                logger.error("Can't execute SQL Request :" + statement, e);
             }
         }
     }
@@ -93,34 +64,6 @@ public abstract class AbstractDAO<T> implements DAO<T> {
     protected void sendError(String msg, Exception e) {
         e.printStackTrace();
         logger.error("Error statics database " + msg + " : " + e.getMessage());
-    }
-
-    public class PreparedStatementWrapper implements AutoCloseable {
-        private final Connection connection;
-        private final PreparedStatement preparedStatement;
-
-        public PreparedStatementWrapper(Connection connection, PreparedStatement preparedStatement) {
-            this.connection = connection;
-            this.preparedStatement = preparedStatement;
-        }
-
-        public PreparedStatement getPreparedStatement() {
-            return preparedStatement;
-        }
-
-        @Override
-        public void close() {
-            try {
-                if (preparedStatement != null && !preparedStatement.isClosed()) {
-                    preparedStatement.close();
-                }
-                if (connection != null && !connection.isClosed()) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     public class Result implements AutoCloseable {
@@ -151,7 +94,7 @@ public abstract class AbstractDAO<T> implements DAO<T> {
                     connection.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                logger.error("Error closing ResultSet, Statement, or Connection", e);
             }
         }
     }

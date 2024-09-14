@@ -773,7 +773,7 @@ public class PlayerExchange extends Exchange {
                         if (World.world.getGameObject(i.first) == null)
                             continue;
                         objet = World.world.getGameObject(i.first);
-                        if (World.world.getGameObject(i.first).getTemplate().getType() == 18) {
+                        if (World.world.getGameObject(i.first).getTemplate().getType() == 18) { //TODO change with ChenilCertificat
                             id = Constant.getParchoByIdPets(World.world.getGameObject(i.first).getTemplate().getId());
                         } else if (World.world.getGameObject(i.first).getTemplate().getType() == 77) {
                             id = Constant.getPetsByIdParcho(World.world.getGameObject(i.first).getTemplate().getId());

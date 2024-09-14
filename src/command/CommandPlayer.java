@@ -426,10 +426,13 @@ public class CommandPlayer {
                             if (newGameObject == null)
                                 continue;
 
-                            if (!player.addObjetSimiler(newGameObject, true, -1)) {
+                            boolean test = player.addObjet(newGameObject, true);
+                            World.world.addGameObject(newGameObject, test);
+
+                            /*if (!player.addObjetSimiler(newGameObject, true, -1)) {
                                 World.world.addGameObject(newGameObject, true);
                                 player.addObjet(newGameObject);
-                            }
+                            }*/
                         }
                         if (fragment.getGuid() != -1) {
                             SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~" + World.world.getGameObject(fragment.getGuid()).getTemplate().getId());
@@ -442,23 +445,6 @@ public class CommandPlayer {
                 }
                 return true;
             }
-            /*else if(command(msg, "openmetierparch") || command(msg, "omp")) {
-                if (player.getFight() != null){
-                    player.sendMessage("Impossible d'utiliser cette commande en combat");
-                    return true;
-                }
-                if(player.getExchangeAction() != null) GameClient.leaveExchange(player);
-
-                List<GameObject> fragments = player.getParcheminMetierObject();
-
-                if(fragments != null){
-                    for(GameObject fragment : fragments){
-
-                    }
-
-                }
-                return true;
-            }*/
             else if(command(msg, "difficulty0") || command(msg, "diff0")) {
                 if (player.difficulty != 0) {
                     player.difficulty = 0;

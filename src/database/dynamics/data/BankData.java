@@ -72,7 +72,7 @@ public class BankData extends AbstractDAO<Object> {
             result = getData("SELECT * FROM `banks` WHERE id = '" + guid + "'");
             ResultSet RS = result.resultSet;
             if (RS.next()) {
-                get = RS.getInt("kamas") + "@" + RS.getString("items");
+                get = RS.getLong("kamas") + "@" + RS.getString("items");
             }
         } catch (SQLException e) {
             super.sendError("BankData getWaitingAccount", e);

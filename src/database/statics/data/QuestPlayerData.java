@@ -8,6 +8,7 @@ import game.world.World;
 import kernel.Main;
 import quest.QuestPlayer;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,12 +25,11 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
     @Override
     public boolean update(QuestPlayer qp) {
         String query = "UPDATE `world.entity.players.quests` SET `finish` = ?, `stepsValidation` = ? WHERE `id` = ?";
-        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
-            PreparedStatement p = wrapper.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, qp.isFinish() ? 1 : 0);
             p.setString(2, qp.getQuestStepString());
             p.setInt(3, qp.getId());
-            executeUpdate(wrapper);
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             sendError("QuestPlayerData update", e);
@@ -37,36 +37,19 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
         return false;
     }
 
-
     public void update(QuestPlayer questPlayer, Player player) {
         String query = "UPDATE `world.entity.players.quests` SET `quest`= ?, `finish`= ?, `player` = ?, `stepsValidation` = ? WHERE `id` = ?";
-        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
-            PreparedStatement p = wrapper.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, questPlayer.getQuest().getId());
             p.setInt(2, questPlayer.isFinish() ? 1 : 0);
             p.setInt(3, player.getId());
             p.setString(4, questPlayer.getQuestStepString());
             p.setInt(5, questPlayer.getId());
-            executeUpdate(wrapper);
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("QuestPlayerData update", e);
         }
     }
-
-    /*public void loadPerso(Player player) {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `world.entity.players.quests` WHERE `player` = " + player.getId() + ";");
-            ResultSet RS = result.getResultSet();
-            while (RS.next()) {
-                player.addQuestPerso(new QuestPlayer(RS.getInt("id"), RS.getInt("quest"), RS.getInt("finish") == 1, RS.getInt("player"), RS.getString("stepsValidation")));
-            }
-        } catch (SQLException e) {
-            super.sendError("QuestPlayerData loadPerso", e);
-        } finally {
-            close(result);
-        }
-    }*/
 
     public void loadAll() {
         String query = "SELECT * FROM `world.entity.players.quests`;";
@@ -86,7 +69,6 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
         }
     }
 
-
     public void loadPerso(Player player) {
         String query = "SELECT * FROM `world.entity.players.quests` WHERE `player` = " + player.getId() + ";";
         try (Result result = getData(query)) {
@@ -103,10 +85,9 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
 
     public boolean delete(int id) {
         String query = "DELETE FROM `world.entity.players.quests` WHERE `id` = ?;";
-        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
-            PreparedStatement p = wrapper.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, id);
-            executeUpdate(wrapper);
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             sendError("QuestPlayerData delete", e);
@@ -116,14 +97,13 @@ public class QuestPlayerData extends AbstractDAO<QuestPlayer> {
 
     public boolean add(QuestPlayer questPlayer) {
         String query = "INSERT INTO `world.entity.players.quests` VALUES (?, ?, ?, ?, ?);";
-        try (PreparedStatementWrapper wrapper = getPreparedStatement(query)) {
-            PreparedStatement p = wrapper.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, questPlayer.getId());
             p.setInt(2, questPlayer.getQuest().getId());
             p.setInt(3, questPlayer.isFinish() ? 1 : 0);
             p.setInt(4, questPlayer.getPlayer().getId());
             p.setString(5, questPlayer.getQuestStepString());
-            executeUpdate(wrapper);
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             sendError("QuestPlayerData add", e);

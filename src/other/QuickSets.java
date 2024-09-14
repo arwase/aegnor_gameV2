@@ -1,7 +1,7 @@
 package other;
 
 
-public class Sets {
+public class QuickSets {
     private int id;
     private int playerId;
     private int nb;
@@ -9,7 +9,7 @@ public class Sets {
     private String objects;
     private int icon;
 
-    public Sets( int id, int playerId, int nb,String name, String objects, int icon) {
+    public QuickSets(int id, int playerId, int nb, String name, String objects, int icon) {
         this.id = id;
         this.playerId = playerId;
         this.nb = nb;

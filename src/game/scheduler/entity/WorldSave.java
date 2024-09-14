@@ -4,7 +4,6 @@ import client.Player;
 import common.SocketManager;
 import database.Database;
 import entity.Prism;
-import entity.monster.Monster;
 import game.GameServer;
 import game.scheduler.Updatable;
 import game.world.World;
@@ -117,9 +116,9 @@ public class WorldSave extends Updatable {
         if(trys != 0) GameServer.INSTANCE.setState(1);
 
         if(thread != null) {
-            World.world.getMaps().stream().filter(map -> map != null && map.getMobGroups() != null)
+            /*World.world.getMaps().stream().filter(map -> map != null && map.getMobGroups() != null)
                     .forEach(map -> map.getMobGroups().values()
-                            .stream().filter(group -> group != null).forEach(Monster.MobGroup::addStarBonus));
+                            .stream().filter(group -> group != null).forEach(Monster.MobGroup::addStarBonus));*/
             Thread copy = thread;
             thread = null;
             copy.interrupt();

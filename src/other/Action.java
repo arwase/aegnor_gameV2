@@ -1197,7 +1197,7 @@ public class Action {
                 break;
 
             case 31:// change classe(zobal)
-                SocketManager.GAME_SEND_MESSAGE(player, "Vous vous êtes fait enculer. Cordialement, le staff.");
+                //SocketManager.GAME_SEND_MESSAGE(player, "Vous vous êtes fait enculer. Cordialement, le staff.");
 				/*
 				 * try { int classe = Integer.parseInt(args); if (classe ==
 				 * perso.getClasse()) { SocketManager.GAME_SEND_MESSAGE(perso,
@@ -1225,7 +1225,6 @@ public class Action {
 				 * e.printStackTrace(); }
 				 */
                 break;
-
             case 33:// Stat max a un obj pos
                 int posItem = Integer.parseInt(args);
                 GameObject itemPos = player.getObjetByPos(posItem);
@@ -1352,8 +1351,8 @@ public class Action {
                 break;
 
             case 42: //Monte prochaine étape quete ou termine
-                break;
 
+                break;
             case 43: //T�l�portation de qu�te
                 String[] split = args.split(";");
                 int mapid = Integer.parseInt(split[0].split(",")[0]);

@@ -541,13 +541,13 @@ public class PathFinding {
             }
 
             if (fight == null) {
-                if (perso.getCurMap().getId() == 9588) {
+                if (perso.getCurMap().getId() == 9588) {/*
                     String cell = "353;339;325;311;297;283;269;255;241;227;213;228;368;354;340;326;312;298;284;270;256;242;243;257;271;285;299;313;327;341;355;369;383";
                     if (cell.contains(String.valueOf(lastPos)))
                         check++;
                     if (check > 1)
                         return "stoptp:" + lastPos;
-                }
+                */}
                 try {
                     if (perso.getCases)
                         if (!perso.thisCases.contains(lastPos))
@@ -757,7 +757,10 @@ public class PathFinding {
     }
 
     public static int newCaseAfterPush(final Fight fight, final GameCase CCase, final GameCase TCase, int value) {
-        final GameMap map = fight.getMap();
+        GameMap map = fight.getMap();
+        if(map == null)
+            return 0;
+
         if (CCase.getId() == TCase.getId())
             return 0;
 

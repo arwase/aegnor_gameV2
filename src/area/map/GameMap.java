@@ -268,7 +268,6 @@ public class GameMap {
     }
 
     public static boolean IsInDj (GameMap map) {
-
         Map<Integer, ArrayList<Action>> actionsOnMap = map.GetEndFightAction();
         for (Map.Entry<Integer, ArrayList<Action> > entry : actionsOnMap.entrySet()) {
             ArrayList<Action> Actions =  entry.getValue();
@@ -2312,7 +2311,8 @@ public class GameMap {
             if (obj != null && !Main.INSTANCE.getMapAsBlocked()) {
                 if (Logging.USE_LOG)
                     Logging.getInstance().write("Object", "GetInOnTheFloor : " + player.getName() + " a ramassÃ© [" + obj.getTemplate().getId() + "@" + obj.getGuid() + ";" + obj.getQuantity() + "]");
-                if (player.addObjet(obj, true))
+
+                if(player.addObjet(obj, true))
                     World.world.addGameObject(obj, true);
                 SocketManager.GAME_SEND_GDO_PACKET_TO_MAP(this, '-', id, 0, 0);
                 SocketManager.GAME_SEND_Ow_PACKET(player);

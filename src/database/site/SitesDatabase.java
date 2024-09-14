@@ -37,11 +37,6 @@ public class SitesDatabase {
             config.addDataSourceProperty("password", Config.INSTANCE.getSitePassDB());
             config.setMaximumPoolSize(10); // Ajustez en fonction de vos besoins
             config.setMinimumIdle(2);
-            config.setIdleTimeout(600000); // 10 minutes
-            config.setConnectionTimeout(30000); // 30 secondes
-            config.setMaxLifetime(1800000); // 30 minutes
-            config.setLeakDetectionThreshold(10000); // Détection des fuites de connexions après 2 secondes
-
             config.setAutoCommit(true); // AutoCommit, c'est cool
 
             this.dataSource = new HikariDataSource(config);

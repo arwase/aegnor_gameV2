@@ -2062,9 +2062,9 @@ public class CommandAdmin extends AdminUser {
             return;
         } else if (command.equalsIgnoreCase("KAMAS"))
         {
-            int count = 0;
+            long count = 0;
             try {
-                count = Integer.parseInt(infos[1]);
+                count = Long.parseLong(infos[1]);
             } catch (Exception e) {
                 // ok
                 this.sendMessage("Valeur incorecte.");
@@ -2083,11 +2083,17 @@ public class CommandAdmin extends AdminUser {
                     perso = this.getPlayer();
             }
             long curKamas = perso.getKamas();
-            long newKamas = curKamas + count;
+            long newKamas =0;
+            if(Formulas.willLongAdditionOverflow(curKamas,count)){
+                newKamas = Long.MAX_VALUE;
+            }
+            else{
+                newKamas = curKamas + count;
+            }
+
             if (newKamas < 0)
                 newKamas = 0;
-            if (newKamas > 1000000000)
-                newKamas = 1000000000;
+
             perso.setKamas(newKamas);
             if (perso.isOnline())
                 SocketManager.GAME_SEND_STATS_PACKET(perso);
@@ -2119,7 +2125,7 @@ public class CommandAdmin extends AdminUser {
 
             for (ObjectTemplate t : IS.getItemTemplates()) {
                 GameObject obj = t.createNewItem(1, useMax,rarity);
-                if (this.getPlayer().addObjet(obj, true))//Si le joueur n'avait pas d'item similaire
+                if(this.getPlayer().addObjet(obj, true))
                     World.world.addGameObject(obj, true);
             }
             String str = "Creation de la panoplie " + tID + " reussie";
@@ -2199,9 +2205,8 @@ public class CommandAdmin extends AdminUser {
             {
                 Player target = World.world.getPlayerByName(pseudo);
                 if(target != null) {
-                    if (target.addObjet(obj, true)) {
+                    if(this.getPlayer().addObjet(obj, true))
                         World.world.addGameObject(obj, true);
-                    }
                     String str = "Creation de l'item " + tID + " reussie";
                     if (useMax)
                         str += " avec des stats maximums";
@@ -2215,7 +2220,7 @@ public class CommandAdmin extends AdminUser {
                 else{
                     pseudo = "";
                     SocketManager.GAME_SEND_MESSAGE(getPlayer(), "Le joueur ciblé n'a pas été trouvé l'item a donc été généré sur vous même.");
-                    if (this.getPlayer().addObjet(obj, true))//Si le joueur n'avait pas d'item similaire
+                    if(this.getPlayer().addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     String str = "Creation de l'item " + tID + " reussie";
                     if (useMax)
@@ -3479,7 +3484,7 @@ public class CommandAdmin extends AdminUser {
             for (ObjectTemplate obj : World.world.getObjTemplates()) {
                 if (obj.getType() == type) {
                     GameObject addObj = obj.createNewItem(1, true,0);
-                    if (this.getPlayer().addObjet(addObj, true))//Si le joueur n'avait pas d'item similaire
+                    if(this.getPlayer().addObjet(addObj, true))
                         World.world.addGameObject(addObj, true);
                 }
             }
@@ -3819,7 +3824,7 @@ public class CommandAdmin extends AdminUser {
                     ObjectTemplate objT = World.world.getObjTemplate(entry.getKey());
                     int qua = entry.getValue();
                     GameObject obj = objT.createNewItem(qua, false,0);
-                    if (this.getPlayer().addObjet(obj, true))
+                    if(this.getPlayer().addObjet(obj, true))
                         World.world.addGameObject(obj, true);
                     SocketManager.GAME_SEND_Im_PACKET(this.getPlayer(), "021;"
                             + qua + "~" + objT.getId());
@@ -4107,7 +4112,7 @@ public class CommandAdmin extends AdminUser {
                 GameMap mapa2 = this.getPlayer().getCurMap();
                 StringBuilder packet = new StringBuilder();
                 packet.append("ÑP").append(mapa2.getCapabilitiesCompiled().toString()).append("|").append(mapa2.getMaxGroupNumb()).append("|").append(mapa2.getMaxSize()).append("|").append(mapa2.getMaxMerchant());
-                        SocketManager.send(getPlayer().getGameClient(), packet.toString());
+                SocketManager.send(getPlayer().getGameClient(), packet.toString());
             } catch (Exception e) {
                 SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception a été relevée");
             }
@@ -4177,16 +4182,37 @@ public class CommandAdmin extends AdminUser {
 
                 if (infos.length > 3) {
                     args = infos[3];
+                    if(!args.contains(",")){
+                        SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Destination invalide");
+                        return;
+                    }
+
+                    String[] params = args.split(",");
+                    try {
+                        int MapDest = Integer.parseInt(params[0]);
+                        int CellDest = Integer.parseInt(params[1]);
+                    } catch (Exception e) {
+                        SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Destination invalide");
+                        return;
+                    }
                 }
+                else{
+                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Destination invalide");
+                    return;
+                }
+
+
                 if (infos.length > 4) {
                     condicion = infos[4];
                 }
+
                 try {
                     if (infos.length > 5) {
                         descripcion = infos[5];
                     }
                 } catch (Exception ignored) {
                 }
+
                 GameMap mapa = getPlayer().getCurMap();
                 try {
                     if (infos.length > 6) {
@@ -4194,6 +4220,7 @@ public class CommandAdmin extends AdminUser {
                     }
                 } catch (Exception ignored) {
                 }
+
 
                 mapa.addEndFightAction(tipo, new Action(accionID, args, "", mapa));
                 strB.append("L'action de combat de fin a été ajoutée, mapID: ").append(mapa.getId()).append(", type: ").append(tipo).append(", actionID: ").append(accionID).append(", args: ").append(args).append(" condition: ").append(condicion);
@@ -4438,23 +4465,19 @@ public class CommandAdmin extends AdminUser {
                 int mobID = 0;
                 int objModID = 0;
                 int prospecc = 0;
-                int max = -1;
+                String cdtString = "-1";
                 float porcentaje = 0f;
+                int max = -1;
                 try {
                     mobID = Integer.parseInt(infos[1]);
                     objModID = Integer.parseInt(infos[2]);
                     prospecc = Integer.parseInt(infos[3]);
                     porcentaje = Float.parseFloat(infos[4]);
+                    cdtString = infos[5];
                 } catch (Exception e) {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Erreur arguments");
                     return;
                 }
-
-                try {
-                    max = Integer.parseInt(infos[5]);
-                } catch (Exception e) {
-                }
-
 
                 Monster mobModelo = World.world.getMonstre(mobID);
                 ObjectTemplate objModelo = World.world.getObjTemplate(objModID);
@@ -4462,9 +4485,33 @@ public class CommandAdmin extends AdminUser {
                     SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Objet ou monstre null");
                     return;
                 }
-                mobModelo.addDrop(new World.Drop(objModID, porcentaje, prospecc,false));
-                Database.getDynamics().getDropData().insertDrop(mobID, objModID, prospecc, porcentaje, max, objModelo.getName(), mobModelo.getName());
-                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Ajout du drop sur le monstre "+ mobModelo.getName() +" (" + mobModelo.getId() + ") de l'item " + objModelo.getName() + " (" + objModelo.getId() + ") Seuil: " + prospecc + ", " + porcentaje + "%, Action: " + max);
+
+                if (cdtString != null && cdtString.endsWith(":")) {
+                    cdtString = cdtString.substring(0, cdtString.length() - 1);
+                }
+
+                // Si le résultat est vide ou nul après la concaténation, retourner "-1"
+                if (cdtString == null || cdtString.isEmpty()) {
+                    cdtString = "-1";
+                }
+                int action =-1;
+                String condition=null;
+                if (!cdtString.equals("-1") && !cdtString.equals("1")
+                        && cdtString.contains(":")) {
+                    condition = cdtString.split(":")[1];
+                    action = Integer.parseInt(cdtString.split(":")[0]);
+                }
+
+                ArrayList<Double> percentage = new ArrayList<>();
+                percentage.add((double) porcentaje);
+                percentage.add((double) porcentaje);
+                percentage.add((double) porcentaje);
+                percentage.add((double) porcentaje);
+                percentage.add((double) porcentaje);
+
+                mobModelo.addDrop(new World.Drop(objModID, percentage, prospecc,action,-1,condition,false,false,false));
+                Database.getDynamics().getDropData().insertDrop(mobID, objModID, prospecc, porcentaje, cdtString, objModelo.getName(), mobModelo.getName());
+                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Ajout du drop sur le monstre "+ mobModelo.getName() +" (" + mobModelo.getId() + ") de l'item " + objModelo.getName() + " (" + objModelo.getId() + ") Seuil: " + prospecc + ", " + porcentaje + "%, Action: " + cdtString);
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une erreur est survenue");
         } else if(command.equalsIgnoreCase("ADD_TRIGGER"))
@@ -4533,6 +4580,25 @@ public class CommandAdmin extends AdminUser {
             } catch (Exception e) {
             SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Arguments incomplets");
         } else if(command.equalsIgnoreCase("STATS_DEFECTO_MOB"))
+            try {
+                int id = 0;
+                try {
+                    id = Integer.parseInt(infos[1]);
+                } catch (Exception e) {
+                    SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Arguments incorrects");
+                    return;
+                }
+
+                Monster mobModelo = World.world.getMonstre(id);
+                if (mobModelo == null) {
+                    SocketManager.GAME_SEND_BN(getPlayer());
+                    return;
+                }
+                SocketManager.ENVIAR_NJ_STATS_DEFECTO_MOB(getPlayer(), mobModelo.strStatsTodosMobs());
+            } catch (Exception e) {
+                SocketManager.GAME_SEND_MESSAGE_CONSOLE(getPlayer(), "Une exception est survenue");
+        }
+        else if(command.equalsIgnoreCase("TEST_STATS_ON_MOB"))
             try {
                 int id = 0;
                 try {

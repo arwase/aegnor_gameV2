@@ -7,6 +7,7 @@ import database.Database;
 import database.statics.AbstractDAO;
 import game.world.World;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,13 +27,12 @@ public class MountParkData extends AbstractDAO<MountPark>
 	@Override
 	public boolean update(MountPark MP) {
 		String query = "UPDATE `mountpark_data` SET `cellMount` =?, `cellPorte`=?, `cellEnclos`=? WHERE `mapid`=?";
-		try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-			PreparedStatement p = stmt.getPreparedStatement();
+		try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
 			p.setInt(1, MP.getMountcell());
 			p.setInt(2, MP.getDoor());
 			p.setString(3, MP.parseStringCellObject());
 			p.setInt(4, MP.getMap().getId());
-			p.executeUpdate();
+			executeUpdate(p);
 			return true;
 		} catch (SQLException e) {
 			sendError("Mountpark_dataData update", e);

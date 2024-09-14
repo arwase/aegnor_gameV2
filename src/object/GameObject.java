@@ -198,9 +198,11 @@ public class GameObject {
     }
 
     public void setModification() {
-        if(this.modification == -1)
+        if(this.modification == -1) {
             this.modification = 1;
+        }
     }
+
     public String stringObjetoConGuino() {
         StringBuilder str = new StringBuilder();
         try {
@@ -408,7 +410,7 @@ public class GameObject {
                     // Gestion des dommages bizarres
                     int statMax = JobAction.getStatBaseMaxLegendaire(this.template, statsString );
 
-                    if(this.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+                    /*if(this.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
                             Pet pets = World.world.getPets(this.template.getId() );
                             statMax = pets.getMax();
                             if (statMax < Integer.parseInt(stats[1], 16) && this.getTemplate().getId() != 6894) {
@@ -419,7 +421,23 @@ public class GameObject {
                             else{
                                 Stats.addOneStat(id, Integer.parseInt(stats[1], 16) );
                             }
+                    }*/
+                    if(this.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+
+                        Pet pets = World.world.getPets(this.getTemplate().getId() );
+                        PetEntry petentry = World.world.getPetsEntry(this.getGuid());
+                        statMax = pets.getMax();
+                        double poid = Formulas.getWeightByStat(id);
+                        if (statMax < Math.round(poid* (Integer.parseInt(stats[1], 16)) )  && this.getTemplate().getId() != 6894) {
+                            txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [corrigé]");
+                            Stats.addOneStat(id, (int) Math.round(statMax/poid));
+                            this.setModification();
+                        }
+                        else{
+                            Stats.addOneStat(id, Integer.parseInt(stats[1], 16) );
+                        }
                     }
+
 
                     if( statMax == 0 && statsString.equals("70")){
                         statsString = "79";
@@ -501,8 +519,10 @@ public class GameObject {
             }
         }
 
-        if(save)
+        if(save) {
             this.setModification();
+            Database.getStatics().getObjectData().update(this);
+        }
     }
 
     public void addTxtStat(int id, String stringName) {
@@ -665,10 +685,11 @@ public class GameObject {
         if (quantity >= 100000)
         {
             if (Logging.USE_LOG)
-                Logging.getInstance().write("Object", "Faille : Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
+                Logging.getInstance().write("Object", "Objet guid : " + guid + " a dépassé 100 000 qua (" + quantity + ") avec comme template : " + template.getName() + " (" + template.getId() + ")");
             quantity = 99999;
         }
         this.quantity = quantity;
+        Database.getStatics().getObjectData().update(this);
         this.setModification();
     }
 
@@ -677,8 +698,9 @@ public class GameObject {
     }
 
     public void setPosition(int position) {
-        this.setModification();
         this.position = position;
+        Database.getStatics().getObjectData().update(this);
+        this.setModification();
     }
 
     public ObjectTemplate getTemplate() {
@@ -686,8 +708,9 @@ public class GameObject {
     }
 
     public void setTemplate(int Tid) {
-        this.setModification();
         this.template = World.world.getObjTemplate(Tid);
+        Database.getStatics().getObjectData().update(this);
+        this.setModification();
     }
 
     public int getGuid() {
@@ -744,11 +767,6 @@ public class GameObject {
         return effectsCac;
     }
 
-
-    public void setExchangeIn(Player player) {
-
-        this.setModification();
-    }
     public Mount setMountStats(Player player, Mount mount, boolean castrated) {
         if(mount == null)
             mount = new Mount(Constant.getMountColorByParchoTemplate(this.getTemplate().getId()), player.getId(), false);
@@ -766,12 +784,14 @@ public class GameObject {
         this.getTxtStat().put(Constant.STATS_OWNER_1, player.getName());
         SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, this);
         this.setModification();
+        Database.getStatics().getObjectData().update(this);
     }
 
     public void dettachToPlayer(Player player) {
         this.getTxtStat().remove(Constant.STATS_OWNER_1);
         SocketManager.GAME_SEND_UPDATE_OBJECT_DISPLAY_PACKET(player, this);
         this.setModification();
+        Database.getStatics().getObjectData().update(this);
     }
 
     public boolean isAttach() {

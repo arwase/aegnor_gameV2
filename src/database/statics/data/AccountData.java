@@ -7,6 +7,7 @@ import database.Database;
 import database.statics.AbstractDAO;
 import game.world.World;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -77,35 +78,19 @@ public class AccountData extends AbstractDAO<Account> {
         return subscribe;
     }
 
-    public void updateVoteAll() {
-        String query = "SELECT guid, heurevote, lastVoteIP from accounts";
-        try (Result result = getData(query)) {
-            if (result != null && result.getResultSet() != null) {
-                ResultSet RS = result.getResultSet();
-                while (RS.next()) {
-                    Account account = World.world.getAccount(RS.getInt("guid"));
-                    if (account == null) continue;
-                    account.updateVote(RS.getString("heurevote"), RS.getString("lastVoteIP"));
-                }
-            }
-        } catch (SQLException e) {
-            super.sendError("AccountData updateVoteAll", e);
-        }
-    }
 
     @Override
     public boolean update(Account acc) {
         String query = "UPDATE accounts SET banned = ?, friends = ?, enemy = ?, muteTime = ?, mutePseudo = ?, vip = ? WHERE guid = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, acc.isBanned() ? 1 : 0);
-            p.setString(2, acc.parseFriendListToDB());
-            p.setString(3, acc.parseEnemyListToDB());
-            p.setLong(4, acc.getMuteTime());
-            p.setString(5, acc.getMutePseudo());
-            p.setInt(6, acc.getVip());
-            p.setInt(7, acc.getId());
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, acc.isBanned() ? 1 : 0);
+            statement.setString(2, acc.parseFriendListToDB());
+            statement.setString(3, acc.parseEnemyListToDB());
+            statement.setLong(4, acc.getMuteTime());
+            statement.setString(5, acc.getMutePseudo());
+            statement.setInt(6, acc.getVip());
+            statement.setInt(7, acc.getId());
+            statement.executeUpdate();
             return true;
         } catch (Exception e) {
             super.sendError("AccountData update", e);
@@ -113,13 +98,13 @@ public class AccountData extends AbstractDAO<Account> {
         return false;
     }
 
+
     public void updateVip(Account account) {
         String query = "UPDATE accounts SET `vip` = ? WHERE `guid` = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, account.getVip());
-            p.setInt(2, account.getId());
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, account.getVip());
+            statement.setInt(2, account.getId());
+            executeUpdate(statement);
         } catch (SQLException e) {
             super.sendError("AccountData updateVip", e);
         }
@@ -127,12 +112,11 @@ public class AccountData extends AbstractDAO<Account> {
 
     public void updateLastConnection(Account account) {
         String query = "UPDATE accounts SET `lastIP` = ?, `lastConnectionDate` = ? WHERE `guid` = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setString(1, account.getCurrentIp());
-            p.setString(2, account.getLastConnectionDate());
-            p.setInt(3, account.getId());
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setString(1, account.getCurrentIp());
+            statement.setString(2, account.getLastConnectionDate());
+            statement.setInt(3, account.getId());
+            executeUpdate(statement);
         } catch (SQLException e) {
             super.sendError("AccountData updateLastConnection", e);
         }
@@ -140,11 +124,10 @@ public class AccountData extends AbstractDAO<Account> {
 
     public void setLogged(int id, int logged) {
         String query = "UPDATE `accounts` SET `logged` = ? WHERE `guid` = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, logged);
-            p.setInt(2, id);
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, logged);
+            statement.setInt(2, id);
+            executeUpdate(statement);
         } catch (SQLException e) {
             super.sendError("AccountData setLogged", e);
         }
@@ -152,12 +135,11 @@ public class AccountData extends AbstractDAO<Account> {
 
     public boolean updateBannedTime(Account acc, long time) {
         String query = "UPDATE accounts SET banned = ?, bannedTime = ? WHERE guid = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, acc.isBanned() ? 1 : 0);
-            p.setLong(2, time);
-            p.setInt(3, acc.getId());
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, acc.isBanned() ? 1 : 0);
+            statement.setLong(2, time);
+            statement.setInt(3, acc.getId());
+            executeUpdate(statement);
             return true;
         } catch (Exception e) {
             super.sendError("AccountData updateBannedTime", e);
@@ -167,10 +149,9 @@ public class AccountData extends AbstractDAO<Account> {
 
     public boolean delete(Account acc) {
         String query = "DELETE FROM accounts WHERE guid = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, acc.getId());
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, acc.getId());
+            executeUpdate(statement);
             return true;
         } catch (SQLException e) {
             super.sendError("AccountData delete", e);
@@ -205,11 +186,10 @@ public class AccountData extends AbstractDAO<Account> {
 
     public void updatePointsWithoutUsersDb(int id, int points) {
         String query = "UPDATE accounts SET `points` = ? WHERE `guid` = ?";
-        try (PreparedStatementWrapper statement = getPreparedStatement(query)) {
-            PreparedStatement p = statement.getPreparedStatement();
-            p.setInt(1, points);
-            p.setInt(2, id);
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, points);
+            statement.setInt(2, id);
+            executeUpdate(statement);
         } catch (SQLException e) {
             super.sendError("AccountData updatePointsWithoutUsersDb", e);
         }

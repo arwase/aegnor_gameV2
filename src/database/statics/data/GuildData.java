@@ -1,12 +1,13 @@
 package database.statics.data;
 
 import com.zaxxer.hikari.HikariDataSource;
-import database.dynamics.AbstractDAO;
+import database.statics.AbstractDAO;
 import exchange.transfer.DataQueue;
 import game.world.World;
 import guild.Guild;
 import kernel.Main;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,25 +20,21 @@ public class GuildData extends AbstractDAO<Guild> {
 
     @Override
     public void load(Object obj) {
-        Result result = null;
-        try {
-            result = getData("SELECT * FROM `world.entity.guilds` WHERE `id` = " + obj + ";");
-            ResultSet RS = result.resultSet;
+        String query = "SELECT * FROM `world.entity.guilds` WHERE `id` = " + obj + ";";
+        try (Result result = getData(query)) {
+            ResultSet RS = result.getResultSet();
 
             while (RS.next())
                 World.world.addGuild(new Guild(RS.getInt("id"), RS.getString("name"), RS.getString("emblem"), RS.getInt("lvl"), RS.getLong("xp"), RS.getInt("capital"), RS.getInt("maxCollectors"), RS.getString("spells"), RS.getString("stats"), RS.getLong("date"), RS.getString("announce")), false);
         } catch (SQLException e) {
             super.sendError("GuildData load", e);
-        } finally {
-            close(result);
         }
     }
 
     @Override
     public boolean update(Guild guild) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("UPDATE `world.entity.guilds` SET `lvl` = ?, `xp` = ?, `capital` = ?, `maxCollectors` = ?, `spells` = ?, `stats` = ?, `announce` = ? WHERE id = ?;");
+        String query = "UPDATE `world.entity.guilds` SET `lvl` = ?, `xp` = ?, `capital` = ?, `maxCollectors` = ?, `spells` = ?, `stats` = ?, `announce` = ? WHERE id = ?;";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, guild.getLvl());
             p.setLong(2, guild.getXp());
             p.setInt(3, guild.getCapital());
@@ -50,16 +47,13 @@ public class GuildData extends AbstractDAO<Guild> {
             return true;
         } catch (SQLException e) {
             super.sendError("GuildData update", e);
-        } finally {
-            close(p);
         }
         return false;
     }
 
     public void add(Guild guild) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("INSERT INTO `world.entity.guilds` VALUES (?,?,?,1,0,0,0,?,?,?,'');");
+        String query = "INSERT INTO `world.entity.guilds` VALUES (?,?,?,1,0,0,0,?,?,?,'');";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, guild.getId());
             p.setString(2, guild.getName());
             p.setString(3, guild.getEmblem());
@@ -69,21 +63,16 @@ public class GuildData extends AbstractDAO<Guild> {
             execute(p);
         } catch (SQLException e) {
             super.sendError("GuildData add", e);
-        } finally {
-            close(p);
         }
     }
 
     public void delete(int id) {
-        PreparedStatement p = null;
-        try {
-            p = getPreparedStatement("DELETE FROM `world.entity.guilds` WHERE `id` = ?;");
+        String query = "DELETE FROM `world.entity.guilds` WHERE `id` = ?;";
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
             p.setInt(1, id);
             execute(p);
         } catch (SQLException e) {
             super.sendError("GuildData delete", e);
-        } finally {
-            close(p);
         }
     }
 

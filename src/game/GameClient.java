@@ -61,7 +61,7 @@ import org.apache.mina.core.session.IoSession;
 import org.slf4j.LoggerFactory;
 import other.Action;
 import other.Dopeul;
-import other.Sets;
+import other.QuickSets;
 import other.Titre;
 import quest.Quest;
 import quest.QuestPlayer;
@@ -709,6 +709,8 @@ public class GameClient {
         int TitreToSet = Integer.parseInt(titre[0]);
 
         Titre yo = World.world.getTitreById(TitreToSet);
+        if(yo == null)
+            return;
 
         if(perso.haveTitrebyID(TitreToSet) ){
             perso.set_title(yo.getId());
@@ -898,7 +900,7 @@ public class GameClient {
 
             int nb = Integer.parseInt(packet);
             int playerId = player.getId();
-            Sets set = World.world.getSetByPersoIDandNB(playerId, nb);
+            QuickSets set = World.world.getSetByPersoIDandNB(playerId, nb);
             if(set != null){
                 String[] items = set.getObjects().split(";");
                 List<GameObject> itemsEquipe = player.getEquippedObjects();
@@ -951,7 +953,7 @@ public class GameClient {
             String objects = packetSplit[3];
             int playerId = player.getId();
             if( World.world.getSetByPersoIDandNB(playerId,nb) ==null ) {
-                Sets newset = new Sets(Database.getStatics().getSetsData().getNextId(), playerId, nb, name, objects, icon);
+                QuickSets newset = new QuickSets(Database.getStatics().getSetsData().getNextId(), playerId, nb, name, objects, icon);
                 if (!Database.getStatics().getSetsData().add(newset)) {
                     this.player.sendMessage("[ERREUR] Une erreur est survenue lors de la création de l'équipement rapide");
                     return;
@@ -960,7 +962,7 @@ public class GameClient {
                 this.player.sendMessage("Vous avez créé un nouvel équipement rapide : " + name);
             }
             else{
-                Sets newset = World.world.getSetByPersoIDandNB(playerId,nb);
+                QuickSets newset = World.world.getSetByPersoIDandNB(playerId,nb);
                 newset.setObjects(objects);
                 if (!Database.getStatics().getSetsData().updateInfos(newset)) {
                     this.player.sendMessage("[ERREUR] Une erreur est survenue lors de la modification de l'équipement rapide");
@@ -980,7 +982,7 @@ public class GameClient {
         int nb = Integer.parseInt(packet);
         int playerId = player.getId();
 
-        Sets newset = World.world.getSetByPersoIDandNB(playerId,nb);
+        QuickSets newset = World.world.getSetByPersoIDandNB(playerId,nb);
 
         String Name = newset.getName();
 
@@ -994,7 +996,7 @@ public class GameClient {
         else{
             this.player.sendMessage("[ERREUR] L'équipement rapide selectionné n'a pas été trouvé");
         }
-        World.world.getSets().remove(newset.getId());
+        World.world.getQuickSets().remove(newset.getId());
 
     }
 
@@ -1130,6 +1132,8 @@ public class GameClient {
                             break;
                         case 10:// Selon difficulté
                             seuils = "Difficulté "+drop.getCondition();
+                            if(drop.getCondition().equals("4"))
+                                seuils = "Difficulté Hotomanie";
                             break;
                         case 999:// Drop for collector
                             seuils = "Pas de conditions";
@@ -2908,8 +2912,13 @@ public class GameClient {
             case 'B': //Confirmation d'achat
                 String[] info = packet.substring(3).split("\\|");//ligneID|amount|price
 
-                Hdv curHdv = World.world.getHdv(Math.abs(exchangeAction.getValue()));
-
+                Hdv curHdv =null;
+                if(Config.INSTANCE.getHDV_GLOBAL()){
+                    curHdv = World.world.getHdv(-1);
+                }
+                else{
+                    curHdv = World.world.getHdv(Math.abs(exchangeAction.getValue()));
+                }
                 int ligneID = Integer.parseInt(info[0]);
                 byte amount = Byte.parseByte(info[1]);
                 HdvLine hL = curHdv.getLine(ligneID);
@@ -2952,7 +2961,13 @@ public class GameClient {
                 break;
             case 'l'://Demande listage d'un template (les prix)
                 templateID = Integer.parseInt(packet.substring(3));
-                String str = World.world.getHdv(this.player.getCurMap().getId()).parseToEHl(Integer.parseInt(packet.substring(3)));
+                String str = "";
+                if(Config.INSTANCE.getHDV_GLOBAL()) {
+                    str = World.world.getHdv(-1).parseToEHl(Integer.parseInt(packet.substring(3)));
+                }
+                else {
+                    str = World.world.getHdv(this.player.getCurMap().getId()).parseToEHl(Integer.parseInt(packet.substring(3)));
+                }
                 try {
                     if(str.isEmpty())
                     {
@@ -2985,17 +3000,28 @@ public class GameClient {
                 int hdvid = 0;
                 if(exchangeAction.getValue() < 0)
                 {
-                    if(World.world.getHdv(this.player.getCurMap().getId()) != null) {
-                        hdvid = World.world.getHdv(this.player.getCurMap().getId()).getHdvId();
+                    if(Config.INSTANCE.getHDV_GLOBAL()){
+                        hdvid = World.world.getHdv(-1).getHdvId();
                     }
                     else{
-                        hdvid = -1;
+                        if(World.world.getHdv(this.player.getCurMap().getId()) != null) {
+                            hdvid = World.world.getHdv(this.player.getCurMap().getId()).getHdvId();
+                        }
+                        else{
+                            hdvid = -1;
+                        }
                     }
                 }
                 else{
                     hdvid = exchangeAction.getValue();
                 }
-                String allTemplate = World.world.getHdv(hdvid).parseTemplate(categ);
+                String allTemplate = "";
+                if(Config.INSTANCE.getHDV_GLOBAL()) {
+                    allTemplate = World.world.getHdv(-1).parseTemplate(categ);
+                }
+                else{
+                    allTemplate = World.world.getHdv(this.player.getCurMap().getId()).parseTemplate(categ);
+                }
                 SocketManager.GAME_SEND_EHL_PACKET(this.player, categ, allTemplate);
                 break;
             case 'S': //search
@@ -3960,9 +3986,14 @@ public class GameClient {
                         }
                         if (count <= 0)
                             return;
-                        this.player.getAccount().recoverItem(cheapestID);//Retire l'objet de la liste de vente du compte
-                        SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this, '-', "", cheapestID
-                                + "");
+                        boolean recover = this.player.getAccount().recoverItem(cheapestID);//Retire l'objet de la liste de vente du compte
+                        if(recover) {
+                            SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this, '-', "", cheapestID
+                                    + "");
+                        }
+                        else{
+                            this.player.sendMessage("An error has been detected during process, please inform post your problem on the 'Support' or 'Bug' section of Discord ");
+                        }
                         break;
                     case '+'://Mettre un objet en vente
                         if (Integer.parseInt(packet.substring(4).split("\\|")[1]) > 127) {
@@ -4126,8 +4157,18 @@ public class GameClient {
                         {
                             if (this.player.getKamas() < kamas)
                                 kamas = this.player.getKamas();
-                            this.player.setBankKamas(this.player.getBankKamas() + kamas);//On ajthise les kamas a la banque
-                            this.player.setKamas(this.player.getKamas() - kamas);//On retire les kamas du this.playernnage
+                            // TODO : La gestion des négatif
+                            if(Formulas.willLongAdditionOverflow(this.player.getBankKamas(),kamas)){
+                                this.player.setBankKamas(this.player.getBankKamas() + kamas);//On ajthise les kamas a la banque
+                                this.player.setKamas(this.player.getKamas() - kamas);//On retire les kamas du this.playernnage
+                            }
+                            else{
+                                this.player.setBankKamas(this.player.getBankKamas() + kamas);//On ajthise les kamas a la banque
+                                this.player.setKamas(this.player.getKamas() - kamas);//On retire les kamas du this.playernnage
+                            }
+
+                            //this.player.setBankKamas(this.player.getBankKamas() + kamas);//On ajthise les kamas a la banque
+                            //this.player.setKamas(this.player.getKamas() - kamas);//On retire les kamas du this.playernnage
                             SocketManager.GAME_SEND_STATS_PACKET(this.player);
                             SocketManager.GAME_SEND_EsK_PACKET(this.player, "G"
                                     + this.player.getBankKamas());
@@ -4629,6 +4670,10 @@ public class GameClient {
             SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(this, 'O');
             return;
         }
+        if(this.player.getFight() != null){
+            this.player.sendMessage("You can't make exchanges during fights");
+            return;
+        }
 
         if (packet.substring(2, 4).equals("13") && this.player.getExchangeAction() == null) { // Craft s?curis? : celui qui n'a pas le job ( this.player ) souhaite invit? player
             try {
@@ -4719,7 +4764,8 @@ public class GameClient {
                 e.printStackTrace();
             }
             return;
-        } else if (packet.substring(2, 4).equals("12") && this.player.getExchangeAction() == null) { // Craft s?curis? : celui qui ? le job ( this.player ) souhaite invit? player
+        }
+        else if (packet.substring(2, 4).equals("12") && this.player.getExchangeAction() == null) { // Craft s?curis? : celui qui ? le job ( this.player ) souhaite invit? player
 
             try {
                 String[] split = packet.split("\\|");
@@ -4797,18 +4843,23 @@ public class GameClient {
                 e.printStackTrace();
             }
             return;
-        } else if (packet.substring(2, 4).equals("11")) {//Ouverture HDV achat
+        }
+        else if (packet.substring(2, 4).equals("11") && (this.player.getExchangeAction() == null || this.player.getExchangeAction().getType() == ExchangeAction.AUCTION_HOUSE_SELLING)) {//Ouverture HDV achat
             if(this.player.getExchangeAction() != null) leaveExchange(this.player);
             if (this.player.getDeshonor() >= 5) {
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "183");
                 return;
             }
 
-            Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
-            if(hdv == null)
-            {
+            Hdv hdv = null;
+            // Si on a le serveur en HDV Global
+            if(Config.INSTANCE.getHDV_GLOBAL()) {
                 hdv = World.world.getHdv(-1);
             }
+            else{
+                hdv = World.world.getHdv(this.player.getCurMap().getId());
+            }
+
             if (hdv != null) {
                 String info = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 11, info);
@@ -4816,7 +4867,8 @@ public class GameClient {
                 this.player.setExchangeAction(exchangeAction);
             }
             return;
-        } else if (packet.substring(2, 4).equals("15") && this.player.getExchangeAction() == null) {
+        }
+        else if (packet.substring(2, 4).equals("15") && this.player.getExchangeAction() == null) {
             Mount mount = this.player.getMount();
 
             if(mount != null) {
@@ -4828,7 +4880,8 @@ public class GameClient {
                 SocketManager.GAME_SEND_Ew_PACKET(this.player, mount.getActualPods(), mount.getMaxPods());
             }
             return;
-        } else if (packet.substring(2, 4).equals("17") && this.player.getExchangeAction() == null) {//Ressurection famillier
+        }
+        else if (packet.substring(2, 4).equals("17") && this.player.getExchangeAction() == null) {//Ressurection famillier
             int id = Integer.parseInt(packet.substring(5));
 
             if (this.player.getCurMap().getNpc(id) != null) {
@@ -4857,29 +4910,51 @@ public class GameClient {
                 this.player.setExchangeAction(exchangeAction);
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 2, String.valueOf(id));
             }
-        } else if (packet.substring(2, 4).equals("10")) {//Ouverture HDV vente
+        }
+        else if (packet.substring(2, 4).equals("10") && (this.player.getExchangeAction() == null || this.player.getExchangeAction().getType() == ExchangeAction.AUCTION_HOUSE_BUYING) ) {//Ouverture HDV vente
+            if(this.player.getFight() != null){
+                SocketManager.GAME_SEND_Im_PACKET(this.player, "183");
+                return;
+            }
             if(this.player.getExchangeAction() != null) leaveExchange(this.player);
             if (this.player.getDeshonor() >= 5) {
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "183");
                 return;
             }
 
-            Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
+            Hdv hdv = null;
+            // Si on a le serveur en HDV Global
+            if(Config.INSTANCE.getHDV_GLOBAL()) {
+                hdv = World.world.getHdv(-1);
+            }
+            else{
+                hdv = World.world.getHdv(this.player.getCurMap().getId());
+            }
+
+            //Hdv hdv = World.world.getHdv(this.player.getCurMap().getId());
             if (hdv != null) {
                 String infos = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
-                ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
+                ExchangeAction<Integer> exchangeAction = null;
+                if(Config.INSTANCE.getHDV_GLOBAL()) {
+                    exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, -World.world.changeHdv(-1));
+                }
+                else{
+                    exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, -World.world.changeHdv(this.player.getCurMap().getId()));
+                }
+
                 this.player.setExchangeAction(exchangeAction);
                 SocketManager.GAME_SEND_HDVITEM_SELLING(this.player, hdv);
             }
-            else
+
+            /*else
             {
                 String infos = "1,10,100;" + hdv.getStrCategory() + ";" + hdv.parseTaxe() + ";" + hdv.getLvlMax() + ";" + hdv.getMaxAccountItem() + ";-1;" + hdv.getSellTime();
                 SocketManager.GAME_SEND_ECK_PACKET(this.player, 10, infos);
                 ExchangeAction<Integer> exchangeAction = new ExchangeAction<>(ExchangeAction.AUCTION_HOUSE_SELLING, - World.world.changeHdv(this.player.getCurMap().getId()));
                 this.player.setExchangeAction(exchangeAction);
                 SocketManager.GAME_SEND_HDVITEM_SELLING(this.player, hdv);
-            }
+            }*/
             return;
         }
         if (this.player.getExchangeAction() != null) {
@@ -6199,14 +6274,14 @@ public class GameClient {
                     || this.player.getCurMap().getPlaces().equalsIgnoreCase("|")
                     || !target.canAggro() || target.isDead() == 1)
                 return;
-            if(target.getAccount().getCurrentIp().equals(this.getAccount().getCurrentIp())) {
+            if(target.getAccount().getCurrentIp().equals(this.getAccount().getCurrentIp()) && this.getPlayer().getGroupe() == null ) {
                 this.player.sendMessage("Vous ne pouvez pas aggresser votre propre personnage.");
                 return;
             }
-            if (this.player.restriction.aggros.containsKey(target.getAccount().getCurrentIp())) {
+            if (this.player.restriction.aggros.containsKey(target.getAccount().getCurrentIp()) && this.getPlayer().getGroupe() == null ) {
                 if ((System.currentTimeMillis() - this.player.restriction.aggros.get(target.getAccount().getCurrentIp())) < 1000 * 60 * 60) {
                     SocketManager.GAME_SEND_MESSAGE(this.player, "Il faut que tu attende encore "
-                            + (((System.currentTimeMillis() - this.player.restriction.aggros.get(target.getAccount().getCurrentIp())) / 60) / 1000)
+                            + (60 - (((System.currentTimeMillis() - this.player.restriction.aggros.get(target.getAccount().getCurrentIp())) / 60) / 1000))
                             + " minute(s).");
                     return;
                 } else {
@@ -6214,7 +6289,9 @@ public class GameClient {
                 }
             }
 
-            this.player.restriction.aggros.put(target.getAccount().getCurrentIp(), System.currentTimeMillis());
+            if(this.getPlayer().getGroupe() == null) {
+                this.player.restriction.aggros.put(target.getAccount().getCurrentIp(), System.currentTimeMillis());
+            }
 
             if (target.isInAreaNotSubscribe()) {
                 SocketManager.GAME_SEND_EXCHANGE_REQUEST_ERROR(target.getGameClient(), 'S');
@@ -6914,14 +6991,15 @@ public class GameClient {
         if (Collector.countCollectorGuild(guild.getId()) >= guild.getNbCollectors())
             return;
 
-        if (World.world.getDelayCollectors().get(map.getId()) != null) {
-            long time = World.world.getDelayCollectors().get(map.getId());
+        if (guild.getDelayCollectors().get(map.getId()) != null) {
+            long time = guild.getDelayCollectors().get(map.getId());
 
-            if ((System.currentTimeMillis() - time) < (((10 * guild.getLvl()) * 60) * 1000)) {
-                this.player.send("Im1167;" + ((((((10 * guild.getLvl()) * 60) * 1000) - (System.currentTimeMillis() - time)) / 1000) / 60));
+            // TODO : Si jamais on veut repasse en valeur offi : (10 * guild.getLvl()) * 60) * 1000) pour le moment c'est un nombre de minute = au lvl de la guilde
+            if ((System.currentTimeMillis() - time) < (((1 * guild.getLvl()) * 60) * 1000)) {
+                this.player.send("Im1167;" + ((((((1 * guild.getLvl()) * 60) * 1000) - (System.currentTimeMillis() - time)) / 1000) / 60));
                 return;
             }
-            World.world.getDelayCollectors().remove(map.getId());
+            guild.getDelayCollectors().remove(map.getId());
         }
 
         if(map.getSubArea() != null) {
@@ -6936,7 +7014,7 @@ public class GameClient {
             if(quit[0] == 1) return;
         }
 
-        World.world.getDelayCollectors().put(map.getId(), System.currentTimeMillis());
+        guild.getDelayCollectors().put(map.getId(), System.currentTimeMillis());
         this.player.setKamas(this.player.getKamas() - price);
 
         if (this.player.getKamas() <= 0)

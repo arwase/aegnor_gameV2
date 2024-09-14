@@ -572,7 +572,7 @@ public class Fighter implements Comparable<Fighter> {
             int  StatsMini = MG1.stats.get(key);
             int  StatsMaxi = value;
 
-            if(key >= EffectConstant.STATS_ADD_RP_TER && key <= EffectConstant.STATS_REM_RP_NEU && key != EffectConstant.STATS_CREATURE) {
+            if( (key >= EffectConstant.STATS_ADD_RP_TER && key <= EffectConstant.STATS_REM_RP_NEU) || key == EffectConstant.STATS_CREATURE) {
 
             }
             else {
@@ -630,7 +630,6 @@ public class Fighter implements Comparable<Fighter> {
         this.addBuffStats(EffectConstant.STATS_ADD_PO,fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_CC,4*fightDiff,Constant.SPELL_BOOSTBYDIFF,this);
         this.addBuffStats(EffectConstant.STATS_ADD_SOIN,fightDiff*20,Constant.SPELL_BOOSTBYDIFF,this);
-        //this.addBuffStats(Constant.STATS_CREATURE,1,Constant.SPELL_BOOSTBYDIFF,this);
 
     }
 

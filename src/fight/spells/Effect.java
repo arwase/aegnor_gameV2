@@ -83,8 +83,8 @@ public class Effect  {
             this.chanceToLaunch = chanceTolaunch;
 
         this.isCCEffect = isCCeffet;
-
-        switch (trigger){
+        this.trigger = trigger;
+        switch (this.trigger){
             case 1 :
                 this.isOnHitEffect = true;
                 break;
@@ -106,13 +106,12 @@ public class Effect  {
     }
 
     // Un constructeur pour les Copy
-    public Effect(int effectID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int turn, boolean isCCeffet,String jet,int effectTarget, Fighter caster, int type, int WeaponType, int WeaponID){
+    public Effect(int effectID, int spellID, int spellGrade,int args1,int args2,int args3,String areaEffect, int turn, boolean isCCeffet,String jet,int effectTarget, Fighter caster, int type, int WeaponType, int WeaponID, int chanceTolaunch,int trigger,EffectTrigger onHitTrigger){
         this.effectID = effectID;
         this.jet = jet;
         this.areaEffect = areaEffect;
         this.effectTarget = effectTarget;
         this.spellID = spellID;
-        this.chanceToLaunch=0;
         this.gradeSpell = spellGrade;
         this.args1 = args1; // Souvent min (fixe quand args2 =-1)
         this.args2 = args2; // Souvent max
@@ -124,6 +123,34 @@ public class Effect  {
         this.type = type;
         this.weaponType = WeaponType;
         this.weaponID = WeaponID;
+        if( turn > 0 )
+            this.isBuff = true;
+
+        if(chanceTolaunch != 0 && chanceTolaunch !=100)
+            this.chanceToLaunch = chanceTolaunch;
+
+        this.isCCEffect = isCCeffet;
+        this.trigger = trigger;
+        switch (this.trigger){
+            case 1 :
+                this.isOnHitEffect = true;
+                break;
+            case 2 :
+                this.isNewTurnEffect = true;
+                break;
+            case 3 :
+                this.isEndTurnEffect = true;
+                break;
+            case -1 :
+            default :
+                this.isDirectEffect = true;
+                break;
+        }
+
+        if(this.isOnHitEffect && onHitTrigger != null){
+            this.onHitTrigger = onHitTrigger;
+        }
+
     }
 
     // Un constructeur pour les effets d'armes
@@ -208,7 +235,7 @@ public class Effect  {
     }
 
     public Effect getCopy() {
-        return new Effect(this.effectID, this.spellID, this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect, this.turn, this.isCCEffect,this.jet,this.effectTarget, this.caster,this.type,this.weaponType,this.weaponID);
+        return new Effect(this.effectID, this.spellID, this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect, this.turn, this.isCCEffect,this.jet,this.effectTarget, this.caster,this.type,this.weaponType,this.weaponID,this.chanceToLaunch, this.trigger,this.onHitTrigger);
     }
 
     // Une fonction qui va venir appeler tous les Effects d'un spell 1 par 1
@@ -482,7 +509,7 @@ public class Effect  {
                 case 87://Dommage Air %vie
                 case 88://Dommage feu %vie
                 case 89://Dommage neutre %vie
-                    applyEffect_PerVitaDmg(target, fight, dmge);
+                    applyEffect_PerVitaMaxDmg(target, fight, dmge);
                     break;
                 case 91://Vol de Vie Eau
                 case 92://Vol de Vie Terre
@@ -497,6 +524,13 @@ public class Effect  {
                 case 99://Dommage feu
                 case 100://Dommage neutre
                     applyEffect_DamageElem(target, fight, isCac, dmge);
+                    break;
+                case 275: //Dommages : X% de la vie manquante de l'attaquant (Eau) - A la cellule visé (Jamais utilise)
+                case 276: //Dommages : X% de la vie manquante de l'attaquant (Terre) - A la cellule visé (Jamais utilise)
+                case 277: //Dommages : X% de la vie manquante de l'attaquant (Air) - A la cellule visé (Jamais utilise)
+                case 278: //Dommages : X% de la vie manquante de l'attaquant (feu) - A la cellule visé (Jamais utilise)
+                case 279: //Dommages : X% de la vie manquante de l'attaquant (neutre) - A la cellule visé
+                    applyEffect_PerVitaLostDmg(target, fight, dmge);
                     break;
                 case 671://Dommages : X% de la vie de l'attaquant (neutre) - Juste au lanceur non ???
                     applyEffect_671(target, fight, dmge);
@@ -622,16 +656,6 @@ public class Effect  {
                 case 271://Vol force
                     applyEffect_271(fight, target, dmge);
                     break;
-                case 275://TODO : pas dev
-                    break;
-                case 276://TODO : pas dev
-                    break;
-                case 277://TODO : pas dev
-                    break;
-                case 278://TODO : pas dev
-                    break;
-                case 279://TODO : pas dev
-                    break;
                 // Tout ca c'est des boost sans valeur, juste un sort avec effet pris en compte plus tard
                 case 9://Esquive une attaque en reculant de 1 case
                 case 79:// + X chance(%) dommage subis * Y sinon soigné de dommage *Z
@@ -693,21 +717,21 @@ public class Effect  {
             Effect CopySpell = null;
             switch (effectID){
                 case 89 :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1,this.chanceToLaunch,-1,null);
                     target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
                     break;
                 case EffectConstant.EFFECTID_PASSTURN :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,1,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1,this.chanceToLaunch,-1,null);
                     break;
                 case 108 : // Les soins en OnHit se lance tous directement ?
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,0,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1,this.chanceToLaunch,-1,null);
                     break;
                 case 950 :
                 case 951 :
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1,this.chanceToLaunch,-1,null);
                     break;
                 default:
-                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1);
+                    CopySpell = new Effect(this.effectID,this.spellID,this.gradeSpell,this.args1,this.args2,this.args3,this.areaEffect,this.turn,this.isCCEffect,this.jet,this.effectTarget,this.caster,this.type,-1,-1,this.chanceToLaunch,-1,null);
                     //target.addBuff(this.effectID,0,this.turn,this.args1,this.args2,this.args3,true,this.spellID,this.caster, true);
                     break;
             }
@@ -944,7 +968,7 @@ public class Effect  {
                 }
             }
             a = args1 - a;
-            newCellId = PathFinding.newCaseAfterPush(fight, caster.getCell(), target.getCell(), a);
+            newCellId = PathFinding.newCaseAfterPush(fight, cell, target.getCell(), a);
 
             char dir = PathFinding.getDirBetweenTwoCase(cell.getId(), target.getCell().getId(), fight.getMap(), true);
             GameCase nextCase = fight.getMap().getCase(PathFinding.GetCaseIDFromDirrection(target.getCell().getId(), dir, fight.getMap(), true));
@@ -1026,19 +1050,27 @@ public class Effect  {
         if (target.haveState(EffectConstant.ETAT_PESANTEUR))
             return;//Pesanteur
         if (target.haveState(EffectConstant.ETAT_PORTE)) {
-            caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porté");
+            if(caster.getPlayer()!= null) {
+                caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porté");
+            }
             return;
         }
         if (target.haveState(EffectConstant.ETAT_PORTEUR)) {
-            caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porteur");
+            if(caster.getPlayer()!= null) {
+                caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort avec quelqu'un qui est dans l'état porteur");
+            }
             return;
         }
         if (caster.haveState(EffectConstant.ETAT_PORTE)){
-            caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porté");
+            if(caster.getPlayer()!= null) {
+                caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porté");
+            }
             return;
         }
         if (caster.haveState(EffectConstant.ETAT_PORTEUR)){
-            caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porteur");
+            if(caster.getPlayer()!= null) {
+                caster.getPlayer().sendMessage("Il n'est pas possible d'utiliser ce sort car tu es dans l'état porteur");
+            }
             return;
         }
 
@@ -1307,8 +1339,8 @@ public class Effect  {
         }
     }
 
-    // Dommage %vita pour le lanceur (Type Furie, Mot Stimulant)
-    private void applyEffect_PerVitaDmg(Fighter target, Fight fight,int dmge) {
+    // Dommage %vita (Type Furie, Mot Stimulant)
+    private void applyEffect_PerVitaMaxDmg(Fighter target, Fight fight, int dmge) {
         if (turn == 0) {
             int resP =0;
             int resF =0;
@@ -1403,6 +1435,102 @@ public class Effect  {
             target.addBuff(effectID, args1, turn, args1,args2,args3, true, spellID, caster, true);//on applique un buff
         }
     }
+
+    // Dommage %vita pour le lanceur (Type Furie, Mot Stimulant)
+    private void applyEffect_PerVitaLostDmg(Fighter target, Fight fight, int dmge) {
+        if (turn == 0) {
+            int resP =0;
+            int resF =0;
+
+            // Gestion des rési selon l'element
+            switch (elem){
+                case EffectConstant.ELEMENT_NEUTRE: // Neutre
+                    resP = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_NEU);
+                    resF = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_NEU);
+                    if (target.getPlayer() != null)//Si c'est un joueur, on ajoute les resists bouclier
+                    {
+                        resP += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_NEU);
+                        resF += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_NEU);
+                    }
+                    break;
+                case EffectConstant.ELEMENT_TERRE : // Terre
+                    resP = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_TER);
+                    resF = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_TER);
+                    if (target.getPlayer() != null)//Si c'est un joueur, on ajoute les resists bouclier
+                    {
+                        resP += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_TER);
+                        resF += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_TER);
+                    }
+                    break;
+                case EffectConstant.ELEMENT_EAU:  // ELEMENT_EAU
+                    resP = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_EAU);
+                    resF = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_EAU);
+                    if (target.getPlayer() != null)//Si c'est un joueur, on ajoute les resists bouclier
+                    {
+                        resP += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_EAU);
+                        resF += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_EAU);
+                    }
+                    break;
+                case EffectConstant.ELEMENT_FEU : //
+                    resP = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_FEU);
+                    resF = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_FEU);
+                    if (target.getPlayer() != null)//Si c'est un joueur, on ajoute les resists bouclier
+                    {
+                        resP += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_FEU);
+                        resF += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_FEU);
+                    }
+                    break;
+                case EffectConstant.ELEMENT_AIR:
+                    resP = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_AIR);
+                    resF = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_AIR);
+                    if (target.getPlayer() != null)//Si c'est un joueur, on ajoute les resists bouclier
+                    {
+                        resP += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_RP_PVP_AIR);
+                        resF += target.getTotalStats().getEffect(EffectConstant.STATS_ADD_R_PVP_AIR);
+                    }
+                    break;
+                default:
+                    break;
+
+            }
+
+            //int dmg = Formulas.getAlteredJet(dmge,args2, target);//%age de pdv inflig�
+            int val = Math.round( (caster.getPdvMax() - caster.getPdv()) / 100 * dmge);//Valeur des d�gats
+            //retrait de la r�sist fixe
+            val -= resF;
+            int reduc = (int) (((float) val) / (float) 100) * resP;//Reduc %resis
+            val -= reduc;
+            int armor = 0;
+
+            // On calcul ici les reduction TODO a revoir c'est chelou
+            for (Effect SE : target.getBuffsByEffectID(EffectConstant.EFFECTID_REDUCEDAMAGE)) {
+                int intell = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_INTE);
+                int carac = target.getTotalStats().getEffect(EffectConstant.STATS_ADD_FORC);
+                int value = SE.getFixvalue();
+                int a = value* (100 + (int) (intell / 2) + (int) (carac / 2))/ 100;
+                armor += a;
+            }
+
+            if (armor > 0) {
+                SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.EFFECTID_REDUCEDAMAGE, caster.getId()+ "", target.getId() + "," + armor, this.effectID);
+                val = val - armor;
+            }
+            if (val < 0)
+                val = 0;
+
+
+
+            if (val > target.getPdv())
+                val = target.getPdv();//Target va mourrir
+
+            target.removePdv(target, val);
+            sendClientDamage(fight,target.getId(),val);
+
+        } else {    // Est-ce que ca au final c'est pas que des OnHit Et je crois que oui donc on va faire ca plutot
+            target.addBuff(effectID, args1, turn, args1,args2,args3, true, spellID, caster, true);//on applique un buff
+        }
+    }
+
 
     // Don de vie
     private void applyEffect_90(ArrayList<Fighter> cibles, Fight fight) {
@@ -2046,7 +2174,7 @@ public class Effect  {
         byte duration = (byte) this.turn;
         SpellGrade TS = World.world.getSort(spellID).getStatsByLevel(level);
 
-        Glyph g = new Glyph(fight, caster, cell, this.areaEffect, TS, duration, spellID,color);
+        Glyph g = new Glyph(fight, caster, cell, this.areaEffect, TS, duration, this.spellID,color);
         fight.getAllGlyphs().add(g);
         g.appear();
     }
@@ -2059,7 +2187,7 @@ public class Effect  {
 
     // Dommage %vita pour le lanceur mais non typé (donc prend pas en compte les résistances)
     private void applyEffect_671(Fighter target, Fight fight,int dmge) {
-        applyEffect_PerVitaDmg(target, fight,dmge);
+        applyEffect_PerVitaMaxDmg(target, fight,dmge);
     }
 
     //Punition (donc dégat en fonction du % de PV restant)

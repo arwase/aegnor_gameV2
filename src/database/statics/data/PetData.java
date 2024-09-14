@@ -6,6 +6,8 @@ import database.statics.AbstractDAO;
 import entity.pet.PetEntry;
 import game.world.World;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -21,13 +23,13 @@ public class PetData extends AbstractDAO<PetEntry> {
     @Override
     public boolean update(PetEntry pets) {
         String query = "UPDATE `world.entity.pets` SET `lastEatDate` = ?, `quantityEat` = ?, `pdv` = ?, `corpulence` = ?, `isEPO` = ? WHERE `id` = ?;";
-        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
-            p.getPreparedStatement().setLong(1, pets.getLastEatDate());
-            p.getPreparedStatement().setInt(2, pets.getQuaEat());
-            p.getPreparedStatement().setInt(3, pets.getPdv());
-            p.getPreparedStatement().setInt(4, pets.getCorpulence());
-            p.getPreparedStatement().setInt(5, (pets.getIsEupeoh() ? 1 : 0));
-            p.getPreparedStatement().setInt(6, pets.getObjectId());
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
+            p.setLong(1, pets.getLastEatDate());
+            p.setInt(2, pets.getQuaEat());
+            p.setInt(3, pets.getPdv());
+            p.setInt(4, pets.getCorpulence());
+            p.setInt(5, (pets.getIsEupeoh() ? 1 : 0));
+            p.setInt(6, pets.getObjectId());
             executeUpdate(p);
             return true;
         } catch (SQLException e) {
@@ -53,14 +55,14 @@ public class PetData extends AbstractDAO<PetEntry> {
 
     public void add(int id, long lastEatDate, int template) {
         String query = "INSERT INTO `world.entity.pets`(`id`, `template`, `lastEatDate`, `quantityEat`, `pdv`, `corpulence`, `isEPO`) VALUES (?, ?, ?, ?, ?, ?, ?);";
-        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
-            p.getPreparedStatement().setInt(1, id);
-            p.getPreparedStatement().setInt(2, template);
-            p.getPreparedStatement().setLong(3, lastEatDate);
-            p.getPreparedStatement().setInt(4, 0);
-            p.getPreparedStatement().setInt(5, 10);
-            p.getPreparedStatement().setInt(6, 0);
-            p.getPreparedStatement().setInt(7, 0);
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
+            p.setInt(1, id);
+            p.setInt(2, template);
+            p.setLong(3, lastEatDate);
+            p.setInt(4, 0);
+            p.setInt(5, 10);
+            p.setInt(6, 0);
+            p.setInt(7, 0);
             executeUpdate(p);
         } catch (SQLException e) {
             super.sendError("PetData add", e);
@@ -69,8 +71,8 @@ public class PetData extends AbstractDAO<PetEntry> {
 
     public void delete(int id) {
         String query = "DELETE FROM `world.entity.pets` WHERE `id` = ?";
-        try (PreparedStatementWrapper p = getPreparedStatement(query)) {
-            p.getPreparedStatement().setInt(1, id);
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
+            p.setInt(1, id);
             executeUpdate(p);
         } catch (SQLException e) {
             super.sendError("PetData delete", e);

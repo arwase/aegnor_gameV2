@@ -11,6 +11,7 @@ import game.world.World;
 import kernel.Config;
 import kernel.Main;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -88,7 +89,6 @@ public class PlayerData extends AbstractDAO<Player> {
             Main.INSTANCE.stop("unknown");
         }
     }
-
 
     public Player load(int obj) {
         String query = "SELECT * FROM players WHERE id = '" + obj + "'";
@@ -220,8 +220,7 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public boolean add(Player perso) {
         String query = "INSERT INTO players(`id`, `name`, `sexe`, `class`, `color1`, `color2`, `color3`, `kamas`, `spellboost`, `capital`, `energy`, `level`, `xp`, `size`, `gfx`, `account`, `cell`, `map`, `spells`, `objets`, `storeObjets`, `morphMode`, `server`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'','','0',?)";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, perso.getId());
             p.setString(2, perso.getName());
             p.setInt(3, perso.getSexe());
@@ -242,7 +241,7 @@ public class PlayerData extends AbstractDAO<Player> {
             p.setInt(18, perso.getCurMap().getId());
             p.setString(19, perso.parseSpellToDB());
             p.setInt(20, Config.INSTANCE.getSERVER_ID());
-            p.executeUpdate();
+            executeUpdate(p);
             return true;
         } catch (SQLException e) {
             sendError("PlayerData add", e);
@@ -250,13 +249,11 @@ public class PlayerData extends AbstractDAO<Player> {
         return false;
     }
 
-
     public boolean delete(Player perso) {
         String query = "DELETE FROM players WHERE id = ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, perso.getId());
-            p.executeUpdate();
+            executeUpdate(p);
 
             if (!perso.getItemsIDSplitByChar(",").isEmpty()) {
                 for (String id : perso.getItemsIDSplitByChar(",").split(",")) {
@@ -289,8 +286,7 @@ public class PlayerData extends AbstractDAO<Player> {
         }
 
         String query = "UPDATE `players` SET `kamas`= ?, `spellboost`= ?, `capital`= ?, `energy`= ?, `level`= ?, `xp`= ?, `size` = ?, `gfx`= ?, `alignement`= ?, `honor`= ?, `deshonor`= ?, `alvl`= ?, `vitalite`= ?, `force`= ?, `sagesse`= ?, `intelligence`= ?, `chance`= ?, `agilite`= ?, `seeFriend`= ?, `seeAlign`= ?, `seeSeller`= ?, `canaux`= ?, `map`= ?, `cell`= ?, `pdvper`= ?, `spells`= ?, `objets`= ?, `storeObjets`= ?, `savepos`= ?, `zaaps`= ?, `jobs`= ?, `mountxpgive`= ?, `mount`= ?, `title`= ?, `wife`= ?, `morphMode`= ?, `allTitle` = ?, `emotes` = ?, `prison` = ?, `parcho` = ?, `timeDeblo` = ?, `noall` = ?, `deadInformation` = ?, `needRestat` = ?, `totalKills` = ?, `isParcho` = ? WHERE `players`.`id` = ? LIMIT 1";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setLong(1, player.getKamas());
             p.setInt(2, player.get_spellPts());
             p.setInt(3, player.get_capital());
@@ -345,7 +341,7 @@ public class PlayerData extends AbstractDAO<Player> {
             p.setLong(45, player.getTotalKills());
             p.setInt(46, player.getisParcho());
             p.setInt(47, player.getId());
-            p.executeUpdate();
+            executeUpdate(p);
 
             if (player.getGuildMember() != null)
                 Database.getDynamics().getGuildMemberData().update(player);
@@ -363,42 +359,37 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateInventory(Player perso){
         String query = "UPDATE `players` SET `objets` = ? WHERE `id`= ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setString(1, perso.parseObjetsToDB());
             p.setInt(2, perso.getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateInfos", e);
         }
     }
 
-
     public void updateInfos(Player perso) {
         String query = "UPDATE `players` SET `name` = ?, `sexe`=?, `class`= ?, `spells`= ? WHERE `id`= ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setString(1, perso.getName());
             p.setInt(2, perso.getSexe());
             p.setInt(3, perso.getClasse());
             p.setString(4, perso.parseSpellToDB());
             p.setInt(5, perso.getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateInfos", e);
         }
     }
 
-
     public void UPDATE_PLAYER_COLORS(Player player) {
         String query = "UPDATE `players` SET `color1` = ?, `color2` = ?, `color3` = ? WHERE `id` = ?;";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, player.getColor1());
             p.setInt(2, player.getColor2());
             p.setInt(3, player.getColor3());
             p.setInt(4, player.getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData UPDATE_PLAYER_COLORS", e);
         }
@@ -406,11 +397,10 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateGroupe(int group, String name) {
         String query = "UPDATE `players` SET `groupe` = ? WHERE `name` = ?;";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, group);
             p.setString(2, name);
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateGroupe", e);
         }
@@ -418,12 +408,11 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateGroupe(Player perso) {
         String query = "UPDATE `players` SET `groupe` = ? WHERE `id`= ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             int id = (perso.getGroupe() != null) ? perso.getGroupe().getId() : -1;
             p.setInt(1, id);
             p.setInt(2, perso.getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateGroupe", e);
         }
@@ -431,11 +420,10 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateTimeTaverne(Player player) {
         String query = "UPDATE players SET `timeDeblo` = ? WHERE `id` = ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setLong(1, player.getTimeTaverne());
             p.setInt(2, player.getId());
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateTimeDeblo", e);
         }
@@ -443,11 +431,10 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateTitles(int guid, String title) {
         String query = "UPDATE players SET `allTitle` = ? WHERE `id` = ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setString(1, title);
             p.setInt(2, guid);
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateTitles", e);
         }
@@ -455,11 +442,10 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateLogged(int guid, int logged) {
         String query = "UPDATE players SET `logged` = ? WHERE `id` = ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, logged);
             p.setInt(2, guid);
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateLogged", e);
         }
@@ -467,11 +453,10 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void updateAllLogged(int guid, int logged) {
         String query = "UPDATE `players` SET `logged` = ? WHERE `account` = ?";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
+        try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
             p.setInt(1, logged);
             p.setInt(2, guid);
-            p.executeUpdate();
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData updateAllLogged", e);
         }
@@ -490,26 +475,6 @@ public class PlayerData extends AbstractDAO<Player> {
             sendError("PlayerData exist", e);
         }
         return false;
-    }
-
-    public String haveOtherPlayer(int account) {
-        String query = "SELECT server FROM players WHERE account = '"
-                + account + "' AND NOT server = '" + Config.INSTANCE.getSERVER_ID() + "'";
-        StringBuilder servers = new StringBuilder();
-        try (Result result = getData(query)) {
-            if (result != null && result.getResultSet() != null) {
-                ResultSet RS = result.getResultSet();
-                while (RS.next()) {
-                    if (servers.length() > 0) {
-                        servers.append(",");
-                    }
-                    servers.append(RS.getInt("server"));
-                }
-            }
-        } catch (SQLException e) {
-            sendError("PlayerData haveOtherPlayer", e);
-        }
-        return servers.toString();
     }
 
     public void reloadGroup(Player p) {
@@ -545,9 +510,8 @@ public class PlayerData extends AbstractDAO<Player> {
 
     public void setRevive(Player player) {
         String query = "UPDATE players SET `revive` = 0 WHERE `id` = '" + player.getId() + "';";
-        try (PreparedStatementWrapper stmt = getPreparedStatement(query)) {
-            PreparedStatement p = stmt.getPreparedStatement();
-            p.executeUpdate();
+        try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
+            executeUpdate(p);
         } catch (SQLException e) {
             sendError("PlayerData setRevive", e);
         }

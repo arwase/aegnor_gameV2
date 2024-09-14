@@ -223,30 +223,63 @@ public class EffectConstant {
     public static int getElemSwitchEffect(int EffectID){
         int elem = Constant.ELEMENT_NULL;
         switch (EffectID){
+            case 85:
             case 91:
             case 96:
+            case 275:
                 elem = Constant.ELEMENT_EAU;
                 break;
+            case 86:
             case 92:
             case 97:
+            case 276:
                 elem = Constant.ELEMENT_TERRE;
                 break;
+            case 87:
             case 93:
             case 98:
+            case 277:
                 elem = Constant.ELEMENT_AIR;
                 break;
+            case 88:
             case 94:
             case 99:
+            case 278:
                 elem = Constant.ELEMENT_FEU;
                 break;
+            case 89:
             case 95:
             case 100:
+            case 279:
+            case 672:
                 elem = Constant.ELEMENT_NEUTRE;
                 break;
             default:
                 break;
         }
         return elem;
+    }
+
+    public static int getStatIDSwitchElem(int elem){
+        int stats = -1;
+        switch (elem){
+            case Constant.ELEMENT_EAU:
+                stats = EffectConstant.STATS_ADD_CHAN;
+                break;
+            case Constant.ELEMENT_NEUTRE:
+            case Constant.ELEMENT_TERRE:
+                stats = EffectConstant.STATS_ADD_FORC;
+                break;
+            case Constant.ELEMENT_AIR:
+                stats = EffectConstant.STATS_ADD_AGIL;
+                break;
+            case Constant.ELEMENT_FEU:
+                stats = EffectConstant.STATS_ADD_INTE;
+                break;
+            default:
+                break;
+        }
+        return stats;
     }
 
 }
