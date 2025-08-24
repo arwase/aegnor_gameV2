@@ -1,7 +1,7 @@
 ```diff
 - ATTENTION ! Cette emulateur a été modifié grandement, aucune aide ne sera apporté si vous souhaitez le modifier !
 ```
-Cliquez sur ce lien pour voir le Github du login : [AegnorLogin](https://github.com/arwase/AegnorV3) 
+Cliquez sur ce lien pour voir le Github du login : [AegnorLogin](https://github.com/arwase/aegnor_loginV2) 
 
 ## AegnorServeur
 
