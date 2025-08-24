@@ -212,7 +212,7 @@ public class HouseManager {
 
     public boolean alreadyHaveHouse(Player P) {
         for (Map.Entry<Integer, House> house : World.world.getHouses().entrySet())
-            if (house.getValue().getOwnerId() == P.getAccID() && P.getGroupe().getId() <= 0)
+            if (house.getValue().getOwnerId() == P.getAccID() && (P.getGroupe() == null))
                 return true;
         return false;
     }

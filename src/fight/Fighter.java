@@ -1077,6 +1077,10 @@ public class Fighter implements Comparable<Fighter> {
     public boolean testIfCC(int tauxCC) {
         if (tauxCC < 2)
             return false;
+
+        if(this.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE))
+            return false;
+
         int agi = getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
         if (agi < 0)
             agi = 0;
@@ -1088,10 +1092,14 @@ public class Fighter implements Comparable<Fighter> {
         return (jet == tauxCC);
     }
 
-    public boolean testIfCC(int porcCC, SpellGrade sSort, Fighter fighter) {
-        Player perso = fighter.getPlayer();
+    public boolean testIfCC(int porcCC, SpellGrade sSort) {
+        Player perso = this.getPlayer();
         if (porcCC < 2)
             return false;
+
+        if(this.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE))
+            return false;
+
         int agi = getTotalStats().getEffect(EffectConstant.STATS_ADD_AGIL);
         if (agi < 0)
             agi = 0;
@@ -1099,14 +1107,14 @@ public class Fighter implements Comparable<Fighter> {
 
         int valueCC = porcCC;
 
-        if (fighter.getType() == 1 && perso.getObjectsClassSpell().containsKey(sSort.getSpellID())) {
+        if (this.getType() == 1 && perso.getObjectsClassSpell().containsKey(sSort.getSpellID())) {
             int value = perso.getValueOfClassObject(sSort.getSpellID(), EffectConstant.STATS_SPELL_ADD_CRIT);
             valueCC -= value;
         }
 
-        if(fighter.hasBuff(EffectConstant.STATS_SPELL_ADD_CRIT)){
-            if(sSort.getSpellID() == fighter.getBuff(EffectConstant.STATS_SPELL_ADD_CRIT).getFixvalue()) {
-                int value =  fighter.getBuff(EffectConstant.STATS_SPELL_ADD_CRIT).getArgs3();
+        if(this.hasBuff(EffectConstant.STATS_SPELL_ADD_CRIT)){
+            if(sSort.getSpellID() == this.getBuff(EffectConstant.STATS_SPELL_ADD_CRIT).getFixvalue()) {
+                int value =  this.getBuff(EffectConstant.STATS_SPELL_ADD_CRIT).getArgs3();
                 valueCC -= value;
             }
         }

@@ -37,7 +37,7 @@ public class ObjectAction {
         this.cond = cond;
     }
 
-    public void apply(Player player0, Player target, int objet, int cellid,int qty) {
+    public void apply(Player player0, Player target, long objet, int cellid,int qty) {
         int qtyuse = qty;
         if (player0 == null || !player0.isOnline() || player0.getDoAction() || player0.getGameClient() == null)
             return;

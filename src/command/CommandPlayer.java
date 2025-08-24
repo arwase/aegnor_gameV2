@@ -819,6 +819,31 @@ public class CommandPlayer {
                 player.teleport((short) 7411, 311);
                 return true;
             }
+            else if(command(msg, "xpoffi")){
+                if(player.isXpOffilike){
+                    player.isXpOffilike = false;
+                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez désactivé le mode xp offilike");
+                }
+                else{
+                    player.isXpOffilike = true;
+                    SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez activé le mode xp offilike");
+                }
+
+                if (!player.PlayerList1.isEmpty()) {
+                    for (Player p : player.PlayerList1){
+                        if (p.isXpOffilike) {
+                            p.isXpOffilike = false;
+                            SocketManager.GAME_SEND_MESSAGE(p,"<b>(Information)</b> Votre maitre a désactivé le mode xp offilike");
+                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez désactivé le mode xp offilike de <b>" + p.getName() +"</b>" );
+                        } else {
+                            p.isXpOffilike = true;
+                            SocketManager.GAME_SEND_MESSAGE(p,"<b>(Information)</b> Votre maitre a activé le mode xp offilike");
+                            SocketManager.GAME_SEND_MESSAGE(player,"<b>(Information)</b> Vous avez activé le mode xp offilike de <b>" + p.getName() +"</b>");
+                        }
+                    }
+                }
+                return true;
+            }
             else if(command(msg, "incarnam")){
                 if (player.isInPrison())
                     return true;

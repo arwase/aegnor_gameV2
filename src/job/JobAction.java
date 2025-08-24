@@ -31,8 +31,8 @@ import java.util.TreeMap;
 @SuppressWarnings("unused")
 public class JobAction {
 
-    public Map<Integer, Integer> ingredients = new TreeMap<>();
-    public Map<Integer, Integer> lastCraft = new TreeMap<>();
+    public Map<Long, Integer> ingredients = new TreeMap<>();
+    public Map<Long, Integer> lastCraft = new TreeMap<>();
     public Player player;
     public String data = "";
     public boolean broke = false;
@@ -58,8 +58,8 @@ public class JobAction {
         this.chan = 100;
         this.time = 0;
         this.xpWin = 0;
-        this.ingredients = new TreeMap<Integer, Integer>();
-        this.lastCraft = new TreeMap<Integer, Integer>();
+        this.ingredients = new TreeMap<Long, Integer>();
+        this.lastCraft = new TreeMap<Long, Integer>();
         this.lastCaftID = new ArrayList<Integer>();
         this.data = "";
         this.broke = false;
@@ -250,7 +250,7 @@ public class JobAction {
         }
         Map<Integer, Integer> items = new HashMap<>();
         //on ajoutes les ingrédient a une liste
-        for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+        for (Entry<Long, Integer> e : this.ingredients.entrySet()) {
                 if (!this.player.hasItemGuid(e.getKey())) {
                     SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
                     return;
@@ -281,7 +281,7 @@ public class JobAction {
             }
             boolean canlaunch = true;
             // on les supprime que si c'est bon pour tous
-            for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+            for (Entry<Long, Integer> e : this.ingredients.entrySet()) {
                     GameObject obj = World.world.getGameObject(e.getKey());
                     if (obj == null) {
                         SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
@@ -296,7 +296,7 @@ public class JobAction {
             }
 
             // C'est bon pour tous
-            for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+            for (Entry<Long, Integer> e : this.ingredients.entrySet()) {
                 GameObject obj = World.world.getGameObject(e.getKey());
                 if (obj == null) {
                     SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
@@ -347,7 +347,7 @@ public class JobAction {
                     } else {
 
                         GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplicationForJobs(this.player.getItems().values(), 1, false, chan2);
-                        int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+                        long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
                         if (guid == -1) { // Don't exist
                             guid = newObj.setId();
@@ -398,7 +398,7 @@ public class JobAction {
 
                 boolean canlaunch = true;
                 // on les supprime que si c'est bon pour tous
-                for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                for (Entry<Long, Integer> e : this.ingredients.entrySet()) {
 
                     GameObject obj = World.world.getGameObject(e.getKey());
                     if (obj == null) {
@@ -414,7 +414,7 @@ public class JobAction {
                 }
 
                 // C'est bon pour tous
-                for (Entry<Integer, Integer> e : this.ingredients.entrySet()) {
+                for (Entry<Long, Integer> e : this.ingredients.entrySet()) {
 
                     GameObject obj = World.world.getGameObject(e.getKey());
                     if (obj == null) {
@@ -460,7 +460,7 @@ public class JobAction {
                 }
 
 
-                int guid = newObj.getGuid();
+                long guid = newObj.getGuid();
                 SocketManager.GAME_SEND_Em_PACKET(this.player, "KO+" + guid + "|1|" + templateId + "|" + newObj.parseStatsString().replace(";", "#"));
             }
 
@@ -532,8 +532,8 @@ public class JobAction {
         }
     }
 
-    private int addCraftObject(Player player, GameObject newObj) {
-        for (Entry<Integer, GameObject> entry : player.getItems().entrySet()) {
+    private long addCraftObject(Player player, GameObject newObj) {
+        for (Entry<Long, GameObject> entry : player.getItems().entrySet()) {
             GameObject obj = entry.getValue();
             if (obj.getTemplate().getId() == newObj.getTemplate().getId() && obj.getTxtStat().equals(newObj.getTxtStat())
                     && obj.getStats().isSameStats(newObj.getStats()) && obj.isSameStats(newObj) && obj.isSametxtStats(newObj) && obj.getRarity() == newObj.getRarity() && obj.getMimibiote() == newObj.getMimibiote() && obj.getPosition() == Constant.ITEM_POS_NO_EQUIPED) {
@@ -549,7 +549,7 @@ public class JobAction {
         return -1;
     }
 
-    public boolean craftPublicMode(Player crafter, Player receiver, Map<Player, ArrayList<Couple<Integer, Integer>>> list) {
+    public boolean craftPublicMode(Player crafter, Player receiver, Map<Player, ArrayList<Couple<Long, Integer>>> list) {
         if (!this.isCraft) return false;
 
         this.player = crafter;
@@ -557,14 +557,14 @@ public class JobAction {
 
         Map<Integer, Integer> items = new HashMap<>();
 
-        for (Entry<Player, ArrayList<Couple<Integer, Integer>>> entry : list.entrySet()) {
+        for (Entry<Player, ArrayList<Couple<Long, Integer>>> entry : list.entrySet()) {
             Player player = entry.getKey();
-            Map<Integer, Integer> playerItems = new HashMap<>();
+            Map<Long, Integer> playerItems = new HashMap<>();
 
-            for (Couple<Integer, Integer> couple : entry.getValue())
+            for (Couple<Long, Integer> couple : entry.getValue())
                 playerItems.put(couple.first, couple.second);
 
-            for (Entry<Integer, Integer> e : playerItems.entrySet()) {
+            for (Entry<Long, Integer> e : playerItems.entrySet()) {
                 if (!player.hasItemGuid(e.getKey())) {
                     SocketManager.GAME_SEND_Ec_PACKET(player, "EI");
                     SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI");
@@ -632,7 +632,7 @@ public class JobAction {
         } else {
             GameObject newObj = World.world.getObjTemplate(template).createNewItem(1, false,0);
             if (signed) newObj.addTxtStat(Constant.STATS_SIGNATURE, this.player.getName());
-            int guid = this.addCraftObject(receiver, newObj);
+            long guid = this.addCraftObject(receiver, newObj);
             if(guid == -1) guid = newObj.getGuid();
             String stats = newObj.parseStatsString();
 
@@ -659,7 +659,7 @@ public class JobAction {
         return success;
     }
 
-    public void addIngredient(Player player, int id, int quantity) {
+    public void addIngredient(Player player, long id, int quantity) {
         int oldQuantity = this.ingredients.get(id) == null ? 0 : this.ingredients.get(id);
         if(quantity < 0) if(- quantity > oldQuantity) return;
 
@@ -680,11 +680,11 @@ public class JobAction {
         }
     }
 
-    public byte sizeList(Map<Player, ArrayList<Couple<Integer, Integer>>> list) {
+    public byte sizeList(Map<Player, ArrayList<Couple<Long, Integer>>> list) {
         byte size = 0;
 
-        for (ArrayList<Couple<Integer, Integer>> entry : list.values()) {
-            for (Couple<Integer, Integer> couple : entry) {
+        for (ArrayList<Couple<Long, Integer>> entry : list.values()) {
+            for (Couple<Long, Integer> couple : entry) {
                 GameObject object = World.world.getGameObject(couple.first);
                 if (object != null) {
                     ObjectTemplate objectTemplate = object.getTemplate();
@@ -716,7 +716,7 @@ public class JobAction {
 
     private int reConfigingRunes = -1;
 
-    public void modifIngredient(Player P, int guid, int qua) {
+    public void modifIngredient(Player P, long guid, int qua) {
         //on prend l'ancienne valeur
         int q = this.ingredients.get(guid) == null ? 0 : this.ingredients.get(guid);
         if(qua < 0) if(-qua > q) return;
@@ -738,7 +738,7 @@ public class JobAction {
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(P, 'O', "-", guid + "");
     }
 
-    public void modifIngredient2(final Player P, final int guid, final int qua) {
+    public void modifIngredient2(final Player P, final long guid, final int qua) {
         int q = (this.ingredients.get(guid) == null) ? 0 : this.ingredients.get(guid);
         this.ingredients.remove(guid);
         q += qua;
@@ -771,15 +771,15 @@ public class JobAction {
 
         int statsID = -1;
         int statsAdd = 0;
-        int deleteID = -1;
+        long deleteID = -1;
         float poidRune = 0;
-        int idRune = 0;
+        long idRune = 0;
         boolean bonusRune = false; // Rune "Bonus" je suppose que c'est pour les serveurs cheat
         String statsObjectFm = "-1";  // La stats que l'on veut FM
         String loi = ""; // La loi de FM qui va être utilisé par l'algo (Potentiellement inutile si corrigé totalement)
 
 
-        for (int idIngredient : this.ingredients.keySet()) { // On boucle sur Les ingrédients Pour différencié la Rune de l'objet
+        for (long idIngredient : this.ingredients.keySet()) { // On boucle sur Les ingrédients Pour différencié la Rune de l'objet
             GameObject ing = World.world.getGameObject(idIngredient); // On récupÃ¨re l'ingrédient
             if (ing == null || !this.player.hasItemGuid(idIngredient)) { // On check s'il existe et si le User a bien l'item
                 SocketManager.GAME_SEND_Ec_PACKET(this.player, "EI"); // PACKET DE RETOUR POUR AFFICHER L'ERREUR CHEZ LE JOUEUR
@@ -984,7 +984,7 @@ public class JobAction {
             GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,rarity);
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
             objectFm = newObj;
-            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
             if(guid == -1) { // Don't exist
                     guid = newObj.setId();
@@ -1088,7 +1088,7 @@ public class JobAction {
             GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,lastDigit);
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
             objectFm = newObj;
-            int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
 
             if(guid == -1) { // Don't exist
                 guid = newObj.setId();

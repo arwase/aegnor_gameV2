@@ -279,7 +279,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewCertificat(GameObject obj) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         if (getType() == Constant.ITEM_TYPE_CERTIFICAT_CHANIL) {
             PetEntry myPets = World.world.getPetsEntry(obj.getGuid());
@@ -304,7 +304,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewFamilier(GameObject obj) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         Map<Integer, String> stats = new LinkedHashMap<>();
         stats.putAll(obj.getTxtStat());
 
@@ -317,7 +317,7 @@ public class ObjectTemplate {
     }
 
     public void createOldFamilier(GameObject obj) {
-        int id = obj.getGuid();
+        long id = obj.getGuid();
         Map<Integer, String> stats = new LinkedHashMap<>();
         stats.putAll(obj.getTxtStat());
 
@@ -335,7 +335,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewBenediction(int turn) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, turn);
@@ -344,21 +344,21 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewMalediction() {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, 1);
         return new GameObject(id, getId(), 1, Constant.ITEM_POS_MALEDICTION, stats, new ArrayList<>(), new HashMap<>(), new HashMap<>(), 0, 0, -1);
     }
 
     public GameObject createNewRoleplayBuff() {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, 1);
         return new GameObject(id, getId(), 1, Constant.ITEM_POS_ROLEPLAY_BUFF, stats, new ArrayList<>(), new HashMap<>(), new HashMap<>(), 0, 0, -1);
     }
 
     public GameObject createNewCandy(int turn) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, turn);
@@ -367,7 +367,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewFollowPnj(int turn) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         Stats stats = generateNewStatsFromTemplate(getStrTemplate(), true, 0);
         stats.addOneStat(Constant.STATS_TURN, turn);
@@ -378,7 +378,7 @@ public class ObjectTemplate {
     private final Integer[] ItemsRarityAllowed = new Integer[]{1,2,3,4,5,6,7,8,9,10,11,16,17,19,20,21,22,23,81,82};
 
     public GameObject createNewItem(int qua, boolean useMax, int rarity) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item;
         List<Integer> verif = new ArrayList<>(Arrays.asList(ItemsRarityAllowed));
         if(!verif.contains(getType()))
@@ -466,7 +466,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplicationForJobs(Collection<GameObject> objects, int qua, boolean useMax,int chanceimpact) {
-        int id = -1;
+        long id = -1;
         GameObject item = null;
         try{
 
@@ -543,7 +543,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplication(Collection<GameObject> objects, int qua, boolean useMax) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         try{
 
@@ -628,7 +628,7 @@ public class ObjectTemplate {
     }
 
     public GameObject createNewItemWithoutDuplicationAndRarityBoost(Collection<GameObject> objects, int qua, boolean useMax,int difficulty) {
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         GameObject item = null;
         try{
 
@@ -976,7 +976,7 @@ public class ObjectTemplate {
         }
     }
 
-    public void applyAction(Player player, Player target, int objectId, short cellId) {
+    public void applyAction(Player player, Player target, long objectId, short cellId) {
         if (World.world.getGameObject(objectId) == null) return;
         if (World.world.getGameObject(objectId).getTemplate().getType() == 85) {
 
@@ -1029,7 +1029,7 @@ public class ObjectTemplate {
         }
     }
 
-    public void applyAction(Player player, Player target, int objectId, short cellId,int quantity) {
+    public void applyAction(Player player, Player target, long objectId, short cellId,int quantity) {
         if (World.world.getGameObject(objectId) == null) return;
         if (World.world.getGameObject(objectId).getQuantity() < quantity)
             return;
@@ -1102,7 +1102,7 @@ public class ObjectTemplate {
 
     public GameObject createNewItemWithoutDuplicationWithrarity(Collection<GameObject> objects, int qua, boolean useMax, int rarity) {
 
-        int id = -1;
+        long id = -1;
         GameObject item = null;
         try{
 

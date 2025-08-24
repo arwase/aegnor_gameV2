@@ -908,7 +908,7 @@ public class Monster {
 
             if(!objects.isEmpty()) {
                 for (String value : objects.split(",")) {
-                    final GameObject gameObject = World.world.getGameObject(Integer.parseInt(value));
+                    final GameObject gameObject = World.world.getGameObject(Long.parseLong(value));
                     if (gameObject != null)
                         this.objects.add(gameObject);
                 }

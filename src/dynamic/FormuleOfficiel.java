@@ -192,7 +192,7 @@ public class FormuleOfficiel {
 
     public static long getXp2(Object object, ArrayList<Fighter> winners,
                              long groupXp, double nbonus, int star, int challenge, int lvlMax,
-                             int lvlMin, int lvlLoosers, int lvlWinners,double bonusip, double bonusclasse) {
+                             int lvlMin, int lvlLoosers, int lvlWinners,double bonusip, double bonusclasse,boolean offiLike) {
 
         if (lvlMin <= 0 || object == null)
             return 0;
@@ -260,10 +260,18 @@ public class FormuleOfficiel {
 
                 double bonusChallenge = 1.0  + ((double)challenge / 100);
                 double bonusStar = 1.0 + ((double)star / 100);
-
-                long total = (long) (((1 + (sagesse / 100)) * bonusChallenge * bonusStar
-                        * (nbonus) * (nvGrpMonster) * (groupXp) * bonusVip)
-                        * Config.INSTANCE.getRATE_XP() * World.world.getConquestBonusNew(fighter.getPlayer()) * bonusip * bonusclasse );
+                long total=0L;
+                if(offiLike){
+                    sagesse = fighter.getLvl() * 0.5 + (fighter.getPlayer().getTotalStats().getEffect(EffectConstant.STATS_ADD_SAGE));
+                    total = (long) (((1 + (sagesse / 100)) * bonusChallenge * 1
+                            * (1) * (nvGrpMonster) * (groupXp) * 1)
+                            * 1 * 1 * 1 * 1 );
+                }
+                else{
+                    total = (long) (((1 + (sagesse / 100)) * bonusChallenge * bonusStar
+                            * (nbonus) * (nvGrpMonster) * (groupXp) * bonusVip)
+                            * Config.INSTANCE.getRATE_XP() * World.world.getConquestBonusNew(fighter.getPlayer()) * bonusip * bonusclasse );
+                }
 
                 //System.out.println("Bonus xp2 = " + total);
                 //System.out.println((1 + (sagesse / 100)) + " * " + ( bonusChallenge ) + " * " + ( bonusStar) + " * " + (nbonus) + " * " + (nvGrpMonster) + " * " + (groupXp) + " * " + Config.INSTANCE.getRATE_XP() + " * " + World.world.getConquestBonusNew(fighter.getPlayer())  + " * " + bonusip  + " * " + bonusclasse + " * " + bonusVip);

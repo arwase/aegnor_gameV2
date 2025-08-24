@@ -85,6 +85,7 @@ public class Player {
     public boolean getCases = false;
     public boolean mpToTp = false;
     public boolean noall = false;
+    public boolean isXpOffilike = false;
 
 
     //Job
@@ -146,7 +147,7 @@ public class Player {
     private Party party;
     private int duelId = -1;
     private Map<Integer, Effect> buffs = new HashMap<Integer, Effect>();
-    private Map<Integer, GameObject> objects = new HashMap<>();
+    private Map<Long, GameObject> objects = new HashMap<>();
     private String _savePos;
     private int _emoteActive = 0;
     private int savestat;
@@ -176,7 +177,7 @@ public class Player {
     private int _Speed = 0;
     //Marchand
     private boolean _seeSeller = false;
-    private Map<Integer, Integer> _storeItems = new HashMap<>();                    //<ObjID, Prix>
+    private Map<Long, Integer> _storeItems = new HashMap<>();                    //<ObjID, Prix>
     //Metier
     private boolean _metierPublic = false;
     private boolean _livreArti = false;
@@ -222,7 +223,7 @@ public class Player {
     // Other ?
     private short oldMap = 0;
     private int oldCell = 0;
-    private String _allTitle = "";
+    private String _allTitle = null;
     private boolean isBlocked = false;
     private int action = -1;
     //Regen hp
@@ -262,7 +263,7 @@ public class Player {
 
     //Retourne la liste des esclaves
     @SuppressWarnings("rawtypes")
-    public List getSlaves(){
+    public List<Player> getSlaves(){
         return PlayerList1;
     }
 
@@ -323,8 +324,9 @@ public class Player {
         this.energy = energy;
         this.level = level;
         this.exp = exp;
-        if (mount != -1)
+        if (mount != -1) {
             this._mount = World.world.getMountById(mount);
+        }
         this._size = _size;
         this.gfxId = _gfxid;
         this._mountXpGive = mountXp;
@@ -417,9 +419,9 @@ public class Player {
                     continue;
                 String[] infos = item.split(":");
 
-                int guid = 0;
+                long guid = 0;
                 try {
-                    guid = Integer.parseInt(infos[0]);
+                    guid = Long.parseLong(infos[0]);
                 } catch (Exception e) {
                     e.printStackTrace();
                     continue;
@@ -463,10 +465,10 @@ public class Player {
             if (!storeObjets.equals("")) {
                 for (String _storeObjets : storeObjets.split("\\|")) {
                     String[] infos = _storeObjets.split(",");
-                    int guid = 0;
+                    long guid = 0;
                     int price = 0;
                     try {
-                        guid = Integer.parseInt(infos[0]);
+                        guid = Long.parseLong(infos[0]);
                         price = Integer.parseInt(infos[1]);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -561,7 +563,7 @@ public class Player {
             if (item.equals(""))
                 continue;
             String[] infos = item.split(":");
-            int guid = Integer.parseInt(infos[0]);
+            long guid = Long.parseLong(infos[0]);
             GameObject obj = World.world.getGameObject(guid);
             if (obj == null)
                 continue;
@@ -966,7 +968,7 @@ public class Player {
         if (objTemplate == 0)
             return;
         if (getObjetByPos(Constant.ITEM_POS_ROLEPLAY_BUFF) != null) {
-            int guid = getObjetByPos(Constant.ITEM_POS_ROLEPLAY_BUFF).getGuid();
+            long guid = getObjetByPos(Constant.ITEM_POS_ROLEPLAY_BUFF).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }
@@ -982,7 +984,7 @@ public class Player {
 
     public void setBenediction(int id) {
         if (getObjetByPos(Constant.ITEM_POS_BENEDICTION) != null) {
-            int guid = getObjetByPos(Constant.ITEM_POS_BENEDICTION).getGuid();
+            long guid = getObjetByPos(Constant.ITEM_POS_BENEDICTION).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }
@@ -1023,7 +1025,7 @@ public class Player {
             return;
         }
         if (getObjetByPos(Constant.ITEM_POS_MALEDICTION) != null) {
-            int guid = getObjetByPos(Constant.ITEM_POS_MALEDICTION).getGuid();
+            long guid = getObjetByPos(Constant.ITEM_POS_MALEDICTION).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }
@@ -1041,7 +1043,7 @@ public class Player {
 
     public void setMascotte(int id) {
         if (getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR) != null) {
-            int guid = getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR).getGuid();
+            long guid = getObjetByPos(Constant.ITEM_POS_PNJ_SUIVEUR).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }
@@ -1063,7 +1065,7 @@ public class Player {
 
     public void setCandy(int id) {
         if (getObjetByPos(Constant.ITEM_POS_BONBON) != null) {
-            int guid = getObjetByPos(Constant.ITEM_POS_BONBON).getGuid();
+            long guid = getObjetByPos(Constant.ITEM_POS_BONBON).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }
@@ -1186,7 +1188,8 @@ public class Player {
     public boolean haveTitrebyID(int Id){
         Map<Integer, Titre> titres = World.world.getTitres();
         String titlepossess = this.getAllTitle();
-        if(titlepossess == null || titlepossess =="" )
+
+        if(titlepossess == null || titlepossess =="" ||titlepossess.isEmpty() ||titlepossess.isBlank())
             return false;
 
         if(titlepossess.contains(",")) {
@@ -1213,8 +1216,9 @@ public class Player {
 
     public void setAllTitle(String title) {
         boolean erreur = false;
-        if (title.equals(""))
+        if (title.equals("") ||title.isEmpty() || title == null)
             title = "0";
+
         if (_allTitle != null)
             for (String i : _allTitle.split(","))
                 if (i.equals(title))
@@ -1223,6 +1227,7 @@ public class Player {
             _allTitle = title;
         else if (!erreur)
             _allTitle += "," + title;
+
         Database.getStatics().getPlayerData().updateTitles(this.getId(), _allTitle);
     }
 
@@ -2661,7 +2666,7 @@ public class Player {
     public int getPodUsed() {
         int pod = 0;
 
-        for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+        for (Entry<Long, GameObject> entry : objects.entrySet()) {
             pod += entry.getValue().getTemplate().getPod()
                     * entry.getValue().getQuantity();
         }
@@ -2795,7 +2800,7 @@ public class Player {
         StringBuilder str = new StringBuilder();
         if (objects.isEmpty())
             return "";
-        for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+        for (Entry<Long, GameObject> entry : objects.entrySet()) {
             GameObject obj = entry.getValue();
             if (obj == null)
                 continue;
@@ -2811,7 +2816,7 @@ public class Player {
             if(newObj.getPosition() != -1 && this.getObjetByPos(newObj.getPosition()) != null)
                 newObj.setPosition(-1);
 
-            for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+            for (Entry<Long, GameObject> entry : objects.entrySet()) {
                 GameObject obj = entry.getValue();
                 if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, stackIfSimilar)) {
                     obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantitê de l'objet existant
@@ -2846,7 +2851,7 @@ public class Player {
         }
     }
 
-    public Map<Integer, GameObject> getItems() {
+    public Map<Long, GameObject> getItems() {
         return objects;
     }
 
@@ -2876,7 +2881,7 @@ public class Player {
         StringBuilder str = new StringBuilder();
         if (objects.isEmpty())
             return "";
-        for (int entry : objects.keySet()) {
+        for (long entry : objects.keySet()) {
             if (str.length() != 0)
                 str.append(splitter);
             str.append(entry);
@@ -2889,7 +2894,7 @@ public class Player {
         StringBuilder str = new StringBuilder();
         if (_storeItems.isEmpty())
             return "";
-        for (int entry : _storeItems.keySet()) {
+        for (long entry : _storeItems.keySet()) {
             if (str.length() != 0)
                 str.append(splitter);
             str.append(entry);
@@ -2897,11 +2902,11 @@ public class Player {
         return str.toString();
     }
 
-    public boolean hasItemGuid(int guid) {
+    public boolean hasItemGuid(long guid) {
         return objects.get(guid) != null && objects.get(guid).getQuantity() > 0;
     }
 
-    public void sellItem(int guid, int qua) {
+    public void sellItem(long guid, int qua) {
         if (qua <= 0)
             return;
 
@@ -2930,11 +2935,11 @@ public class Player {
         SocketManager.GAME_SEND_ESK_PACKEt(this);
     }
 
-    public void removeItem(int guid) {
+    public void removeItem(Long guid) {
         objects.remove(guid);
     }
 
-    public void removeItem(int guid, int nombre, boolean send,
+    public void removeItem(long guid, int nombre, boolean send,
                            boolean deleteFromWorld) {
         GameObject obj = objects.get(guid);
 
@@ -2963,7 +2968,7 @@ public class Player {
         SocketManager.GAME_SEND_Ow_PACKET(this);
     }
 
-    public void deleteItem(int guid) {
+    public void deleteItem(long guid) {
         objects.remove(guid);
         World.world.removeGameObject(guid);
     }
@@ -2988,7 +2993,7 @@ public class Player {
         if (pos == Constant.ITEM_POS_NO_EQUIPED)
             return null;
 
-        for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+        for (Entry<Long, GameObject> entry : objects.entrySet()) {
             GameObject obj = entry.getValue();
 
             if (obj.getPosition() == pos)
@@ -3534,7 +3539,7 @@ public class Player {
     }
 
     public boolean hasEquiped(int id) {
-        for (Entry<Integer, GameObject> entry : objects.entrySet())
+        for (Entry<Long, GameObject> entry : objects.entrySet())
             if (entry.getValue().getTemplate().getId() == id
                     && entry.getValue().getPosition() != Constant.ITEM_POS_NO_EQUIPED)
                 return true;
@@ -3543,7 +3548,7 @@ public class Player {
     }
 
     public int getPosItem(int id) {
-        for (Entry<Integer, GameObject> entry : objects.entrySet())
+        for (Entry<Long, GameObject> entry : objects.entrySet())
             if (entry.getValue().getTemplate().getId() == id
                     && entry.getValue().getPosition() != Constant.ITEM_POS_NO_EQUIPED)
                 return entry.getValue().getPosition();
@@ -3586,7 +3591,7 @@ public class Player {
     public int getNumbEquipedItemOfPanoplie(int panID) {
         int nb = 0;
 
-        for (Entry<Integer, GameObject> i : objects.entrySet()) {
+        for (Entry<Long, GameObject> i : objects.entrySet()) {
             //On ignore les objets non �quip�s
             if (i.getValue().getPosition() == Constant.ITEM_POS_NO_EQUIPED)
                 continue;
@@ -4080,7 +4085,7 @@ public class Player {
             _spellPts += pts;
     }
 
-    public void addInBank(int guid, int qua) {
+    public void addInBank(long guid, int qua) {
         if (qua <= 0)
             return;
         GameObject PersoObj = World.world.getGameObject(guid);
@@ -4163,7 +4168,7 @@ public class Player {
         return null;
     }
 
-    public void removeFromBank(int guid, int qua) {
+    public void removeFromBank(long guid, int qua) {
         if (qua <= 0)
             return;
         GameObject BankObj = World.world.getGameObject(guid);
@@ -5698,7 +5703,7 @@ public class Player {
         SocketManager.send(this, "AR6bk");//Block l'orientation
     }
 
-    public Map<Integer, Integer> getStoreItems() {
+    public Map<Long, Integer> getStoreItems() {
         return _storeItems;
     }
 
@@ -5734,7 +5739,7 @@ public class Player {
         StringBuilder list = new StringBuilder();
         if (_storeItems.isEmpty())
             return "";
-        for (Entry<Integer, Integer> obj : _storeItems.entrySet()) {
+        for (Entry<Long, Integer> obj : _storeItems.entrySet()) {
             GameObject O = World.world.getGameObject(obj.getKey());
             if (O == null)
                 continue;
@@ -5749,7 +5754,7 @@ public class Player {
         if (_storeItems.isEmpty())
             return 0;
         int total = 0;
-        for (Entry<Integer, Integer> obj : _storeItems.entrySet()) {
+        for (Entry<Long, Integer> obj : _storeItems.entrySet()) {
             GameObject O = World.world.getGameObject(obj.getKey());
             if (O != null) {
                 int qua = O.getQuantity();
@@ -5762,14 +5767,14 @@ public class Player {
 
     public String parseStoreItemstoBD() {
         StringBuilder str = new StringBuilder();
-        for (Entry<Integer, Integer> _storeObjets : _storeItems.entrySet()) {
+        for (Entry<Long, Integer> _storeObjets : _storeItems.entrySet()) {
             str.append(_storeObjets.getKey()).append(",").append(_storeObjets.getValue()).append("|");
         }
 
         return str.toString();
     }
 
-    public void addInStore(int ObjID, int price, int qua) {
+    public void addInStore(long ObjID, int price, int qua) {
         GameObject PersoObj = World.world.getGameObject(ObjID);
         //Si le joueur n'a pas l'item dans son sac ...
         if(PersoObj.isAttach()) return;
@@ -5855,7 +5860,7 @@ public class Player {
     }
 
     private GameObject getSimilarStoreItem(GameObject exGameObject) {
-        for (Integer id : _storeItems.keySet()) {
+        for (Long id : _storeItems.keySet()) {
             GameObject gameObject = World.world.getGameObject(id);
             if (World.world.getConditionManager().stackIfSimilar2(gameObject, exGameObject, true))
                 return gameObject;
@@ -5864,7 +5869,7 @@ public class Player {
         return null;
     }
 
-    public void removeFromStore(int guid, int qua) {
+    public void removeFromStore(long guid, int qua) {
         GameObject SimilarObj = World.world.getGameObject(guid);
         //Si le joueur n'a pas l'item dans son store ...
         if (_storeItems.get(guid) == null) {
@@ -5909,7 +5914,7 @@ public class Player {
         _storeItems.remove(guid);
     }
 
-    public void addStoreItem(int guid, int price) {
+    public void addStoreItem(long guid, int price) {
         _storeItems.put(guid, price);
     }
 
@@ -6397,7 +6402,7 @@ public class Player {
         if (objModelo.getType() == 85 || objModelo.getType() == 18)
             return false;
         if (hasSimiler) {
-            for (Entry<Integer, GameObject> entry : objects.entrySet()) {
+            for (Entry<Long, GameObject> entry : objects.entrySet()) {
                 GameObject obj = entry.getValue();
                 if (obj.getPosition() == -1 && obj.getGuid() != oldID
                         && obj.getTemplate().getId() == objModelo.getId()
@@ -6483,7 +6488,7 @@ public class Player {
 
     public int storeAllBuy() {
         int total = 0;
-        for (Entry<Integer, Integer> value : _storeItems.entrySet()) {
+        for (Entry<Long, Integer> value : _storeItems.entrySet()) {
             GameObject O = World.world.getGameObject(value.getKey());
             int multiple = O.getQuantity();
             int add = value.getValue() * multiple;
@@ -7289,7 +7294,7 @@ public class Player {
 
     public void setTonique(int id,int pos, String StatsToAdd) {
         if (getObjetByPos(pos) != null) {
-            int guid = getObjetByPos(pos).getGuid();
+            long guid = getObjetByPos(pos).getGuid();
             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(this, guid);
             this.deleteItem(guid);
         }

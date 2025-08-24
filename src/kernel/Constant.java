@@ -551,6 +551,9 @@ public class Constant {
     // Objet d'�levage
     public static final int STATS_RESIST = 812;
     public static final int STATS_DD_ID = 995;
+    public static final int STATS_DD_OWNER = 996;
+    public static final int STATS_DD_NAME = 997;
+
     // Other
     public static final int STATS_TURN = 811;
     public static final int STATS_EXCHANGE_IN = 983;

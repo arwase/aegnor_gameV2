@@ -25,7 +25,7 @@ public class Trunk {
     private int ownerId;
     private long kamas;
     private Player player = null;
-    private Map<Integer, GameObject> object = new HashMap<>();
+    private Map<Long, GameObject> object = new HashMap<>();
 
     public Trunk(int id, int houseId, short mapId, int cellId) {
         this.id = id;
@@ -88,7 +88,7 @@ public class Trunk {
             if (item.equals(""))
                 continue;
             String[] infos = item.split(":");
-            int guid = Integer.parseInt(infos[0]);
+            long guid = Long.parseLong(infos[0]);
 
             GameObject obj = World.world.getGameObject(guid);
             if (obj == null)
@@ -161,11 +161,11 @@ public class Trunk {
         this.player = player;
     }
 
-    public Map<Integer, GameObject> getObject() {
+    public Map<Long, GameObject> getObject() {
         return object;
     }
 
-    public void setObject(Map<Integer, GameObject> object) {
+    public void setObject(Map<Long, GameObject> object) {
         this.object = object;
     }
 
@@ -205,7 +205,7 @@ public class Trunk {
         return packet.toString();
     }
 
-    public void addInTrunk(int guid, int qua, Player P) {
+    public void addInTrunk(long guid, int qua, Player P) {
         if (qua <= 0)
             return;
         if (((Trunk) P.getExchangeAction().getValue()).getId() != getId())
@@ -299,7 +299,7 @@ public class Trunk {
         Database.getStatics().getPlayerData().update(P);
     }
 
-    public void removeFromTrunk(int guid, int qua, Player P) {
+    public void removeFromTrunk(long guid, int qua, Player P) {
         if (qua <= 0)
             return;
         if (((Trunk) P.getExchangeAction().getValue()).getId() != getId())
@@ -393,7 +393,7 @@ public class Trunk {
 
     public String parseTrunkObjetsToDB() {
         StringBuilder str = new StringBuilder();
-        for (Entry<Integer, GameObject> entry : this.object.entrySet()) {
+        for (Entry<Long, GameObject> entry : this.object.entrySet()) {
             GameObject obj = entry.getValue();
             str.append(obj.getGuid()).append("|");
         }
@@ -401,7 +401,7 @@ public class Trunk {
     }
 
     public void moveTrunkToBank(Account Cbank) {
-        for (Entry<Integer, GameObject> obj : this.object.entrySet())
+        for (Entry<Long, GameObject> obj : this.object.entrySet())
             Cbank.getBank().add(obj.getValue());
         this.object.clear();
         Database.getDynamics().getTrunkData().update(this);

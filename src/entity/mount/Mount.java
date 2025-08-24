@@ -58,14 +58,16 @@ public class Mount {
 	private long fecundatedDate = -1;
     private int couple;
 
+    private int typeLocation = 0; // 0 : Etable, 1 : Enclos, 2 : En parchemin
+
 	private Stats stats = new Stats();
-	private java.util.Map<Integer, GameObject> objects = new HashMap<>();
+	private java.util.Map<Long, GameObject> objects = new HashMap<>();
 	private List<Integer> capacitys = new ArrayList<>(2);
 
 	public Mount(int color, int owner, boolean savage) {
 		this.id = Database.getStatics().getMountData().getNextId();
 		this.color = color;
-		if(color == 90 || color == 91){
+		if(color == 75 || color == 88 || color == 90 || color == 91){
 			this.sex = 0;
 		}
 		else {
@@ -76,7 +78,7 @@ public class Mount {
 		this.name = "SansNom";
 		this.fatigue = 0;
 		this.energy = 1000;
-		this.reproduction = ((color == 75 || color == 88) ? -1 : 0);
+		this.reproduction = ((color == 75 || color == 88 || color == 90 || color == 91) ? -1 : 0);
 		this.maturity = getMaxMaturity();
 		this.state = 0;
 		this.stats = Constant.getMountStats(this.color, this.level);
@@ -174,7 +176,7 @@ public class Mount {
 		for(String str : objects.split(";")) {
 			if(str.isEmpty()) continue;
 			try {
-				GameObject gameObject = World.world.getGameObject(Integer.parseInt(str));
+				GameObject gameObject = World.world.getGameObject(Long.parseLong(str));
 				if(gameObject != null)
 					this.objects.put(gameObject.getGuid(), gameObject);
 			} catch (Exception e) {
@@ -454,7 +456,7 @@ public class Mount {
 	}
 	//endregion getter/setter
 
-	public java.util.Map<Integer, GameObject> getObjects() {
+	public java.util.Map<Long, GameObject> getObjects() {
 		return objects;
 	}
 
@@ -959,7 +961,7 @@ public class Mount {
         }
     }
 
-	public void addObject(int guid, int qua, Player P) {
+	public void addObject(long guid, int qua, Player P) {
 		if(qua <= 0)
 			return;
 		GameObject playerObj = World.world.getGameObject(guid);
@@ -1030,7 +1032,7 @@ public class Mount {
 		SocketManager.GAME_SEND_EL_MOUNT_PACKET(P, this);
 	}
 
-	public void removeObject(int guid, int qua, Player P) {
+	public void removeObject(long guid, int qua, Player P) {
 		if(qua <= 0)
 			return;
 		GameObject TrunkObj = World.world.getGameObject(guid);

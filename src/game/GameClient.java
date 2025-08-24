@@ -32,6 +32,7 @@ import event.type.Event;
 import fight.Fight;
 import fight.Fighter;
 import fight.spells.Effect;
+import fight.spells.EffectConstant;
 import fight.spells.SpellGrade;
 import game.action.ExchangeAction;
 import game.action.GameAction;
@@ -441,7 +442,7 @@ public class GameClient {
     private void LinkItem(String packet, Player player)
     {
         if(player == null)return;
-        GameObject object = World.world.getGameObject(Integer.parseInt(packet.substring(2)));
+        GameObject object = World.world.getGameObject(Long.parseLong(packet.substring(2)));
         if(object == null) {
             return;
         }
@@ -461,7 +462,7 @@ public class GameClient {
     private void MorphItemDiscard(String packet, Player player)
     {
         if(player == null)return;
-        GameObject object = World.world.getGameObject(Integer.parseInt(packet.substring(2)));
+        GameObject object = World.world.getGameObject(Long.parseLong(packet.substring(2)));
         if(object == null) {
             return;
         }
@@ -480,7 +481,7 @@ public class GameClient {
 
         // ITEM D'APPARAT A RESTORE
         int templateTorestore = object.getMimibiote();
-        int id = Database.getStatics().getObjectData().getNextId();
+        long id = Database.getStatics().getObjectData().getNextId();
         Map<Integer, String> Stat = new HashMap<>();
         GameObject item = new GameObject(id, templateTorestore, object.getQuantity(), Constant.ITEM_POS_NO_EQUIPED, new Stats(false, null) , new ArrayList<Effect>(), new HashMap<Integer, Integer>(), Stat, 0,1, -1);
         if (player.addObjet(item, true)) {
@@ -516,8 +517,8 @@ public class GameClient {
             return;
         }
         String infos[] = verif.split("\\|");
-        int objectID = (infos.length >= 1)?Integer.parseInt(infos[0]):0;
-        int ApparatID = (infos.length >= 2)?Integer.parseInt(infos[1]):0;
+        long objectID = (infos.length >= 1)?Long.parseLong(infos[0]):0;
+        long ApparatID = (infos.length >= 2)?Long.parseLong(infos[1]):0;
         if (objectID == ApparatID){
             SocketManager.GAME_SEND_MESSAGE(player, "Vous devez prendre deux objet différent !",Constant.COULEUR_ECHEC);
             return;
@@ -559,10 +560,10 @@ public class GameClient {
         }
 
 
-        Map<Integer, GameObject> mimi2 = player.getItems();
+        Map<Long, GameObject> mimi2 = player.getItems();
         //Récupération d'un mimibiote sur le perso
         GameObject mimi = null;
-        for (Map.Entry<Integer, GameObject> entry : mimi2.entrySet()) {
+        for (Map.Entry<Long, GameObject> entry : mimi2.entrySet()) {
             if  ( entry.getValue().getTemplate().getId() == 4 )  {
                 mimi = entry.getValue();
             }
@@ -847,11 +848,11 @@ public class GameClient {
         movementObject("OM" + exObj.getGuid() + "|-1");
     }
 
-    private void VerifToSet(Map<Integer, Integer> itemtoEquip,List<GameObject> itemsEquipe, int pos){
+    private void VerifToSet(Map<Integer, Long> itemtoEquip,List<GameObject> itemsEquipe, int pos){
         GameObject Objold = player.getObjetByPos3(pos,itemsEquipe);
 
         if (itemtoEquip.get(pos) != null) {
-            int ToEquipGUID = itemtoEquip.get(pos);
+            long ToEquipGUID = itemtoEquip.get(pos);
             if (player.getItems().get(itemtoEquip.get(pos)) != null) {
                 if (Objold != null) {
                     if (ToEquipGUID != Objold.getGuid() || pos == Constant.ITEM_POS_ARME) {
@@ -904,11 +905,11 @@ public class GameClient {
             if(set != null){
                 String[] items = set.getObjects().split(";");
                 List<GameObject> itemsEquipe = player.getEquippedObjects();
-                Map<Integer, Integer> itemtoEquip = new HashMap<>();
+                Map<Integer, Long> itemtoEquip = new HashMap<>();
 
                 for (String item : items) {
                     String[] param = item.split(",");
-                    int guid = Integer.parseInt(param[0]);
+                    long guid = Long.parseLong(param[0]);
                     int pos = Integer.parseInt(param[1]);
                     itemtoEquip.put(pos, guid);
                 }
@@ -2162,22 +2163,30 @@ public class GameClient {
     }
 
     public void requestBalance() {
-        SocketManager.SEND_Cb_BALANCE_CONQUETE(this.player, World.world.getBalanceWorld(this.player.get_align())
-                + ";"
-                + World.world.getBalanceArea(this.player.getCurMap().getSubArea().getArea(), this.player.get_align()));
+        if(this.player.getCurMap().getSubArea().getAlignement() == this.player.get_align()) {
+            SocketManager.SEND_Cb_BALANCE_CONQUETE(this.player, World.world.getBalanceWorldPercent(this.player.get_align())
+                    + ";"
+                    + World.world.getBalanceWorldNew(this.player.get_align()));
+        }
+        else{
+            SocketManager.SEND_Cb_BALANCE_CONQUETE(this.player, World.world.getBalanceWorldPercent(this.player.get_align())
+                    + ";"+0);
+        }
     }
 
     public void getAlignedBonus() {
-        double porc = World.world.getBalanceWorld(this.player.get_align());
-        double porcN = Math.rint((this.player.getGrade() / 2.5) + 1);
+        double porc = World.world.getBalanceWorldNew(this.player.get_align());
+        double porcN = ((Math.rint((player.getGrade() / 2.5) + 1)) * 4);
+         porcN = 1.0D + porcN/100;
         SocketManager.SEND_CB_BONUS_CONQUETE(this.player, porc + "," + porc + ","
-                + porc + ";" + porcN + "," + porcN + "," + porcN + ";" + porc
-                + "," + porc + "," + porc);
+                + porc + ";" + porcN + "," + porcN + "," + porcN + ";");
     }
 
     private void worldInfos(String packet) {
         switch (packet.charAt(2)) {
             case 'J':
+                SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(this.player.get_align()));
+                break;
             case 'V':
                 SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(1));
                 SocketManager.SEND_CW_INFO_WORLD_CONQUETE(this.player, World.world.PrismesGeoposition(2));
@@ -2284,6 +2293,38 @@ public class GameClient {
      * Dialog Packet *
      */
     private void parseDialogPacket(String packet) {
+        //final Party party = this.player.getParty();
+        final List<Player> playerAccount = this.player.getSlaves();
+        if (playerAccount != null) {
+            if (!playerAccount.isEmpty()) {
+                for (Player slave : playerAccount) {
+                            //Si l'esclave est null
+                            if (slave == null) {
+                                continue;
+                            }
+                            //Si l'esclave n'est pas sur notre map
+                            if (slave.getCurMap() != this.player.getCurMap()) {
+                                continue;
+                            }
+                            if (slave.getCurMap().hasEndFightAction(0)) {
+                                continue;
+                            }
+                            //Si l'esclave est en combat
+                            if (slave.getFight() != null) {
+                                continue;
+                            }
+
+                            //Verification recursives
+                            if (slave.getAccount() != null) {
+                                if (slave.getGameClient() != null) {
+                                    //On duplique la game action du maitre pour les slaves
+                                    TimerWaiter.addNext(() -> slave.getGameClient().parseDialogPacket(packet), 20, TimeUnit.MILLISECONDS);
+                                }
+                            }
+                }
+            }
+        }
+
         switch (packet.charAt(1)) {
             case 'C'://Demande de l'initQuestion
                 create(packet);
@@ -2298,12 +2339,14 @@ public class GameClient {
                 break;
         }
 
-        final Party party = this.player.getParty();
 
-        if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
+
+        /*if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
+
             TimerWaiter.addNext(() -> party.getPlayers().stream().filter((follower1) -> party.isWithTheMaster(follower1, false))
                     .forEach(follower -> follower.getGameClient().parseDialogPacket(packet)), 20, TimeUnit.MILLISECONDS);
-        }
+
+        }*/
     }
 
     private void create(String packet) {
@@ -2521,7 +2564,7 @@ public class GameClient {
         }
     }
 
-    private void leave() {
+    public void leave() {
         this.player.setAway(false);
         this.walk = false;
         if (this.player.getExchangeAction() != null && this.player.getExchangeAction().getType() == ExchangeAction.TALKING_WITH)
@@ -2658,12 +2701,12 @@ public class GameClient {
         if (exchangeAction.getType() == ExchangeAction.TRADING_WITH_OFFLINE_PLAYER) {
             Player seller = World.world.getPlayer(exchangeAction.getValue());
             if (seller != null && seller != this.player) {
-                int itemID = 0;
+                long itemID = 0;
                 int qua = 0;
                 int price = 0;
                 try {
-                    itemID = Integer.valueOf(infos[0]);
-                    qua = Integer.valueOf(infos[1]);
+                    itemID = Long.parseLong(infos[0]);
+                    qua = Integer.parseInt(infos[1]);
                 } catch (Exception e) {
                     e.printStackTrace();
                     return;
@@ -3083,7 +3126,7 @@ public class GameClient {
                 return;
 
             Fragment fragment = new Fragment(Database.getStatics().getObjectData().getNextId(), "");
-            for (Couple<Integer, Integer> couple : ((PlayerExchange.NpcBreakItem) value).getObjects()) {
+            for (Couple<Long, Integer> couple : ((PlayerExchange.NpcBreakItem) value).getObjects()) {
                 GameObject object = this.player.getItems().get(couple.first);
 
                 if (object == null || couple.second < 1 || object.getQuantity() < couple.second) {
@@ -3192,7 +3235,7 @@ public class GameClient {
 
             Fragment fragment = new Fragment(Database.getStatics().getObjectData().getNextId(), "");
 
-            for (Couple<Integer, Integer> couple : ((BreakingObject) value).getObjects()) {
+            for (Couple<Long, Integer> couple : ((BreakingObject) value).getObjects()) {
                 GameObject object = this.player.getItems().get(couple.first);
 
                 if (object == null || couple.second < 1 || object.getQuantity() < couple.second) {
@@ -3314,7 +3357,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int price = Integer.parseInt(infos[2]);
 
@@ -3337,7 +3380,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3367,7 +3410,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3389,7 +3432,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3413,7 +3456,7 @@ public class GameClient {
                         break;
                     case 'G'://Kamas
                         try {
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (this.player.getKamas() < numb)
                                 numb = this.player.getKamas();
                             ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).setKamas(false, numb);
@@ -3461,10 +3504,10 @@ public class GameClient {
                         if (packet.charAt(3) == '-') //On retire
                         {
                             String[] infos = packet.substring(4).split("\\|");
-                            int guid = 0;
+                            long guid = 0;
                             int qua = 0;
                             try {
-                                guid = Integer.parseInt(infos[0]);
+                                guid = Long.parseLong(infos[0]);
                                 qua = Integer.parseInt(infos[1]);
                             } catch (NumberFormatException e) {
                                 // ok
@@ -3498,7 +3541,8 @@ public class GameClient {
                         String[] infos = packet.substring(4).split("\\|");
 
                         try {
-                            int id = Integer.parseInt(infos[0]), qua = Integer.parseInt(infos[1]);
+                            long id = Long.parseLong(infos[0]);
+                            int qua = Integer.parseInt(infos[1]);
 
                             if (!this.player.hasItemGuid(id))
                                 return;
@@ -3525,7 +3569,7 @@ public class GameClient {
                     } else if (packet.charAt(3) == '-') {
                         String[] infos = packet.substring(4).split("\\|");
                         try {
-                            int id = Integer.parseInt(infos[0]);
+                            long id = Long.parseLong(infos[0]);
                             int qua = Integer.parseInt(infos[1]);
 
                             GameObject object = World.world.getGameObject(id);
@@ -3574,10 +3618,10 @@ public class GameClient {
                 if (mount == null) return;
                 switch (packet.charAt(2)) {
                     case 'O':// Objet
-                        int id = 0;
+                        long id = 0;
                         int cant = 0;
                         try {
-                            id = Integer.parseInt(packet.substring(4).split("\\|")[0]);
+                            id = Long.parseLong(packet.substring(4).split("\\|")[0]);
                             cant = Integer.parseInt(packet.substring(4).split("\\|")[1]);
                         } catch (Exception e) {
                             World.world.logger.error("Error Echange DD '" + packet + "' => " + e.getMessage());
@@ -3610,7 +3654,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3634,7 +3678,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3659,7 +3703,7 @@ public class GameClient {
                         break;
                     case 'G'://Kamas
                         try {
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (this.player.getKamas() < numb)
                                 numb = this.player.getKamas();
                             ((PlayerExchange.NpcExchange) this.player.getExchangeAction().getValue()).setKamas(false, numb);
@@ -3677,7 +3721,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcExchangePets) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3702,7 +3746,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3726,7 +3770,7 @@ public class GameClient {
                         break;
                     case 'G'://Kamas
                         try {
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (numb < 0)
                                 return;
                             if (this.player.getKamas() < numb)
@@ -3746,7 +3790,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3757,6 +3801,13 @@ public class GameClient {
                                     qua = obj.getQuantity() - quaInExch;
                                 if (qua <= 0 || obj.isAttach())
                                     return;
+
+                                int type = obj.getTemplate().getType();
+
+                                if ((ArrayUtils.contains(Constant.ITEM_SUPERTYPE_CAPTURE,type))){
+                                    SocketManager.GAME_SEND_MESSAGE(this.player,"<b>[Rachet & B(l)ank]</b> Tu risque d'avoir encore besoin de ça, je te le laisse.");
+                                    return;
+                                }
 
                                 long kamasActuel =  ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).getKamas(true);
                                 long kamas = ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).getKamasSwitchItem(guid, qua);
@@ -3773,7 +3824,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3810,7 +3861,7 @@ public class GameClient {
                         break;
                     case 'G'://Kamas
                         try {
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (this.player.getKamas() < numb)
                                 numb = this.player.getKamas();
                             ((PlayerExchange.NpcExchangeSellItem) this.player.getExchangeAction().getValue()).setKamas(false, numb);
@@ -3828,7 +3879,7 @@ public class GameClient {
                         if (packet.charAt(3) == '+') {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcBreakItem) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3845,7 +3896,7 @@ public class GameClient {
                                     return;
 
                                 int type = obj.getTemplate().getType();
-                                if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type) & !(ArrayUtils.contains( Constant.ITEM_SUPERTYPE_CAPTURE,type)) ){
+                                if( ArrayUtils.contains( Constant.FILTER_EQUIPEMENT,type) & !(ArrayUtils.contains( Constant.ITEM_SUPERTYPE_CAPTURE,type) ) ){
 
                                 }
                                 else{
@@ -3864,7 +3915,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -3888,7 +3939,7 @@ public class GameClient {
                         break;
                     case 'G'://Kamas
                         try {
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (numb < 0)
                                 return;
                             if (this.player.getKamas() < numb)
@@ -3909,7 +3960,7 @@ public class GameClient {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
 
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
                                 int quaInExch = ((PlayerExchange.NpcRessurectPets) this.player.getExchangeAction().getValue()).getQuaItem(guid, false);
 
@@ -3934,7 +3985,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -4001,12 +4052,12 @@ public class GameClient {
                             return;
                         }
 
-                        int itmID,
-                                price = 0;
+                        long itmID=0;
+                         int price = 0;
                         byte amount = 0;
 
                         try {
-                            itmID = Integer.parseInt(packet.substring(4).split("\\|")[0]);
+                            itmID = Long.parseLong(packet.substring(4).split("\\|")[0]);
                             amount = Byte.parseByte(packet.substring(4).split("\\|")[1]);
                             price = Integer.parseInt(packet.substring(4).split("\\|")[2]);
                         } catch (Exception e) {
@@ -4090,7 +4141,8 @@ public class GameClient {
                         try {
                             char c = part.charAt(0);
                             String[] infos = part.substring(1).split("\\|");
-                            int id = Integer.parseInt(infos[0]), quantity = Integer.parseInt(infos[1]);
+                            long id = Long.parseLong(infos[0]);
+                            int quantity = Integer.parseInt(infos[1]);
 
                             if (quantity <= 0) return;
                             if (c == '+') {
@@ -4187,10 +4239,10 @@ public class GameClient {
                     case 'O'://Objet
                         if (Main.INSTANCE.getTradeAsBlocked())
                             return;
-                        int guid = 0;
+                        long guid = 0;
                         int qua = 0;
                         try {
-                            guid = Integer.parseInt(packet.substring(4).split("\\|")[0]);
+                            guid = Long.parseLong(packet.substring(4).split("\\|")[0]);
                             qua = Integer.parseInt(packet.substring(4).split("\\|")[1]);
                         } catch (Exception e) {
                             World.world.logger.error("Error Echange Banque '" + packet + "' => " + e.getMessage());
@@ -4264,10 +4316,10 @@ public class GameClient {
                         break;
 
                     case 'O'://Objet
-                        int guid = 0;
+                        long guid = 0;
                         int qua = 0;
                         try {
-                            guid = Integer.parseInt(packet.substring(4).split("\\|")[0]);
+                            guid = Long.parseLong(packet.substring(4).split("\\|")[0]);
                             qua = Integer.parseInt(packet.substring(4).split("\\|")[1]);
                         } catch (Exception e) {
                             World.world.logger.error("Error Echange Coffre '" + packet + "' => " + e.getMessage());
@@ -4298,21 +4350,24 @@ public class GameClient {
                             for(String arg : packet.substring(4).split("\\+")) {
                                 String[] infos = arg.split("\\|");
                                 try {
-                                    int guid = Integer.parseInt(infos[0]);
+                                    long guid = Long.parseLong(infos[0]);
                                     int qua = Integer.parseInt(infos[1]);
                                     int quaInExch = ((PlayerExchange) this.player.getExchangeAction().getValue()).getQuaItem(guid, this.player.getId());
-
-                                    if (!this.player.hasItemGuid(guid))
+                                    if (!this.player.hasItemGuid(guid)) {
                                         return;
+                                    }
                                     GameObject obj = this.player.getItems().get(guid);
-                                    if (obj == null)
+
+                                    if (obj == null){
                                         return;
+                                    }
                                     if (qua > obj.getQuantity() - quaInExch)
                                         qua = obj.getQuantity() - quaInExch;
 
-                                    if (qua <= 0 || obj.isAttach())
+                                    if (qua <= 0 || obj.isAttach()) {
+                                        //this.player.sendMessage("Tu ne peux" + e.getMessage());
                                         return;
-
+                                    }
                                     ((PlayerExchange) this.player.getExchangeAction().getValue()).addItem(guid, qua, this.player.getId());
                                 } catch (NumberFormatException e) {
                                     this.player.sendMessage("Error : PlayerExchange : " + packet + "\n" + e.getMessage());
@@ -4323,7 +4378,7 @@ public class GameClient {
                         } else {
                             String[] infos = packet.substring(4).split("\\|");
                             try {
-                                int guid = Integer.parseInt(infos[0]);
+                                long guid = Long.parseLong(infos[0]);
                                 int qua = Integer.parseInt(infos[1]);
 
                                 if (qua <= 0)
@@ -4348,7 +4403,7 @@ public class GameClient {
                     case 'G'://Kamas
                         try {
                             if(packet.substring(3).contains("NaN")) return;
-                            long numb = Integer.parseInt(packet.substring(3));
+                            long numb = Long.parseLong(packet.substring(3));
                             if (this.player.getKamas() < numb)
                                 numb = this.player.getKamas();
                             if (numb < 0)
@@ -4375,7 +4430,7 @@ public class GameClient {
 
         TimerWaiter.addNext(() -> {
             this.player.send("EA" + (breakingObject.getCount() - i));
-            ArrayList<Couple<Integer, Integer>> objects = new ArrayList<>(breakingObject.getObjects());
+            ArrayList<Couple<Long, Integer>> objects = new ArrayList<>(breakingObject.getObjects());
             this.ready();
             breakingObject.setObjects(objects);
             this.recursiveBreakingObject(breakingObject, i + 1, count);
@@ -4390,7 +4445,8 @@ public class GameClient {
                     case 'O':
                         String[] split = packet.substring(3).split("\\|");
                         boolean adding = packet.charAt(2) == '+';
-                        int guid = Integer.parseInt(split[0]), quantity = Integer.parseInt(split[1]);
+                        long guid = Long.parseLong(split[0]);
+                        int quantity = Integer.parseInt(split[1]);
 
                         ((CraftSecure) this.player.getExchangeAction().getValue()).setPayItems(type, adding, guid, quantity);
                         break;
@@ -4422,7 +4478,7 @@ public class GameClient {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "125;6");
             return;
         }
-        for (Map.Entry<Integer, Integer> entry : this.player.getStoreItems().entrySet()) {
+        for (Map.Entry<Long, Integer> entry : this.player.getStoreItems().entrySet()) {
             if (entry.getValue() <= 0) {
                 this.kick();
                 return;
@@ -4475,10 +4531,10 @@ public class GameClient {
 
     private synchronized void putInInventory(String packet) { // TODO : géré que les cas d'echange interne sans changer celle avec des items
         if(this.player.getExchangeAction() != null && this.player.getExchangeAction().getType() == ExchangeAction.IN_MOUNTPARK) {
-            int id = -1;
+            long id = -1;
             MountPark park = this.player.getCurMap().getMountPark();
 
-            try { id = Integer.parseInt(packet.substring(3)); } catch (Exception ignored) {}
+            try { id = Long.parseLong(packet.substring(3)); } catch (Exception ignored) {}
 
             switch (packet.charAt(2)) {
                 case 'C':// Certificats -> Etable
@@ -4490,14 +4546,24 @@ public class GameClient {
                     }
 
                     GameObject object = World.world.getGameObject(id);
-                    Mount mount = World.world.getMountById(- object.getStats().getEffect(995));
+                    if(object == null){
+                        this.player.send("Im1104");
+                        return;
+                    }
+
+                    if((object.getTxtStat().get(EffectConstant.EFFECTID_INVALID_MOUNT) != null)){
+                        this.player.send("Im1104");
+                        return;
+                    }
+
+                    Mount mount = World.world.getMountById(- object.getStats().getEffect(Constant.STATS_DD_ID));
 
                     if(mount == null){
                         mount = new Mount(Constant.getMountColorByParchoTemplate(object.getTemplate().getId()), this.player.getId(), false);
                         object.clearStats();
-                        object.getStats().addOneStat(995, - (mount.getId()));
-                        object.getTxtStat().put(996, this.getPlayer().getName());
-                        object.getTxtStat().put(997, mount.getName());
+                        object.getStats().addOneStat(Constant.STATS_DD_ID, - (mount.getId()));
+                        object.getTxtStat().put(Constant.STATS_DD_OWNER, this.getPlayer().getName());
+                        object.getTxtStat().put(Constant.STATS_DD_NAME, mount.getName());
                     }
 
                     mount.setOwner(this.player.getId());
@@ -4515,7 +4581,7 @@ public class GameClient {
                     break;
 
                 case 'c':// Etable -> Certificats
-                    mount = World.world.getMountById(id);
+                    mount = World.world.getMountById((int)id);
 
                     if(!park.getEtable().contains(mount) || mount == null)
                         return;
@@ -4535,7 +4601,7 @@ public class GameClient {
                     break;
 
                 case 'g':// Equiper une dinde
-                    mount = World.world.getMountById(id);
+                    mount = World.world.getMountById((int)id);
 
                     if(!park.getEtable().contains(mount) || mount == null) {
                         SocketManager.GAME_SEND_Im_PACKET(this.player, "1104");
@@ -5071,7 +5137,8 @@ public class GameClient {
     private void sell(String packet) {
         try {
             String[] infos = packet.substring(2).split("\\|");
-            int id = Integer.parseInt(infos[0]), quantity = Integer.parseInt(infos[1]);
+            long id = Long.parseLong(infos[0]);
+            int quantity = Integer.parseInt(infos[1]);
 
             if (!this.player.hasItemGuid(id)) {
                 SocketManager.GAME_SEND_SELL_ERROR_PACKET(this);
@@ -5682,7 +5749,7 @@ public class GameClient {
 
                 this.gameParseDeplacementPacket(GA);
 
-                final Party party = this.player.getParty();
+                /*final Party party = this.player.getParty();
 
                 if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
                     TimerWaiter.addNext(() -> party.getPlayers().stream()
@@ -5692,7 +5759,7 @@ public class GameClient {
                                     follower.teleport(follower.getCurMap().getId(), oldCase.getId());
                                 follower.getGameClient().sendActions(packet);
                             }), 10, TimeUnit.MILLISECONDS);
-                }
+                }*/
                 break;
 
             case 34://Get quest on sign.
@@ -6508,13 +6575,13 @@ public class GameClient {
                         return;
                     }
                 } else {
-                    final Party party = this.player.getParty();
+                    /*final Party party = this.player.getParty();
 
                     if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
                         TimerWaiter.addNext(() -> party.getPlayers().stream()
                                 .filter((follower1) -> party.isWithTheMaster(follower1, false))
                                 .forEach(follower -> follower.getGameClient().actionAck(packet)), 10, TimeUnit.MILLISECONDS);
-                    }
+                    }*/
                     //Si le joueur s'arrete sur une case
                     int newCellID = -1;
                     try {
@@ -7588,7 +7655,7 @@ public class GameClient {
     private void destroyObject(String packet) {
         String[] infos = packet.substring(2).split("\\|");
         try {
-            int guid = Integer.parseInt(infos[0]);
+            long guid = Long.parseLong(infos[0]);
             int qua = 1;
             try {
                 qua = Integer.parseInt(infos[1]);
@@ -7626,10 +7693,10 @@ public class GameClient {
     private void dropObject(String packet) {
         if (this.player.getExchangeAction() != null) return;
 
-        int guid = -1;
+        long guid = -1;
         int qua = -1;
         try {
-            guid = Integer.parseInt(packet.substring(2).split("\\|")[0]);
+            guid = Long.parseLong(packet.substring(2).split("\\|")[0]);
             qua = Integer.parseInt(packet.split("\\|")[1]);
         } catch (Exception e) {
             e.printStackTrace();
@@ -7687,7 +7754,8 @@ public class GameClient {
 
         String[] infos = packet.substring(2).split("" + (char) 0x0A)[0].split("\\|");
         try {
-            int quantity = 1, id = Integer.parseInt(infos[0]), position = Integer.parseInt(infos[1]);
+            int quantity = 1 , position = Integer.parseInt(infos[1]);
+            long id = Long.parseLong(infos[0]);
             try {
                 quantity = Integer.parseInt(infos[2]);
             } catch (Exception ignored) {}
@@ -8150,12 +8218,12 @@ public class GameClient {
         if(!player.isOnline())
             return;
 
-        int guid = -1;
+        long guid = -1;
         int targetGuid = -1;
         int quantity = 1;
         try {
             String[] infos = packet.substring(2).split("\\|");
-            guid = Integer.parseInt(infos[0]);
+            guid = Long.parseLong(infos[0]);
             try {
                 quantity = Integer.parseInt(infos[1]);
             } catch (Exception e) {
@@ -8222,7 +8290,7 @@ public class GameClient {
             player.sendMessage("Impossible d'utiliser un objet au Gladiatrool");
             return;
         }
-        int guid = -1;
+        long guid = -1;
         int targetGuid = -1;
         short cellID = -1;
         Player target = null;
@@ -8230,7 +8298,7 @@ public class GameClient {
 
         try {
             String[] infos = packet.substring(2).split("\\|");
-            guid = Integer.parseInt(infos[0]);
+            guid = Long.parseLong(infos[0]);
             try {
                 targetGuid = Integer.parseInt(infos[1]);
             } catch (Exception e) {
@@ -8281,10 +8349,10 @@ public class GameClient {
     }
 
     private void dissociateObvi(String packet) {
-        int guid = -1;
+        long guid = -1;
         int pos = -1;
         try {
-            guid = Integer.parseInt(packet.substring(2).split("\\|")[0]);
+            guid = Long.parseLong(packet.substring(2).split("\\|")[0]);
             pos = Integer.parseInt(packet.split("\\|")[1]);
         } catch (Exception e) {
             e.printStackTrace();
@@ -8331,13 +8399,13 @@ public class GameClient {
     }
 
     private void feedObvi(String packet) {
-        int guid = -1;
+        long guid = -1;
         int pos = -1;
-        int victime = -1;
+        long victime = -1;
         try {
-            guid = Integer.parseInt(packet.substring(2).split("\\|")[0]);
+            guid = Long.parseLong(packet.substring(2).split("\\|")[0]);
             pos = Integer.parseInt(packet.split("\\|")[1]);
-            victime = Integer.parseInt(packet.split("\\|")[2]);
+            victime = Long.parseLong(packet.split("\\|")[2]);
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -8362,11 +8430,11 @@ public class GameClient {
     }
 
     private void setSkinObvi(String packet) {
-        int guid = -1;
+        long guid = -1;
         int pos = -1;
         int val = -1;
         try {
-            guid = Integer.parseInt(packet.substring(2).split("\\|")[0]);
+            guid = Long.parseLong(packet.substring(2).split("\\|")[0]);
             pos = Integer.parseInt(packet.split("\\|")[1]);
             val = Integer.parseInt(packet.split("\\|")[2]);
         } catch (Exception e) {
@@ -8959,14 +9027,14 @@ public class GameClient {
     private void waypointUse(String packet) {
         try {
             final short id = Short.parseShort(packet.substring(2));
-            final Party party = this.player.getParty();
+            /*final Party party = this.player.getParty();
 
             if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
                 party.getPlayers().stream().filter((follower1) -> party.isWithTheMaster(follower1, false) && follower1.getExchangeAction() == null).forEach(follower -> {
                     follower.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_ZAAPING, null));
                     follower.useZaap(id);
                 });
-            }
+            }*/
 
             this.player.useZaap(id);
         } catch (Exception e) {
@@ -8979,14 +9047,14 @@ public class GameClient {
             SocketManager.GAME_SEND_Im_PACKET(this.player, "183");
             return;
         }
-        final Party party = this.player.getParty();
+        /*final Party party = this.player.getParty();
 
         if(party != null && this.player.getFight() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
             party.getPlayers().stream().filter((follower1) -> party.isWithTheMaster(follower1, false) && follower1.getExchangeAction() == null).forEach(follower -> {
                 follower.setExchangeAction(new ExchangeAction<>(ExchangeAction.IN_ZAPPI, null));
                 follower.getGameClient().zaapiUse(packet);
             });
-        }
+        }*/
 
         this.player.Zaapi_use(packet);
     }

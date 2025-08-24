@@ -11,10 +11,24 @@ public class Area {
     private final int id, superArea;
     private int alignement, prismId;
     private ArrayList<SubArea> subAreas = new ArrayList<>();
+    public boolean canbeCapturable = false;
+    private final ArrayList<Integer> AreaCapturable = new ArrayList<>();
+    {
+        AreaCapturable.add(20);
+        AreaCapturable.add(21);
+        AreaCapturable.add(22);
+        AreaCapturable.add(23);
+        AreaCapturable.add(13);
+        AreaCapturable.add(14);
+        AreaCapturable.add(47);
+    }
 
     public Area(int id, int superArea) {
         this.id = id;
         this.superArea = superArea;
+        if(AreaCapturable.contains(this.id)) {
+            canbeCapturable = true;
+        }
     }
 
     public int getId() {
@@ -56,6 +70,7 @@ public class Area {
     public ArrayList<SubArea> getSubAreas() {
         return subAreas;
     }
+
 
     public ArrayList<GameMap> getMaps() {
         ArrayList<GameMap> maps = new ArrayList<>();

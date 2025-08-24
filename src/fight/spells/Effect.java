@@ -255,9 +255,10 @@ public class Effect  {
         for(Effect SE : copyOfEffects){
             SE.cell = cellSelected;
             SE.caster = spellCaster;
+
             // On cible que les CCs ou non CCs
             ArrayList<Fighter> ImpactedFighterForThisEffect;
-            if (SE.type != EffectConstant.EFFECT_TYPE_CAC && (isCC && !SE.IsCCEffet()) || (!isCC && SE.IsCCEffet()))
+            if (SE.type != EffectConstant.EFFECT_TYPE_CAC && (isCC && !SE.IsCCEffet()) || (!isCC && SE.IsCCEffet() ))
                 continue;
 
             // Si le combat est déja terminé osef
@@ -857,7 +858,7 @@ public class Effect  {
 
     private void applyEffect_PO(Fighter target, Fight fight,int dmg)//Malus PO
     {
-        int val = Formulas.getAlteredJet(dmg,args2, target);
+        int val = Formulas.getAlteredJet(dmg,args2, target,caster);
         target.addBuff(effectID, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, caster.getId()+ "", target.getId() + "," + val + "," + turn, this.effectID);
 
@@ -867,7 +868,7 @@ public class Effect  {
     }
 
     private void applyEffect_320(Fight fight, Fighter target,int dmg) {
-        int value = Formulas.getAlteredJet(dmg,args2, target);
+        int value = Formulas.getAlteredJet(dmg,args2, target,caster);
 
         target.addBuff(EffectConstant.STATS_REM_PO, value, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_PO, caster.getId()+ "", target.getId() + "," + value + "," + turn, this.effectID);
@@ -885,7 +886,7 @@ public class Effect  {
     //Buff avec valeur a calculer car variable
     private int applyEffect_Buff(Fighter target, Fight fight,boolean isUnbuffable,int dmg)
     {
-        int val = Formulas.getAlteredJet(dmg,args2, target);
+        int val = Formulas.getAlteredJet(dmg,args2, target,caster);
         target.addBuff(effectID, val, turn, args1,args2,args3, isUnbuffable, spellID, caster, true);
         sendClientBuff(fight,effectID,val,target.getId(),false);
         return val;
@@ -1187,7 +1188,7 @@ public class Effect  {
 
     //Retrait PM (debuffable) - Fini !
     private int applyEffect_RetMP(Fighter target, Fight fight,int dmg) {
-        int value = Formulas.getAlteredJet(dmg,args2, target);
+        int value = Formulas.getAlteredJet(dmg,args2, target,caster);
         int retrait = Formulas.getPointsLost('m', value, caster, target);
 
         if ((value - retrait) > 0)
@@ -1217,7 +1218,7 @@ public class Effect  {
 
     // Refait a tester // - PA, no esquivables
     private void applyEffect_168(Fighter cible, Fight fight,int dmg) {
-        int value = Formulas.getAlteredJet(dmg,args2, cible);
+        int value = Formulas.getAlteredJet(dmg,args2, cible,caster);
         cible.addBuff(effectID, value, turn, args1,args2,args3, true, spellID, caster, true);
 
         //if (turn <= 1 )
@@ -1231,7 +1232,7 @@ public class Effect  {
 
     // Refait a tester // - PM, no esquivables
     private void applyEffect_169(Fighter cible, Fight fight,int dmg) {
-        int value = Formulas.getAlteredJet(dmg,args2, cible);
+        int value = Formulas.getAlteredJet(dmg,args2, cible,caster);
 
         // Si c'est un buff c'est pour plusieurs tours ou infini si -1 (et potentiellement débuffable)
         if (turn != 0 ) {
@@ -1255,7 +1256,7 @@ public class Effect  {
     // Heal (PV rendu)
     private void applyEffect_81(Fighter target, Fight fight, boolean isCaC,int dmg) {
         if (turn == 0) {
-            int heal = Formulas.getAlteredJet(dmg,args2, target);
+            int heal = Formulas.getAlteredJet(dmg,args2, target,caster);
 
             // Why ??????   heal = getMaxMinSpell(cible, heal);
             int pdvMax = target.getPdvMax();
@@ -1277,7 +1278,7 @@ public class Effect  {
     // Vol de vie (valeur fixe)
     private void applyEffect_82(Fighter target, Fight fight,int dmg) {
         if (turn == 0) {
-            int finalDommage = Formulas.getAlteredJet(dmg,args2, target);
+            int finalDommage = Formulas.getAlteredJet(dmg,args2, target,caster);
             //finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
             if (finalDommage > target.getPdv())
                 finalDommage = target.getPdv();//Target va mourrir
@@ -1301,7 +1302,7 @@ public class Effect  {
 
     // Vol PA corrigé !
     private void applyEffect_84(Fighter target, Fight fight,int dmg) {
-        int value = Formulas.getAlteredJet(dmg,args2, target);
+        int value = Formulas.getAlteredJet(dmg,args2, target,caster);
         int val = Formulas.getPointsLost('a', value, caster, target);
         if (val < value)
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 308, caster.getId() + "", target.getId() + "," + (value - val), this.effectID);
@@ -1397,7 +1398,7 @@ public class Effect  {
 
             }
 
-            int dmg = Formulas.getAlteredJet(dmge,args2, target);//%age de pdv inflig�
+            int dmg = Formulas.getAlteredJet(dmge,args2, target,caster);//%age de pdv inflig�
             int val = Math.round(caster.getPdv() / 100 * dmg);//Valeur des d�gats
             //retrait de la r�sist fixe
             val -= resF;
@@ -1574,7 +1575,7 @@ public class Effect  {
     // Du soin fixe qui ne prend en compte que les bonus /malus en soin (sans l'intel)
     private void applyEffect_143(Fighter cible, Fight fight,int dmge) {
         if (turn <= 0) {
-            int val = Formulas.getAlteredJet(dmge,args2, cible);
+            int val = Formulas.getAlteredJet(dmge,args2, cible,caster);
             if(val == -1)return;
 
             int heals = caster.getTotalStats().getEffect(EffectConstant.STATS_ADD_SOIN) - caster.getTotalStats().getEffect(EffectConstant.STATS_REM_SOIN);
@@ -1599,7 +1600,7 @@ public class Effect  {
     private void applyEffect_LifeSteal(Fighter target, Fight fight,
                                        boolean isCaC,int dmge) {
         if (!isBuff) {
-            int dmg = Formulas.getAlteredJet(dmge,args2, target);
+            int dmg = Formulas.getAlteredJet(dmge,args2, target,caster);
             int finalDommage = this.calculFinalDommage(fight, caster, target, this.elem, dmg, false, isCaC, spellID);
             finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,caster,fight,this.elem);
             //Peut etre du Heal si Chance d'eca du coup
@@ -1632,7 +1633,7 @@ public class Effect  {
                                         boolean isCaC,int dmge)
     {
         if (turn == 0) {
-            int dmg = Formulas.getAlteredJet(dmge,args2, target);
+            int dmg = Formulas.getAlteredJet(dmge,args2, target,caster);
             int finalDommage = this.calculFinalDommage(fight, this.caster, target, this.elem, dmg, false, isCaC, spellID);
             finalDommage = applySpecificCasesBeforeDamage(finalDommage,target,this.caster,fight,this.elem);
 
@@ -1652,7 +1653,7 @@ public class Effect  {
     }
 
     private void applyEffect_RetAP(Fighter target, Fight fight,int dmge) {
-        int value = Formulas.getAlteredJet(dmge,args2, target);
+        int value = Formulas.getAlteredJet(dmge,args2, target,caster);
         int remove = Formulas.getPointsLost('a', value, caster, target);
 
         if ((value - remove) > 0)
@@ -1684,7 +1685,7 @@ public class Effect  {
     // Heal  TODO : Why ????   if (isCaC) return;
     private void applyEffect_108(Fighter cible, Fight fight, boolean isCaC,int dmge) {
         if (turn <= 0) {
-            int heal = Formulas.getAlteredJet(dmge,args2, cible);
+            int heal = Formulas.getAlteredJet(dmge,args2, cible,caster);
 
             // Why ??????   heal = getMaxMinSpell(cible, heal);
             int pdvMax = cible.getPdvMax();
@@ -1705,7 +1706,7 @@ public class Effect  {
     //Dommage pour le lanceur (pas tout le temps fixe) - Ca n'existe pas en buff
     private void applyEffect_109(Fight fight,int dmge)
     {
-            int dmg = Formulas.getAlteredJet(dmge,args2, caster);
+            int dmg = Formulas.getAlteredJet(dmge,args2, caster,caster);
             int finalDommage = calculFinalDommage(fight, caster, caster, -1, dmg, false, false, spellID);
             //finalDommage = applyOnHitBuffs(finalDommage, caster, caster, fight, Constant.ELEMENT_NULL);//S'il y a des buffs sp�ciaux
 
@@ -1719,7 +1720,7 @@ public class Effect  {
 
     // Vol de kamas ca n'existe pas en buff
     private void applyEffect_130(Fight fight, Fighter target,int dmge) {
-        int kamas = Formulas.getAlteredJet(dmge,args2, target);
+        int kamas = Formulas.getAlteredJet(dmge,args2, target,caster);
         if (caster.getPlayer() == null) return;
 
         if (target.getPlayer() != null) {
@@ -2030,7 +2031,7 @@ public class Effect  {
 
     // On vol des stats brute EAU
     private void applyEffect_266(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_CHAN, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_CHAN, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2045,7 +2046,7 @@ public class Effect  {
 
     // On vol des stats brute VIE
     private void applyEffect_267(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_VITA, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_VITA, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2060,7 +2061,7 @@ public class Effect  {
 
     // On vol des stats brute AGI
     private void applyEffect_268(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_AGIL, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_AGIL, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2075,7 +2076,7 @@ public class Effect  {
 
     // On vol des stats brute INT
     private void applyEffect_269(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_INTE, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_INTE, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2090,7 +2091,7 @@ public class Effect  {
 
     // On vol des stats brute SAG
     private void applyEffect_270(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_SAGE, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_SAGE, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);
@@ -2105,7 +2106,7 @@ public class Effect  {
 
     // On vol des stats brute FOR
     private void applyEffect_271(Fight fight, Fighter target,int dmge) {
-        int val = Formulas.getAlteredJet(dmge,args2, target);
+        int val = Formulas.getAlteredJet(dmge,args2, target,caster);
         int vol = 0;
         target.addBuff(EffectConstant.STATS_REM_FORC, val, turn, args1,args2,args3, true, spellID, caster, true);
         SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, EffectConstant.STATS_REM_FORC, caster.getId() + "", target.getId() + "," + val + "," + turn, this.effectID);

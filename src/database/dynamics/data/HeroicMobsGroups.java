@@ -127,7 +127,7 @@ public class HeroicMobsGroups extends AbstractDAO<Object> {
             while (RS.next()) {
                 ArrayList<GameObject> objects = new ArrayList<>();
                 for(String value : RS.getString("objects").split(",")) {
-                    final GameObject object = World.world.getGameObject(Integer.parseInt(value));
+                    final GameObject object = World.world.getGameObject(Long.parseLong(value));
                     if(object != null)
                         objects.add(object);
                 }

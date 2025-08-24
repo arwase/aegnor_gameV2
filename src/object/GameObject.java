@@ -31,7 +31,7 @@ public class GameObject {
     protected ObjectTemplate template;
     protected int quantity = 1;
     protected int position = Constant.ITEM_POS_NO_EQUIPED;
-    protected int guid;
+    protected long guid;
     protected int obvijevanPos;
     protected int obvijevanLook;
     protected int obvijevanId;
@@ -46,7 +46,7 @@ public class GameObject {
 
     public byte modification = -1;
 
-    public GameObject(int Guid, int template, int qua, int pos, String strStats, int puit,int rarity, int mimibiote) {
+    public GameObject(long Guid, int template, int qua, int pos, String strStats, int puit,int rarity, int mimibiote) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
@@ -59,7 +59,7 @@ public class GameObject {
         this.getStatsClass();
     }
 
-    public GameObject(int Guid) {
+    public GameObject(long Guid) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(8378);
         this.quantity = 1;
@@ -68,7 +68,7 @@ public class GameObject {
         this.rarity = 0;
     }
 
-    public GameObject(int Guid, int template, int qua, int pos, Stats stats, ArrayList<Effect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit, int rarity, int mimibiote) {
+    public GameObject(long Guid, int template, int qua, int pos, Stats stats, ArrayList<Effect> effects, Map<Integer, Integer> _SoulStat, Map<Integer, String> _txtStats, int puit, int rarity, int mimibiote) {
         this.guid = Guid;
         this.template = World.world.getObjTemplate(template);
         this.quantity = qua;
@@ -158,7 +158,7 @@ public class GameObject {
         this.setModification();
     }
 
-    public int setId() {
+    public long setId() {
         this.guid = Database.getStatics().getObjectData().getNextId();
         return this.getGuid();
     }
@@ -206,7 +206,7 @@ public class GameObject {
     public String stringObjetoConGuino() {
         StringBuilder str = new StringBuilder();
         try {
-            str.append(Integer.toHexString(guid)).append("~")
+            str.append(Long.toHexString(guid)).append("~")
                     .append(Integer.toHexString(getTemplate().getId())).append("~").append(
                     Integer.toHexString(quantity))
                     .append("~");
@@ -438,7 +438,6 @@ public class GameObject {
                         }
                     }
 
-
                     if( statMax == 0 && statsString.equals("70")){
                         statsString = "79";
                         statMax = JobAction.getStatBaseMaxLegendaire(this.template, statsString );
@@ -489,7 +488,7 @@ public class GameObject {
                             else {
                                 Stats.addOneStat(id, statMax);
 
-                                //System.out.println("["+ this.getGuid() +"]"+ "!! Item illégal :"+  this.template.getName() + " Stat "+ id + " valeur " + Integer.parseInt(stats[1], 16) + " Donc ligne a " + poidligne + " alors que max " + statMax);
+                                System.out.println("["+ this.getGuid() +"]"+ "!! Item illégal :"+  this.template.getName() + " Stat "+ id + " valeur " + Integer.parseInt(stats[1], 16) + " Donc ligne a " + poidligne + " alors que max " + statMax);
                                 this.txtStats.put(Constant.STATS_CHANGE_BY, "Arwase [Correction]");
                                 this.setModification();
                             }
@@ -542,7 +541,7 @@ public class GameObject {
     }
 
     public static String whoGotObject(GameObject gameObject) {
-        int id = gameObject.getGuid();
+        Long id = gameObject.getGuid();
 
         Collection<Account> compte = World.world.getAccounts();
         Player Owner = null;
@@ -578,8 +577,8 @@ public class GameObject {
             for (Entry<Integer, Player> joueurs : players.entrySet()) {
                 Player joueur = joueurs.getValue();
 
-                Map<Integer, GameObject> objectsOfPlayer = joueur.getItems();
-                for (Entry<Integer, GameObject> item : objectsOfPlayer.entrySet()) {
+                Map<Long, GameObject> objectsOfPlayer = joueur.getItems();
+                for (Entry<Long, GameObject> item : objectsOfPlayer.entrySet()) {
                     if (item.getValue() == gameObject) {
                         Owner = joueur;
                         Origine = "inventaire du joueur" + joueur.getId();
@@ -588,8 +587,8 @@ public class GameObject {
 
                 }
 
-                Map<Integer, Integer> objectsventeofPlayer = joueur.getStoreItems();
-                for (Entry<Integer, Integer> itemenvente : objectsventeofPlayer.entrySet()) {
+                Map<Long, Integer> objectsventeofPlayer = joueur.getStoreItems();
+                for (Entry<Long, Integer> itemenvente : objectsventeofPlayer.entrySet()) {
                     if (itemenvente.getValue() == gameObject.getGuid()) {
                         Owner = joueur;
                         Origine = "inventaire de vente du joueur";
@@ -608,9 +607,9 @@ public class GameObject {
                 int idOwner = trunks.getValue().getOwnerId();
                 int idcoffre = trunks.getValue().getId();
 
-                Map<Integer, GameObject> ObjectinTrunks = trunks.getValue().getObject();
+                Map<Long, GameObject> ObjectinTrunks = trunks.getValue().getObject();
 
-                for (Entry<Integer, GameObject> object : ObjectinTrunks.entrySet()) {
+                for (Entry<Long, GameObject> object : ObjectinTrunks.entrySet()) {
                     if (object.getValue() == gameObject) {
                         Owner = World.world.getPlayer(idOwner);
                         Origine = "Dans un coffre " + idcoffre + " Appartenant a " + idOwner;
@@ -665,7 +664,7 @@ public class GameObject {
 
     public String stringObjectMimibiote()
     {
-        StringBuilder str = new StringBuilder(String.valueOf(Integer.toHexString(this.guid))
+        StringBuilder str = new StringBuilder(String.valueOf(Long.toHexString(this.guid))
         + "~" + Integer.toHexString(getTemplate().getId())
         + "~" + Integer.toHexString(getQuantity()) + "~"
                 + ((getPosition() == -1) ? "" : Integer.toHexString(getPosition()) + "~"
@@ -713,8 +712,12 @@ public class GameObject {
         this.setModification();
     }
 
-    public int getGuid() {
+    public long getGuid() {
         return guid;
+    }
+
+    public void setGuid(long guid) {
+        this.guid= guid;
     }
 
     public Map<Integer, Integer> getSoulStat() {
@@ -773,7 +776,7 @@ public class GameObject {
         if(castrated) mount.setCastrated();
 
         this.clearStats();
-        this.getStats().addOneStat(995, - (mount.getId()));
+        this.getStats().addOneStat(995, - ((int)mount.getId()));
         this.getTxtStat().put(996, player.getName());
         this.getTxtStat().put(997, mount.getName());
         this.setModification();
@@ -807,7 +810,7 @@ public class GameObject {
 
     public String parseItem() {
         String posi = position == Constant.ITEM_POS_NO_EQUIPED ? "" : Integer.toHexString(position);
-        return Integer.toHexString(guid) + "~"
+        return Long.toHexString(guid) + "~"
                 + Integer.toHexString(template.getId()) + "~"
                 + Integer.toHexString(quantity) + "~" + posi + "~"
                 + parseStatsString() +  "~"
@@ -1226,7 +1229,7 @@ public class GameObject {
         if (pos == -1)
             strPos = "";
         String upPacket = "OCO";
-        upPacket = upPacket + Integer.toHexString(getGuid()) + "~";
+        upPacket = upPacket + Long.toHexString(getGuid()) + "~";
         upPacket = upPacket + Integer.toHexString(getTemplate().getId()) + "~";
         upPacket = upPacket + Integer.toHexString(getQuantity()) + "~";
         upPacket = upPacket + strPos + "~";

@@ -60,7 +60,6 @@ public class Dopeul {
                     World.world.addGameObject(obj, true);
                 removeObject(player, doplon, 1);
                 break;
-
             case 3://Reset spell
                 ArrayList<Integer> doplons = hasQuaDoplon(player, 7);
 

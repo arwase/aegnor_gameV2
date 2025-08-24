@@ -98,7 +98,7 @@ public class Account {
             if (!allItem.equals("")) {
                 for (String item : allItem.split("\\|")) {
                     if (!item.equals("")) {
-                        GameObject obj = World.world.getGameObject(Integer.parseInt(item));
+                        GameObject obj = World.world.getGameObject(Long.parseLong(item));
                         if (obj != null)
                             this.bank.add(obj);
                     }

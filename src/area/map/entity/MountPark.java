@@ -46,7 +46,7 @@ public class MountPark {
         }
     }
 
-    public void setData(int owner, int guild, int price, String raising, String objects, String objDurab, String etable) {
+    public void setData(int owner, int guild, int price, String etable, String objects, String objDurab, String raising) {
         this.owner = owner;
         this.guild = World.world.getGuild(guild);
         this.price = price;
@@ -65,12 +65,14 @@ public class MountPark {
             }
         }
         //chargement de la liste des dragodinde dans l'Ã©table
-        for(String i: raising.split(";"))
+        for(String i: etable.split(";"))
         {
             try {
                 Mount DD = World.world.getMountById(Integer.parseInt(i));
-                if(DD != null)
-                    this.etable.add(DD);
+                if(!World.world.checkIfDDAlreadySomeWhereElse(Integer.parseInt(i))) {
+                    if (DD != null)
+                        this.etable.add(DD);
+                }
             } catch (Exception e) {
             }
         }
@@ -87,21 +89,24 @@ public class MountPark {
                 this.objDurab.put(cellId, inDurab);
             }
         }
-        if(!etable.isEmpty())
-            for(String dd: etable.split(";")) {
+        if(!raising.isEmpty())
+            for(String dd: raising.split(";")) {
                 try {
-                    this.raising.add(Integer.parseInt(dd));
-                    Mount mount = World.world.getMountById(Integer.parseInt(dd));
-                    if(mount != null) {
-                        mount.setMapId(this.map.getId());
-                        mount.setCellId(mount.getCellId());
+                    if(!World.world.checkIfDDAlreadySomeWhereElse(Integer.parseInt(dd))) {
+                        this.raising.add(Integer.parseInt(dd));
+                        Mount mount = World.world.getMountById(Integer.parseInt(dd));
+                        if (mount != null) {
+                            mount.setMapId(this.map.getId());
+                            mount.setCellId(mount.getCellId());
+                        }
                     }
                 } catch(Exception ignored) {
                 }
             }
         if(this.map != null)
             this.map.setMountPark(this);
-        for(String firstCut: etable.split(";"))//PosseseurID,DragoID;PosseseurID2,DragoID2;PosseseurID,DragoID3
+
+        /*for(String firstCut: raising.split(";"))//PosseseurID,DragoID;PosseseurID2,DragoID2;PosseseurID,DragoID3
         {
             try	{
                 String[] secondCut = firstCut.split(",");
@@ -111,7 +116,7 @@ public class MountPark {
                 this.raising.add(Integer.parseInt(secondCut[1]), Integer.parseInt(secondCut[0]));
             }catch(Exception ignored) {
             }
-        }
+        }*/
     }
 
     public void setInfos(GameMap map, int cellid, int size, int placeOfSpawn, int door, String cellOfObject, int maxObject) {
@@ -151,7 +156,7 @@ public class MountPark {
         this.cellOfObject = (ArrayList<Integer>) array.clone();
     }
 
-    public void setInfos(int owner, GameMap map, int cell, int size, int guild, int price, int placeOfSpawn, String raising, int door, String cellOfObject, int maxObject, String objects, String objDurab, String etable)
+    /*public void setInfos(int owner, GameMap map, int cell, int size, int guild, int price, int placeOfSpawn, String raising, int door, String cellOfObject, int maxObject, String objects, String objDurab, String etable)
     {
 
         this.owner = owner;
@@ -240,7 +245,7 @@ public class MountPark {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
     public int getOwner() {
         return this.owner;

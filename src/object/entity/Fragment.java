@@ -9,7 +9,7 @@ public class Fragment extends GameObject {
 
     private ArrayList<Couple<Integer, Integer>> runes;
 
-    public Fragment(int Guid, String runes) {
+    public Fragment(long Guid, String runes) {
         super(Guid);
         this.runes = new ArrayList<>();
 

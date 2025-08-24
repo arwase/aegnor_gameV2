@@ -1061,7 +1061,7 @@ public class CommandAdmin extends AdminUser {
             String mess = "==========\n"
                     + "Liste d'items sur le personnage :\n";
             this.sendMessage(mess);
-            for (Entry<Integer, GameObject> entry : perso.getItems().entrySet()) {
+            for (Entry<Long, GameObject> entry : perso.getItems().entrySet()) {
                 mess = entry.getValue().getGuid() + " || "
                         + entry.getValue().getTemplate().getName() + " || "
                         + entry.getValue().getQuantity();
@@ -1122,7 +1122,7 @@ public class CommandAdmin extends AdminUser {
             String mess = "==========\n"
                     + "Liste d'items sur le personnage :\n";
             this.sendMessage(mess);
-            for (Entry<Integer, GameObject> entry : perso.getItems().entrySet()) {
+            for (Entry<Long, GameObject> entry : perso.getItems().entrySet()) {
                 mess = entry.getValue().getGuid() + " || "
                         + entry.getValue().getTemplate().getName() + " || "
                         + entry.getValue().getQuantity();
@@ -1186,7 +1186,7 @@ public class CommandAdmin extends AdminUser {
             }
             String mess = "==========\n" + "Liste d'items dans le Store :";
             this.sendMessage(mess);
-            for (Entry<Integer, Integer> obj : perso.getStoreItems().entrySet()) {
+            for (Entry<Long, Integer> obj : perso.getStoreItems().entrySet()) {
                 GameObject entry = World.world.getGameObject(obj.getKey());
                 mess = entry.getGuid() + " || " + entry.getTemplate().getName()
                         + " || " + entry.getQuantity();
@@ -1215,7 +1215,7 @@ public class CommandAdmin extends AdminUser {
             String mess = "==========\n" + "Liste d'items dans la monture :";
             this.sendMessage(mess);
             if(perso.getMount() != null) {
-                for (Entry<Integer, GameObject> entry : perso.getMount().getObjects().entrySet()) {
+                for (Entry<Long, GameObject> entry : perso.getMount().getObjects().entrySet()) {
                     mess = entry.getValue().getGuid() + " || "
                             + entry.getValue().getTemplate().getName() + " || "
                             + entry.getValue().getQuantity();
@@ -1571,7 +1571,7 @@ public class CommandAdmin extends AdminUser {
 
             list.addAll(perso.getItems().values());
             for (GameObject obj : list) {
-                int guid = obj.getGuid();
+                long guid = obj.getGuid();
                 SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(perso, guid);
                 perso.deleteItem(guid);
                 i++;
@@ -2711,8 +2711,7 @@ public class CommandAdmin extends AdminUser {
             this.sendMessage("Vous avez renomme la guilde en "
                     + newName + ".");
             return;
-        }
-        else if (command.equalsIgnoreCase("SETGUILDRIGHTANDRANK"))
+        } else if (command.equalsIgnoreCase("SETGUILDRIGHTANDRANK"))
         {
             int right = -1;
             int rank = -1;
@@ -2743,8 +2742,25 @@ public class CommandAdmin extends AdminUser {
             }
 
             return;
-        }
-        else if (command.equalsIgnoreCase("A"))
+        } else if (command.equalsIgnoreCase("RESETGUILDMSG"))
+        {
+            String ancName = "";
+            String newName = "";
+            int idGuild = -1;
+            if (infos.length > 1)
+                ancName = infos[1];
+            newName = infos[2];
+            idGuild = World.world.getGuildByName(ancName);
+            if (idGuild == -1) {
+                String mess = "La guilde n'existe pas.";
+                this.sendMessage(mess);
+                return;
+            }
+            World.world.getGuild(idGuild).setAnnounce("");
+            this.sendMessage("Vous avez réinitialisé le message de la guilde  "
+                    + newName + ".");
+            return;
+        } else if (command.equalsIgnoreCase("A"))
         {
             infos = msg.split(" ", 2);
             String prefix = "<b>Server</b>";
@@ -2915,10 +2931,10 @@ public class CommandAdmin extends AdminUser {
             return;
         } else if (command.equalsIgnoreCase("SETSTATS"))
         {
-            int obj = -1;
+            long obj = -1;
             String stats = "";
             try {
-                obj = Integer.parseInt(infos[1]);
+                obj = Long.parseLong(infos[1]);
                 stats = infos[2];
             } catch (Exception e) {
                 // ok
@@ -3513,9 +3529,9 @@ public class CommandAdmin extends AdminUser {
             return;
         } else if (command.equalsIgnoreCase("PETSRES"))
         {
-            int objID = 1;
+            long objID = 1;
             try {
-                objID = Integer.parseInt(infos[1]);
+                objID = Long.parseLong(infos[1]);
             } catch (Exception e) {
                 // ok
             }
@@ -5424,7 +5440,7 @@ public class CommandAdmin extends AdminUser {
                 String mess = "==========\n"
                         + "Liste d'items sur le personnage :\n";
                 this.sendMessage(mess);
-                for (Entry<Integer, GameObject> entry : perso.getItems().entrySet()) {
+                for (Entry<Long, GameObject> entry : perso.getItems().entrySet()) {
                     mess = entry.getValue().getGuid() + " || "
                             + entry.getValue().getTemplate().getName() + " || "
                             + entry.getValue().getQuantity();
@@ -5486,7 +5502,7 @@ public class CommandAdmin extends AdminUser {
                 }
                 String mess = "==========\n" + "Liste d'items dans le Store :";
                 this.sendMessage(mess);
-                for (Entry<Integer, Integer> obj : perso.getStoreItems().entrySet()) {
+                for (Entry<Long, Integer> obj : perso.getStoreItems().entrySet()) {
                     GameObject entry = World.world.getGameObject(obj.getKey());
                     mess = entry.getGuid() + " || " + entry.getTemplate().getName()
                             + " || " + entry.getQuantity();
@@ -5516,7 +5532,7 @@ public class CommandAdmin extends AdminUser {
                 String mess = "==========\n" + "Liste d'items dans la monture :";
                 this.sendMessage(mess);
                 if(perso.getMount() != null) {
-                    for (Entry<Integer, GameObject> entry : perso.getMount().getObjects().entrySet()) {
+                    for (Entry<Long, GameObject> entry : perso.getMount().getObjects().entrySet()) {
                         mess = entry.getValue().getGuid() + " || "
                                 + entry.getValue().getTemplate().getName() + " || "
                                 + entry.getValue().getQuantity();

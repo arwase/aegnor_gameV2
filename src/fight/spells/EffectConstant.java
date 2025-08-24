@@ -22,6 +22,7 @@ public class EffectConstant {
     public static final int EFFECTID_MINIMUMDAMAGE = 781;
     public static final int EFFECTID_MAXIMUMDAMAGE = 782;
     public static final int EFFECTID_BOOST_CAP = 750;
+    public static final int EFFECTID_INVALID_MOUNT = 994;
 
     public static final int[] IS_DIRECTDAMMAGE_EFFECT = {82,85,86,87,88,89,91,92,93,94,95,96,97,98,99,100,109,275,276,277,278,279,670,671,672};
     public static final int[] NONEEDTARGET_EFFECT = {4,180,181,185,200,400,401,402,780,50,51,120,109,783,784};

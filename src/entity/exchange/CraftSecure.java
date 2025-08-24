@@ -23,8 +23,8 @@ public class CraftSecure extends PlayerExchange {
     private int maxCase = 9;
     private boolean maging = false;
 
-    private ArrayList<Couple<Integer, Integer>> payItems = new ArrayList<>();
-    private ArrayList<Couple<Integer, Integer>> payItemsIfSuccess = new ArrayList<>();
+    private ArrayList<Couple<Long, Integer>> payItems = new ArrayList<>();
+    private ArrayList<Couple<Long, Integer>> payItemsIfSuccess = new ArrayList<>();
 
     public CraftSecure(Player player1, Player player2) {
         super(player1, player2);
@@ -53,7 +53,7 @@ public class CraftSecure extends PlayerExchange {
         if (jobAction == null)
             return;
 
-        Map<Player, ArrayList<Couple<Integer, Integer>>> items = new HashMap<>();
+        Map<Player, ArrayList<Couple<Long, Integer>>> items = new HashMap<>();
         items.put(this.player1, this.items1);
         items.put(this.player2, this.items2);
 
@@ -99,9 +99,9 @@ public class CraftSecure extends PlayerExchange {
     }
 
     @SafeVarargs
-    private final void giveObjects(ArrayList<Couple<Integer, Integer>>... arrays) {
-        for(ArrayList<Couple<Integer, Integer>> array : arrays) {
-            for (Couple<Integer, Integer> couple : array) {
+    private final void giveObjects(ArrayList<Couple<Long, Integer>>... arrays) {
+        for(ArrayList<Couple<Long, Integer>> array : arrays) {
+            for (Couple<Long, Integer> couple : array) {
                 if (couple.second == 0)
                     continue;
 
@@ -160,7 +160,7 @@ public class CraftSecure extends PlayerExchange {
         }
     }
 
-    public void setPayItems(byte type, boolean adding, int guid, int quantity) {
+    public void setPayItems(byte type, boolean adding, long guid, int quantity) {
         GameObject object = World.world.getGameObject(guid);
 
         if (object == null)
@@ -186,8 +186,8 @@ public class CraftSecure extends PlayerExchange {
         if (object.getQuantity() < quantity)
             quantity = object.getQuantity();
 
-        ArrayList<Couple<Integer, Integer>> items = (type == 1 ? this.payItems : this.payItemsIfSuccess);
-        Couple<Integer, Integer> couple = getCoupleInList(items, object.getGuid());
+        ArrayList<Couple<Long, Integer>> items = (type == 1 ? this.payItems : this.payItemsIfSuccess);
+        Couple<Long, Integer> couple = getCoupleInList(items, object.getGuid());
         String add = "|" + object.getTemplate().getId() + "|" + object.parseStatsString();
 
         if (couple != null) {
@@ -203,8 +203,8 @@ public class CraftSecure extends PlayerExchange {
     }
 
     private void removeItem(GameObject object, int quantity, byte type) {
-        ArrayList<Couple<Integer, Integer>> items = (type == 1 ? this.payItems : this.payItemsIfSuccess);
-        Couple<Integer, Integer> couple = getCoupleInList(items, object.getGuid());
+        ArrayList<Couple<Long, Integer>> items = (type == 1 ? this.payItems : this.payItemsIfSuccess);
+        Couple<Long, Integer> couple = getCoupleInList(items, object.getGuid());
 
         if(couple == null) return;
         int newQua = couple.second - quantity;

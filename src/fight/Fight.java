@@ -2468,8 +2468,6 @@ public class Fight {
             else
                 SocketManager.GAME_SEND_GJK_PACKET(perso, 2, 0, 1, 0, timeRestant, getType());
 
-
-
             SocketManager.GAME_SEND_FIGHT_PLACES_PACKET(perso.getGameClient(), getMap().getPlaces(), getSt1());
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 3, 950, perso.getId() + "", perso.getId() + "," + EffectConstant.ETAT_PORTE + ",0");
             SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 3, 950, perso.getId() + "", perso.getId() + "," + EffectConstant.ETAT_PORTEUR + ",0");
@@ -2481,10 +2479,9 @@ public class Fight {
             getTeam0().put(perso.getId(), f);
             perso.setFight(this);
 
-            //f.setCell(cell);
-            if(f.getPlayer().lastfightmap == f.getPlayer().getCurMap().getId() && getMap().getCase(f.getPlayer().lastfightcell.getId()).getFighters().isEmpty()){
-                if(cell != f.getPlayer().lastfightcell ){
-                   f.setCell(getMap().getCase(f.getPlayer().lastfightcell.getId()));
+            if(perso != null && perso.lastfightmap == perso.getCurMap().getId() && getMap().getCase(perso.lastfightcell.getId()).getFighters().isEmpty()){
+                if(cell != perso.lastfightcell ){
+                   f.setCell(getMap().getCase(perso.lastfightcell.getId()));
                 }
                 else{
                     f.setCell(cell);
@@ -3091,7 +3088,7 @@ public class Fight {
                 }
 
 
-                boolean isCC = fighter.testIfCC(spell.getTauxCC(), spell, fighter);
+                boolean isCC = fighter.testIfCC(spell.getTauxCC(), spell);
                 String sort = spell.getSpellID() + "," + cell + "," + spell.getSpriteID() + "," + spell.getLevel() + "," + spell.getSpriteInfos();
                 SocketManager.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 300, fighter.getId() + "", sort); // xx lance le sort
 
@@ -5092,7 +5089,7 @@ public class Fight {
                                     continue;
                                 }
                                 if (Formulas.getRandomValue(1, 100) <= Formulas.totalCaptChance(playerSoulStone.first, f.getPlayer())) {// Si le joueur obtiens la capture Retire la pierre vide au personnage et lui envoie ce changement
-                                    int emptySoulStone = f.getPlayer().getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
+                                    long emptySoulStone = f.getPlayer().getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
                                     f.getPlayer().deleteItem(emptySoulStone);
                                     SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(f.getPlayer(), emptySoulStone);
                                     this.setCaptWinner(f.getId());
@@ -5183,7 +5180,7 @@ public class Fight {
                                 }
                                 else {
                                     // Retire le filet au personnage et lui envoie ce changement
-                                    int filet = player.getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
+                                    long filet = player.getObjetByPos(Constant.ITEM_POS_ARME).getGuid();
                                     player.deleteItem(filet);
                                     SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, filet);
 
@@ -5568,13 +5565,16 @@ public class Fight {
                     /** Xp,kamas **/
                     if (player != null) {
                         //xpPlayer = FormuleOfficiel.getXp(i, winners, totalXP, nbbonus, (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners);
-                        xpPlayer2 = FormuleOfficiel.getXp2(i, winners, totalXP,BonuslvlMoyen , (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners,BonusPerdiffip,BonusPerdiffclasse);
+
+                        xpPlayer2 = FormuleOfficiel.getXp2(i, winners, totalXP,BonuslvlMoyen , (getMobGroup() != null ? getMobGroup().getStarBonus() : 0), challXp, lvlMax, lvlMin, lvlLoosers, lvlWinners,BonusPerdiffip,BonusPerdiffclasse,player.isXpOffilike);
                         //player.sendMessage("Avec l'ancienne méthode de calcul tu aurais gagné " + xpPlayer+ " XP");
 
                         XP.set(xpPlayer2);
 
-                        percentBonusFinal = ((int) Math.round((BonusPerdiffip*100)-100) + (int) Math.round((BonusPerdiffclasse*100)-100) +(int) Math.round((bonusVip*100)-100)   );
-
+                        if(player.isXpOffilike)
+                            percentBonusFinal =0;
+                        else
+                            percentBonusFinal =((int) Math.round((BonusPerdiffip*100)-100) + (int) Math.round((BonusPerdiffclasse*100)-100) +(int) Math.round((bonusVip*100)-100));
 
                         if (this.getType() == Constant.FIGHT_TYPE_PVT && win == 1) {
                             if (player != null && memberGuild != 0)
@@ -5629,10 +5629,17 @@ public class Fight {
 
                                 for (Fighter entry : loosers) {
                                     temporary3.add( World.world.getPotentialRuneReini( entry.getLvl() , this.fightdifficulty ));
-                                    double boost = entry.getLvl()/100;
-                                    if(boost<=1.0) {
-                                        boost = 1.0;
+                                    double boost = ((double)entry.getLvl()/100.0D);
+                                    if(boost<=1.0D) {
+                                        boost = 1.0D;
                                     }
+
+                                    // TODO : Faire un truc plus propre pour les events drop sur les boss
+                                    /*if(ArrayUtils.contains(Constant.BOSS_ID, entry.getMob().getTemplate().getId())) {
+                                        temporary3.add(new Drop(9617, (0.05D * (boost)), 0, true));
+                                        temporary3.add(new Drop(8693, (0.05D * (boost)), 0, true));
+                                    }*/
+
                                     if (ArrayUtils.contains(Constant.BOSS_ID, entry.getMob().getTemplate().getId()) && this.fightdifficulty == 3) {
                                         temporary3.add(new Drop(12827, 0.1*(boost*2), 0,true));
                                     }
@@ -5655,6 +5662,8 @@ public class Fight {
 
                         Collections.shuffle(temporary3);
 
+                        double conquestFactor = World.world.getConquestBonusNew(player);
+
                         for (Drop drop : temporary3) {
                             double prospecting = i.getPros() / 100.0;
                             if (prospecting < 1) prospecting = 1;
@@ -5663,10 +5672,9 @@ public class Fight {
                             Double chance = 0.0;
 
                             if (drop.isNoPPInfluence())
-                                chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * 1 * World.world.getConquestBonusNew(player) * challengeFactor * 1 * 1 * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
+                                chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * 1 * conquestFactor * challengeFactor * 1 * 1 * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
                             else
-                                chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * World.world.getConquestBonusNew(player) * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP() * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
-
+                                chance = Double.parseDouble(formatter.format(drop.getLocalPercent() * prospecting * conquestFactor * challengeFactor * starFactor * Config.INSTANCE.getRATE_DROP() * chancebase * BonusPerdiffip * BonusPerdiffclasse * bonusVip ).replace(',', '.'));
                             boolean ok = false;
 
                             switch (drop.getAction()) {

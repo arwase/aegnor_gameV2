@@ -31,10 +31,7 @@ import entity.npc.NpcTemplate;
 import entity.pet.Pet;
 import entity.pet.PetEntry;
 import exchange.transfer.DataQueue;
-import fight.spells.Effect;
-import fight.spells.EffectTrigger;
-import fight.spells.Spell;
-import fight.spells.SpellGrade;
+import fight.spells.*;
 import game.GameClient;
 import game.GameServer;
 import game.scheduler.entity.WorldPub;
@@ -90,7 +87,7 @@ public class World {
     private Map<Integer, AccountWeb>    accountsWeb    = new HashMap<>();
     private Map<Integer, Player>     players     = new HashMap<>();
     private Map<Short, GameMap>    maps        = new HashMap<>();
-    private Map<Integer, GameObject> objects     = new ConcurrentHashMap<>();
+    private Map<Long, GameObject> objects     = new ConcurrentHashMap<>();
 
     private Map<Integer, ExpLevel> experiences = new HashMap<>();
     private Map<Integer, Spell> spells = new HashMap<>();
@@ -124,7 +121,7 @@ public class World {
     private Map<Integer, Prism> Prismes = new HashMap<>();
     private Map<Integer, Map<String, String>> fullmorphs = new HashMap<>();
     private Map<Integer, Pet> Pets = new HashMap<>();
-    private Map<Integer, PetEntry> PetsEntry = new HashMap<>();
+    private Map<Long, PetEntry> PetsEntry = new HashMap<>();
     private Map<String, Map<String, String>> mobsGroupsFix = new HashMap<>();
     private Map<Integer, Map<String, Map<String, Integer>>> extraMonstre = new HashMap<>();
     private Map<Integer, GameMap> extraMonstreOnMap = new HashMap<>();
@@ -362,11 +359,33 @@ public class World {
     }
 
 
-    public GameObject getGameObject(int guid) {
-        return objects.get(guid);
+    public GameObject getGameObject(Long guid) {
+        GameObject Obj = objects.get(guid);
+        // Réparation des objet négatif
+        if(Obj != null) {
+            if (guid < 0 && Obj.getTemplate().getType() != Constant.ITEM_TYPE_DRAGODINDE) {
+                long newID = Database.getStatics().getObjectData().getNextId();
+                Obj.setGuid(newID);
+                Database.getStatics().getObjectData().updateID(Obj,guid);
+                objects.remove(guid);
+                objects.put(newID,Obj);
+                if(Obj.getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
+
+                    PetEntry petTochange = PetsEntry.get(guid);
+                    if(petTochange != null){
+                        petTochange.setObjectId(newID);
+                        System.out.println(guid + " : correction d'ID : " + newID);
+                        Database.getStatics().getPetData().updateID(petTochange,guid);
+                        PetsEntry.remove(guid);
+                        PetsEntry.put(newID,petTochange);
+                    }
+                }
+            }
+        }
+        return Obj;
     }
 
-    public void removeGameObject(int id) {
+    public void removeGameObject(Long id) {
         if(objects.containsKey(id))
             objects.remove(id);
         Database.getStatics().getObjectData().delete(id);
@@ -592,7 +611,6 @@ public class World {
         Database.getDynamics().getDropData().load();
         logger.debug("The drops were loaded successfully.");
 
-
         logger.debug("The mounts were loaded successfully.");
 
         Database.getDynamics().getAnimationData().load();
@@ -623,8 +641,6 @@ public class World {
 
         Database.getDynamics().getGuildMemberData().load();
         logger.debug("The guilds and guild members were loaded successfully.");
-
-
 
         Database.getStatics().getTitleData().load();
         logger.debug("The titles were loaded successfully.");
@@ -663,7 +679,6 @@ public class World {
             logger.debug("Nettoyage des guildes vides ou inactives terminé.");
 
         }
-
         clearInactiveHousesTrunk();
 
         Database.getDynamics().getZaapData().load();
@@ -725,6 +740,8 @@ public class World {
         }
 
         sendWebhookInformationsServeur("Le serveur de jeu est désormais accessible !");
+        clearDoubleMountDupplication();
+
 
         if(Config.INSTANCE.getLOG()){
             logger.setLevel(Level.ALL);
@@ -736,11 +753,91 @@ public class World {
 
 
     // L'ensemble des fonction ci dessous concerne le nettoyage automatique
+    private void clearDoubleMountDupplication() {
+        for(GameObject DD : objects.values()){
+            if(DD.getTemplate().getType() == Constant.ITEM_TYPE_CERTIF_MONTURE){
+                boolean dupplication = false;
+                int idDD = -1*DD.getStats().getEffect(Constant.STATS_DD_ID);
+                if(idDD == 0){
+                    dupplication = true;
+                    System.out.println("DD " + idDD + " - ID non valide" );
+                }
+
+                if(!dupplication) {
+                    Mount RealMount = World.world.getMountById(idDD);
+                    if (RealMount == null) {
+                        dupplication = true;
+                        System.out.println("DD " + idDD + " - non trouvée" );
+                    }
+
+                    if(!dupplication) {
+                        for (MountPark test : World.world.getMountparks().values()) {
+                            if (test.getListOfRaising().contains(idDD)) {
+                                dupplication = true;
+                                System.out.println("DD " + idDD + " - déjà en enclos" );
+                                break;
+                            }
+                            if (test.getEtable().contains(RealMount)) {
+                                System.out.println("DD " + idDD + " - déjà en étable" );
+                                dupplication = true;
+                                break;
+                            }
+                        }
+                    }
+                    if(!dupplication) {
+                        for (Player player : World.world.getPlayers()) {
+                            if (player.getMount() == RealMount){
+                                System.out.println("DD " + idDD + " - déjà équipée" );
+                                dupplication = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(dupplication){
+                    DD.getTxtStat().put(EffectConstant.EFFECTID_INVALID_MOUNT,"1");
+                    DD.getTxtStat().remove(Constant.STATS_DD_OWNER);
+                    DD.getTxtStat().remove(Constant.STATS_DD_NAME);
+                    DD.getStats().getEffects().remove(Constant.STATS_DD_ID);
+                    DD.setModification();
+                }
+            }
+        }
+
+    }
+
+    public boolean checkIfDDAlreadySomeWhereElse(int idDD) {
+        Mount RealMount = World.world.getMountById(idDD);
+        if (RealMount == null) {
+            return false;
+        }
+
+        for (MountPark test : World.world.getMountparks().values()) {
+            if (test.getListOfRaising().contains(idDD)) {
+                System.out.println("DD " + idDD + " - déjà en enclos" );
+                return true;
+            }
+            if (test.getEtable().contains(RealMount)) {
+                System.out.println("DD " + idDD + " - déjà en étable" );
+                return true;
+            }
+        }
+
+        for (Player player : World.world.getPlayers()) {
+            if (player.getMount() == RealMount){
+                System.out.println("DD " + idDD + " - déjà équipée" );
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // L'ensemble des fonction ci dessous concerne le nettoyage automatique
     private void clearInactiveHousesTrunk() {
         if(!houseToClear.isEmpty()) {
             for (House house : houseToClear) {
                 for (Trunk trunk : Trunk.getTrunksByHouse(house)) {
-                    for(Integer itemID : trunk.getObject().keySet()){
+                    for(Long itemID : trunk.getObject().keySet()){
                         World.world.removeGameObject(itemID);
                     }
                     trunk.getObject().clear();
@@ -853,8 +950,6 @@ public class World {
         int nb = clearAllPlayerFromAccount(account);
         clearance.put("Players",nb);
 
-        // Faudrait supprimer aussi les mount avec leur inventaires. (ca c'est les joueurs pas les accounts)
-
         // On supprime toutes les dépences lié au compte (Banque, Maison ??, Coffre ??, )
         clearAccountBank(account);
         clearance.put("BankObj",nb);
@@ -883,6 +978,7 @@ public class World {
         while (iterator.hasNext()) {
             Map.Entry<Integer,Player> entry = iterator.next();
             System.out.println("Suppression du personnage " + entry.getValue().getName() + " car associé au compte");
+            World.sendWebhookInformations(Config.INSTANCE.getDISCORD_CHANNEL_INFO(),"Le personnage "+entry.getValue().getName()+" est supprimé car ne s'est plus connecté depuis plus de 9 mois.",entry.getValue() );
             account.deletePlayer(entry.getValue().getId());
             account.getPlayers().remove(entry.getValue().getId());
             i++;
@@ -1102,9 +1198,10 @@ public class World {
         return Math.rint((10 * cant / 4) / 10);
     }
 
-    public double getBalanceWorldNew(int alignement) {
-        int i = 0;
-        int tot = 0;
+    public double getBalanceWorldPercent(int alignement) {
+        double i = 0.0D;
+        double tot = 0.0D;
+
         for (SubArea subarea : subAreas.values()) {
             if (subarea.getAlignement() != 0){
                 tot++;
@@ -1114,12 +1211,35 @@ public class World {
             }
         }
 
-        double factor =  (Math.rint(2 - i/tot)*100) - 100 ;
+        double ratio = (double) i / tot * 100;
+        return Math.floor(ratio);
+    }
+
+    public double getBalanceWorldNew(int alignement) {
+        double i = 0.0D;
+        double tot = 0.0D;
+        double totfull = subAreas.size();
+        int nonValue = 0;
+        for (SubArea subarea : subAreas.values()) {
+            if (subarea.getAlignement() != 0){
+                tot++;
+                if (subarea.getAlignement() == alignement) {
+                    i++;
+                }
+            }
+            else{
+                nonValue++;
+            }
+        }
+
+        double ratio = (double) i / tot;
+        double distance = ratio - 0.5;
+        double factor = 100 * (1 - 4 * Math.pow(distance, 2));
 
         if (tot == 0 || factor<0 || i==0)
             return 0;
 
-        return factor;
+        return Math.floor(factor);
     }
 
     public double getConquestBonusNew(Player player) {
@@ -1127,7 +1247,7 @@ public class World {
         if(player.get_align() == 0) return 1;
         if(player.getCurMap().getSubArea().getAlignement() == player.get_align()) {
             if(player.is_showWings()) {
-                final double factor = (100 + (getBalanceWorldNew(player.get_align()) + ((Math.rint((player.getGrade() / 2.5) + 1)) * 4))) / 100;
+                final double factor = (100 + (getBalanceWorldNew(player.get_align()) * (1.0D + ((Math.rint((player.getGrade() / 2.5) + 1)) * 4)/100)) ) / 100;
                 if (factor < 1) return 1;
                 return factor;
             }
@@ -1154,8 +1274,6 @@ public class World {
         experiences.put(lvl, exp);
     }
 
-
-
     public void addNPCQuestion(NpcQuestion quest) {
         questions.put(quest.getId(), quest);
     }
@@ -1181,14 +1299,17 @@ public class World {
                 Player leader = null;
 
                 for (Player newLeader : player.getGuild().getPlayers()) {
+                    if(leader == null){
+                        leader = newLeader;
+                    }
                     if (newLeader != player && newLeader.getGuildMember().getRights() < curMaxRight) {
                         leader = newLeader;
                     }
                 }
 
-                GuildMember toChange = leader.getGuildMember();
                 player.getGuild().removeMember(player);
                 if(leader != null) {
+                    GuildMember toChange = leader.getGuildMember();
                     toChange.setAllRights(1,(byte)-1,1,leader);
                 }
             } else {
@@ -1215,19 +1336,25 @@ public class World {
     }
 
     public void deletePlayerMountAndObj(Player player){
-
-        for(Mount mount : World.world.getMounts().values()){
-            if(mount.getOwner() == player.getId()){
-                for(GameObject obj : mount.getObjects().values() ){
+        Iterator<Mount> mountIterator = World.world.getMounts().values().iterator();
+        while (mountIterator.hasNext()) {
+            Mount mount = mountIterator.next();
+            if (mount.getOwner() == player.getId()) {
+                for (GameObject obj : mount.getObjects().values()) {
                     World.world.removeGameObject(obj.getGuid());
                 }
-                Database.getStatics().getMountData().delete(player.getMount().getId());
-                World.world.removeMount(player.getMount().getId());
+
+                // Supprime la monture dans la base de données
+                Database.getStatics().getMountData().delete(mount.getId());
+
+                // Supprime la monture de la collection en utilisant l'iterator
+                mountIterator.remove();
+
+                // Déconnecte la monture du joueur
                 player.setMount(null);
             }
         }
     }
-
 
     public void unloadPerso(Player perso) {
         unloadPerso(perso.getId());//UnLoad du perso+item
@@ -1358,16 +1485,11 @@ public class World {
         return "Undefined";
     }
 
-
-
-
-
     public void addIOTemplate(InteractiveObjectTemplate IOT) {
         IOTemplate.put(IOT.getId(), IOT);
     }
 
     public Mount getMountById(int id) {
-
         Mount mount = Dragodindes.get(id);
         if(mount == null) {
             Database.getStatics().getMountData().load(id);
@@ -1380,7 +1502,7 @@ public class World {
         Dragodindes.put(mount.getId(), mount);
     }
 
-    public void removeMount(int id) {
+    public void removeMount(long id) {
         Dragodindes.remove(id);
     }
 
@@ -1588,7 +1710,7 @@ public class World {
         return -1;
     }
 
-    public void delDragoByID(int getId) {
+    public void delDragoByID(long getId) {
         Dragodindes.remove(getId);
     }
 
@@ -1604,14 +1726,14 @@ public class World {
     public void unloadPerso(int g) {
         Player toRem = players.get(g);
         if (!toRem.getItems().isEmpty())
-            for (Entry<Integer, GameObject> curObj : toRem.getItems().entrySet())
+            for (Entry<Long, GameObject> curObj : toRem.getItems().entrySet())
                 objects.remove(curObj.getKey());
     }
 
     public void SuppressPerso(int g) {
         Player toRem = players.get(g);
         if (!toRem.getItems().isEmpty()) {
-            for (Entry<Integer, GameObject> curObj : toRem.getItems().entrySet()) {
+            for (Entry<Long, GameObject> curObj : toRem.getItems().entrySet()) {
                 if(curObj.getValue().getTemplate().getType() == Constant.ITEM_TYPE_FAMILIER){
                     World.world.removePets(curObj.getKey());
                 }
@@ -1620,13 +1742,13 @@ public class World {
         }
 
         if(!toRem.getStoreItems().isEmpty()){
-            for (Entry<Integer, Integer> curObj : toRem.getStoreItems().entrySet()) {
+            for (Entry<Long, Integer> curObj : toRem.getStoreItems().entrySet()) {
                 World.world.removeGameObject(curObj.getKey());
             }
         }
     }
 
-    public GameObject newObjet(int id, int template, int qua, int pos, String stats, int puit, int rarity, int mimibiote) {
+    public GameObject newObjet(long id, int template, int qua, int pos, String stats, int puit, int rarity, int mimibiote) {
         if (getObjTemplate(template) == null) {
             return null;
         }
@@ -1951,13 +2073,40 @@ public class World {
 
     public String PrismesGeoposition(int alignement) {
         String str = "";
-        boolean first = false;
+        boolean isfirst = true;
         int subareas = 0;
+
+        // Count
+        int demonsubArea = 0;
+        int angesubArea = 0;
+
+        int demonArea = 0;
+        int angeArea = 0;
+        int totareasConquest = 0;
+
+        int neutralsubArea = 0;
+
         for (SubArea subarea : subAreas.values()) {
             if (!subarea.getConquistable())
                 continue;
-            if (first)
+            if(subarea.getAlignement() == 1) {
+                angesubArea++;
+            }
+            else if(subarea.getAlignement() == 2){
+                demonsubArea++;
+            }
+            else {
+                neutralsubArea++;
+            }
+        }
+
+        for (SubArea subarea : subAreas.values()) {
+            if (!subarea.getConquistable())
+                continue;
+
+            if (!isfirst)
                 str += ";";
+
             str += subarea.getId()
                     + ","
                     + (subarea.getAlignement() == 0 ? -1 : subarea.getAlignement())
@@ -1967,32 +2116,53 @@ public class World {
             else
                 str += (subarea.getPrismId() == 0 ? 0 : getPrisme(subarea.getPrismId()).getMap())
                         + ",1";
-            first = true;
+            isfirst = false;
             subareas++;
         }
-        if (alignement == 1)
-            str += "|" + Area.bontarians;
-        else if (alignement == 2)
-            str += "|" + Area.brakmarians;
-        str += "|" + areas.size() + "|";
-        first = false;
+
+
         for (Area area : areas.values()) {
+            if(!area.canbeCapturable)
+                continue;
+            totareasConquest++;
+            if (area.getAlignement() == 1)
+                angeArea++;
+            else if (area.getAlignement() == 2)
+                demonArea++;
+
+        }
+
+        if (alignement == 1)
+            str += "|" + angeArea;
+        else if (alignement == 2)
+            str += "|" + demonArea;
+
+
+        str += "|" + totareasConquest + "|";
+        isfirst = true;
+        for (Area area : areas.values()) {
+            if(!area.canbeCapturable)
+                continue;
+
             if (area.getAlignement() == 0)
                 continue;
-            if (first)
+            if (!isfirst)
                 str += ";";
             str += area.getId() + "," + area.getAlignement() + ",1,"
                     + (area.getPrismId() == 0 ? 0 : 1);
-            first = true;
+            isfirst = false;
         }
-        if (alignement == 1)
-            str = Area.bontarians + "|" + subareas + "|"
-                    + (subareas - (SubArea.bontarians + SubArea.brakmarians)) + "|"
+
+        if (alignement == 1) {
+            str = angesubArea + "|" + subareas + "|"
+                    + (subareas - (angesubArea + demonsubArea)) + "|"
                     + str;
-        else if (alignement == 2)
-            str = Area.brakmarians + "|" + subareas + "|"
-                    + (subareas - (SubArea.bontarians + SubArea.brakmarians)) + "|"
+        }
+        else if (alignement == 2) {
+            str = demonsubArea + "|" + subareas + "|"
+                    + (subareas - (angesubArea + demonsubArea)) + "|"
                     + str;
+        }
         return str;
     }
 
@@ -2038,15 +2208,15 @@ public class World {
         PetsEntry.put(pets.getObjectId(), pets);
     }
 
-    public PetEntry getPetsEntry(int guid) {
+    public PetEntry getPetsEntry(Long guid) {
         return PetsEntry.get(guid);
     }
 
-    public PetEntry removePetsEntry(int guid) {
+    public PetEntry removePetsEntry(Long guid) {
         return PetsEntry.remove(guid);
     }
 
-    public void removePets(int guid) {
+    public void removePets(Long guid) {
         PetEntry pet = World.world.getPetsEntry(guid);
         if(pet != null) {
             World.world.removePetsEntry(guid);
@@ -3440,6 +3610,7 @@ public class World {
             this.second = i;
         }
     }
+
 
     public static class ExpLevel {
         public long perso;

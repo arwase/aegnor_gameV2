@@ -50,7 +50,6 @@ object Config {
     var PRIX_CHANGEMENT_CLASSE = ConfigReader.data[ConfigReader.prix.prix_changement_classe]
     var PRIX_CHANGEMENT_COULEUR = ConfigReader.data[ConfigReader.prix.prix_changement_couleur]
     var PRIX_CHANGEMENT_PSEUDO = ConfigReader.data[ConfigReader.prix.prix_changement_pseudo]
-    var PRIX_MIMIBIOTE = ConfigReader.data[ConfigReader.prix.prix_mimibiote]
 
     var exchangePort: Int = ConfigReader.data[ConfigReader.exchange.port]
     var gamePort: Int = ConfigReader.data[ConfigReader.server.port]

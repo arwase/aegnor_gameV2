@@ -241,8 +241,12 @@ public class Formulas {
         }
     }
 
-    public static int getAlteredJet(int jet,int max, Fighter target)//1d5+6
+    public static int getAlteredJet(int jet,int max, Fighter target, Fighter caster)//1d5+6
     {
+        // Si le lanceur a POISSE ON PRIO
+        if(target != null && caster.hasBuff(EffectConstant.EFFECTID_MINIMUMDAMAGE))
+            return jet;
+
         // Pour les valeurs fixes
         if(max == -1){
             return jet;
@@ -250,7 +254,7 @@ public class Formulas {
         if(max <= jet)
             return jet;
 
-
+        // Si la cible a BROKLE on maximise le jet
         if(target != null && target.hasBuff(EffectConstant.EFFECTID_MAXIMUMDAMAGE)){
             return max;
         }

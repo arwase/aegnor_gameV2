@@ -257,12 +257,12 @@ public class PlayerData extends AbstractDAO<Player> {
 
             if (!perso.getItemsIDSplitByChar(",").isEmpty()) {
                 for (String id : perso.getItemsIDSplitByChar(",").split(",")) {
-                    Database.getStatics().getObjectData().delete(Integer.parseInt(id));
+                    Database.getStatics().getObjectData().delete(Long.parseLong(id));
                 }
             }
             if (!perso.getStoreItemsIDSplitByChar(",").isEmpty()) {
                 for (String id : perso.getStoreItemsIDSplitByChar(",").split(",")) {
-                    Database.getStatics().getObjectData().delete(Integer.parseInt(id));
+                    Database.getStatics().getObjectData().delete(Long.parseLong(id));
                 }
             }
             if (perso.getMount() != null) {

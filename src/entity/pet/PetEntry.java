@@ -16,7 +16,7 @@ import java.util.Map.Entry;
 
 public class PetEntry {
 
-    private int objectId;
+    private Long objectId;
     private int template;
     private long lastEatDate;
     private int quaEat;
@@ -25,7 +25,7 @@ public class PetEntry {
     private int corpulence;
     private boolean isEupeoh;
 
-    public PetEntry(int Oid, int template, long lastEatDate, int quaEat,
+    public PetEntry(Long Oid, int template, long lastEatDate, int quaEat,
                     int pdv, int corpulence, boolean isEPO) {
         this.objectId = Oid;
         this.template = template;
@@ -37,8 +37,12 @@ public class PetEntry {
         this.isEupeoh = isEPO;
     }
 
-    public int getObjectId() {
+    public Long getObjectId() {
         return this.objectId;
+    }
+
+    public void setObjectId(long ObjGUID) {
+        this.objectId = ObjGUID;
     }
 
     public int getTemplate() {
@@ -123,7 +127,7 @@ public class PetEntry {
             return 0;
         int cumul = 0;
         for (Entry<Integer, Integer> entry : obj.getStats().getEffects().entrySet()) {
-            cumul = (int) (cumul + Math.round(Formulas.getWeightByStat(entry.getKey()) * entry.getValue()));
+            cumul = (int) (cumul + Math.round((double)Formulas.getWeightByStat(entry.getKey()) * (double)entry.getValue()));
         }
         this.Poids = cumul;
         return this.Poids;

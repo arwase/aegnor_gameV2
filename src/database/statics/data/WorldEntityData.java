@@ -11,7 +11,8 @@ import java.sql.SQLException;
  */
 public class WorldEntityData extends AbstractDAO<Object> {
 
-    private int nextMountId, nextObjectId, nextQuestId, nextGuildId, nextPetId;
+    private long nextObjectId, nextPetId;
+    private int nextMountId, nextQuestId, nextGuildId;
 
     public WorldEntityData(HikariDataSource dataSource) {
         super(dataSource);
@@ -34,7 +35,7 @@ public class WorldEntityData extends AbstractDAO<Object> {
         try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.objects`;")) {
             ResultSet RS = result.getResultSet();
             if (RS.next()) {
-                this.nextObjectId = RS.getInt("max");
+                this.nextObjectId = RS.getLong("max");
             } else {
                 this.nextObjectId = 1;
             }
@@ -67,7 +68,7 @@ public class WorldEntityData extends AbstractDAO<Object> {
         try (Result result = getData("SELECT MAX(id) AS max FROM `world.entity.pets`;")) {
             ResultSet RS = result.getResultSet();
             if (RS.next()) {
-                this.nextPetId = RS.getInt("max");
+                this.nextPetId = RS.getLong("max");
             } else {
                 this.nextPetId = 1;
             }
@@ -86,7 +87,7 @@ public class WorldEntityData extends AbstractDAO<Object> {
     }
 
     // TODO : A changer on peut essayer de demander a la base de générer le nouvel ID pour éviter les ID non unique
-    public int getNextObjectId() {
+    public long getNextObjectId() {
         /*int nextObjectId = -1;
         try {
             Result result = getData("SELECT nextval('object_id_seq') FROM `sequence_table`;");
@@ -113,7 +114,7 @@ public class WorldEntityData extends AbstractDAO<Object> {
         return ++nextGuildId;
     }
 
-    public synchronized int getNextPetId() {
+    public synchronized long getNextPetId() {
         return ++nextPetId;
     }
 }

@@ -20,7 +20,7 @@ public class NpcTemplate {
 
     private Map<Integer, Integer> initQuestions = new HashMap<>();
     private ArrayList<ObjectTemplate> sales = new ArrayList<>();
-    private List<Couple<ArrayList<Couple<Integer, Integer>>, ArrayList<Couple<Integer, Integer>>>> exchanges;
+    private List<Couple<ArrayList<Couple<Long, Integer>>, ArrayList<Couple<Long, Integer>>>> exchanges;
 
     public NpcTemplate(int id, int bonus, int gfxId, int scaleX, int scaleY, int sex, int color1, int color2, int color3, String accessories, int extraClip, int customArtWork, String questions,
                        String sales, String quest, String exchanges, String path, byte informations) {
@@ -86,19 +86,19 @@ public class NpcTemplate {
             try	{
                 this.exchanges = new ArrayList<>();
                 for(String data : exchanges.split("~")) {
-                    ArrayList<Couple<Integer, Integer>> gives = new ArrayList<>(), gets = new ArrayList<>();
+                    ArrayList<Couple<Long, Integer>> gives = new ArrayList<>(), gets = new ArrayList<>();
 
                     String[] split = data.split("\\|");
                     String give = split[1], get = split[0];
 
                     for(String obj : give.split(",")) {
                         split = obj.split(":");
-                        gives.add(new Couple<>(Integer.parseInt(split[0]), Integer.parseInt(split[1])));
+                        gives.add(new Couple<>(Long.parseLong(split[0]), Integer.parseInt(split[1])));
                     }
 
                     for(String obj : get.split(",")) {
                         split = obj.split(":");
-                        gets.add(new Couple<>(Integer.parseInt(split[0]), Integer.parseInt(split[1])));
+                        gets.add(new Couple<>(Long.parseLong(split[0]), Integer.parseInt(split[1])));
                     }
                     this.exchanges.add(new Couple<>(gets, gives));
                 }
@@ -162,16 +162,16 @@ public class NpcTemplate {
                 for(String data : exchanges.split("~")) {
                     String[] split = data.split("\\|");
                     String give = split[1], get = split[0];
-                    ArrayList<Couple<Integer, Integer>> gives = new ArrayList<>(), gets = new ArrayList<>();
+                    ArrayList<Couple<Long, Integer>> gives = new ArrayList<>(), gets = new ArrayList<>();
 
                     for(String obj : give.split(",")) {
                         split = obj.split(":");
-                        gives.add(new Couple<>(Integer.parseInt(split[0]), Integer.parseInt(split[1])));
+                        gives.add(new Couple<>(Long.parseLong(split[0]), Integer.parseInt(split[1])));
                     }
 
                     for(String obj : get.split(",")) {
                         split = obj.split(":");
-                        gets.add(new Couple<>(Integer.parseInt(split[0]), Integer.parseInt(split[1])));
+                        gets.add(new Couple<>(Long.parseLong(split[0]), Integer.parseInt(split[1])));
                     }
                     this.exchanges.add(new Couple<>(gets, gives));
                 }
@@ -304,9 +304,9 @@ public class NpcTemplate {
         return false;
     }
 
-    public Couple<Integer,Integer> checkGetTypeObjects(ArrayList<Couple<Integer,Integer>> objects) {
-        Couple<Integer, Integer> fragment = new Couple<>(8378, 1);
-        for(Couple<Integer, Integer> entry2 : objects) {
+    public Couple<Long,Integer> checkGetTypeObjects(ArrayList<Couple<Long,Integer>> objects) {
+        Couple<Long, Integer> fragment = new Couple<>(8378L, 1);
+        for(Couple<Long, Integer> entry2 : objects) {
             int type = World.world.getGameObject(entry2.first).getTemplate().getType();
             if(!(ArrayUtils.contains(Constant.FILTER_EQUIPEMENT,type))){ }
             else{return fragment; }
@@ -314,17 +314,17 @@ public class NpcTemplate {
         return null;
     }
 
-    public ArrayList<Couple<Integer,Integer>> checkGetObjects(ArrayList<Couple<Integer,Integer>> objects) {
+    public ArrayList<Couple<Long,Integer>> checkGetObjects(ArrayList<Couple<Long,Integer>> objects) {
         if(this.exchanges == null) return null;
         boolean ok;
         int multiple = 0, newMultiple = 0;
 
-        for(Couple<ArrayList<Couple<Integer, Integer>>, ArrayList<Couple<Integer, Integer>>> entry0 : this.exchanges) {
+        for(Couple<ArrayList<Couple<Long, Integer>>, ArrayList<Couple<Long, Integer>>> entry0 : this.exchanges) {
             ok = true;
-            for(Couple<Integer, Integer> entry1 : entry0.first) {
+            for(Couple<Long, Integer> entry1 : entry0.first) {
                 boolean ok1 = false;
 
-                for(Couple<Integer, Integer> entry2 : objects) {
+                for(Couple<Long, Integer> entry2 : objects) {
                     if (entry1.first == World.world.getGameObject(entry2.first).getTemplate().getId() && (int) (entry2.second) % entry1.second == 0) {
                         ok1 = true;
                         newMultiple = entry2.second / entry1.second;

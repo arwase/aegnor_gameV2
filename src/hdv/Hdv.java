@@ -96,7 +96,14 @@ public class Hdv {
     }
 
     public void addEntry(HdvEntry toAdd, boolean load) {
+
         toAdd.setHdvId(this.getHdvId());
+
+        if(toAdd.getGameObject()==null){
+            System.out.println("Object null, ignore adding into HDV");
+            return;
+        }
+
         int categoryId = toAdd.getGameObject().getTemplate().getType();
         int templateId = toAdd.getGameObject().getTemplate().getId();
         if (this.getCategorys().get(categoryId) == null)

@@ -328,7 +328,7 @@ public class SocketManager {
         send(out, packet);
     }
 
-    public static void GAME_SEND_ERASE_ON_MAP_TO_MAP(GameMap map, int guid) {
+    public static void GAME_SEND_ERASE_ON_MAP_TO_MAP(GameMap map, long guid) {
         if (map == null)
             return;
         String packet = "GM|-" + guid;
@@ -712,7 +712,7 @@ public class SocketManager {
             send(z, packet);
     }
 
-    public static void GAME_SEND_eUK_PACKET_TO_MAP(GameMap map, int guid, int emote) {
+    public static void GAME_SEND_eUK_PACKET_TO_MAP(GameMap map, long guid, int emote) {
         String packet = "eUK" + guid + "|" + emote;
         for (Player z : map.getPlayers())
             send(z, packet);
@@ -1350,7 +1350,7 @@ public class SocketManager {
 
     }
 
-    public static void GAME_SEND_eD_PACKET_TO_MAP(GameMap map, int guid, int dir) {
+    public static void GAME_SEND_eD_PACKET_TO_MAP(GameMap map, long guid, int dir) {
         String packet = "eD" + guid + "|" + dir;
         for (Player z : map.getPlayers())
             send(z, packet);
@@ -1458,7 +1458,7 @@ public class SocketManager {
         send(player, packet);
     }
 
-    public static void GAME_SEND_REMOVE_ITEM_PACKET(Player out, int guid) {
+    public static void GAME_SEND_REMOVE_ITEM_PACKET(Player out, long guid) {
         String packet = "OR" + guid;
         send(out, packet);
 
@@ -1479,7 +1479,7 @@ public class SocketManager {
 
     }
 
-    public static void GAME_SEND_DELETE_STATS_ITEM_FM(Player perso, int id) {
+    public static void GAME_SEND_DELETE_STATS_ITEM_FM(Player perso, long id) {
         String packet = "OR" + id;
         send(perso, packet);
 
@@ -2439,9 +2439,11 @@ public class SocketManager {
         if (World.world.getSeller(P.getCurMap().getId()) == null)
             return;
         for (Integer pID : World.world.getSeller(P.getCurMap().getId())) {
-            if (!World.world.getPlayer(pID).isOnline()
-                    && World.world.getPlayer(pID).isShowSeller()) {
-                packet.append("~").append(World.world.getPlayer(pID).parseToMerchant()).append("|");
+            if(World.world.getPlayer(pID) != null) {
+                if (!World.world.getPlayer(pID).isOnline()
+                        && World.world.getPlayer(pID).isShowSeller()) {
+                    packet.append("~").append(World.world.getPlayer(pID).parseToMerchant()).append("|");
+                }
             }
         }
         if (packet.length() < 5)
@@ -2546,7 +2548,7 @@ public class SocketManager {
 
     }
 
-    public static void SEND_OR_DELETE_ITEM(GameClient out, int id) {
+    public static void SEND_OR_DELETE_ITEM(GameClient out, long id) {
         String packet = "OR" + id;
         send(out, packet);
     }

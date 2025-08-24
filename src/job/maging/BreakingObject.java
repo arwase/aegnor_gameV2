@@ -6,11 +6,11 @@ import java.util.ArrayList;
 
 public class BreakingObject {
 
-    private ArrayList<Couple<Integer, Integer>> objects = new ArrayList<>();
+    private ArrayList<Couple<Long, Integer>> objects = new ArrayList<>();
     private int count = 0;
     private boolean stop = false;
 
-    public ArrayList<Couple<Integer, Integer>> getObjects() {
+    public ArrayList<Couple<Long, Integer>> getObjects() {
         return objects;
     }
 
@@ -30,8 +30,8 @@ public class BreakingObject {
         return stop;
     }
 
-    public synchronized int addObject(int id, int quantity) {
-        Couple<Integer, Integer> couple = this.search(id);
+    public synchronized int addObject(long id, int quantity) {
+        Couple<Long, Integer> couple = this.search(id);
 
         if (couple == null) {
             this.objects.add(new Couple<>(id, quantity));
@@ -42,8 +42,8 @@ public class BreakingObject {
         }
     }
 
-    public synchronized int removeObject(int id, int quantity) {
-        Couple<Integer, Integer> couple = this.search(id);
+    public synchronized int removeObject(long id, int quantity) {
+        Couple<Long, Integer> couple = this.search(id);
 
         if (couple != null) {
             if (quantity > couple.second) {
@@ -61,13 +61,13 @@ public class BreakingObject {
         return 0;
     }
 
-    public Couple<Integer, Integer> search(int id) {
-        for (Couple<Integer, Integer> couple : this.objects)
+    public Couple<Long, Integer> search(long id) {
+        for (Couple<Long, Integer> couple : this.objects)
             if (couple.first == id)
                 return couple;
         return null;
     }
 
-    public void setObjects(ArrayList<Couple<Integer, Integer>> objects) {
+    public void setObjects(ArrayList<Couple<Long, Integer>> objects) {
     }
 }

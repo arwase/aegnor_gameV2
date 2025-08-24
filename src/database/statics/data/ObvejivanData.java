@@ -26,7 +26,7 @@ public class ObvejivanData extends AbstractDAO<GameObject> {
     public void add(GameObject obvijevan, GameObject object) {
         String query = "INSERT INTO `world.entity.obvijevans`(`id`, `template`) VALUES(?, ?);";
         try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(query)) {
-            p.setInt(1, object.getGuid());
+            p.setLong(1, object.getGuid());
             p.setInt(2, obvijevan.getTemplate().getId());
             executeUpdate(p);
         } catch (Exception e) {
@@ -40,13 +40,13 @@ public class ObvejivanData extends AbstractDAO<GameObject> {
         int template = -1;
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement p = conn.prepareStatement(selectQuery)) {
-            p.setInt(1, object.getGuid());
+            p.setLong(1, object.getGuid());
             try (ResultSet resultSet = p.executeQuery()) {
                 if (resultSet.next()) {
                     template = resultSet.getInt("template");
                     if (delete) {
                         try (Connection conn2 = dataSource.getConnection(); PreparedStatement deletePs = conn2.prepareStatement(deleteQuery)) {
-                            deletePs.setInt(1, object.getGuid());
+                            deletePs.setLong(1, object.getGuid());
                             executeUpdate(deletePs);
                         }
                         catch (SQLException e) {

@@ -13,6 +13,8 @@ import object.GameObject;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Collector {
 
@@ -31,8 +33,8 @@ public class Collector {
     private Player poseur = null;
     private long date;
     //Les logs
-    private java.util.Map<Integer, GameObject> logObjects = new HashMap<>();
-    private java.util.Map<Integer, GameObject> objects = new HashMap<>();
+    private java.util.Map<Long, GameObject> logObjects = new HashMap<>();
+    private java.util.Map<Long, GameObject> objects = new HashMap<>();
     //La d�fense
     private java.util.Map<Integer, Player> defenserId = new HashMap<>();
     //Fight
@@ -54,7 +56,7 @@ public class Collector {
             if (item.equals(""))
                 continue;
             String[] infos = item.split(":");
-            int itemId = Integer.parseInt(infos[0]);
+            long itemId = Long.parseLong(infos[0]);
             GameObject obj = World.world.getGameObject(itemId);
             if (obj == null)
                 continue;
@@ -307,15 +309,25 @@ public class Collector {
         return str.toString();
     }
 
-    public static void removeCollector(int GuildID) {
-        for (java.util.Map.Entry<Integer, Collector> Collector : World.world.getCollectors().entrySet()) {
-            if (Collector.getValue().getGuildId() == GuildID) {
-                World.world.getCollectors().remove(Collector.getKey());
-                for (Player p : World.world.getMap(Collector.getValue().getMap()).getPlayers()) {
-                    SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(p.getCurMap(), Collector.getValue().getId());//Suppression visuelle
+    public static void removeCollector(int guildID) {
+        Iterator<Map.Entry<Integer, Collector>> iterator = World.world.getCollectors().entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Collector> entry = iterator.next();
+            Collector collector = entry.getValue();
+
+            if (collector.getGuildId() == guildID) {
+                // On supprime l'entrée via l'iterator
+                iterator.remove();
+
+                // Suppression visuelle
+                for (Player p : World.world.getMap(collector.getMap()).getPlayers()) {
+                    SocketManager.GAME_SEND_ERASE_ON_MAP_TO_MAP(p.getCurMap(), collector.getId());
                 }
-                Collector.getValue().reloadTimer();
-                Database.getDynamics().getCollectorData().delete(Collector.getKey());
+
+                // On arrête le timer, puis on supprime en base
+                collector.reloadTimer();
+                Database.getDynamics().getCollectorData().delete(entry.getKey());
             }
         }
     }
@@ -410,7 +422,7 @@ public class Collector {
         this.inExchange = inExchange;
     }
 
-    public void addLogObjects(int id, GameObject obj) {
+    public void addLogObjects(long id, GameObject obj) {
         this.logObjects.put(id, obj);
     }
 
@@ -425,11 +437,11 @@ public class Collector {
         return str.toString();
     }
 
-    public java.util.Map<Integer, GameObject> getOjects() {
+    public java.util.Map<Long, GameObject> getOjects() {
         return this.objects;
     }
 
-    public boolean haveObjects(int id) {
+    public boolean haveObjects(long id) {
         return this.objects.get(id) != null;
     }
 
@@ -446,7 +458,7 @@ public class Collector {
     }
 
     public boolean addObjet(GameObject newObj) {
-        for (java.util.Map.Entry<Integer, GameObject> entry : this.objects.entrySet()) {
+        for (java.util.Map.Entry<Long, GameObject> entry : this.objects.entrySet()) {
             GameObject obj = entry.getValue();
             if (World.world.getConditionManager().stackIfSimilar2(obj, newObj, true)) {
                 obj.setQuantity(obj.getQuantity() + newObj.getQuantity());//On ajoute QUA item a la quantit� de l'objet existant
@@ -457,7 +469,7 @@ public class Collector {
         return true;
     }
 
-    public void removeObjet(int id) {
+    public void removeObjet(long id) {
         this.objects.remove(id);
     }
 
@@ -484,7 +496,7 @@ public class Collector {
         return items;
     }
 
-    public void removeFromCollector(Player P, int id, int qua) {
+    public void removeFromCollector(Player P, long id, int qua) {
         if (qua <= 0)
             return;
         GameObject CollectorObj = World.world.getGameObject(id);

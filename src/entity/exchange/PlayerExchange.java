@@ -32,7 +32,7 @@ public class PlayerExchange extends Exchange {
         if (i == 1) {
             int podsmax = this.player1.getMaxPod();
             int pods = this.player1.getPodUsed();
-            for (Couple<Integer, Integer> couple : items2) {
+            for (Couple<Long, Integer> couple : items2) {
                 if (couple.second == 0)
                     continue;
                 GameObject obj = World.world.getGameObject(couple.first);
@@ -41,7 +41,7 @@ public class PlayerExchange extends Exchange {
             if (newpods == 0) {
                 return true;
             }
-            for (Couple<Integer, Integer> couple : items1) {
+            for (Couple<Long, Integer> couple : items1) {
                 if (couple.second == 0)
                     continue;
                 GameObject obj = World.world.getGameObject(couple.first);
@@ -56,7 +56,7 @@ public class PlayerExchange extends Exchange {
         } else {
             int podsmax = this.player2.getMaxPod();
             int pods = this.player2.getPodUsed();
-            for (Couple<Integer, Integer> couple : items1) {
+            for (Couple<Long, Integer> couple : items1) {
                 if (couple.second == 0)
                     continue;
                 GameObject obj = World.world.getGameObject(couple.first);
@@ -65,7 +65,7 @@ public class PlayerExchange extends Exchange {
             if (newpods == 0) {
                 return true;
             }
-            for (Couple<Integer, Integer> couple : items2) {
+            for (Couple<Long, Integer> couple : items2) {
                 if (couple.second == 0)
                     continue;
                 GameObject obj = World.world.getGameObject(couple.first);
@@ -158,7 +158,7 @@ public class PlayerExchange extends Exchange {
         String str = "";
         try {
             str += this.player1.getName() + " : ";
-            for (Couple<Integer, Integer> couple1 : items1) {
+            for (Couple<Long, Integer> couple1 : items1) {
                 str += ", ["
                         + World.world.getGameObject(couple1.first).getTemplate().getId()
                         + "@" + couple1.first + ";" + couple1.second + "]";
@@ -169,7 +169,7 @@ public class PlayerExchange extends Exchange {
         }
         try {
             str += "Avec " + this.player2.getName();
-            for (Couple<Integer, Integer> couple2 : items2) {
+            for (Couple<Long, Integer> couple2 : items2) {
                 str += ", ["
                         + World.world.getGameObject(couple2.first).getTemplate().getId()
                         + "@" + couple2.first + ";" + couple2.second + "]";
@@ -201,7 +201,7 @@ public class PlayerExchange extends Exchange {
         // On donne
         this.player1.addKamas((-kamas1 + kamas2));
         this.player2.addKamas((-kamas2 + kamas1));
-        for (Couple<Integer, Integer> couple : items1) // Les items du player vers le player2
+        for (Couple<Long, Integer> couple : items1) // Les items du player vers le player2
         {
             if (couple.second == 0)
                 continue;
@@ -230,7 +230,7 @@ public class PlayerExchange extends Exchange {
                     World.world.addGameObject(newObj, true);//On ajoute l'item au World
             }
         }
-        for (Couple<Integer, Integer> couple : items2) {
+        for (Couple<Long, Integer> couple : items2) {
             if (couple.second == 0)
                 continue;
             if (World.world.getGameObject(couple.first) == null)
@@ -257,7 +257,7 @@ public class PlayerExchange extends Exchange {
         Database.getStatics().getPlayerData().update(this.player2);
     }
 
-    protected void giveObject(Couple<Integer, Integer> couple, GameObject object) {
+    protected void giveObject(Couple<Long, Integer> couple, GameObject object) {
         if(object == null) return;
         if ((object.getQuantity() - couple.second) < 1) {
             this.player2.removeItem(couple.first);
@@ -272,7 +272,7 @@ public class PlayerExchange extends Exchange {
         }
     }
 
-    public synchronized void addItem(int guid, int qua, int pguid) {
+    public synchronized void addItem(long guid, int qua, int pguid) {
         ok1 = false;
         ok2 = false;
 
@@ -287,21 +287,24 @@ public class PlayerExchange extends Exchange {
         if (qua == 1)
             qua = 1;
         String str = guid + "|" + qua;
+
         if (obj == null)
             return;
+
         if (obj.getPosition() != Constant.ITEM_POS_NO_EQUIPED)
             return;
 
         if (this instanceof CraftSecure) {
             ArrayList<ObjectTemplate> tmp = new ArrayList<>();
-            for (Couple<Integer, Integer> couple : this.items1) {
+            for (Couple<Long, Integer> couple : this.items1) {
                 GameObject _tmp = World.world.getGameObject(couple.first);
                 if (_tmp == null)
                     continue;
                 if (!tmp.contains(_tmp.getTemplate()))
                     tmp.add(_tmp.getTemplate());
             }
-            for (Couple<Integer, Integer> couple : this.items2) {
+
+            for (Couple<Long, Integer> couple : this.items2) {
                 GameObject _tmp = World.world.getGameObject(couple.first);
                 if (_tmp == null)
                     continue;
@@ -324,7 +327,7 @@ public class PlayerExchange extends Exchange {
         SocketManager.GAME_SEND_EXCHANGE_OK(this.player1.getGameClient(), ok2, this.player2.getId());
         SocketManager.GAME_SEND_EXCHANGE_OK(this.player2.getGameClient(), ok2, this.player2.getId());
         if (i == 1) {
-            Couple<Integer, Integer> couple = getCoupleInList(items1, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items1, guid);
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player1, 'O', "+", ""
@@ -338,7 +341,7 @@ public class PlayerExchange extends Exchange {
                     + add);
             items1.add(new Couple<>(guid, qua));
         } else if (i == 2) {
-            Couple<Integer, Integer> couple = getCoupleInList(items2, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items2, guid);
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player2, 'O', "+", ""
@@ -354,7 +357,7 @@ public class PlayerExchange extends Exchange {
         }
     }
 
-    public synchronized void removeItem(int guid, int qua, int pguid) {
+    public synchronized void removeItem(long guid, int qua, int pguid) {
         int i = 0;
         if (this.player1.getId() == pguid)
             i = 1;
@@ -373,7 +376,7 @@ public class PlayerExchange extends Exchange {
         String add = "|" + object.getTemplate().getId() + "|" + object.parseStatsString();
 
         if (i == 1) {
-            Couple<Integer, Integer> couple = getCoupleInList(items1, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items1, guid);
 
             if(couple == null) return;
             int newQua = couple.second - qua;
@@ -388,7 +391,7 @@ public class PlayerExchange extends Exchange {
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player2.getGameClient(), 'O', "+", "" + guid + "|" + newQua + add);
             }
         } else if (i == 2) {
-            Couple<Integer, Integer> couple = getCoupleInList(items2, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items2, guid);
 
             if(couple == null) return;
             int newQua = couple.second - qua;
@@ -405,13 +408,13 @@ public class PlayerExchange extends Exchange {
         }
     }
 
-    public synchronized int getQuaItem(int itemID, int playerGuid) {
-        ArrayList<Couple<Integer, Integer>> items;
+    public synchronized int getQuaItem(long itemID, int playerGuid) {
+        ArrayList<Couple<Long, Integer>> items;
         if (this.player1.getId() == playerGuid)
             items = items1;
         else
             items = items2;
-        for (Couple<Integer, Integer> curCoupl : items)
+        for (Couple<Long, Integer> curCoupl : items)
             if (curCoupl.first == itemID)
                 return curCoupl.second;
         return 0;
@@ -425,8 +428,8 @@ public class PlayerExchange extends Exchange {
         private NpcTemplate npc;
         private long kamas1 = 0;
         private long kamas2 = 0;
-        private ArrayList<Couple<Integer,Integer>> items1 = new ArrayList<Couple<Integer,Integer>>();
-        private ArrayList<Couple<Integer,Integer>> items2 = new ArrayList<Couple<Integer,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items1 = new ArrayList<Couple<Long,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items2 = new ArrayList<Couple<Long,Integer>>();
         private boolean ok1;
         private boolean ok2;
 
@@ -486,7 +489,7 @@ public class PlayerExchange extends Exchange {
         }
 
         public synchronized void apply() {
-            for(Couple<Integer, Integer> couple : items1) {
+            for(Couple<Long, Integer> couple : items1) {
                 if(couple.second == 0)continue;
                 if(World.world.getGameObject(couple.first).getPosition() != Constant.ITEM_POS_NO_EQUIPED)continue;
                 if(!this.player.hasItemGuid(couple.first)) {
@@ -505,17 +508,14 @@ public class PlayerExchange extends Exchange {
                 }
             }
 
-            for(Couple<Integer, Integer> couple1 : items2) {
+            for(Couple<Long, Integer> couple1 : items2) {
                 if(couple1.second == 0)continue;
-                if(World.world.getObjTemplate(couple1.first) == null)continue;
-                GameObject obj1 = World.world.getObjTemplate(couple1.first).createNewItem(couple1.second, false,0);
+                if(World.world.getObjTemplate((couple1.first).intValue()) == null)continue;
+                GameObject obj1 = World.world.getObjTemplate((couple1.first).intValue()).createNewItem(couple1.second, false,0);
                 if(this.player.addObjet(obj1, true))
                     World.world.addGameObject(obj1, true);
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "021;" + couple1.second + "~" + couple1.first);
             }
-
-
-
 
                 if(kamas2 > 0) {
                     SocketManager.GAME_SEND_MESSAGE(this.player,"Tu as vendu pour " + (-kamas1 + kamas2) + " kamas d'objets !");
@@ -530,14 +530,14 @@ public class PlayerExchange extends Exchange {
         }
 
 
-        public synchronized void addItem(int obj, int qua) {
+        public synchronized void addItem(long obj, int qua) {
             if(qua <= 0)return;
             if(World.world.getGameObject(obj) == null)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             String str = obj + "|" + qua;
-            Couple<Integer,Integer> couple = getCoupleInList(items1, obj);
+            Couple<Long,Integer> couple = getCoupleInList(items1, obj);
             if(couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", ""+obj+"|"+couple.second);
@@ -545,17 +545,17 @@ public class PlayerExchange extends Exchange {
                 return;
             }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", str);
-            items1.add(new Couple<Integer,Integer>(obj,qua));
+            items1.add(new Couple<Long,Integer>(obj,qua));
             putAllGiveItem();
         }
 
-        public synchronized void removeItem(int guid, int qua) {
+        public synchronized void removeItem(long guid, int qua) {
             if(qua < 0)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             if(World.world.getGameObject(guid) == null)return;
-            Couple<Integer,Integer> couple = getCoupleInList(items1,guid);
+            Couple<Long,Integer> couple = getCoupleInList(items1,guid);
             int newQua = couple.second - qua;
             if(newQua <1) {
                 items1.remove(couple);
@@ -568,21 +568,28 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        public synchronized int getQuaItem(int obj, boolean b) {
-            ArrayList<Couple<Integer, Integer>> list;
-            if(b)
+        public synchronized int getQuaItem(long obj, boolean b) {
+            if(b){
+                ArrayList<Couple<Long, Integer>> list;
                 list = this.items2;
-            else
+                for(Couple<Long, Integer> item: list)
+                    if(item.first == obj)
+                        return item.second;
+                return 0;
+            }
+            else{
+                ArrayList<Couple<Long, Integer>> list;
                 list = this.items1;
-            for(Couple<Integer, Integer> item: list)
-                if(item.first == obj)
-                    return item.second;
-            return 0;
+                for(Couple<Long, Integer> item: list)
+                    if(item.first == obj)
+                        return item.second;
+                return 0;
+            }
         }
 
         public synchronized void clearItems() {
             if(this.items2.isEmpty()) return;
-            for(Couple<Integer, Integer> i: items2)
+            for(Couple<Long, Integer> i: items2)
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "-", i.first+"");
             this.kamas2 = 0;
             this.items2.clear();
@@ -592,24 +599,24 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        private synchronized Couple<Integer, Integer> getCoupleInList(ArrayList<Couple<Integer, Integer>> items,int guid) {
-            for(Couple<Integer, Integer> couple : items)
+        private synchronized Couple<Long, Integer> getCoupleInList(ArrayList<Couple<Long, Integer>> items,long guid) {
+            for(Couple<Long, Integer> couple : items)
                 if(couple.first == guid)
                     return couple;
             return null;
         }
 
         public synchronized void putAllGiveItem() {
-            ArrayList<Couple<Integer,Integer>> objects = this.npc.checkGetObjects(this.items1);
+            ArrayList<Couple<Long,Integer>> objects = this.npc.checkGetObjects(this.items1);
 
             if(objects != null) {
                 this.clearItems();
-                for(Couple<Integer, Integer> object : objects) {
+                for(Couple<Long, Integer> object : objects) {
                     if(object.second == -1) {
-                        int kamas = object.first;
+                        long kamas = object.first;
 
                         if(kamas == -1) {
-                            for(Couple<Integer, Integer> pepite : this.items1)
+                            for(Couple<Long, Integer> pepite : this.items1)
                                 if(World.world.getGameObject(pepite.first).getTemplate().getId() == 1)
                                     this.kamas2 += Integer.parseInt(World.world.getGameObject(pepite.first).getTxtStat().get(990).substring(9, 13)) * pepite.second;
 
@@ -621,8 +628,8 @@ public class PlayerExchange extends Exchange {
                         SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'G', "", String.valueOf(this.kamas2));
                         continue;
                     }
-                    String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first).getStrTemplate();
-                    this.items2.add(new Couple<Integer, Integer>(object.first, object.second));
+                    String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first.intValue()).getStrTemplate();
+                    this.items2.add(new Couple<Long, Integer>(object.first, object.second));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "+", str);
                 }
                 if(!this.ok2) {
@@ -648,8 +655,8 @@ public class PlayerExchange extends Exchange {
         private NpcTemplate npc;
         private long kamas1 = 0;
         private long kamas2 = 0;
-        private ArrayList<Couple<Integer, Integer>> items1 = new ArrayList<>();
-        private ArrayList<Couple<Integer, Integer>> items2 = new ArrayList<>();
+        private ArrayList<Couple<Long, Integer>> items1 = new ArrayList<>();
+        private ArrayList<Couple<Long, Integer>> items2 = new ArrayList<>();
         private boolean ok1;
         private boolean ok2;
 
@@ -697,7 +704,7 @@ public class PlayerExchange extends Exchange {
 
         public synchronized void apply() {
             GameObject objetToChange = null;
-            for (Couple<Integer, Integer> couple : items1) {
+            for (Couple<Long, Integer> couple : items1) {
                 if (couple.second == 0)
                     continue;
                 if (World.world.getGameObject(couple.first).getPosition() != Constant.ITEM_POS_NO_EQUIPED)
@@ -720,18 +727,18 @@ public class PlayerExchange extends Exchange {
                 }
             }
 
-            for (Couple<Integer, Integer> couple1 : items2) {
+            for (Couple<Long, Integer> couple1 : items2) {
                 if (couple1.second == 0)
                     continue;
-                if (World.world.getObjTemplate(couple1.first) == null)
+                if (World.world.getObjTemplate(couple1.first.intValue()) == null)
                     continue;
                 if (World.world.getGameObject(objetToChange.getGuid()) == null)
                     continue;
                 GameObject obj1 = null;
-                if (World.world.getObjTemplate(couple1.first).getType() == 18)
-                    obj1 = World.world.getObjTemplate(couple1.first).createNewFamilier(objetToChange);
-                if (World.world.getObjTemplate(couple1.first).getType() == 77)
-                    obj1 = World.world.getObjTemplate(couple1.first).createNewCertificat(objetToChange);
+                if (World.world.getObjTemplate(couple1.first.intValue()).getType() == 18)
+                    obj1 = World.world.getObjTemplate(couple1.first.intValue()).createNewFamilier(objetToChange);
+                if (World.world.getObjTemplate(couple1.first.intValue()).getType() == 77)
+                    obj1 = World.world.getObjTemplate(couple1.first.intValue()).createNewCertificat(objetToChange);
 
                 if (obj1 == null)
                     continue;
@@ -747,7 +754,7 @@ public class PlayerExchange extends Exchange {
             Database.getStatics().getPlayerData().update(this.player);
         }
 
-        public synchronized void addItem(int obj, int qua) {
+        public synchronized void addItem(long obj, int qua) {
             if (qua <= 0)
                 return;
             if (World.world.getGameObject(obj) == null)
@@ -756,7 +763,7 @@ public class PlayerExchange extends Exchange {
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             String str = obj + "|" + qua;
-            Couple<Integer, Integer> couple = getCoupleInList(items1, obj);
+            Couple<Long, Integer> couple = getCoupleInList(items1, obj);
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(player, 'O', "+", ""
@@ -764,12 +771,12 @@ public class PlayerExchange extends Exchange {
                 return;
             }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(player, 'O', "+", str);
-            items1.add(new Couple<Integer, Integer>(obj, qua));
+            items1.add(new Couple<Long, Integer>(obj, qua));
             if (verifIfAlonePets() || verifIfAloneParcho()) {
                 if (items1.size() == 1) {
-                    int id = -1;
+                    long id = -1;
                     GameObject objet = null;
-                    for (Couple<Integer, Integer> i : items1) {
+                    for (Couple<Long, Integer> i : items1) {
                         if (World.world.getGameObject(i.first) == null)
                             continue;
                         objet = World.world.getGameObject(i.first);
@@ -783,7 +790,7 @@ public class PlayerExchange extends Exchange {
                         return;
                     String str1 = id + "|" + 1 + "|" + id + "|"
                             + objet.parseStatsString();
-                    this.items2.add(new Couple<Integer, Integer>(id, 1));
+                    this.items2.add(new Couple<Long, Integer>(id, 1));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "+", str1);
                     this.ok2 = true;
                     SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
@@ -799,7 +806,7 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        public synchronized void removeItem(int guid, int qua) {
+        public synchronized void removeItem(long guid, int qua) {
             if (qua < 0)
                 return;
             this.ok1 = (this.ok2 = false);
@@ -807,7 +814,7 @@ public class PlayerExchange extends Exchange {
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             if (World.world.getGameObject(guid) == null)
                 return;
-            Couple<Integer, Integer> couple = getCoupleInList(items1, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items1, guid);
             int newQua = couple.second - qua;
             if (newQua < 1)//Si il n'y a pu d'item
             {
@@ -821,9 +828,9 @@ public class PlayerExchange extends Exchange {
             }
             if (verifIfAlonePets()) {
                 if (items1.size() == 1) {
-                    int id = -1;
+                    long id = -1;
                     GameObject objet = null;
-                    for (Couple<Integer, Integer> i : items1) {
+                    for (Couple<Long, Integer> i : items1) {
                         if (World.world.getGameObject(i.first) == null)
                             continue;
                         objet = World.world.getGameObject(i.first);
@@ -837,7 +844,7 @@ public class PlayerExchange extends Exchange {
                         return;
                     String str = id + "|" + 1 + "|" + id + "|"
                             + objet.parseStatsString();
-                    this.items2.add(new Couple<Integer, Integer>(id, 1));
+                    this.items2.add(new Couple<Long, Integer>(id, 1));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "+", str);
                     this.ok2 = true;
                     SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
@@ -854,42 +861,42 @@ public class PlayerExchange extends Exchange {
         }
 
         public boolean verifIfAlonePets() {
-            for (Couple<Integer, Integer> i : items1)
+            for (Couple<Long, Integer> i : items1)
                 if (World.world.getGameObject(i.first).getTemplate().getType() != 18)
                     return false;
             return true;
         }
 
         public boolean verifIfAloneParcho() {
-            for (Couple<Integer, Integer> i : items1)
+            for (Couple<Long, Integer> i : items1)
                 if (World.world.getGameObject(i.first).getTemplate().getType() != 77)
                     return false;
             return true;
         }
 
         public synchronized void clearNpcItems() {
-            for (Couple<Integer, Integer> i : items2)
+            for (Couple<Long, Integer> i : items2)
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "-", i.first
                         + "");
             this.items2.clear();
         }
 
-        private synchronized Couple<Integer, Integer> getCoupleInList(
-                ArrayList<Couple<Integer, Integer>> items, int guid) {
-            for (Couple<Integer, Integer> couple : items)
+        private synchronized Couple<Long, Integer> getCoupleInList(
+                ArrayList<Couple<Long, Integer>> items, long guid) {
+            for (Couple<Long, Integer> couple : items)
                 if (couple.first == guid)
                     return couple;
             return null;
         }
 
-        public synchronized int getQuaItem(int obj, boolean b) {
-            ArrayList<Couple<Integer, Integer>> list;
+        public synchronized int getQuaItem(long obj, boolean b) {
+            ArrayList<Couple<Long, Integer>> list;
             if (b)
                 list = this.items2;
             else
                 list = this.items1;
 
-            for (Couple<Integer, Integer> item : list)
+            for (Couple<Long, Integer> item : list)
                 if (item.first == obj)
                     return item.second;
             return 0;
@@ -909,8 +916,8 @@ public class PlayerExchange extends Exchange {
         private NpcTemplate npc;
         private long kamas1 = 0;
         private long kamas2 = 0;
-        private ArrayList<Couple<Integer, Integer>> items1 = new ArrayList<Couple<Integer, Integer>>();
-        private ArrayList<Couple<Integer, Integer>> items2 = new ArrayList<Couple<Integer, Integer>>();
+        private ArrayList<Couple<Long, Integer>> items1 = new ArrayList<Couple<Long, Integer>>();
+        private ArrayList<Couple<Long, Integer>> items2 = new ArrayList<Couple<Long, Integer>>();
         private boolean ok1;
         private boolean ok2;
 
@@ -964,7 +971,7 @@ public class PlayerExchange extends Exchange {
         }
 
         public synchronized void apply() {
-            for (Couple<Integer, Integer> item : items1) {
+            for (Couple<Long, Integer> item : items1) {
                 GameObject object = World.world.getGameObject(item.first);
                 if (object.getTemplate().getId() == 8012) {
                     if ((object.getQuantity() - item.second) < 1) {
@@ -989,7 +996,7 @@ public class PlayerExchange extends Exchange {
             Database.getStatics().getPlayerData().update(this.perso);
         }
 
-        public synchronized void addItem(int obj, int qua) {
+        public synchronized void addItem(long obj, int qua) {
             if (qua <= 0)
                 return;
             if (World.world.getGameObject(obj) == null)
@@ -998,7 +1005,7 @@ public class PlayerExchange extends Exchange {
             SocketManager.GAME_SEND_EXCHANGE_OK(this.perso.getGameClient(), this.ok1, this.perso.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.perso.getGameClient(), this.ok2);
             String str = obj + "|" + qua;
-            Couple<Integer, Integer> couple = getCoupleInList(items1, obj);
+            Couple<Long, Integer> couple = getCoupleInList(items1, obj);
             if (couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(perso, 'O', "+", ""
@@ -1006,13 +1013,13 @@ public class PlayerExchange extends Exchange {
                 return;
             }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(perso, 'O', "+", str);
-            items1.add(new Couple<Integer, Integer>(obj, qua));
+            items1.add(new Couple<Long, Integer>(obj, qua));
             if (verification()) {
                 if (items1.size() == 2) {
-                    int id = -1;
+                    long id = -1;
                     GameObject objet = null;
 
-                    for (Couple<Integer, Integer> i : items1) {
+                    for (Couple<Long, Integer> i : items1) {
                         objet = World.world.getGameObject(i.first);
 
                         if (objet == null)
@@ -1027,7 +1034,7 @@ public class PlayerExchange extends Exchange {
                         return;
                     String str1 = id + "|" + 1 + "|" + id + "|"
                             + objet.parseStatsString();
-                    this.items2.add(new Couple<Integer, Integer>(id, 1));
+                    this.items2.add(new Couple<Long, Integer>(id, 1));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.perso.getGameClient(), 'O', "+", str1);
                     this.ok2 = true;
                     SocketManager.GAME_SEND_EXCHANGE_OK(this.perso.getGameClient(), this.ok2);
@@ -1043,7 +1050,7 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        public synchronized void removeItem(int guid, int qua) {
+        public synchronized void removeItem(long guid, int qua) {
             if (qua < 0)
                 return;
             this.ok1 = (this.ok2 = false);
@@ -1051,7 +1058,7 @@ public class PlayerExchange extends Exchange {
             SocketManager.GAME_SEND_EXCHANGE_OK(this.perso.getGameClient(), this.ok2);
             if (World.world.getGameObject(guid) == null)
                 return;
-            Couple<Integer, Integer> couple = getCoupleInList(items1, guid);
+            Couple<Long, Integer> couple = getCoupleInList(items1, guid);
             int newQua = couple.second - qua;
             if (newQua < 1)//Si il n'y a pu d'item
             {
@@ -1065,10 +1072,10 @@ public class PlayerExchange extends Exchange {
             }
             if (verification()) {
                 if (items1.size() == 2) {
-                    int id = -1;
+                    long id = -1;
                     GameObject objet = null;
 
-                    for (Couple<Integer, Integer> i : items1) {
+                    for (Couple<Long, Integer> i : items1) {
                         objet = World.world.getGameObject(i.first);
 
                         if (objet == null)
@@ -1084,7 +1091,7 @@ public class PlayerExchange extends Exchange {
 
                     String str = id + "|" + 1 + "|" + id + "|"
                             + objet.parseStatsString();
-                    this.items2.add(new Couple<Integer, Integer>(id, 1));
+                    this.items2.add(new Couple<Long, Integer>(id, 1));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.perso.getGameClient(), 'O', "+", str);
                     this.ok2 = true;
                     SocketManager.GAME_SEND_EXCHANGE_OK(this.perso.getGameClient(), this.ok2);
@@ -1102,7 +1109,7 @@ public class PlayerExchange extends Exchange {
 
         public boolean verification() {
             boolean verif = true;
-            for (Couple<Integer, Integer> item : items1) {
+            for (Couple<Long, Integer> item : items1) {
                 GameObject object = World.world.getGameObject(item.first);
                 if ((object.getTemplate().getId() != 8012 && object.getTemplate().getType() != 90)
                         || item.second > 1)
@@ -1112,28 +1119,28 @@ public class PlayerExchange extends Exchange {
         }
 
         public synchronized void clearNpcItems() {
-            for (Couple<Integer, Integer> i : items2)
+            for (Couple<Long, Integer> i : items2)
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.perso.getGameClient(), 'O', "-", i.first
                         + "");
             this.items2.clear();
         }
 
-        private synchronized Couple<Integer, Integer> getCoupleInList(
-                ArrayList<Couple<Integer, Integer>> items, int guid) {
-            for (Couple<Integer, Integer> couple : items)
+        private synchronized Couple<Long, Integer> getCoupleInList(
+                ArrayList<Couple<Long, Integer>> items, long guid) {
+            for (Couple<Long, Integer> couple : items)
                 if (couple.first == guid)
                     return couple;
             return null;
         }
 
-        public synchronized int getQuaItem(int obj, boolean b) {
-            ArrayList<Couple<Integer, Integer>> list;
+        public synchronized int getQuaItem(long obj, boolean b) {
+            ArrayList<Couple<Long, Integer>> list;
             if (b)
                 list = this.items2;
             else
                 list = this.items1;
 
-            for (Couple<Integer, Integer> item : list)
+            for (Couple<Long, Integer> item : list)
                 if (item.first == obj)
                     return item.second;
             return 0;
@@ -1153,8 +1160,8 @@ public class PlayerExchange extends Exchange {
         private NpcTemplate npc;
         private long kamas1 = 0;
         private long kamas2 = 0;
-        private ArrayList<Couple<Integer,Integer>> items1 = new ArrayList<Couple<Integer,Integer>>();
-        private ArrayList<Couple<Integer,Integer>> items2 = new ArrayList<Couple<Integer,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items1 = new ArrayList<Couple<Long,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items2 = new ArrayList<Couple<Long,Integer>>();
         private boolean ok1;
         private boolean ok2;
 
@@ -1206,7 +1213,7 @@ public class PlayerExchange extends Exchange {
         }
 
         public synchronized void apply() {
-            for(Couple<Integer, Integer> couple : items1) {
+            for(Couple<Long, Integer> couple : items1) {
                 if(couple.second == 0)continue;
                 if(World.world.getGameObject(couple.first).getPosition() != Constant.ITEM_POS_NO_EQUIPED)continue;
                 if(!this.player.hasItemGuid(couple.first)) {
@@ -1236,10 +1243,10 @@ public class PlayerExchange extends Exchange {
                 }
             }
 
-            for(Couple<Integer, Integer> couple1 : items2) {
+            for(Couple<Long, Integer> couple1 : items2) {
                 if(couple1.second == 0)continue;
-                if(World.world.getObjTemplate(couple1.first) == null)continue;
-                GameObject obj1 = World.world.getObjTemplate(couple1.first).createNewItem(couple1.second, false,0);
+                if(World.world.getObjTemplate(couple1.first.intValue()) == null)continue;
+                GameObject obj1 = World.world.getObjTemplate(couple1.first.intValue()).createNewItem(couple1.second, false,0);
                 if(this.player.addObjet(obj1, true))
                     World.world.addGameObject(obj1, true);
                 SocketManager.GAME_SEND_Im_PACKET(this.player, "021;" + couple1.second + "~" + couple1.first);
@@ -1263,14 +1270,14 @@ public class PlayerExchange extends Exchange {
         }
 
 
-        public synchronized void addItem(int obj, int qua) {
+        public synchronized void addItem(long obj, int qua) {
             if(qua <= 0)return;
             if(World.world.getGameObject(obj) == null)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             String str = obj + "|" + qua;
-            Couple<Integer,Integer> couple = getCoupleInList(items1, obj);
+            Couple<Long,Integer> couple = getCoupleInList(items1, obj);
             if(couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", ""+obj+"|"+couple.second);
@@ -1278,17 +1285,17 @@ public class PlayerExchange extends Exchange {
                 return;
             }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", str);
-            items1.add(new Couple<Integer,Integer>(obj,qua));
+            items1.add(new Couple<Long,Integer>(obj,qua));
             putAllGiveItem();
         }
 
-        public synchronized void removeItem(int guid, int qua) {
+        public synchronized void removeItem(long guid, int qua) {
             if(qua < 0)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             if(World.world.getGameObject(guid) == null)return;
-            Couple<Integer,Integer> couple = getCoupleInList(items1,guid);
+            Couple<Long,Integer> couple = getCoupleInList(items1,guid);
             int newQua = couple.second - qua;
             if(newQua <1) {
                 items1.remove(couple);
@@ -1301,13 +1308,13 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        public synchronized int getQuaItem(int obj, boolean b) {
-            ArrayList<Couple<Integer, Integer>> list;
+        public synchronized int getQuaItem(long obj, boolean b) {
+            ArrayList<Couple<Long, Integer>> list;
             if(b)
                 list = this.items2;
             else
                 list = this.items1;
-            for(Couple<Integer, Integer> item: list)
+            for(Couple<Long, Integer> item: list)
                 if(item.first == obj)
                     return item.second;
             return 0;
@@ -1315,7 +1322,7 @@ public class PlayerExchange extends Exchange {
 
         public synchronized void clearItems() {
             if(this.items2.isEmpty()) return;
-            for(Couple<Integer, Integer> i: items2)
+            for(Couple<Long, Integer> i: items2)
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "-", i.first+"");
             this.kamas2 = 0;
             this.items2.clear();
@@ -1325,24 +1332,24 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        private synchronized Couple<Integer, Integer> getCoupleInList(ArrayList<Couple<Integer, Integer>> items,int guid) {
-            for(Couple<Integer, Integer> couple : items)
+        private synchronized Couple<Long, Integer> getCoupleInList(ArrayList<Couple<Long, Integer>> items,long guid) {
+            for(Couple<Long, Integer> couple : items)
                 if(couple.first == guid)
                     return couple;
             return null;
         }
 
         public synchronized void putAllGiveItem() {
-            ArrayList<Couple<Integer,Integer>> objects = this.npc.checkGetObjects(this.items1);
+            ArrayList<Couple<Long,Integer>> objects = this.npc.checkGetObjects(this.items1);
 
             if(objects != null) {
                 this.clearItems();
-                for(Couple<Integer, Integer> object : objects) {
+                for(Couple<Long, Integer> object : objects) {
                     if(object.second == -1) {
-                        int kamas = object.first;
+                        long kamas = object.first;
 
                         if(kamas == -1) {
-                            for(Couple<Integer, Integer> pepite : this.items1)
+                            for(Couple<Long, Integer> pepite : this.items1)
                                 if(World.world.getGameObject(pepite.first).getTemplate().getId() == 1)
                                     this.kamas2 += Integer.parseInt(World.world.getGameObject(pepite.first).getTxtStat().get(990).substring(9, 13)) * pepite.second;
 
@@ -1354,8 +1361,8 @@ public class PlayerExchange extends Exchange {
                         SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'G', "", String.valueOf(this.kamas2));
                         continue;
                     }
-                    String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first).getStrTemplate();
-                    this.items2.add(new Couple<Integer, Integer>(object.first, object.second));
+                    String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first.intValue()).getStrTemplate();
+                    this.items2.add(new Couple<Long, Integer>(object.first, object.second));
                     SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "+", str);
                 }
                 if(!this.ok2) {
@@ -1375,7 +1382,7 @@ public class PlayerExchange extends Exchange {
             this.npc = npc;
         }
 
-        public synchronized long getKamasSwitchItem(int obj, int qua) {
+        public synchronized long getKamasSwitchItem(long obj, int qua) {
             long kamastoadd = 0;
             ObjectTemplate added = World.world.getGameObject(obj).getTemplate();
             int type = added.getType();
@@ -1410,8 +1417,8 @@ public class PlayerExchange extends Exchange {
         private NpcTemplate npc;
         private long kamas1 = 0;
         private long kamas2 = 0;
-        private ArrayList<Couple<Integer,Integer>> items1 = new ArrayList<Couple<Integer,Integer>>();
-        private ArrayList<Couple<Integer,Integer>> items2 = new ArrayList<Couple<Integer,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items1 = new ArrayList<Couple<Long,Integer>>();
+        private ArrayList<Couple<Long,Integer>> items2 = new ArrayList<Couple<Long,Integer>>();
         private boolean ok1;
         private boolean ok2;
 
@@ -1471,14 +1478,14 @@ public class PlayerExchange extends Exchange {
         }
 
 
-        public synchronized void addItem(int obj, int qua) {
+        public synchronized void addItem(long obj, int qua) {
             if(qua <= 0)return;
             if(World.world.getGameObject(obj) == null)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             String str = obj + "|" + qua;
-            Couple<Integer,Integer> couple = getCoupleInList(items1, obj);
+            Couple<Long,Integer> couple = getCoupleInList(items1, obj);
             if(couple != null) {
                 couple.second += qua;
                 SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", ""+obj+"|"+couple.second);
@@ -1486,17 +1493,17 @@ public class PlayerExchange extends Exchange {
                 return;
             }
             SocketManager.GAME_SEND_EXCHANGE_MOVE_OK(this.player, 'O', "+", str);
-            items1.add(new Couple<Integer,Integer>(obj,qua));
+            items1.add(new Couple<Long,Integer>(obj,qua));
             putAllGiveItem();
         }
 
-        public synchronized void removeItem(int guid, int qua) {
+        public synchronized void removeItem(long guid, int qua) {
             if(qua < 0)return;
             this.ok1 = (this.ok2 = false);
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok1, this.player.getId());
             SocketManager.GAME_SEND_EXCHANGE_OK(this.player.getGameClient(), this.ok2);
             if(World.world.getGameObject(guid) == null)return;
-            Couple<Integer,Integer> couple = getCoupleInList(items1,guid);
+            Couple<Long,Integer> couple = getCoupleInList(items1,guid);
             int newQua = couple.second - qua;
             if(newQua <1) {
                 items1.remove(couple);
@@ -1509,13 +1516,13 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        public synchronized int getQuaItem(int obj, boolean b) {
-            ArrayList<Couple<Integer, Integer>> list;
+        public synchronized int getQuaItem(long obj, boolean b) {
+            ArrayList<Couple<Long, Integer>> list;
             if(b)
                 list = this.items2;
             else
                 list = this.items1;
-            for(Couple<Integer, Integer> item: list)
+            for(Couple<Long, Integer> item: list)
                 if(item.first == obj)
                     return item.second;
             return 0;
@@ -1523,7 +1530,7 @@ public class PlayerExchange extends Exchange {
 
         public synchronized void clearItems() {
             if(this.items2.isEmpty()) return;
-            for(Couple<Integer, Integer> i: items2)
+            for(Couple<Long, Integer> i: items2)
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "-", i.first+"");
             this.kamas2 = 0;
             this.items2.clear();
@@ -1533,19 +1540,19 @@ public class PlayerExchange extends Exchange {
             }
         }
 
-        private synchronized Couple<Integer, Integer> getCoupleInList(ArrayList<Couple<Integer, Integer>> items,int guid) {
-            for(Couple<Integer, Integer> couple : items)
+        private synchronized Couple<Long, Integer> getCoupleInList(ArrayList<Couple<Long, Integer>> items,long guid) {
+            for(Couple<Long, Integer> couple : items)
                 if(couple.first == guid)
                     return couple;
             return null;
         }
 
         public synchronized void putAllGiveItem() {
-            Couple<Integer,Integer> object = this.npc.checkGetTypeObjects(this.items1);
+            Couple<Long,Integer> object = this.npc.checkGetTypeObjects(this.items1);
             if(object != null) {
                 this.clearItems();
-                String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first).getStrTemplate();
-                this.items2.add(new Couple<Integer, Integer>(object.first, object.second));
+                String str = object.first + "|" + object.second + "|" + object.first + "|" + World.world.getObjTemplate(object.first.intValue()).getStrTemplate();
+                this.items2.add(new Couple<Long, Integer>(object.first, object.second));
                 SocketManager.GAME_SEND_EXCHANGE_OTHER_MOVE_OK(this.player.getGameClient(), 'O', "+", str);
                 if(!this.ok2) {
                     this.ok2 = true;
@@ -1565,7 +1572,7 @@ public class PlayerExchange extends Exchange {
         }
 
 
-        public ArrayList<Couple<Integer, Integer>> getObjects() {
+        public ArrayList<Couple<Long, Integer>> getObjects() {
             return items1;
         }
     }

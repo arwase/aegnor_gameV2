@@ -24,7 +24,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
             if (result != null) {
                 ResultSet RS = result.getResultSet();
                 while (RS.next()) {
-                    int id = RS.getInt("id");
+                    long id = RS.getLong("id");
                     int template = RS.getInt("template");
                     int quantity = RS.getInt("quantity");
                     int position = RS.getInt("position");
@@ -49,7 +49,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
             if (result != null) {
                 ResultSet RS = result.getResultSet();
                 while (RS.next()) {
-                    int id = RS.getInt("id");
+                    long id = RS.getLong("id");
                     int template = RS.getInt("template");
                     int quantity = RS.getInt("quantity");
                     int position = RS.getInt("position");
@@ -82,8 +82,26 @@ public class ObjectData extends AbstractDAO<GameObject> {
             p.setInt(5, object.getRarity());
             p.setInt(6, object.getMimibiote());
             p.setString(7, object.parseToSave());
-            p.setInt(8, object.getGuid());
+            p.setLong(8, object.getGuid());
             executeUpdate(p);
+            return true;
+        } catch (SQLException e) {
+            sendError("ObjectData update", e);
+        }
+        return false;
+    }
+
+    public boolean updateID(GameObject object,long oldID) {
+        if (object == null || object.getTemplate() == null)
+            return false;
+
+        String query = "UPDATE `world.entity.objects` SET `id` = ? WHERE `id` = ?;";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement p = conn.prepareStatement(query)) {
+            p.setLong(1, object.getGuid());
+            p.setLong(2, oldID);
+            executeUpdate(p);
+            Database.getDynamics().getHdvObjectData().updateHDVID(object,oldID);
             return true;
         } catch (SQLException e) {
             sendError("ObjectData update", e);
@@ -97,7 +115,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
             return;
         }
 
-        int id = object.getGuid();
+        long id = object.getGuid();
         int checkResult;
 
          checkResult = existsAndSameTemplate(id, object.getTemplate().getId());
@@ -108,7 +126,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
             String query = "INSERT INTO `world.entity.objects`(`id`, `template`, `quantity`, `position`, `stats`, `puit`, `rarity`, `mimibiote`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement p = conn.prepareStatement(query)) {
-                p.setInt(1, object.getGuid());
+                p.setLong(1, object.getGuid());
                 p.setInt(2, object.getTemplate().getId());
                 p.setInt(3, object.getQuantity());
                 p.setInt(4, object.getPosition());
@@ -131,7 +149,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
             String query = "INSERT INTO `world.entity.objects`(`id`, `template`, `quantity`, `position`, `stats`, `puit`, `rarity`, `mimibiote`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement p = conn.prepareStatement(query)) {
-                p.setInt(1, object.getGuid());
+                p.setLong(1, object.getGuid());
                 p.setInt(2, object.getTemplate().getId());
                 p.setInt(3, object.getQuantity());
                 p.setInt(4, object.getPosition());
@@ -146,11 +164,11 @@ public class ObjectData extends AbstractDAO<GameObject> {
         }
     }
 
-    public int existsAndSameTemplate(int id, int templateId) {
+    public int existsAndSameTemplate(long id, int templateId) {
         String query = "SELECT template FROM `world.entity.objects` WHERE `id` = ?";
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, id);
+            stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     int existingTemplateId = rs.getInt("template");
@@ -167,10 +185,10 @@ public class ObjectData extends AbstractDAO<GameObject> {
         return 0; // ID does not exist
     }
 
-    public void delete(int id) {
+    public void delete(Long id) {
         String query = "DELETE FROM `world.entity.objects` WHERE id = ?;";
         try (Connection conn = dataSource.getConnection() ; PreparedStatement p = conn.prepareStatement(query) ) {
-            p.setInt(1, id);
+            p.setLong(1, id);
             executeUpdate(p);
         } catch (SQLException e) {
             sendError("ObjectData delete", e);
@@ -178,7 +196,7 @@ public class ObjectData extends AbstractDAO<GameObject> {
     }
 
     // TODO : changer cette gestion de merde des IDs qui écrase certains items
-    public int getNextId() {
+    public long getNextId() {
         return Database.getStatics().getWorldEntityData().getNextObjectId();
     }
 }

@@ -105,7 +105,7 @@ public class Action {
         this.map = map;
     }
 
-    public boolean apply(final Player player, Player target, int itemID,
+    public boolean apply(final Player player, Player target, long itemID,
                          int cellid) {
 
         if (player == null)
@@ -262,9 +262,9 @@ public class Action {
                 break;
             case -3://Mascotte
                 int idMascotte = Integer.parseInt(args);
-
-                if (player.hasItemTemplate(itemID, 1)) {
-                    player.removeByTemplateID(itemID, 1);
+                int Templateid = (int) itemID;
+                if (player.hasItemTemplate(Templateid, 1)) {
+                    player.removeByTemplateID(Templateid, 1);
                     player.setMascotte(idMascotte);
                     Database.getStatics().getPlayerData().update(player);
                     SocketManager.GAME_SEND_Im_PACKET(player, "022;" + 1 + "~"
@@ -343,11 +343,10 @@ public class Action {
                                 }
                             }
                         }
-
                         player.teleport(newMapID, newCellID);
                     } else {
                         if (player.getCurCell().getId() == 268) {
-                            player.teleport(newMapID, newCellID);
+                            //player.teleport(newMapID, newCellID);
                         }
                     }
                 } catch (Exception e) {
@@ -477,7 +476,7 @@ public class Action {
 
 
                         if (player.getObjetByPos(Constant.ITEM_POS_TONIQUE_EQUILIBRAGE) != null) {
-                            int guid = player.getObjetByPos(Constant.ITEM_POS_TONIQUE_EQUILIBRAGE).getGuid();
+                            long guid = player.getObjetByPos(Constant.ITEM_POS_TONIQUE_EQUILIBRAGE).getGuid();
                             SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, guid);
                             player.deleteItem(guid);
                         }
@@ -923,17 +922,17 @@ public class Action {
                                                         if (slave.getAccount().getGameClient() != null) {
                                                             //On duplique la game action du maitre pour les slaves
                                                             if (slave.hasItemTemplate(ObjetNeed, 1) ) {
-                                                                slave.teleport(newMapID, newCellID);
+                                                                /*slave.teleport(newMapID, newCellID);
                                                                 slave.removeByTemplateID(ObjetNeed, 1);
                                                                 SocketManager.GAME_SEND_Ow_PACKET(slave);
-
+                                                                slave.getGameClient().leave(); // Au Cas ou le joueur avait une popup Dialog ouverte*/
                                                             }
                                                             else if(player.hasItemTemplate(ObjetNeed, 2)){
                                                                 slave.teleport(newMapID, newCellID);
                                                                 player.removeByTemplateID(ObjetNeed, 1);
                                                                 SocketManager.GAME_SEND_Ow_PACKET(player);
                                                                 SocketManager.GAME_SEND_MESSAGE(player, "Vous avez payé la clef pour " + slave.getName() + ".", "009900");
-
+                                                                slave.getGameClient().leave(); // Au Cas ou le joueur avait une popup Dialog ouverte
                                                             }
                                                             else{
                                                                 SocketManager.GAME_SEND_MESSAGE(player, "Vous ne possédez pas assez de clefs nécessaire pour faire entrer " + slave.getName() +".", "009900");
@@ -1232,7 +1231,7 @@ public class Action {
                     itemPos.clearStats();
                     Stats maxStats = itemPos.generateNewStatsFromTemplate(itemPos.getTemplate().getStrTemplate(), true);
                     itemPos.setStats(maxStats);
-                    int idObjPos = itemPos.getGuid();
+                    long idObjPos = itemPos.getGuid();
                     player.removeItem(itemID, 1, true, true);
                     SocketManager.GAME_SEND_REMOVE_ITEM_PACKET(player, idObjPos);
                     SocketManager.GAME_SEND_OAKO_PACKET(player, itemPos);
