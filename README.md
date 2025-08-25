@@ -1,6 +1,8 @@
-```diff
-- ATTENTION ! Cet émulateur a été modifié grandement, <br>aucune aide ne sera apporté si vous souhaitez également le modifier !
-```
+> ⚠️ **ATTENTION**
+> - Cet émulateur a été grandement modifié.
+> - Aucune aide ne sera apportée si vous souhaitez le modifier.
+> - L'utilisation de ce travail à des fins malhonnêtes est interdite.
+
 ![Logo](./aegnorlogo.png)
 
 ## AegnorServeur
