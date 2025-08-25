@@ -1,16 +1,16 @@
 ```diff
 - ATTENTION ! Cette emulateur a été modifié grandement, aucune aide ne sera apporté si vous souhaitez le modifier !
 ```
-
 ![Logo](./aegnorlogo.png)
 
 ## AegnorServeur
 
 Cette émulateur est open source pour tous le monde.  
 Merci de pas le vendre, vous avez reçu gratuitement, donnez gratuitement 🤗.
-Cet emulateur game est developper pour un client 1.34.1.
+Cet emulateur game est developpé pour un client 1.34.1.
 Il est lié au GitHub login suivant :
 Cliquez sur ce lien pour voir le GitHub du login : [AegnorLogin](https://github.com/arwase/aegnor_loginV2) 
+le login n'a pas été developpé par moi, il est un fork du travail de Locos.
 
 ## Authors
 
@@ -22,7 +22,7 @@ Cliquez sur ce lien pour voir le GitHub du login : [AegnorLogin](https://github.
 Aegnor est un serveur de type EasyLike.
 Il propose une experience de jeu legérement modifié afin d'accélerer la progression dans le jeu et ajoute des fonctionnalités non présente initialement comme un système de rareté d'objet etc.
 Pour plus d'informations vous pouvez visiter l'ancien discord du serveur qui regorge d'informations à son sujet.
-Cette émulateur est basé sur un ancien starloco et diverses sources d'emulateurs afin d'en extraire le meilleur.
+Cette émulateur est basé sur une base d'un émulateur starloco et diverses sources d'emulateurs afin d'en extraire le meilleur.
 [@aegnor] https://discord.com/invite/f2cNEZ2cev
 
 ## DEBUG :
