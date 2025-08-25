@@ -44,9 +44,9 @@ La liste des debugs est visible sur le discord dans l'onglet patchnote
 
 - AegnorEmulateur.zip contient l'intégralité des fichiers nécéssaires à son execution en Local.
 
-## AIDE :
+## INSTALLATION :
 
-Je ne vais pas faire de tutoriel sur son installation mais vous pouvez suivre cette vidéo et reproduire le même schéma.
+Je ne vais pas faire de tutoriel sur son installation mais vous pouvez suivre cette vidéo et reproduire le même schéma pour l'installer une fois que vous avez compilé le projet en JAR.
 
 [Vidéo d'installation](https://youtu.be/06tjFmFvEkk) 
 
