@@ -1,13 +1,15 @@
 ```diff
 - ATTENTION ! Cette emulateur a été modifié grandement, aucune aide ne sera apporté si vous souhaitez le modifier !
 ```
-Cliquez sur ce lien pour voir le Github du login : [AegnorLogin](https://github.com/arwase/aegnor_loginV2) 
+
 
 ## AegnorServeur
 
 Cette émulateur est open source pour tous le monde.  
-Merci de pas le vendre, vous avez reçu gratuitement, donnez gratuitement 🤗
-
+Merci de pas le vendre, vous avez reçu gratuitement, donnez gratuitement 🤗.
+Cet emulateur game est developper pour un client 1.34.1.
+Il est lié au GitHub login suivant :
+Cliquez sur ce lien pour voir le GitHub du login : [AegnorLogin](https://github.com/arwase/aegnor_loginV2) 
 
 ## Authors
 
