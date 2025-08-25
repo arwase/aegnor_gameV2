@@ -1,5 +1,5 @@
 ```diff
-- ATTENTION ! Cette emulateur a été modifié grandement, aucune aide ne sera apporté si vous souhaitez le modifier !
+- ATTENTION ! Cet émulateur a été modifié grandement, <br>aucune aide ne sera apporté si vous souhaitez également le modifier !
 ```
 ![Logo](./aegnorlogo.png)
 
