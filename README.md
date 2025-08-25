@@ -55,14 +55,12 @@ L’archive **AegnorEmulateur.zip** contient l’intégralité des fichiers néc
 ## 🚀 INSTALLATION
 
 1. Compilez le projet en `.jar`  
-2. Décompressez l’archive  
-3. Lancez le serveur avec :  
+2. Lancez le serveur avec :  
 
    ```bash
    java -Xmx2G -jar Aegnor.jar
    ```
-
-4. Connectez-vous avec le compte déjà créé :  
+3. Connectez-vous avec le compte déjà créé :  
    - **login** : `admin1`  
    - **mot de passe** : `admin`  
 
