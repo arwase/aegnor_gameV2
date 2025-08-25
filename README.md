@@ -2,6 +2,7 @@
 - ATTENTION ! Cette emulateur a été modifié grandement, aucune aide ne sera apporté si vous souhaitez le modifier !
 ```
 
+![Logo](./aegnorlogo.png)
 
 ## AegnorServeur
 
