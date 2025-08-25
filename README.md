@@ -1,60 +1,84 @@
 > ⚠️ **ATTENTION**
-> - Cet émulateur a été grandement modifié.
-> - Aucune aide ne sera apportée si vous souhaitez le modifier.
-> - L'utilisation de ce travail à des fins malhonnêtes est interdite.
+> - Cet émulateur a été grandement modifié.  
+> - Aucune aide ne sera apportée si vous souhaitez également le modifier.  
+> - L'utilisation de ce travail à des fins malhonnêtes est interdite.  
+
+---
 
 ![Logo](./aegnorlogo.png)
 
-## AEGNOR SERVEUR
+# 🐉 AEGNOR SERVEUR
 
-Cette émulateur est open source pour tous le monde.  
-Merci de pas le vendre, vous avez reçu gratuitement, donnez gratuitement 🤗.<br>
-Cet emulateur game est developpé pour un client 1.34.1.<br>
-Il est lié au GitHub login suivant :<br>
-Cliquez sur ce lien pour voir le GitHub du login : [AegnorLogin](https://github.com/arwase/aegnor_loginV2) .<br><br>
-Le login n'a pas été developpé par moi, il est un fork du travail de Locos.
+Cet émulateur est **open source** et disponible pour tout le monde.  
+Merci de **ne pas le vendre** : vous l’avez reçu gratuitement, donnez-le gratuitement 🤗.  
 
-## INFORMATIONS :
+Il est développé pour un **client 1.34.1** et lié au GitHub login suivant :  
+👉 [AegnorLogin](https://github.com/arwase/aegnor_loginV2) (fork du travail de Locos)
 
-Aegnor est un serveur de type EasyLike.
-Il propose une experience de jeu legérement modifié afin d'accélerer la progression dans le jeu et ajoute des fonctionnalités non présente initialement comme un système de rareté d'objet etc.
-Pour plus d'informations vous pouvez visiter l'ancien discord du serveur qui regorge d'informations à son sujet.
-Cette émulateur est basé sur une base d'un émulateur starloco et diverses sources d'emulateurs afin d'en extraire le meilleur.
-[@aegnor] https://discord.com/invite/f2cNEZ2cev
+---
 
-## DEBUGS :
+## ⚙️ INFORMATIONS
 
-La liste des debugs est visible sur le discord dans l'onglet patchnote
+Aegnor est un serveur **EasyLike** :  
+- Une expérience de jeu légèrement accélérée  
+- Un système de rareté des objets  
+- De nouvelles fonctionnalités absentes du client officiel  
 
-## AUTRE :
+Cet émulateur est basé sur **Starloco** et diverses autres sources afin d’en extraire le meilleur.  
+👉 Plus d’informations disponibles sur l’ancien [Discord du serveur](https://discord.com/invite/f2cNEZ2cev).
 
-- Systeme de rareté d'equiepement.
-- Runes spécifique associées a ce systeme
-- Simplification des donjons.
-- Simplification des métiers avec tous les métiers accessible dès la création d'un personnage
-- Core spécifique obligatoire pour le systeme de rareté etc.
-- OneWindows, ControlInvo, et plein d'autre fonctionnalités multi-comptes 
+---
 
-## TELECHARGEMENT :
+## 🐞 DEBUGS
 
-- AegnorEmulateur.zip contient l'intégralité des fichiers nécéssaires à son execution en Local.
+La liste complète des debugs est visible sur le **Discord** dans l’onglet *Patchnote*.
 
-## INSTALLATION :
+---
 
-Je ne vais pas faire de tutoriel sur son installation mais vous pouvez suivre cette vidéo et reproduire le même schéma pour l'installer une fois que vous avez compilé le projet en JAR.
+## ✨ FONCTIONNALITÉS PRINCIPALES
 
-[Vidéo d'installation](https://youtu.be/06tjFmFvEkk) 
+- 🔹 Système de rareté d’équipement  
+- 🔹 Runes spécifiques associées  
+- 🔹 Donjons simplifiés  
+- 🔹 Tous les métiers accessibles dès la création d’un personnage  
+- 🔹 Core spécifique obligatoire pour gérer la rareté & fonctionnalités avancées  
+- 🔹 Fonctionnalités multi-comptes : *OneWindows, ControlInvo*, etc.  
 
+---
 
-## COMPTE JEU DEJA CREE
+## 📥 TÉLÉCHARGEMENT
 
-- login : admin1
-- mdp : admin
+L’archive **AegnorEmulateur.zip** contient l’intégralité des fichiers nécessaires pour exécuter le serveur en local.
 
-## REMERCIEMENT :
+---
 
-Je remercie Hydronish de son aide lors du développement du serveur et l'ensemble des donateurs qui m'ont aidé durant le developpement du serveur. <br>
-Je remercie également Locos pour la base de son travail et tous les auteurs qui ont succèdés ou précédés ses modifications pour son émulateur.
+## 🚀 INSTALLATION
 
-- [@arwase](https://github.com/arwase) 
-- Discord : Arwase#6656
+1. Compilez le projet en `.jar`  
+2. Décompressez l’archive  
+3. Lancez le serveur avec :  
+
+   ```bash
+   java -Xmx2G -jar Aegnor.jar
+   ```
+
+4. Connectez-vous avec le compte déjà créé :  
+   - **login** : `admin1`  
+   - **mot de passe** : `admin`  
+
+🎥 Tutoriel vidéo d’installation : [Cliquez ici](https://youtu.be/06tjFmFvEkk)
+
+---
+
+## 🙏 REMERCIEMENTS
+
+Un grand merci à :  
+- **Hydronish** pour son aide lors du développement  
+- L’ensemble des donateurs qui ont soutenu le projet  
+- **Locos** pour la base de son travail  
+- Tous les auteurs qui ont contribué aux émulateurs précédents  
+
+👤 Auteur : [@arwase](https://github.com/arwase)  
+💬 Discord : `Arwase#6656`
+
+---
