@@ -96,7 +96,7 @@ public class SocketManager {
         send(out, packet);
     }
 
-    //TODO: Abonement
+    //TODO: Abonnement Osef en Privé, mais on peut mettre le VIP TIME a la place
     public static void GAME_SEND_PERSO_LIST(GameClient out, java.util.Map<Integer, Player> persos, long subscriber) {
         StringBuilder packet = new StringBuilder();
 
@@ -2198,29 +2198,6 @@ public class SocketManager {
 
     }
 
-    public static void REALM_SEND_REQUIRED_APK(GameClient out)//FIXME:G�n�rateur de nom
-    {
-        String pass = "";
-        String noms = "fantasy;mr;beau;fort;dark;knight;sword;big;boss;chuck;norris;wood;rick;roll;food;play;volt;rick;ven;bana;sam;ron;fou;pui;to;fu;lo;rien;bank;cap;chap;fort;dou;soleil;gentil;mechant;bad;killer;fight;gra;evil;dark;jerry;fatal;haut;bas;arc;epe;cac;ec;mai;invo;tro;com;koi;bou;let;top;fun;fai;sony;kani;meulou;faur;asus;choa;chau;cho;miel;beur;pain;cry;big;sma;to;day;bi;cih;geni;bou;che;scania;dave;swi;cas;que;chi;er;de;nul;do;a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;z;a;e;i;o;u;y";
-        String str[] = noms.split(";");
-        String rep = "";
-        int tiree = 0;
-        int maxi = (int) Math.floor(Math.random() * 4D) + 2;
-        for (int x = 0; x < maxi; x++) {
-            rep = (new StringBuilder(String.valueOf(rep))).append(str[(int) Math.floor(Math.random()
-                    * str.length)]).toString();
-            if (maxi >= 3 && x == 0 && tiree == 0
-                    && (int) Math.floor(Math.random() * 2D) == 1) {
-                rep = (new StringBuilder(String.valueOf(rep))).append("-").toString();
-                tiree = 1;
-            }
-        }
-
-        rep = (new StringBuilder(String.valueOf(rep.substring(0, 1).toUpperCase()))).append(rep.substring(1)).toString();
-        pass = rep;
-        String packet = (new StringBuilder("APK")).append(pass).toString();
-        send(out, packet);
-    }
 
     public static void GAME_SEND_ADD_ENEMY(Player out, Player pr) {
 

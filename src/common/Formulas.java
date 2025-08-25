@@ -478,7 +478,7 @@ public class Formulas {
         int heals = healer.getTotalStats().getEffect(EffectConstant.STATS_ADD_SOIN) - healer.getTotalStats().getEffect(EffectConstant.STATS_REM_SOIN);
         if (intel < 0)
             intel = 0;
-        float adic = 90; // TODO : petit bonus 100 normalement (ca boost un peu les heal)
+        float adic = 100; // TODO : petit bonus 100 normalement (ca boost un peu les heal)
         if (isCac)
             adic = 100;
 

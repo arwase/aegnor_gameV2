@@ -724,7 +724,6 @@ public class Fighter implements Comparable<Fighter> {
 
         // On mettrai pas un truc , si c'est le tour du joueur on rajoute un tour (au lieu de addingTurnIfCanPlay)?
 
-
         // TODO : a supprimer - On force mais en vrai faut juste faire gaffe a l'appel
         switch(spellID) {
             case 431:
@@ -1418,7 +1417,7 @@ public class Fighter implements Comparable<Fighter> {
                 str.append(getDouble().getSexe()).append(";");
                 str.append(getDouble().getLevel()).append(";");
                 str.append(getDouble().get_align()).append(",");
-                str.append("1,");//TODO
+                str.append("1,");//FIXME
                 str.append((getDouble().is_showWings() ? getDouble().getALvl() : "0")).append(",");
                 str.append(getDouble().getId()).append(";");
 

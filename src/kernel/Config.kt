@@ -78,7 +78,7 @@ object Config {
     var SERVER_NAME: String = ConfigReader.data[ConfigReader.server.name]
     var SERVER_VER: String = ConfigReader.data[ConfigReader.server.version]
 
-    var url: String = "https://aegnor.arwase.fr"
+    var url: String = "http://127.0.0.1"
     var startMessage = "Bienvenue sur le serveur $SERVER_NAME - ($SERVER_VER) !"
     var colorMessage = "B9121B"
 

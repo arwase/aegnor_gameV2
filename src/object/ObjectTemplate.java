@@ -971,7 +971,7 @@ public class ObjectTemplate {
             return getId() + ";" + getStrTemplate() + (this.newPrice > 0 ? ";" + this.newPrice : "");
         }
         else{
-            //return getId() + ";" + getStrTemplate() + ";" + this.money + ";" + (this.newPrice > 0 ? ";" + this.newPrice : "") +";;"; //TODO pas géré en 1.34.0
+            //return getId() + ";" + getStrTemplate() + ";" + this.money + ";" + (this.newPrice > 0 ? ";" + this.newPrice : "") +";;"; //TODO pas géré en 1.34.0 met permet l'achat au PNJ avec autre chose que des kamas
             return getId() + ";" + getStrTemplate() + (this.newPrice > 0 ? ";" + this.newPrice : "");
         }
     }

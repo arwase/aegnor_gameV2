@@ -4420,7 +4420,7 @@ public class GameClient {
         }
     }
 
-    private void recursiveBreakingObject(BreakingObject breakingObject, final int i, int count) {
+   /* private void recursiveBreakingObject(BreakingObject breakingObject, final int i, int count) {
         if (breakingObject.isStop() || !(i < count)) {
             if (breakingObject.isStop()) this.player.send("Ea2");
             else this.player.send("Ea1");
@@ -4435,7 +4435,7 @@ public class GameClient {
             breakingObject.setObjects(objects);
             this.recursiveBreakingObject(breakingObject, i + 1, count);
         }, 1000, TimeUnit.MILLISECONDS);
-    }
+    }*/
 
     private synchronized void movementItemOrKamasDons(String packet) {
         if (this.player.getExchangeAction() != null && this.player.getExchangeAction().getType() == ExchangeAction.CRAFTING_SECURE_WITH) {
@@ -7868,7 +7868,7 @@ public class GameClient {
             } else {
                 ObjectTemplate template = object.getTemplate();
                 int set = template.getPanoId();
-                // TODO : trop chelou la
+                // TODO : trop chelou la de mettre en dur les verifs des stats itemsClasse
                 if (set >= 81 && set <= 92 && position != Constant.ITEM_POS_NO_EQUIPED) {
                     String[] stats = template.getStrTemplate().split(",");
 
@@ -7883,7 +7883,7 @@ public class GameClient {
                     }
 
                 }
-                // TODO : trop chelou la aussi
+                // TODO : trop chelou la de mettre en dur les verifs des stats itemsClasse
                 if((template.getId() == 8992 | template.getId() == 8993) && position != Constant.ITEM_POS_NO_EQUIPED) {
                     String[] stats = template.getStrTemplate().split(",");
 
@@ -7897,7 +7897,7 @@ public class GameClient {
                         }
                     }
                 }
-                // TODO : trop chelou la aussi
+                // TODO : trop chelou la de mettre en dur les verifs des stats itemsClasse
                 if (set >= 81 && set <= 92 && position == Constant.ITEM_POS_NO_EQUIPED) {
                     String[] stats = template.getStrTemplate().split(",");
 

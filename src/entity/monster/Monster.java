@@ -279,7 +279,7 @@ public class Monster {
         return false;
     }
 
-    public String strStats4eachgrade() { // se usa mas q todo para el panel mobs, pero minkamas y maxkamas son int para sql
+    public String strStats4eachgrade() { // Pour le panel de l'admin
         StringBuilder strStats = new StringBuilder();
         StringBuilder strStatsAction = new StringBuilder();
         StringBuilder strStatsInfo = new StringBuilder();
@@ -338,7 +338,7 @@ public class Monster {
                 + strMaxKamas.toString() + "~" + strStatsAction.toString()  + "~" + strStatsInfo.toString() + "~" + strStatsInit.toString() );
     }
 
-    public String strStatsTodosMobs() { // se usa mas q todo para el panel mobs, pero minkamas y maxkamas son int para sql
+    public String strStatsTodosMobs() { // Pour le panel de l'admin
         StringBuilder strStats = new StringBuilder();
         StringBuilder strPDV = new StringBuilder();
         StringBuilder strExp = new StringBuilder();

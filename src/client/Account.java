@@ -619,7 +619,7 @@ public class Account {
                 player.getSlaveLeader().PlayerList1.remove(player);
                 SocketManager.GAME_SEND_MESSAGE(player.getSlaveLeader(),"<b>(Information) " + player.getName() + "</b> ne fait plus parti de vos Suiveurs");
                 player.setSlaveLeader(null);
-            }//TODO : Add Gestion esclave
+            }
 
             if(!player.PlayerList1.isEmpty()){
 

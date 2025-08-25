@@ -2984,7 +2984,7 @@ public class Fight {
                 effets2.addAll(effets);
                 Effect.applyAllEffectFromList(this,effets2,isCC,caster,getMap().getCase(cellID));
 
-                /* TODO : pk les armes Heal sont géré la ?
+                /* Les armes Heal ne sont plus gérées ici
                  * 7172 Baguette Rhon
                  * 7156 Marteau Ronton
                  * 1355 Arc Hidsad
@@ -5311,7 +5311,7 @@ public class Fight {
                                             }
                                             if(!IsAlreadyOnlist){
 
-                                                // TODO : faire un truc plus propre pour les events
+                                                // TODO : faire un truc plus propre pour les events double drop pour un type d'item
                                                 /*if( World.world.getObjTemplate(drop.getObjectId()).getType() == Constant.ITEM_TYPE_DOFUS  ){
                                                     drop.setLocalPercent(drop.getLocalPercent()*2); // ON double le drop temporairement
                                                 }*/
@@ -5634,7 +5634,7 @@ public class Fight {
                                         boost = 1.0D;
                                     }
 
-                                    // TODO : Faire un truc plus propre pour les events drop sur les boss
+                                    // TODO : Faire un truc plus propre pour les events drop sur les boss temporaire
                                     /*if(ArrayUtils.contains(Constant.BOSS_ID, entry.getMob().getTemplate().getId())) {
                                         temporary3.add(new Drop(9617, (0.05D * (boost)), 0, true));
                                         temporary3.add(new Drop(8693, (0.05D * (boost)), 0, true));

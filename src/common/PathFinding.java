@@ -1956,7 +1956,7 @@ public class PathFinding {
                 if (i != null)
                     cibles.add(i);
                 break;
-            case Constant.ITEM_TYPE_BATON: // TODO : a reprendre marche pas avec les batons distances
+            case Constant.ITEM_TYPE_BATON: // TODO : a reprendre marche pas avec les batons distances (RAMBOTON)
                 int dist = PathFinding.getDistanceBetween(fight.getMap(), cell.getId(), castCellID);
                 int newCell = PathFinding.getCaseIDFromDirrection(castCellID, c, fight.getMap());
 

@@ -237,3 +237,4 @@ Version 4.1 (08/12/2022):
 - Sauvegarde de Cell entre 2 fight sur la même map
 - Ajout de la gestion de commande Azuriom dans la config
 
+ARRET DU MAINTIEN DU CHANGELOG LE 08/12/2022

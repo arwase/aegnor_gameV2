@@ -841,7 +841,6 @@ public class GameCase {
             case 149:
             case 15:
                 return this.object.getId() == 7013;
-            //TODO: R�par�
             //Tailleur (Haut)
             case 63:
                 return (this.object.getId() == 7014 || this.object.getId() == 7016);

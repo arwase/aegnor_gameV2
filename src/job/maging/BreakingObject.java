@@ -68,6 +68,4 @@ public class BreakingObject {
         return null;
     }
 
-    public void setObjects(ArrayList<Couple<Long, Integer>> objects) {
-    }
 }

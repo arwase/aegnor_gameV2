@@ -347,7 +347,7 @@ public class JobAction {
                     } else {
 
                         GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplicationForJobs(this.player.getItems().values(), 1, false, chan2);
-                        long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+                        long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
 
                         if (guid == -1) { // Don't exist
                             guid = newObj.setId();
@@ -499,7 +499,7 @@ public class JobAction {
 
 
                 GameObject newObj = World.world.getObjTemplate(templateId).createNewItemWithoutDuplication(this.player.getItems().values(), repeat, false);
-                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+                int guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
 
                 if (guid == -1) { // Don't exist
                     guid = newObj.setId();
@@ -984,7 +984,7 @@ public class JobAction {
             GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,rarity);
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
             objectFm = newObj;
-            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
 
             if(guid == -1) { // Don't exist
                     guid = newObj.setId();
@@ -1088,7 +1088,7 @@ public class JobAction {
             GameObject newObj = World.world.getObjTemplate(objTemplate.getId()).createNewItemWithoutDuplicationWithrarity(this.player.getItems().values(), 1, false,lastDigit);
             //GameObject newObj = new GameObject(id, getId(), 1, Constant.ITEM_POS_NO_EQUIPED, ObjectTemplate.generateNewStatsFromTemplate(objTemplate.getStrTemplate(), false,rarity), ObjectTemplate.getEffectTemplate(objTemplate.getStrTemplate()), new HashMap<Integer, Integer>(), Stat, 0,rarity);
             objectFm = newObj;
-            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler aprÃ¨s
+            long guid = newObj.getGuid();//FIXME: Ne pas recrée un item pour l'empiler après
 
             if(guid == -1) { // Don't exist
                 guid = newObj.setId();
