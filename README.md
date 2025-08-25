@@ -74,9 +74,9 @@ L’archive **AegnorEmulateur.zip** contient l’intégralité des fichiers néc
 
 Un grand merci à :  
 - **Hydronish** pour son aide lors du développement  
+- **Locos** pour la base de son travail
 - L’ensemble des donateurs qui ont soutenu le projet  
-- **Locos** pour la base de son travail  
-- Tous les auteurs qui ont contribué aux émulateurs précédents  
+- Tous les auteurs qui ont contribués aux émulateurs précédents ou ultérieur
 
 👤 Auteur : [@arwase](https://github.com/arwase)  
 💬 Discord : `Arwase#6656`
