@@ -48,7 +48,8 @@ La liste complète des debugs est visible sur le **Discord** dans l’onglet *Pa
 
 ## 📥 TÉLÉCHARGEMENT
 
-L’archive **AegnorEmulateur.zip** contient l’intégralité des fichiers nécessaires pour exécuter le serveur en local.
+L’archive **Aegnor_Serveur.zip** contient l’intégralité des fichiers nécessaires pour exécuter le serveur en local.
+👉 [Aegnor_Serveur.zip](https://mega.nz/file/GFZhXQ7L#r9-qOuBxayiz0oUXc65SHHbQrkVybgL6EFaEl-ZRKUA) 
 
 ---
 
