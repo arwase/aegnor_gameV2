@@ -78,9 +78,8 @@ public class PlayerData extends AbstractDAO<Player> {
 
                     if (RS.getInt("vitalite") > 2091 || RS.getInt("force") > 465 || RS.getInt("sagesse") > 432 ||
                             RS.getInt("intelligence") > 465 || RS.getInt("chance") > 465 || RS.getInt("agilite") > 465) {
-                        perso.banAccount();
-                        World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(),
-                                "TO BAN : Suspicion de Tentative de faille statistique, supérieurs aux jets maximum", perso);
+                        //perso.banAccount();
+                        //World.sendWebhookMessage(Config.INSTANCE.getDISCORD_CHANNEL_FAILLE(), "TO BAN : Suspicion de Tentative de faille statistique, supérieurs aux jets maximum", perso);
                     }
                 }
             }
